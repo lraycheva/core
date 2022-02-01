@@ -1,3 +1,5 @@
+1.10.5
+chore: bump due to dependencies update
 1.10.4
 feat: added positionIndex property as a config when opening workspaces
 feat: added a WorkspacePinOptions interface for better extensibility 

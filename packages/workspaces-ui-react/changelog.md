@@ -1,3 +1,5 @@
+1.7.5
+chore: bump due to dependencies update
 1.7.4
 chore: bump due to dependencies update
 1.7.3
