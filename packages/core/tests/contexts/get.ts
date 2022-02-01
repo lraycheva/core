@@ -75,4 +75,38 @@ describe("contexts.get", () => {
         await glue.contexts.update(name, { b: 2 });
         return pw.promise;
     });
+
+    it("double get returns snapshot", async () => {
+        const pw = new PromiseWrapper();
+        const name = generate();
+        const data = { a: 1 };
+        await glue2.contexts.update(name, data);
+
+        glue2.contexts.subscribe(name, async () => {
+            const ab = await Promise.all([glue.contexts.get(name), glue.contexts.get(name)]);
+            console.log(ab);
+            expect(ab[0]).to.deep.eq(data);
+            expect(ab[1]).to.deep.eq(data);
+            pw.resolve();
+        });
+
+        return pw.promise;
+    });
+
+    it("get followed by subscribe returns snapshot", async () => {
+        const pw = new PromiseWrapper();
+        const name = generate();
+        const data = { a: 1 };
+        await glue2.contexts.update(name, data);
+        glue2.contexts.subscribe(name, async () => {
+            const pa = glue.contexts.get(name);
+            glue.contexts.subscribe(name, (dataFromSubscribe) => {
+                expect(dataFromSubscribe).to.deep.eq(data);
+            });
+            const a = await pa;
+            expect(a).to.deep.eq(data);
+            pw.resolve();
+        });
+        return pw.promise;
+    });
 });

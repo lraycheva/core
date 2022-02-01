@@ -410,7 +410,7 @@ export class GW3Bridge implements ContextBridge {
         }
 
         // 2)
-        if (contextData && !contextData.hasCallbacks()) {
+        if (contextData && (!contextData.hasCallbacks() || !contextData.hasReceivedSnapshot)) {
             return new Promise<any>(async (resolve, _) => {
                 this.subscribe(name, (data: any, _d: any, _r: string[], un: ContextSubscriptionKey) => {
                     this.unsubscribe(un);
