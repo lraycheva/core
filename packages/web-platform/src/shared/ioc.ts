@@ -9,7 +9,7 @@ import { SessionStorageController } from "../controllers/session";
 import { WindowsStateController } from "../controllers/state";
 import { ApplicationsController } from "../libs/applications/controller";
 import { LayoutsController } from "../libs/layouts/controller";
-import { IdbStore } from "../libs/layouts/idbStore";
+import { IdbLayoutsStore } from "../libs/layouts/idbStore";
 import { WorkspacesController } from "../libs/workspaces/controller";
 import { IntentsController } from "../libs/intents/controller";
 import { ChannelsController } from "../libs/channels/controller";
@@ -22,6 +22,9 @@ import { ServiceWorkerController } from "../controllers/serviceWorker";
 import { NotificationsController } from "../libs/notifications/controller";
 import { ExtensionController } from "../libs/extension/controller";
 import { AsyncSequelizer } from "./sequelizer";
+import { Glue42CoreDB } from "../common/types";
+import { IDBPDatabase, openDB } from "idb";
+import { dbName, dbVersion } from "../common/constants";
 
 export class IoC {
     private _gatewayInstance!: Gateway;
@@ -44,9 +47,10 @@ export class IoC {
     private _stateChecker!: WindowsStateController;
     private _framesController!: FramesController;
     private _systemController!: SystemController;
-    private _idbStore!: IdbStore;
+    private _idbStore!: IdbLayoutsStore;
     private _serviceWorkerController!: ServiceWorkerController;
-
+    private _database!: IDBPDatabase<Glue42CoreDB> | undefined;
+    
     constructor(private readonly config?: Glue42WebPlatform.Config) { }
 
     public get gateway(): Gateway {
@@ -249,9 +253,9 @@ export class IoC {
         return this._framesController;
     }
 
-    public get idbStore(): IdbStore {
+    public get idbStore(): IdbLayoutsStore {
         if (!this._idbStore) {
-            this._idbStore = new IdbStore();
+            this._idbStore = new IdbLayoutsStore(this);
         }
 
         return this._idbStore;
@@ -267,10 +271,25 @@ export class IoC {
 
     public get serviceWorkerController(): ServiceWorkerController {
         if (!this._serviceWorkerController) {
-            this._serviceWorkerController = new ServiceWorkerController();
+            this._serviceWorkerController = new ServiceWorkerController(this);
         }
 
         return this._serviceWorkerController;
+    }
+    
+    public getDatabase(): Promise<IDBPDatabase<Glue42CoreDB>> {
+        if (this._database) {
+            return Promise.resolve(this._database);
+        }
+
+        return new Promise((resolve) => {
+
+            openDB<Glue42CoreDB>(dbName, dbVersion, { upgrade: this.setUpDb.bind(this) })
+                .then((database) => {
+                    this._database = database;
+                    resolve(this._database);
+                });
+        });
     }
 
     public createMessageChannel(): MessageChannel {
@@ -279,5 +298,19 @@ export class IoC {
 
     public createSequelizer(looseInterval?: number): AsyncSequelizer {
         return new AsyncSequelizer(looseInterval);
+    }
+
+    private setUpDb(database: IDBPDatabase<Glue42CoreDB>): void {
+        if (!database.objectStoreNames.contains("workspaceLayouts")) {
+            database.createObjectStore("workspaceLayouts");
+        }
+
+        if (!database.objectStoreNames.contains("globalLayouts")) {
+            database.createObjectStore("globalLayouts");
+        }
+
+        if (!database.objectStoreNames.contains("serviceWorker")) {
+            database.createObjectStore("serviceWorker");
+        }
     }
 }

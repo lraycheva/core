@@ -3,6 +3,7 @@ import { Glue42 } from "@glue42/desktop";
 import { Glue42Web } from "@glue42/web";
 import { Decoder } from "decoder-validate";
 import { Glue42WebPlatform } from "../../platform";
+import { DBSchema } from "idb";
 
 export type Glue42API = Glue42.Glue;
 export type Glue42Config = Glue42.Config;
@@ -21,6 +22,29 @@ export interface InternalApplicationsConfig {
 export interface InternalLayoutsConfig {
     mode: "idb" | "session";
     local: Array<Glue42Web.Layouts.Layout>;
+}
+
+export interface Glue42CoreDB extends DBSchema {
+    workspaceLayouts: {
+        key: string;
+        value: Glue42Web.Layouts.Layout;
+    };
+    autoLayouts: {
+        key: string;
+        value: Glue42Web.Layouts.Layout;
+    };
+    globalLayouts: {
+        key: string;
+        value: Glue42Web.Layouts.Layout;
+    };
+    serviceWorker: {
+        key: "workerData";
+        value: ServiceWorkerDbData;
+    };
+}
+
+export interface ServiceWorkerDbData {
+    platformUrl: string;
 }
 
 export interface InternalPlatformConfig {

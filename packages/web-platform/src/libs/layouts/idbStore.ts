@@ -1,47 +1,34 @@
 /* eslint-disable indent */
-import { openDB, IDBPDatabase } from "idb";
-import { dbName, dbVersion } from "../../common/constants";
-import { LayoutsDB } from "./types";
+import { IDBPDatabase } from "idb";
 import { Glue42Web } from "@glue42/web";
 import { layoutDecoder, layoutTypeDecoder } from "./decoders";
+import { IoC } from "../../shared/ioc";
+import { Glue42CoreDB } from "../../common/types";
 
-export class IdbStore {
+export class IdbLayoutsStore {
 
-    private _database: IDBPDatabase<LayoutsDB> | undefined;
-
-    constructor() {
+    constructor(private readonly ioc: IoC) {
         if (!("indexedDB" in window)) {
             throw new Error("Cannot initialize the local storage, because IndexedDb is not supported");
         }
     }
 
-    private get database(): Promise<IDBPDatabase<LayoutsDB>> {
-        if (this._database) {
-            return Promise.resolve(this._database);
-        }
-
-        return new Promise((resolve) => {
-
-            openDB<LayoutsDB>(dbName, dbVersion, { upgrade: this.setUpDb.bind(this) })
-                .then((database) => {
-                    this._database = database;
-                    resolve(this._database);
-                });
-        });
+    private get database(): Promise<IDBPDatabase<Glue42CoreDB>> {
+        return this.ioc.getDatabase();
     }
 
     public async getAll(layoutType: Glue42Web.Layouts.LayoutType): Promise<Glue42Web.Layouts.Layout[]> {
         switch (layoutType) {
-            case "Workspace": return (await this.database).getAll("workspaceLayouts");
-            case "Global": return (await this.database).getAll("globalLayouts");
+            case "Workspace": return (await this.database).getAll<"workspaceLayouts">("workspaceLayouts");
+            case "Global": return (await this.database).getAll<"globalLayouts">("globalLayouts");
             default: throw new Error(`The provided layout type is not recognized: ${layoutType}`);
         }
     }
 
     public async delete(name: string, layoutType: Glue42Web.Layouts.LayoutType): Promise<void> {
         switch (layoutType) {
-            case "Workspace": return (await this.database).delete("workspaceLayouts", name);
-            case "Global": return (await this.database).delete("globalLayouts", name);
+            case "Workspace": return (await this.database).delete<"workspaceLayouts">("workspaceLayouts", name);
+            case "Global": return (await this.database).delete<"globalLayouts">("globalLayouts", name);
             default: throw new Error(`The provided layout type is not recognized: ${layoutType}`);
         }
     }
@@ -56,8 +43,8 @@ export class IdbStore {
 
     public async get(name: string, layoutType: Glue42Web.Layouts.LayoutType): Promise<Glue42Web.Layouts.Layout | undefined> {
         switch (layoutType) {
-            case "Workspace": return (await this.database).get("workspaceLayouts", name);
-            case "Global": return (await this.database).get("globalLayouts", name);
+            case "Workspace": return (await this.database).get<"workspaceLayouts">("workspaceLayouts", name);
+            case "Global": return (await this.database).get<"globalLayouts">("globalLayouts", name);
             default: throw new Error(`The provided layout type is not recognized: ${layoutType}`);
         }
     }
@@ -67,19 +54,9 @@ export class IdbStore {
         layoutTypeDecoder.runWithException(layoutType);
 
         switch (layoutType) {
-            case "Workspace": return (await this.database).put("workspaceLayouts", layout, layout.name);
-            case "Global": return (await this.database).put("globalLayouts", layout, layout.name);
+            case "Workspace": return (await this.database).put<"workspaceLayouts">("workspaceLayouts", layout, layout.name);
+            case "Global": return (await this.database).put<"globalLayouts">("globalLayouts", layout, layout.name);
             default: throw new Error(`The provided layout type is not recognized: ${layoutType}`);
-        }
-    }
-
-    private setUpDb(database: IDBPDatabase<LayoutsDB>): void {
-        if (!database.objectStoreNames.contains("workspaceLayouts")) {
-            database.createObjectStore("workspaceLayouts");
-        }
-
-        if (!database.objectStoreNames.contains("globalLayouts")) {
-            database.createObjectStore("globalLayouts");
         }
     }
 

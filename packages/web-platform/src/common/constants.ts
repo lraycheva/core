@@ -27,4 +27,4 @@ export const dbName = "glue42core";
 
 export const serviceWorkerBroadcastChannelName = "glue42-core-worker";
 
-export const dbVersion = 1;
+export const dbVersion = 2;

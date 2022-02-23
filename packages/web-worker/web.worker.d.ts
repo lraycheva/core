@@ -6,7 +6,7 @@ export interface Glue42NotificationClickHandler {
 
 export interface WebWorkerConfig {
     platform?: {
-        url: string;
+        url?: string;
         openIfMissing?: boolean;
     };
     notifications?: {

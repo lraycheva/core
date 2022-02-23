@@ -1,6 +1,5 @@
 import { Glue42Web } from "@glue42/web";
 import { UnsubscribeFunction } from "callback-registry";
-import { DBSchema } from "idb";
 import { InternalLayoutsConfig } from "../../common/types";
 
 export type LayoutEvent = "layoutAdded" | "layoutChanged" | "layoutRemoved";
@@ -13,21 +12,6 @@ export interface LayoutModeExecutor {
     getAll(type: Glue42Web.Layouts.LayoutType): Promise<Glue42Web.Layouts.Layout[]>;
     save(layouts: Glue42Web.Layouts.Layout[]): Promise<void>;
     delete(name: string, type: Glue42Web.Layouts.LayoutType): Promise<boolean>;
-}
-
-export interface LayoutsDB extends DBSchema {
-    workspaceLayouts: {
-        key: string;
-        value: Glue42Web.Layouts.Layout;
-    };
-    autoLayouts: {
-        key: string;
-        value: Glue42Web.Layouts.Layout;
-    };
-    globalLayouts: {
-        key: string;
-        value: Glue42Web.Layouts.Layout;
-    };
 }
 
 export interface SimpleLayoutConfig {

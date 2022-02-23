@@ -9,11 +9,14 @@ import {
     UnsubscribeFunction,
 } from "callback-registry";
 import { GlueNotificationData } from "../libs/notifications/types";
+import { IoC } from "../shared/ioc";
 
 export class ServiceWorkerController {
     private readonly registry: CallbackRegistry = CallbackRegistryFactory();
     private _serviceWorkerRegistration: ServiceWorkerRegistration | undefined;
     private channel!: BroadcastChannel;
+
+    constructor(private readonly ioc: IoC) { }
 
     private get logger(): Glue42Web.Logger.API | undefined {
         return logger.get("service.worker.web.platform");
@@ -41,6 +44,8 @@ export class ServiceWorkerController {
         if (config.serviceWorker.url && config.serviceWorker.registrationPromise) {
             throw new Error("The service worker is over-specified, there is both defined url and a registration promise, please provide one or the other");
         }
+
+        await this.prepareSwDb();
 
         this._serviceWorkerRegistration = config.serviceWorker.url ?
             await this.registerWorker(config.serviceWorker.url) :
@@ -157,5 +162,13 @@ export class ServiceWorkerController {
         }
 
         return registration;
+    }
+
+    private async prepareSwDb(): Promise<void> {
+        const db = await this.ioc.getDatabase();
+
+        await db.clear("serviceWorker");
+
+        await db.put<"serviceWorker">("serviceWorker", { platformUrl: window.location.href }, "workerData");
     }
 }

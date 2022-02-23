@@ -1,8 +1,42 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Glue42WebWorkerFactoryFunction, WebWorkerConfig } from "../web.worker";
-import { platformOpenTimeoutMS, platformPingTimeoutMS, serviceWorkerBroadcastChannelName } from "./constants";
+import { dbName, dbVersion, platformOpenTimeoutMS, platformPingTimeoutMS, serviceWorkerBroadcastChannelName } from "./constants";
 import { webWorkerConfigDecoder } from "./decoders";
 import { generate } from "shortid";
+import { IDBPDatabase, openDB } from "idb";
+
+let openDbPromise: Promise<IDBPDatabase<any>>;
+
+const trimUrlQueryHashAndTrailingSlash = (url: string): string => {
+    const trimmedQueryHash = url.split("?")[0].split("#")[0];
+    const trimmedTrailingSlash = trimmedQueryHash.replace(/\/$/, "");
+
+    return trimmedTrailingSlash;
+};
+
+const startDb = (): Promise<IDBPDatabase<any>> => {
+    if (openDbPromise) {
+        return openDbPromise;
+    }
+
+    openDbPromise = openDB<any>(dbName, dbVersion, {
+        upgrade: (db: IDBPDatabase<any>) => {
+            if (!db.objectStoreNames.contains("workspaceLayouts")) {
+                db.createObjectStore("workspaceLayouts");
+            }
+
+            if (!db.objectStoreNames.contains("globalLayouts")) {
+                db.createObjectStore("globalLayouts");
+            }
+
+            if (!db.objectStoreNames.contains("serviceWorker")) {
+                db.createObjectStore("serviceWorker");
+            }
+        }
+    });
+
+    return openDbPromise;
+};
 
 const checkPlatformOpen = (): Promise<boolean> => {
     const checkPromise = new Promise<boolean>((resolve) => {
@@ -27,8 +61,34 @@ const checkPlatformOpen = (): Promise<boolean> => {
     return Promise.race([checkPromise, timeoutPromise]);
 };
 
+const getPlatformUrl = async (config: WebWorkerConfig): Promise<string | undefined> => {
+    if (config.platform?.url) {
+        const url = config.platform.url.split("?")[0].split("#")[0];
+        console.debug(`getting url from config: ${url}`);
+        return trimUrlQueryHashAndTrailingSlash(url);
+    }
+
+    console.debug("starting the db");
+    const db = await startDb();
+
+    if (!db.objectStoreNames.contains("serviceWorker")) {
+        console.warn("there is no service worker store");
+        return;
+    }
+
+    const workerData = await db.get("serviceWorker", "workerData");
+
+    const url = workerData?.platformUrl?.split("?")[0].split("#")[0];
+
+    return trimUrlQueryHashAndTrailingSlash(url);
+};
+
 const validateConfig = (config: WebWorkerConfig = {}): WebWorkerConfig => {
-    const validated = webWorkerConfigDecoder.runWithException(config);
+    const validated: WebWorkerConfig = webWorkerConfigDecoder.runWithException(config);
+
+    if (validated.platform?.url) {
+        validated.platform.url = validated.platform.url.replace(/\/$/, "");
+    }
 
     return validated;
 };
@@ -86,6 +146,27 @@ export const openCorePlatform = (url: string): Promise<void> => {
     });
 };
 
+export const focusCorePlatform = async (url: string): Promise<void> => {
+    if (!url) {
+        console.warn("Cannot open the platform, because a url was not provided");
+        return;
+    }
+
+    const allWindows = await (self as any).clients.matchAll({ type: "window" });
+
+    for (const client of allWindows) {
+
+        const urlStrippedQueryHash = client.url.split("?")[0].split("#")[0];
+        const urlStrippedTrailingSlash = urlStrippedQueryHash.replace(/\/$/, "");
+
+        if (urlStrippedTrailingSlash === url) {
+
+            await client.focus();
+            return;
+        }
+    }
+};
+
 export const setupCore: Glue42WebWorkerFactoryFunction = (config?: WebWorkerConfig): void => {
     const verifiedConfig = validateConfig(config);
 
@@ -94,30 +175,50 @@ export const setupCore: Glue42WebWorkerFactoryFunction = (config?: WebWorkerConf
 
         const channel = new BroadcastChannel(serviceWorkerBroadcastChannelName);
 
+        console.debug("Received a notification, checking if the platform is open");
+
         const executionPromise = checkPlatformOpen()
             .then((platformExists: boolean) => {
 
                 isPlatformOpen = platformExists;
 
+                console.debug(`The platform is: ${isPlatformOpen ? "open" : "not open"}`);
+
                 const action = event.action;
 
                 if (!action && verifiedConfig.notifications?.defaultClick) {
+                    console.debug("Calling a defined default click handler");
                     return verifiedConfig.notifications.defaultClick(event, isPlatformOpen);
                 }
 
                 if (action && verifiedConfig.notifications?.actionClicks?.some((actionDef) => actionDef.action === action)) {
                     const foundHandler = verifiedConfig.notifications.actionClicks.find((actionDef) => actionDef.action === action).handler;
-
+                    console.debug(`Calling a defined action click handler for action: ${action}`);
                     return foundHandler(event, isPlatformOpen);
                 }
             })
             .then(() => {
+                console.debug("Getting the platform url");
+                return getPlatformUrl(verifiedConfig);
+            })
+            .then((url) => {
+
+                console.debug(`Found platform url: ${url}`);
+
                 if (!isPlatformOpen && verifiedConfig.platform?.openIfMissing) {
-                    return openCorePlatform(verifiedConfig.platform.url);
+                    console.debug("Opening the platform");
+                    return openCorePlatform(url);
+                }
+
+                const focusOnClick = (event as any).notification.data?.glueData?.focusPlatformOnDefaultClick;
+
+                if (isPlatformOpen && focusOnClick) {
+                    console.debug("Focusing the platform");
+                    return focusCorePlatform(url);
                 }
             })
             .then(() => {
-
+                console.log("The platform is prepared, posting the click message");
                 const messageType = "notificationClick";
 
                 const action = (event as any).action;
@@ -140,12 +241,6 @@ export const setupCore: Glue42WebWorkerFactoryFunction = (config?: WebWorkerConf
                 };
 
                 channel.postMessage({ messageType, action, glueData, definition });
-            })
-            .then(() => {
-                const focusOnClick = (event as any).notification.data?.glueData?.focusPlatformOnDefaultClick;
-                if (isPlatformOpen && focusOnClick) {
-                    // focus the platform
-                }
             })
             .catch((error) => {
                 const stringError = typeof error === "string" ? error : JSON.stringify(error.message);

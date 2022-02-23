@@ -19,7 +19,7 @@ export const glue42NotificationClickHandlerDecoder: Decoder<Glue42NotificationCl
 
 export const webWorkerConfigDecoder: Decoder<WebWorkerConfig> = object({
     platform: optional(object({
-        url: nonEmptyStringDecoder,
+        url: optional(nonEmptyStringDecoder),
         openIfMissing: optional(boolean())
     })),
     notifications: optional(object({

@@ -8,7 +8,7 @@ import { SessionStorageController } from "../../controllers/session";
 import logger from "../../shared/logger";
 import { objEqual } from "../../shared/utils";
 import { allLayoutsFullConfigDecoder, allLayoutsSummariesResultDecoder, getAllLayoutsConfigDecoder, layoutsImportConfigDecoder, layoutsOperationTypesDecoder, optionalSimpleLayoutResult, simpleLayoutConfigDecoder } from "./decoders";
-import { IdbStore } from "./idbStore";
+import { IdbLayoutsStore } from "./idbStore";
 import { AllLayoutsFullConfig, AllLayoutsSummariesResult, GetAllLayoutsConfig, LayoutsImportConfig, LayoutsOperationTypes, OptionalSimpleLayoutResult, SimpleLayoutConfig } from "./types";
 
 export class LayoutsController implements LibController {
@@ -26,7 +26,7 @@ export class LayoutsController implements LibController {
 
     constructor(
         private readonly glueController: GlueController,
-        private readonly idbStore: IdbStore,
+        private readonly idbStore: IdbLayoutsStore,
         private readonly sessionStore: SessionStorageController
     ) { }
 

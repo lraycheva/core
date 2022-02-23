@@ -211,9 +211,6 @@ export class NotificationsController implements LibController {
                 buttons
             };
 
-            console.log("Raising an extension notification with options");
-            console.log(chromeOptions);
-
             const extensionNotification: ExtensionNotification = { id, settings };
 
             this.session.saveNotification(extensionNotification);
