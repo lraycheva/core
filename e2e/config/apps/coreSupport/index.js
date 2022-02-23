@@ -46,6 +46,36 @@ const getAllContextNames = async (_, success) => {
     success({ result: contextNames });
 };
 
+const destroyContext = async({ name }, success, error) => {
+    if (!name) {
+        return error(`Context name is not provided to operation destroyContext`);
+    }
+
+    await glue.contexts.destroy(name);
+
+    success();
+}
+
+const setPathContext = async({ name, path, data }, success, error) => {
+    if (!name) {
+        return error(`Context name is not provided to operation setPathContext`);
+    }
+
+    await glue.contexts.setPath(name, path, data);
+
+    success();
+}
+
+const setPathsContext = async({ name, paths }, success, error) => {
+    if (!name) {
+        return error(`Context name is not provided to operation setPathsContext`);
+    }
+
+    await glue.contexts.setPaths(name, paths);
+
+    success();
+}
+
 const register = async ({ methodDefinition }, success) => {
     await glue.interop.register(methodDefinition, (args) => {
         const shouldFail = args.shouldFail;
@@ -258,6 +288,9 @@ const operations = [
     { name: 'updateContext', execute: updateContext },
     { name: 'getContext', execute: getContext },
     { name: 'getAllContextNames', execute: getAllContextNames },
+    { name: 'destroyContext', execute: destroyContext },
+    { name: 'setPathContext', execute: setPathContext },
+    { name: 'setPathsContext', execute: setPathsContext },
     { name: 'register', execute: register },
     { name: 'unregisterMethod', execute: unregisterMethod },
     { name: 'registerAsync', execute: registerAsync },

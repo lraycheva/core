@@ -198,48 +198,88 @@ export class GtfApp implements Gtf.App {
         await this.myInstance.stop();
     }
 
-    public async setContext(ctxName: string, ctxData: any): Promise<void> {
-        const controlArgs: ControlArgs = {
-            operation: "setContext",
-            params: {
-                name: ctxName,
-                data: ctxData
+    public get contexts() {
+        return {
+            all: (): Promise<string[]> => {
+                const controlArgs: ControlArgs = {
+                    operation: "getAllContextNames",
+                    params: {}
+                };
+        
+                return this.sendControl<string[]>(controlArgs);
+            },
+
+            set: (ctxName: string, ctxData: any): Promise<void> => {
+                const controlArgs: ControlArgs = {
+                    operation: "setContext",
+                    params: {
+                        name: ctxName,
+                        data: ctxData
+                    }
+                };
+        
+                return this.sendControl<void>(controlArgs);
+            },
+
+            update: (ctxName: string, ctxData: any): Promise<void> => {
+                const controlArgs: ControlArgs = {
+                    operation: "updateContext",
+                    params: {
+                        name: ctxName,
+                        data: ctxData
+                    }
+                };
+        
+                return this.sendControl<void>(controlArgs);
+            },
+            
+            get: (ctxName: string): Promise<any> => {
+                const controlArgs: ControlArgs = {
+                    operation: "getContext",
+                    params: {
+                        name: ctxName
+                    }
+                };
+        
+                return this.sendControl<any>(controlArgs);
+            },
+
+            destroy: (ctxName: string): Promise<void> => {
+                const controlArgs: ControlArgs = {
+                    operation: "destroyContext",
+                    params: {
+                        name: ctxName
+                    }
+                };
+
+                return this.sendControl<any>(controlArgs);
+            },
+
+            setPath: (ctxName: string, path: string, data: any): Promise<void>  => {
+                const controlArgs: ControlArgs = {
+                    operation: "setPathContext",
+                    params: {
+                        name: ctxName, 
+                        path, 
+                        data
+                    }
+                };
+
+                return this.sendControl<any>(controlArgs);
+            },
+
+            setPaths: (ctxName: string, paths: Glue42Web.Contexts.PathValue[]): Promise<void>  => {
+                const controlArgs: ControlArgs = {
+                    operation: "setPathsContext",
+                    params: {
+                        name: ctxName, 
+                        paths
+                    }
+                };
+
+                return this.sendControl<any>(controlArgs);
             }
         };
-
-        return this.sendControl<void>(controlArgs);
-    }
-
-    public async updateContext(ctxName: string, ctxData: any): Promise<void> {
-        const controlArgs: ControlArgs = {
-            operation: "updateContext",
-            params: {
-                name: ctxName,
-                data: ctxData
-            }
-        };
-
-        return this.sendControl<void>(controlArgs);
-    }
-
-    public async getContext(ctxName: string): Promise<any> {
-        const controlArgs: ControlArgs = {
-            operation: "getContext",
-            params: {
-                name: ctxName
-            }
-        };
-
-        return this.sendControl<any>(controlArgs);
-    }
-
-    public async getAllContextNames(): Promise<string[]> {
-        const controlArgs: ControlArgs = {
-            operation: "getAllContextNames",
-            params: {}
-        };
-
-        return this.sendControl<string[]>(controlArgs);
     }
 
     private async sendControl<T>(controlArgs: ControlArgs): Promise<T> {

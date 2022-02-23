@@ -13,6 +13,7 @@ import { WorkspacesFactoryFunction } from "../../../packages/workspaces-api/work
 // TODO: Add building and serving the Workspaces application to the e2e script.
 import { channelsConfig, localApplicationsConfig } from "./config";
 import sinon, { fake } from "sinon";
+import { GtfContexts } from './contexts';
 
 // Make the RUNNER environment variable available inside of the tests (resolved during the gtf build process) and set it as window title.
 const RUNNER = process.env.RUNNER;
@@ -119,7 +120,8 @@ const startGtf = async () => {
         { appManager: new GtfAppManager(glue) },
         { intents: new GtfIntents(glue) },
         { connection: new GtfConnection() },
-        { windows: new GtfWindows(glue) }
+        { windows: new GtfWindows(glue) },
+        { contexts: new GtfContexts() }
     );
 };
 
