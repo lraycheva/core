@@ -1,3 +1,5 @@
+1.10.0
+feat: added support for focusing the platform on click via notifications with action buttons
 1.9.5
 feat: added positionIndex property as a config when opening workspaces
 1.9.4
