@@ -18,23 +18,23 @@ export class AppComponent implements OnInit {
   public workspaceReuse = true;
   public showSettings = false;
   public selectedStockSymbol: string;
-  public showAll = false;
+  public showAll = true;
   private allData: AllData;
 
   constructor(private readonly dataService: DataService, private readonly glueService: GlueService) { }
 
   public async ngOnInit(): Promise<void> {
-    this.showAll = !!(window as any).SharedWorker;
+    // this.showAll = !!(window as any).SharedWorker;
 
-    if (!this.showAll) {
-      return;
-    }
+    // if (!this.showAll) {
+    //   return;
+    // }
 
     this.allData = await this.dataService.getAllData();
     this.clients = this.allData.clients;
     this.news = this.getSortedAllNews();
     this.stocks = this.allData.stocks;
-    console.log(this.glueService.glue.version);
+    console.log(`${this.glueService.glue.version}-1`);
   }
 
   public async handleClientSelect(client?: Client) {

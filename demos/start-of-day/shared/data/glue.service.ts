@@ -223,7 +223,7 @@ export class GlueService {
     }
 
     public get glue(): Glue42Web.API {
-        return this.glueStore.getGlue();
+        return this.glueStore.getGlue() as Glue42Web.API;
     }
 
     private waitForContextId(handleContext: (context: any) => any): Promise<{ contextId: string, globalUnsubscribe: () => void }> {
