@@ -217,7 +217,7 @@ Use the `frameCache` property to set the refresh behavior of the Main App when u
 
 *Note that the `frameCache` property can be used only when the `isFrame` property is set to `true`.*
 
-### Allowing Apps in the "Add Application" Menu 
+### Allowing Apps in the "Add Application" Menu
 
 To control whether an app will be available in the Workspace "Add Application" menu (the dropdown that appears when you click the "+" button to add an application), use the `includeInWorkspaces` property of the `customProperties` top-level key in your [application definition](../../../application-management/index.html#application_definitions):
 
@@ -249,6 +249,42 @@ const { glue } = await GlueWebPlatform(config);
 By default, the `includeInWorkspaces` property is set to `false`.
 
 *For more details on application definitions, see the [Application Management](../../../application-management/index.html#application_definitions) section.*
+
+### Using Glue42 APIs in the Frame
+
+The [Workspaces App](../overview/index.html#workspaces_concepts-frame) is a fully-featured Glue42 client, so you can use all Glue42 APIs in it.
+
+#### Getting the Frame Object
+
+The [`getMyFrame()`](../../../../reference/core/latest/workspaces/index.html#API-getMyFrame) and [`glue.windows.my()`](../../../../reference/core/latest/windows/index.html#API-my) methods by design don't work when used in a Frame. To get the [`Frame`](../../../../reference/core/latest/workspaces/index.html#Frame) object, you must first use the `getFrameId()` function provided by the [`@glue42/workspaces-ui-react`](https://www.npmjs.com/package/@glue42/workspaces-ui-react) library which will return the ID of the current Frame. After that, to ensure that the window has been loaded as a Frame, you must use the Workspaces API [`waitForFrame()`](../../../../reference/core/latest/workspaces/index.html#API-waitForFrame) method.
+
+The following example demonstrates how to correctly get the [`Frame`](../../../../reference/core/latest/workspaces/index.html#Frame) object:
+
+```javascript
+import React from "react";
+import Workspaces, { getFrameId } from "@glue42/workspaces-ui-react";
+import { useGlue } from "@glue42/react-hooks";
+import { Glue42 } from "@glue42/desktop";
+
+const App = () => {
+	useGlue(async (glue) => {
+        // Getting the ID of the current Frame.
+        const frameID = getFrameId();
+        // Waiting for the Frame to be loaded.
+		const myFrame = await glue.workspaces.waitForFrame(frameID);
+
+        // The Frame is now initialized and part of the API.
+	}, []);
+
+	return (
+		<Workspaces />
+	);
+}
+
+export default App;
+```
+
+It is recommended that all Glue42 and app logic be executed after the Frame has been loaded in order to avoid unexpected behaviors and memory leaks.
 
 ## Web Client Applications
 
@@ -283,7 +319,7 @@ Install the necessary packages:
 npm install --save @glue42/react-hooks @glue42/workspaces-api
 ```
 
-Initialize Glue42 either by: 
+Initialize Glue42 either by:
 
 - using the `<GlueProvider />` component:
 
