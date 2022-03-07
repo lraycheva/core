@@ -47,7 +47,8 @@ export class WorkspacesConfigurationFactory {
             minHeight: args.minHeight,
             maxWidth: args.maxWidth,
             maxHeight: args.maxHeight,
-            positionIndex: args.positionIndex
+            positionIndex: args.positionIndex,
+            isMaximized: args.isMaximized
         } as GoldenLayout.BaseItemConfig["workspacesConfig"];
         return {
             ...baseConfiguration,
@@ -263,7 +264,8 @@ export class WorkspacesConfigurationFactory {
     private wrap(content: GoldenLayout.ComponentConfig[], wrapper: "stack" | "row" | "column"): GoldenLayout.ItemConfig {
         return {
             workspacesConfig: {
-                wrapper: true
+                wrapper: true,
+                isMaximized: wrapper === "stack" && content.some(c => c.workspacesConfig.isMaximized) // only valid for windows placed directly in row/col
             },
             type: wrapper,
             content

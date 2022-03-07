@@ -2439,4 +2439,94 @@ describe('restoreWorkspace() Should', function () {
             });
         });
     });
+
+    describe("isMaximized Should ", () => {
+
+        const windowConfig = {
+            type: "window",
+            appName: "dummyApp"
+        };
+        const threeContainersConfig = {
+            children: [
+                {
+                    type: "row",
+                    children: [
+                        {
+                            type: "column",
+                            children: [
+                                {
+                                    type: "row",
+                                    children: [
+                                        windowConfig
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            type: "column",
+                            children: [
+                                {
+                                    type: "group",
+                                    children: [
+                                        windowConfig
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            type: "column",
+                            children: [
+                                windowConfig
+                            ]
+                        }
+                    ]
+                }
+            ]
+        };
+
+        Array.from(["row", "column", "group"]).forEach((containerType) => {
+            it(`restore the layout with a maximized ${containerType} when the layout contains a maximized ${containerType}`, async () => {
+                const workspace = await glue.workspaces.createWorkspace(threeContainersConfig);
+                const maximizedContainer = workspace.getAllBoxes().find(b => b.type === containerType);
+
+                await maximizedContainer.maximize();
+
+                await workspace.saveLayout(layoutName);
+                await workspace.close();
+
+                const restoredWorkspace = await glue.workspaces.restoreWorkspace(layoutName);
+
+                expect(restoredWorkspace.getAllBoxes(b => b.isMaximized).length).to.eql(1);
+            });
+        });
+
+        it(`restore the layout with a maximized window when the layout contains a maximized window`, async () => {
+            const workspace = await glue.workspaces.createWorkspace(threeContainersConfig);
+            const maximizedWindow = workspace.getAllWindows().find(w=>w.parent.type==="group");
+
+            await maximizedWindow.maximize();
+
+            await workspace.saveLayout(layoutName);
+            await workspace.close();
+
+            const restoredWorkspace = await glue.workspaces.restoreWorkspace(layoutName);
+
+            expect(restoredWorkspace.getAllWindows().filter(w => w.isMaximized).length).to.eql(1);
+        });
+
+        it(`restore the layout with a maximized flat window when the layout contains a flat maximized window`, async () => {
+            const workspace = await glue.workspaces.createWorkspace(threeContainersConfig);
+            const maximizedWindow = workspace.getAllWindows().find(w=>w.parent.type!=="group");
+
+            await maximizedWindow.maximize();
+
+            await workspace.saveLayout(layoutName);
+            await workspace.close();
+
+            const restoredWorkspace = await glue.workspaces.restoreWorkspace(layoutName);
+
+            expect(restoredWorkspace.getAllWindows().filter(w => w.isMaximized).length).to.eql(1);
+        });
+
+    });
 });

@@ -273,6 +273,7 @@ lm.utils.copy(lm.LayoutManager.prototype, {
 		this._bindEvents();
 		this.isInitialised = true;
 		this._adjustColumnsResponsive();
+		this._maximizeContainers();
 		this.emit('initialised');
 	},
 
@@ -549,7 +550,7 @@ lm.utils.copy(lm.LayoutManager.prototype, {
 	 *************************/
 	_$maximiseItem: function (contentItem) {
 		if (this._maximizedItem !== null) {
-			this._$minimizeItem(this._maximizedItem);
+			this._$minimiseItem(this._maximizedItem);
 		}
 		this._maximizedItem = contentItem;
 		this._maximizedItem.addId('__glMaximised');
@@ -1074,7 +1075,15 @@ lm.utils.copy(lm.LayoutManager.prototype, {
 
 		this._updatingColumnsResponsive = false;
 	},
+	_maximizeContainers: function () {
+		const maximizedItems = this.root.getItemsByFilter((i) => {
+			return i.config.workspacesConfig && i.config.workspacesConfig.isMaximized && i.type != "component";
+		});
 
+		if (maximizedItems.length) {
+			maximizedItems[0].toggleMaximise();
+		}
+	},
 	/**
 	 * Determines if responsive layout should be used.
 	 *

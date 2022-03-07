@@ -503,7 +503,8 @@ export const windowLayoutItemDecoder: Decoder<Glue42Workspaces.WindowLayoutItem>
         minWidth: optional(number()),
         minHeigth: optional(number()),
         maxWidth: optional(number()),
-        maxHeight: optional(number())
+        maxHeight: optional(number()),
+        isMaximized: optional(boolean())
     })
 });
 

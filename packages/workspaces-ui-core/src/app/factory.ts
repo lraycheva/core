@@ -339,6 +339,14 @@ export class ApplicationFactory {
                 newlyAddedWindow.appName = appNameToUse;
             }
 
+            const maximizedItems = component.layoutManager.root.getItemsByFilter((ci) => ci.isMaximized && ci.type !== "component");
+            const components = maximizedItems.reduce((acc, mi) => [...acc, ...mi.getItemsByFilter((ci) => ci.type === "component")], []);
+
+            if (components.some(c => c === component)) {
+                this._frameController.maximizeTab(componentId);
+                this._frameController.selectionChanged([componentId],[]);
+            }
+
         } catch (error) {
             this.raiseFailed(component, workspace.id);
             // If a frame doesn't initialize properly remove its windowId

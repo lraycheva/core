@@ -66,7 +66,8 @@ describe("convertToRendererConfig() Should", () => {
                     {
                         type: "stack",
                         workspacesConfig: {
-                            wrapper: true
+                            wrapper: true,
+                            isMaximized: false
                         },
                         content: [
                             {
@@ -87,13 +88,14 @@ describe("convertToRendererConfig() Should", () => {
                 workspacesOptions: {},
                 workspacesConfig: {
                     allowDrop: undefined,
-                    allowSplitters:undefined,
+                    allowSplitters: undefined,
                     isPinned: undefined,
                     minWidth: undefined,
                     maxWidth: undefined,
                     minHeight: undefined,
                     maxHeight: undefined,
-                    positionIndex: undefined
+                    positionIndex: undefined,
+                    isMaximized: undefined
                 },
             };
 
@@ -124,7 +126,8 @@ describe("convertToRendererConfig() Should", () => {
                     {
                         type: "stack",
                         workspacesConfig: {
-                            wrapper: true
+                            wrapper: true,
+                            isMaximized: false
                         },
                         content: [
                             {
@@ -148,7 +151,8 @@ describe("convertToRendererConfig() Should", () => {
                                     maxWidth: undefined,
                                     minHeight: undefined,
                                     maxHeight: undefined,
-                                    positionIndex: undefined
+                                    positionIndex: undefined,
+                                    isMaximized: false
                                 }
                             }
                         ]
@@ -156,7 +160,8 @@ describe("convertToRendererConfig() Should", () => {
                     {
                         type: "stack",
                         workspacesConfig: {
-                            wrapper: true
+                            wrapper: true,
+                            isMaximized: false
                         },
                         content: [
                             {
@@ -180,7 +185,8 @@ describe("convertToRendererConfig() Should", () => {
                                     maxWidth: undefined,
                                     minHeight: undefined,
                                     maxHeight: undefined,
-                                    positionIndex: undefined
+                                    positionIndex: undefined,
+                                    isMaximized: false
                                 }
                             }
                         ]
@@ -188,7 +194,8 @@ describe("convertToRendererConfig() Should", () => {
                     {
                         type: "stack",
                         workspacesConfig: {
-                            wrapper: true
+                            wrapper: true,
+                            isMaximized: false
                         },
                         content: [
                             {
@@ -212,7 +219,8 @@ describe("convertToRendererConfig() Should", () => {
                                     maxWidth: undefined,
                                     minHeight: undefined,
                                     maxHeight: undefined,
-                                    positionIndex: undefined
+                                    positionIndex: undefined,
+                                    isMaximized: false
                                 }
                             }
                         ]
@@ -220,13 +228,14 @@ describe("convertToRendererConfig() Should", () => {
                 ] as object[],
                 workspacesConfig: {
                     allowDrop: undefined,
-                    allowSplitters:undefined,
+                    allowSplitters: undefined,
                     isPinned: undefined,
                     minWidth: undefined,
                     maxWidth: undefined,
                     minHeight: undefined,
                     maxHeight: undefined,
-                    positionIndex: undefined
+                    positionIndex: undefined,
+                    isMaximized: undefined
                 },
             };
 
@@ -260,7 +269,8 @@ describe("convertToRendererConfig() Should", () => {
             const emptyWindowPlaceholder = {
                 type: "stack",
                 workspacesConfig: {
-                    wrapper: true
+                    wrapper: true,
+                    isMaximized: false
                 },
                 content: [
                     {
@@ -290,13 +300,14 @@ describe("convertToRendererConfig() Should", () => {
                         ],
                         workspacesConfig: {
                             allowDrop: undefined,
-                            allowSplitters:undefined,
+                            allowSplitters: undefined,
                             isPinned: undefined,
                             minWidth: undefined,
                             maxWidth: undefined,
                             minHeight: undefined,
                             maxHeight: undefined,
-                            positionIndex: undefined
+                            positionIndex: undefined,
+                            isMaximized: undefined
                         },
                     },
                     {
@@ -309,13 +320,14 @@ describe("convertToRendererConfig() Should", () => {
                         ],
                         workspacesConfig: {
                             allowDrop: undefined,
-                            allowSplitters:undefined,
+                            allowSplitters: undefined,
                             isPinned: undefined,
                             minWidth: undefined,
                             maxWidth: undefined,
                             minHeight: undefined,
                             maxHeight: undefined,
-                            positionIndex: undefined
+                            positionIndex: undefined,
+                            isMaximized: undefined
                         },
                     },
                     {
@@ -327,25 +339,27 @@ describe("convertToRendererConfig() Should", () => {
                             emptyWindowPlaceholder
                         ], workspacesConfig: {
                             allowDrop: undefined,
-                            allowSplitters:undefined,
+                            allowSplitters: undefined,
                             isPinned: undefined,
                             minWidth: undefined,
                             maxWidth: undefined,
                             minHeight: undefined,
                             maxHeight: undefined,
-                            positionIndex: undefined
+                            positionIndex: undefined,
+                            isMaximized: undefined
                         },
                     }
                 ],
                 workspacesConfig: {
                     allowDrop: undefined,
-                    allowSplitters:undefined,
+                    allowSplitters: undefined,
                     isPinned: undefined,
                     minWidth: undefined,
                     maxWidth: undefined,
                     minHeight: undefined,
                     maxHeight: undefined,
-                    positionIndex: undefined
+                    positionIndex: undefined,
+                    isMaximized: undefined
                 },
             };
 
@@ -407,7 +421,8 @@ describe("convertToRendererConfig() Should", () => {
                     maxWidth: undefined,
                     minHeight: undefined,
                     maxHeight: undefined,
-                    positionIndex: undefined
+                    positionIndex: undefined,
+                    isMaximized: undefined
                 },
             };
 
@@ -423,13 +438,14 @@ describe("convertToRendererConfig() Should", () => {
                 ],
                 workspacesConfig: {
                     allowDrop: undefined,
-                    allowSplitters:undefined,
+                    allowSplitters: undefined,
                     isPinned: undefined,
                     minWidth: undefined,
                     maxWidth: undefined,
                     minHeight: undefined,
                     maxHeight: undefined,
-                    positionIndex: undefined
+                    positionIndex: undefined,
+                    isMaximized: undefined
                 },
             };
 
@@ -477,7 +493,8 @@ describe("convertToRendererConfig() Should", () => {
                 maxWidth: undefined,
                 minHeight: undefined,
                 maxHeight: undefined,
-                positionIndex: undefined
+                positionIndex: undefined,
+                isMaximized: undefined
             }
         };
 
@@ -523,7 +540,8 @@ describe("convertToRendererConfig() Should", () => {
                         maxWidth: undefined,
                         minHeight: undefined,
                         maxHeight: undefined,
-                        positionIndex: undefined
+                        positionIndex: undefined,
+                        isMaximized: false
                     }
                 },
                 {
@@ -546,7 +564,8 @@ describe("convertToRendererConfig() Should", () => {
                         maxWidth: undefined,
                         minHeight: undefined,
                         maxHeight: undefined,
-                        positionIndex: undefined
+                        positionIndex: undefined,
+                        isMaximized: false
                     }
                 },
                 {
@@ -569,7 +588,8 @@ describe("convertToRendererConfig() Should", () => {
                         maxWidth: undefined,
                         minHeight: undefined,
                         maxHeight: undefined,
-                        positionIndex: undefined
+                        positionIndex: undefined,
+                        isMaximized: false
                     }
                 }
             ],
@@ -588,7 +608,8 @@ describe("convertToRendererConfig() Should", () => {
                 maxWidth: undefined,
                 minHeight: undefined,
                 maxHeight: undefined,
-                positionIndex: undefined
+                positionIndex: undefined,
+                isMaximized: undefined
             },
         };
 
@@ -610,7 +631,8 @@ describe("convertToRendererConfig() Should", () => {
         const emptyWindowPlaceholder = {
             type: "stack",
             workspacesConfig: {
-                wrapper: true
+                wrapper: true,
+                isMaximized: false
             },
             content: [
                 {
@@ -639,13 +661,14 @@ describe("convertToRendererConfig() Should", () => {
                     ],
                     workspacesConfig: {
                         allowDrop: undefined,
-                        allowSplitters:undefined,
+                        allowSplitters: undefined,
                         isPinned: undefined,
                         minWidth: undefined,
                         maxWidth: undefined,
                         minHeight: undefined,
                         maxHeight: undefined,
-                        positionIndex: undefined
+                        positionIndex: undefined,
+                        isMaximized: undefined
                     }
                 }
             ]
@@ -669,7 +692,8 @@ describe("convertToRendererConfig() Should", () => {
         const emptyWindowPlaceholder = {
             type: "stack",
             workspacesConfig: {
-                wrapper: true
+                wrapper: true,
+                isMaximized: false
             },
             content: [
                 {
@@ -698,13 +722,14 @@ describe("convertToRendererConfig() Should", () => {
                     ],
                     workspacesConfig: {
                         allowDrop: undefined,
-                        allowSplitters:undefined,
+                        allowSplitters: undefined,
                         isPinned: undefined,
                         minWidth: undefined,
                         maxWidth: undefined,
                         minHeight: undefined,
                         maxHeight: undefined,
-                        positionIndex: undefined
+                        positionIndex: undefined,
+                        isMaximized: undefined
                     },
                 }
             ]
@@ -757,7 +782,8 @@ describe("convertToRendererConfig() Should", () => {
                 maxWidth: undefined,
                 minHeight: undefined,
                 maxHeight: undefined,
-                positionIndex: undefined
+                positionIndex: undefined,
+                isMaximized: undefined
             },
         };
 
@@ -844,7 +870,8 @@ describe("convertToRendererConfig() Should", () => {
                                             maxWidth: undefined,
                                             minHeight: undefined,
                                             maxHeight: undefined,
-                                            positionIndex: undefined
+                                            positionIndex: undefined,
+                                            isMaximized: false
                                         }
                                     }
                                 ],
@@ -863,19 +890,21 @@ describe("convertToRendererConfig() Should", () => {
                                     maxWidth: undefined,
                                     minHeight: undefined,
                                     maxHeight: undefined,
-                                    positionIndex: undefined
+                                    positionIndex: undefined,
+                                    isMaximized: undefined
                                 },
                                 workspacesOptions: {},
                             }],
                             workspacesConfig: {
                                 allowDrop: undefined,
-                                allowSplitters:undefined,
+                                allowSplitters: undefined,
                                 isPinned: undefined,
                                 minWidth: undefined,
                                 maxWidth: undefined,
                                 minHeight: undefined,
                                 maxHeight: undefined,
-                                positionIndex: undefined
+                                positionIndex: undefined,
+                                isMaximized: undefined
                             },
                             workspacesOptions: {},
                         },
@@ -913,7 +942,8 @@ describe("convertToRendererConfig() Should", () => {
                                                 maxWidth: undefined,
                                                 minHeight: undefined,
                                                 maxHeight: undefined,
-                                                positionIndex: undefined
+                                                positionIndex: undefined,
+                                                isMaximized: false
                                             }
                                         }
                                     ],
@@ -932,44 +962,48 @@ describe("convertToRendererConfig() Should", () => {
                                         maxWidth: undefined,
                                         minHeight: undefined,
                                         maxHeight: undefined,
-                                        positionIndex: undefined
+                                        positionIndex: undefined,
+                                        isMaximized: undefined
                                     },
                                     workspacesOptions: {},
                                 }],
                                 workspacesConfig: {
                                     allowDrop: undefined,
-                                    allowSplitters:undefined,
+                                    allowSplitters: undefined,
                                     isPinned: undefined,
                                     minWidth: undefined,
                                     maxWidth: undefined,
                                     minHeight: undefined,
                                     maxHeight: undefined,
-                                    positionIndex: undefined
+                                    positionIndex: undefined,
+                                    isMaximized: undefined
                                 },
                                 workspacesOptions: {},
                             }],
                             workspacesConfig: {
                                 allowDrop: undefined,
-                                allowSplitters:undefined,
+                                allowSplitters: undefined,
                                 isPinned: undefined,
                                 minWidth: undefined,
                                 maxWidth: undefined,
                                 minHeight: undefined,
                                 maxHeight: undefined,
-                                positionIndex: undefined
+                                positionIndex: undefined,
+                                isMaximized: undefined
                             },
                             workspacesOptions: {},
                         }
                     ],
                     workspacesConfig: {
                         allowDrop: undefined,
-                        allowSplitters:undefined,
+                        allowSplitters: undefined,
                         isPinned: undefined,
                         minWidth: undefined,
                         maxWidth: undefined,
                         minHeight: undefined,
                         maxHeight: undefined,
-                        positionIndex: undefined
+                        positionIndex: undefined,
+                        isMaximized: undefined
                     },
                     workspacesOptions: {},
                 }

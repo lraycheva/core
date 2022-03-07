@@ -1,3 +1,5 @@
+1.10.1 
+chore: updated the decoders to pass isMaximized in window layout items
 1.10.0
 feat: added support for focusing the platform on click via notifications with action buttons
 1.9.5

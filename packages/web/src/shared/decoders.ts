@@ -317,7 +317,8 @@ export const windowLayoutItemDecoder: Decoder<Glue42Workspaces.WindowLayoutItem>
         url: optional(nonEmptyStringDecoder),
         title: optional(string()),
         allowExtract: optional(boolean()),
-        showCloseButton: optional(boolean())
+        showCloseButton: optional(boolean()),
+        isMaximized: optional(boolean())
     })
 });
 

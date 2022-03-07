@@ -470,6 +470,11 @@ declare module '@glue42/golden-layout' {
              * Specifies where the item should be placed
              */
             positionIndex?: number;
+
+            /**
+             * Indicates whether the item is maximized
+             */
+            isMaximized?: boolean;
         }
 
         interface BaseItemConfig {

@@ -1,3 +1,5 @@
+2.2.5
+feat: started applying the maximized state of elements when initializing the layout
 2.2.4
 feat: added positionIndex property as a config when opening workspaces
 fix: Unpinned tabs can be placed before unpinned ones in certain occasions

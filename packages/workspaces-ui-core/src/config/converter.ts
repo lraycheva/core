@@ -66,6 +66,7 @@ export class ConfigConverter {
             glConfig.workspacesConfig.maxHeight = config.config?.maxHeight;
             glConfig.workspacesConfig.minHeight = config.config?.minHeight;
             glConfig.workspacesConfig.positionIndex = config.config?.positionIndex;
+            glConfig.workspacesConfig.isMaximized = config.config?.isMaximized;
             glConfig.width = this.convertSizeToRendererConfigSafely(config.config?.width as any);
             glConfig.height = this.convertSizeToRendererConfigSafely(config.config?.height as any);
 
@@ -97,6 +98,7 @@ export class ConfigConverter {
             glConfig.workspacesConfig.minHeight = config.config?.minHeight;
             glConfig.activeItemIndex = config.config?.activeTabIndex;
             glConfig.workspacesConfig.positionIndex = config.config?.positionIndex;
+            glConfig.workspacesConfig.isMaximized = config.config?.isMaximized;
             glConfig.width = this.convertSizeToRendererConfigSafely(config.config?.width as any);
             glConfig.height = this.convertSizeToRendererConfigSafely(config.config?.height as any);
 
@@ -121,7 +123,8 @@ export class ConfigConverter {
                 maxWidth: config?.config?.maxWidth ?? (config as any).maxWidth,
                 minHeight: config?.config?.minHeight ?? (config as any).minHeight,
                 maxHeight: config?.config?.maxHeight ?? (config as any).maxHeight,
-                positionIndex: config?.config?.positionIndex ?? (config as any).positionIndex
+                positionIndex: config?.config?.positionIndex ?? (config as any).positionIndex,
+                isMaximized: config?.config?.isMaximized ?? (config as any).isMaximized
             });
 
             if (parent.type !== "group") {
@@ -228,7 +231,8 @@ export class ConfigConverter {
     private wrap(content: GoldenLayout.ComponentConfig[], wrapper: "stack" | "row" | "column") {
         return {
             workspacesConfig: {
-                wrapper: true
+                wrapper: true,
+                isMaximized: wrapper === "stack" && content.some(c => c.workspacesConfig.isMaximized)// only valid for windows placed directly in row/col
             },
             type: wrapper,
             content

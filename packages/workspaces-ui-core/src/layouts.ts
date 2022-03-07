@@ -256,7 +256,6 @@ export class LayoutsManager {
     private windowSummariesToWindowLayout(workspaceItem: WorkspaceItem) {
         const transform = (item: AnyItem) => {
             if (item.type === "window") {
-                delete item.config.isMaximized;
                 delete item.config.isLoaded;
                 delete item.config.isFocused;
                 delete item.config.windowId;
