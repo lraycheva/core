@@ -51,6 +51,14 @@ class WorkspacesManagerDecorator {
     public requestFocus(): void {
         return (window.workspacesManager || workspacesManager).requestFocus();
     }
+
+    public showSaveWorkspacePopup(workspaceId: string, bounds: Bounds): void {
+        return (window.workspacesManager || workspacesManager).showSaveWorkspacePopup(workspaceId, bounds);
+    }
+
+    public closeWorkspace(workspaceId:string):void{
+        return (window.workspacesManager || workspacesManager).closeWorkspace(workspaceId);
+    }
 }
 
 export default new WorkspacesManagerDecorator();

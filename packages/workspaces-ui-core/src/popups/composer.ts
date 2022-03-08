@@ -3,7 +3,7 @@ import { AddApplicationPopupPayload, BasePopupPayload, SaveWorkspacePopupPayload
 import { Glue42Web } from "@glue42/web";
 import { ComponentPopupManager } from "./component";
 import { PopupManager } from "./external";
-import { ComponentFactory } from "../types/internal";
+import { ComponentFactory } from "../types/componentFactory";
 
 declare const window: Window & { glue: Glue42Web.API };
 

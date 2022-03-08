@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { WorkspacesWrapperProps } from "./types/internal";
 import withGlueInstance from "./withGlueInstance";
 import workspacesManager from "./workspacesManager";
@@ -6,10 +6,10 @@ import workspacesManager from "./workspacesManager";
 const templateId = "workspaces-react-wrapper-template";
 const workspacesInnerContainerId = "outter-layout-container";
 
-class WorkspacesWrapper extends React.Component<WorkspacesWrapperProps> {
-    containerRef: HTMLElement | null;
+const WorkspacesWrapper: React.FC<WorkspacesWrapperProps> = ({ shouldInit, glue, ...props }) => {
+    const containerRef = useRef<HTMLDivElement>(null);
 
-    componentDidMount() {
+    useEffect(() => {
         let placeholder = document.getElementById(templateId) as HTMLTemplateElement;
         if (!placeholder) {
             const template = document.createElement("template");
@@ -24,44 +24,61 @@ class WorkspacesWrapper extends React.Component<WorkspacesWrapperProps> {
             document.body.appendChild(template);
             placeholder = template;
         }
-        if (!this.containerRef) {
+        if (!containerRef.current) {
             return;
         }
-        this.containerRef.appendChild(placeholder.content);
+        containerRef.current.appendChild(placeholder.content);
 
+        if (!shouldInit) {
+            return;
+        }
         const componentFactory = {
-            createLogo: this.props.onCreateLogoRequested,
-            createAddWorkspace: this.props.onCreateAddWorkspaceRequested,
-            createSystemButtons: this.props.onCreateSystemButtonsRequested,
-            createWorkspaceContents: this.props.onCreateWorkspaceContentsRequested,
-            createSaveWorkspacePopup: this.props.onCreateSaveWorkspacePopupRequested,
-            createAddApplicationPopup: this.props.onCreateAddApplicationPopupRequested,
-            createAddWorkspacePopup: this.props.onCreateAddWorkspacePopupRequested,
-            hideSystemPopups: this.props.onHideSystemPopupsRequested,
-            externalPopupApplications: this.props.externalPopupApplications
+            // Create
+            createLogo: props.onCreateLogoRequested,
+            createWorkspaceTabs: props.onCreateWorkspaceTabRequested,
+            createAddWorkspace: props.onCreateAddWorkspaceRequested,
+            createSystemButtons: props.onCreateSystemButtonsRequested,
+            createWorkspaceContents: props.onCreateWorkspaceContentsRequested,
+            createBeforeGroupTabs: props.onCreateBeforeGroupTabsRequested,
+            createGroupTabs: props.onCreateGroupTabRequested,
+            createAfterGroupTabs: props.onCreateAfterGroupTabsRequested,
+            createGroupHeaderButtons: props.onCreateGroupHeaderButtonsRequested,
+            createSaveWorkspacePopup: props.onCreateSaveWorkspacePopupRequested,
+            createAddApplicationPopup: props.onCreateAddApplicationPopupRequested,
+            createAddWorkspacePopup: props.onCreateAddWorkspacePopupRequested,
+            // Update
+            updateWorkspaceTabs: props.onUpdateWorkspaceTabsRequested,
+            // Remove
+            removeWorkspaceTabs: props.onRemoveWorkspaceTabsRequested,
+            removeWorkspaceContents: props.onRemoveWorkspaceContentsRequested,
+            removeBeforeGroupTabs: props.onRemoveBeforeGroupTabsRequested,
+            removeGroupTab: props.onRemoveGroupTabRequested,
+            removeAfterGroupTabs: props.onRemoveAfterGroupTabsRequested,
+            removeGroupHeaderButtons: props.onRemoveGroupHeaderButtonsRequested,
+            // Misc
+            hideSystemPopups: props.onHideSystemPopupsRequested,
+            externalPopupApplications: props.externalPopupApplications
         };
-        workspacesManager.init(this.props.glue, componentFactory);
-    }
+        workspacesManager.init(glue, componentFactory);
 
-    componentWillUnmount() {
-        let placeholder = document.getElementById(templateId) as HTMLTemplateElement;
+        return () => {
+            let placeholder = document.getElementById(templateId) as HTMLTemplateElement;
 
-        if (!this.containerRef) {
-            return;
+            if (!containerRef.current) {
+                return;
+            }
+
+            placeholder?.content.appendChild(containerRef.current.children[0]);
+
+            workspacesManager.unmount();
         }
+    }, [shouldInit]);
 
-        placeholder?.content.appendChild(this.containerRef.children[0]);
+    return (
+        <div ref={containerRef} style={{ overflow: "hidden", width: "100%", height: "100%" }}>
 
-        workspacesManager.unmount();
-    }
-
-    render() {
-        return (
-            <div ref={(r) => this.containerRef = r} style={{ overflow: "hidden", width: "100%", height: "100%" }}>
-
-            </div>
-        );
-    }
+        </div>
+    );
 }
 
 export default withGlueInstance(WorkspacesWrapper);

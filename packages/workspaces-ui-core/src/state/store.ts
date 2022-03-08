@@ -14,10 +14,6 @@ class WorkspaceStore {
         return Object.keys(this._idToLayout);
     }
 
-    public get workspaceTitles(): string[] {
-        return this.workspaceIds.map((wid) => this.getWorkspaceTitle(wid));
-    }
-
     public set workspaceLayout(layout) {
         this._workspaceLayout = layout;
     }
@@ -42,11 +38,6 @@ class WorkspaceStore {
     public getByContainerId(id: string | string[]): Workspace {
         id = idAsString(id);
         return this._idToLayout[id] || this.getByContainerIdCore(id);
-    }
-
-    public getWorkspaceTitle(workspaceId: string): string {
-        const workspacesContentItem = this.workspaceLayout.root.getItemsById(workspaceId)[0] as GoldenLayout.Component;
-        return workspacesContentItem?.tab.titleElement[0].innerText || workspacesContentItem?.config.title;
     }
 
     public removeById(id: string): void {

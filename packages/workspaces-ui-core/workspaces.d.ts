@@ -13,6 +13,8 @@ export interface WorkspacesManager {
     subscribeForWindowFocused: (callback: () => void) => void;
     notifyWorkspacePopupChanged: (element: HTMLElement) => void;
     requestFocus: () => void;
+    closeWorkspace: (workspaceId: string) => void;
+    showSaveWorkspacePopup: (workspaceId: string, bounds: Bounds) => void;
 }
 
 declare const WorkspacesManagerAPI: WorkspacesManager;

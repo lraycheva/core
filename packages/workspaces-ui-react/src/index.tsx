@@ -6,7 +6,7 @@ import MinimizeFrameButton from './defaultComponents/MinimizeFrameButton';
 import AddApplicationPopup from './defaultComponents/popups/addApplication/AddApplicationPopup';
 import AddWorkspacePopup from './defaultComponents/popups/addWorkspace/AddWorkspacePopup';
 import SaveWorkspacePopup from './defaultComponents/popups/saveWorkspace/SaveWorkspacePopup';
-import WorkspaceContents from "./defaultComponents/WorkspaceContents";
+import WorkspaceContents from "./defaultComponents/workspace/WorkspaceContents";
 import MoveArea from "./defaultComponents/MoveArea";
 import useWorkspacePopup from './useWorkspacePopup';
 import useWorkspaceWindowClicked from './useWorkspaceWindowClicked';
@@ -26,10 +26,15 @@ import {
     SaveWorkspacePopupProps,
     AddApplicationPopupProps,
     WorkspaceContentsProps,
-    MoveAreaProps
+    AddWindowButtonProps,
+    MaximizeGroupButtonProps,
+    EjectButtonProps,
+    MoveAreaProps,
+    WorkspaceTabComponentProps,
 } from './types/internal';
 import WorkspacesElementCreationWrapper from './WorkspacesElementCreationWrapper'
 import workspacesManager from './workspacesManager';
+import WorkspaceTab from "./defaultComponents/workspace/WorkspaceTab";
 
 export {
     SaveWorkspacePopup,
@@ -44,7 +49,8 @@ export {
     useWorkspacePopup,
     useWorkspaceWindowClicked,
     WorkspaceContents,
-    MoveArea
+    MoveArea,
+    WorkspaceTab
 };
 export const notifyMoveAreaChanged: () => void = () => workspacesManager?.notifyMoveAreaChanged();
 export const getComponentBounds: () => Bounds = () => workspacesManager?.getComponentBounds();
@@ -57,6 +63,9 @@ export {
     AddWorkspaceButtonProps,
     MaximizeFrameButtonProps,
     MinimizeFrameButtonProps,
+    AddWindowButtonProps,
+    MaximizeGroupButtonProps,
+    EjectButtonProps,
     SaveWorkspacePopupComponentProps,
     AddWorkspacePopupComponentProps,
     AddApplicationPopupComponentProps,
@@ -64,6 +73,7 @@ export {
     SaveWorkspacePopupProps,
     AddApplicationPopupProps,
     WorkspaceContentsProps,
-    MoveAreaProps
+    MoveAreaProps,
+    WorkspaceTabComponentProps
 };
 export default WorkspacesElementCreationWrapper;

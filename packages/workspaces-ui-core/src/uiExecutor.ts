@@ -1,4 +1,5 @@
 import GoldenLayout from "@glue42/golden-layout";
+import componentStateMonitor from "./componentStateMonitor";
 import store from "./state/store";
 import { idAsString } from "./utils";
 
@@ -26,7 +27,7 @@ export class WorkspacesUIExecutor {
         workspaceTab.element.children(".lm_saveButton").hide();
     }
 
-    public showWorkspaceIconButton(options: { workspaceId?: string, workspaceTab?: GoldenLayout.Tab, icon: string }): void {
+    public showWorkspaceIconButton(options: { workspaceId?: string; workspaceTab?: GoldenLayout.Tab; icon: string }): void {
         const workspaceTab = options.workspaceTab || store.getWorkspaceTabElement(options.workspaceId);
 
         if (!workspaceTab || workspaceTab.element.hasClass(WorkspacesUIExecutor.HibernationIconClass)) {
@@ -50,11 +51,17 @@ export class WorkspacesUIExecutor {
     }
 
     public replaceWorkspaceSaveButtonWithIcon(options: { workspaceId?: string; workspaceTab?: GoldenLayout.Tab; icon: string }): void {
+        if (componentStateMonitor.decoratedFactory.createWorkspaceTabs) {
+            return;
+        }
         this.hideWorkspaceSaveButton(options);
         this.showWorkspaceIconButton(options);
     }
 
     public replaceWorkspaceIconButtonWithSave(options: { workspaceId?: string; workspaceTab?: GoldenLayout.Tab }): void {
+        if (componentStateMonitor.decoratedFactory.createWorkspaceTabs) {
+            return;
+        }
         this.hideWorkspaceIconButton(options);
         this.showWorkspaceSaveButton(options);
     }
@@ -174,11 +181,8 @@ export class WorkspacesUIExecutor {
         }
 
         const maximiseButton = containerContentItem.header.element.children(".lm_controls").children(".lm_maximise");
-        if (!maximiseButton) {
-            return;
-        }
 
-        maximiseButton.show();
+        maximiseButton?.show();
     }
 
     public hideMaximizeButton(itemId: string | GoldenLayout.Stack): void {
@@ -194,11 +198,8 @@ export class WorkspacesUIExecutor {
         }
 
         const maximiseButton = containerContentItem.header.element.children(".lm_controls").children(".lm_maximise");
-        if (!maximiseButton) {
-            return;
-        }
 
-        maximiseButton.hide();
+        maximiseButton?.hide();
     }
 
     public showEjectButton(itemId: string | GoldenLayout.Stack): void {
@@ -213,11 +214,8 @@ export class WorkspacesUIExecutor {
             throw new Error(`Cannot show eject button of ${containerContentItem.type} ${containerContentItem.config.id}`);
         }
         const ejectButton = containerContentItem.header.element.children(".lm_controls").children(".lm_popout");
-        if (!ejectButton) {
-            return;
-        }
 
-        ejectButton.show();
+        ejectButton?.show();
     }
 
     public hideEjectButton(itemId: string | GoldenLayout.Stack): void {
@@ -232,11 +230,8 @@ export class WorkspacesUIExecutor {
             throw new Error(`Cannot hide eject button of ${containerContentItem.type} ${containerContentItem.config.id}`);
         }
         const ejectButton = containerContentItem.header.element.children(".lm_controls").children(".lm_popout");
-        if (!ejectButton) {
-            return;
-        }
 
-        ejectButton.hide();
+        ejectButton?.hide();
     }
 
     public showAddWindowButton(itemId: string | GoldenLayout.Stack): void {
@@ -251,16 +246,12 @@ export class WorkspacesUIExecutor {
             throw new Error(`Cannot show add window button of ${containerContentItem.type} ${containerContentItem.config.id}`);
         }
 
-        if ((containerContentItem.config.workspacesConfig as any).showAddWindowButton === false) {
+        if (containerContentItem.config.workspacesConfig.showAddWindowButton === false) {
             return;
         }
 
         const button = containerContentItem.header.element.children(".lm_controls").children(".lm_add_button");
-        if (!button) {
-            return;
-        }
-
-        button.show();
+        button?.show();
     }
 
     public hideAddWindowButton(itemId: string | GoldenLayout.Stack): void {
@@ -275,11 +266,7 @@ export class WorkspacesUIExecutor {
             throw new Error(`Cannot hide add window button of ${containerContentItem.type} ${containerContentItem.config.id}`);
         }
         const button = containerContentItem.header.element.children(".lm_controls").children(".lm_add_button");
-        if (!button) {
-            return;
-        }
-
-        button.hide();
+        button?.hide();
     }
 
     public showWindowCloseButtons(workspaceId: string): void {

@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable indent */
 import { LayoutController } from "./layout/controller";
-import { WindowSummary, Workspace, WorkspaceOptionsWithTitle, WorkspaceOptionsWithLayoutName, ComponentFactory, LoadingStrategy, WorkspaceLayout, Bounds, Constraints, FrameSummary } from "./types/internal";
+import { WindowSummary, Workspace, WorkspaceOptionsWithTitle, WorkspaceOptionsWithLayoutName, LoadingStrategy, WorkspaceLayout, Bounds, Constraints, FrameSummary } from "./types/internal";
 import { LayoutEventEmitter } from "./layout/eventEmitter";
 import { IFrameController } from "./iframeController";
 import store from "./state/store";
@@ -30,6 +30,7 @@ import systemSettings from "./config/system";
 import { ConstraintsValidator } from "./config/constraintsValidator";
 import { WorkspaceWrapper } from "./state/workspaceWrapper";
 import uiExecutor from "./uiExecutor";
+import { ComponentFactory } from "./types/componentFactory";
 
 export class WorkspacesManager {
     private _controller: LayoutController;
@@ -41,13 +42,11 @@ export class WorkspacesManager {
     private _isLayoutInitialized = false;
     private _initPromise = Promise.resolve();
     private _workspacesEventEmitter = new WorkspacesEventEmitter();
-    private _titleGenerator = new TitleGenerator();
     private _initialized: boolean;
     private _glue: Glue42Web.API;
     private _configFactory: WorkspacesConfigurationFactory;
     private _applicationFactory: ApplicationFactory;
     private _facade: GlueFacade;
-    private _isDisposing: boolean;
     private _context?: object;
 
     public get stateResolver(): LayoutStateResolver {
@@ -131,16 +130,21 @@ export class WorkspacesManager {
 
     public async saveWorkspace(name: string, id?: string, saveContext?: boolean, metadata?: object): Promise<WorkspaceLayout> {
         const workspace = store.getById(id) || store.getActiveWorkspace();
+        const wrapper = new WorkspaceWrapper(this.stateResolver, workspace, store.getWorkspaceContentItem(workspace.id), this.frameId);
         const result = await this._layoutsManager.save({
             name,
             workspace,
-            title: store.getWorkspaceTitle(workspace.id),
+            title: wrapper.title,
             saveContext,
             metadata
         });
 
         const config = workspace.layout?.config || workspace.hibernateConfig;
         (config.workspacesOptions as WorkspaceOptionsWithLayoutName).layoutName = name;
+
+        if (componentStateMonitor.decoratedFactory?.createWorkspaceTabs) {
+            componentStateMonitor.decoratedFactory.updateWorkspaceTabs({ workspaceId: workspace.id, layoutName: name });
+        }
         if (config.workspacesOptions.noTabHeader) {
             delete config.workspacesOptions.noTabHeader;
         }
@@ -413,7 +417,7 @@ export class WorkspacesManager {
                 rej(`The window id of ${itemId} is missing`);
             }
 
-            let unsub = () => {
+            let unsub = (): void => {
                 // safety
             };
             const timeout = setTimeout(() => {
@@ -461,7 +465,7 @@ export class WorkspacesManager {
         this._controller.bundleWorkspace(workspaceId, type);
     }
 
-    public move(location: { x: number; y: number }) {
+    public move(location: { x: number; y: number }): Promise<Glue42Web.Windows.WebWindow> {
         return this._glue.windows.my().moveTo(location.y, location.x);
     }
 
@@ -843,6 +847,27 @@ export class WorkspacesManager {
         this._context = context;
     }
 
+    public async showSaveWorkspacePopup(workspaceId: string, targetBounds: Bounds): Promise<void> {
+        const payload: any = {
+            frameId: this._frameId,
+            workspaceId,
+            peerId: this._glue.agm.instance.peerId,
+            buildMode: scReader.config.build,
+            domNode: undefined,
+            resizePopup: undefined,
+            hidePopup: undefined
+        };
+
+        const saveButton = (store
+            .getWorkspaceLayoutItemById(workspaceId) as GoldenLayout.Component)
+            .tab
+            .element
+            .find(".lm_saveButton");
+
+
+        await this._popupManager.showSaveWorkspacePopup(targetBounds, payload);
+    }
+
     private resizeWorkspaceItem(args: ResizeItemArguments): void {
         const item = store.getContainer(args.itemId) || store.getWindowContentItem(args.itemId);
 
@@ -1094,16 +1119,6 @@ export class WorkspacesManager {
         });
 
         this._controller.emitter.onWorkspaceSaveRequested(async (workspaceId) => {
-            const payload: any = {
-                frameId: this._frameId,
-                workspaceId,
-                peerId: this._glue.agm.instance.peerId,
-                buildMode: scReader.config.build,
-                domNode: undefined,
-                resizePopup: undefined,
-                hidePopup: undefined
-            };
-
             const saveButton = (store
                 .getWorkspaceLayoutItemById(workspaceId) as GoldenLayout.Component)
                 .tab
@@ -1112,7 +1127,7 @@ export class WorkspacesManager {
 
             const targetBounds = getElementBounds(saveButton);
 
-            await this._popupManager.showSaveWorkspacePopup(targetBounds, payload);
+            await this.showSaveWorkspacePopup(workspaceId, targetBounds);
         });
 
         this._controller.emitter.onContainerMaximized((contentItem: GoldenLayout.ContentItem) => {
@@ -1192,6 +1207,12 @@ export class WorkspacesManager {
             }, 16); // 60 FPS
         });
 
+        this._controller.emitter.onContentItemRemoved(async (workspaceId, item) => {
+            if (item.type === "stack") {
+                componentStateMonitor.notifyGroupClosed(idAsString(item.config.id));
+            }
+        });
+
         // debouncing because there is potential for 1ms spam
         let shownTimeout: NodeJS.Timeout = undefined;
         componentStateMonitor.onWorkspaceContentsShown((workspaceId: string) => {
@@ -1248,7 +1269,6 @@ export class WorkspacesManager {
     }
 
     private cleanUp = (): void => {
-        this._isDisposing = true;
         if (scReader.config?.build) {
             return;
         }
@@ -1328,6 +1348,8 @@ export class WorkspacesManager {
         if (isFrameEmpty) {
             return;
         }
+        componentStateMonitor.notifyWorkspaceClosed(workspaceSummary.id);
+
         this.workspacesEventEmitter.raiseWorkspaceEvent({
             action: "closed",
             payload: {
@@ -1359,6 +1381,7 @@ export class WorkspacesManager {
         if (isFrameEmpty) {
             return;
         }
+        componentStateMonitor.notifyWorkspaceClosed(workspaceSummary.id);
         this.workspacesEventEmitter.raiseWorkspaceEvent({
             action: "closed",
             payload: {

@@ -1,11 +1,12 @@
-
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import manager from "./manager";
 import facade from "./interop/facade";
 import jquery from "jquery";
 import { Glue42Web } from "@glue42/web";
 import startupReader from "./config/startupReader";
-import { ComponentFactory } from "./types/internal";
 import { WorkspacesManager } from "../workspaces";
+import { ComponentFactory } from "./types/componentFactory";
+import { Bounds } from "./types/internal";
 
 declare const window: Window & { glue: Glue42Web.API; $: JQueryStatic };
 
@@ -72,6 +73,12 @@ const workspacesManagerAPI: WorkspacesManager = {
     },
     requestFocus: () => {
         return;
+    },
+    closeWorkspace: (id: string) => {
+        manager.closeItem(id);
+    },
+    showSaveWorkspacePopup:(workspaceId: string, bounds: Bounds) => {
+        manager.showSaveWorkspacePopup(workspaceId, bounds);
     }
 };
 

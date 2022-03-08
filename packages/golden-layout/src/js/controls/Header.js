@@ -20,7 +20,7 @@ lm.controls.Header = function (layoutManager, parent) {
 	}
 
 	if (this.layoutManager.config.settings.mode === "workspace" && this.layoutManager._componentFactory) {
-		const headerControlls = this.element.children(".lm_controls")[0];
+		const headerControls = this.element.children(".lm_controls")[0];
 		const workspaceControlsContainer = this.element.children(".lm_workspace_controls")[0];
 		const logoContainer = this.element.children(".lm_logo")[0];
 
@@ -33,7 +33,29 @@ lm.controls.Header = function (layoutManager, parent) {
 		}
 
 		if (this.layoutManager._componentFactory.createSystemButtons) {
-			this.layoutManager._componentFactory.createSystemButtons({ domNode: headerControlls });
+			this.layoutManager._componentFactory.createSystemButtons({ domNode: headerControls });
+		}
+	} else if (this.layoutManager._componentFactory) {
+		const headerControls = this.element.children(".lm_controls")[0];
+		const tabControls = this.element.children(".lm_tabs_controls")[0];
+		const logoContainer = this.element.children(".lm_logo")[0];
+
+		if (this.layoutManager._componentFactory.createBeforeGroupTabs) {
+			this.layoutManager._componentFactory.createBeforeGroupTabs({
+				domNode: logoContainer,
+				groupId: lm.utils.idAsString(parent.config.id),
+				workspaceId: this.layoutManager.config.workspacesOptions.workspaceId,
+				elementId: lm.utils.idAsString(parent.config.id)
+			});
+		}
+
+		if (this.layoutManager._componentFactory.createAfterGroupTabs) {
+			this.layoutManager._componentFactory.createAfterGroupTabs({
+				domNode: tabControls,
+				groupId: lm.utils.idAsString(parent.config.id),
+				workspaceId: this.layoutManager.config.workspacesOptions.workspaceId,
+				elementId: lm.utils.idAsString(parent.config.id)
+			});
 		}
 	}
 

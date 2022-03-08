@@ -303,7 +303,7 @@ export class LayoutController {
             },
             id,
             noTabHeader: config?.workspacesOptions?.noTabHeader,
-            title: (config?.workspacesOptions as any)?.title || this._configFactory.getWorkspaceTitle(store.workspaceTitles)
+            title: (config?.workspacesOptions as any)?.title || this._configFactory.getWorkspaceTitle(this._stateResolver.getWorkspaceTitles())
         };
 
         let shouldActivateChild = true;
@@ -354,11 +354,17 @@ export class LayoutController {
     }
 
     public reinitializeWorkspace(id: string, config: GoldenLayout.Config): Promise<unknown> {
+        const workspaceContentItem = store.getWorkspaceContentItem(id);
         store.removeLayout(id);
         if (config.workspacesOptions?.reuseWorkspaceId) {
             // Making sure that the property doesn't leak in a workspace summary or a saved layout
             delete config.workspacesOptions.reuseWorkspaceId;
         }
+
+        if ((config.workspacesOptions as any)?.title) {
+            this.setWorkspaceTitle(idAsString(workspaceContentItem.config.id), (config.workspacesOptions as any).title);
+        }
+
         return this.initWorkspaceContents(id, config, false);
     }
 
@@ -478,6 +484,7 @@ export class LayoutController {
         const item = store.getWorkspaceLayoutItemById(workspaceId);
 
         item.setTitle(title);
+        componentStateMonitor.decoratedFactory.updateWorkspaceTabs({ workspaceId, title });
     }
 
     public focusWindow(windowId: string): void {
@@ -638,7 +645,7 @@ export class LayoutController {
         const workspaceContainer = document.getElementById(`nestHere${workspaceId}`);
         const workspace = store.getById(workspaceId);
 
-        if (workspaceContainer && workspace.layout) {
+        if (workspaceContainer && workspace?.layout) {
             const bounds = getElementBounds(workspaceContainer);
 
             workspace.layout.updateSize(bounds.width, bounds.height);
@@ -1119,6 +1126,8 @@ export class LayoutController {
         uiExecutor.waitForTransition(workspaceContentItem.tab.element[0]).then(() => {
             this._tabObserver.refreshTabsMaxWidth(workspaceContentItem.parent.header.tabsContainer);
         });
+
+        componentStateMonitor.decoratedFactory.updateWorkspaceTabs({ workspaceId, icon, isPinned: true });
     }
 
     public unpinWorkspace(workspaceId: string): void {
@@ -1136,6 +1145,8 @@ export class LayoutController {
         uiExecutor.waitForTransition(workspaceContentItem.tab.element[0]).then(() => {
             this._tabObserver.refreshTabsMaxWidth(workspaceContentItem.parent.header.tabsContainer);
         });
+
+        componentStateMonitor.decoratedFactory.updateWorkspaceTabs({ workspaceId, isPinned: false });
     }
 
     private resizeComponentCore(componentItem: GoldenLayout.Component, width?: number, height?: number): void {
@@ -1341,7 +1352,9 @@ export class LayoutController {
 
         workspaceContentItem.config.workspacesConfig = mergedOptions;
         (config as GoldenLayout.Config).workspacesOptions = mergedOptions;
-        const layout = new GoldenLayout(config as GoldenLayout.Config, $(`#nestHere${id}`));
+        (config as GoldenLayout.Config).workspacesOptions.workspaceId = id;
+
+        const layout = new GoldenLayout(config as GoldenLayout.Config, $(`#nestHere${id}`), componentStateMonitor.decoratedFactory);
         store.addOrUpdate(id, []);
 
         this.registerEmptyWindowComponent(layout, id);
@@ -1425,18 +1438,22 @@ export class LayoutController {
             this.emitter.raiseEvent("content-item-created", { workspaceId: id, item });
         });
 
+        layout.on("itemDestroyed", (item: GoldenLayout.ContentItem) => {
+            this.emitter.raiseEvent("content-item-removed", { workspaceId: id, item });
+        });
+
         layout.on("stackCreated", (stack: GoldenLayout.Stack) => {
             const wrapper = new WorkspaceContainerWrapper(this._stateResolver, stack, this._frameId);
-            const button = document.createElement("li");
-            button.classList.add("lm_add_button");
+            const addWindowButton = document.createElement("li");
+            addWindowButton.classList.add("lm_add_button");
 
-            button.onclick = (e): void => {
+            addWindowButton.onclick = (e): void => {
                 e.stopPropagation();
                 this.emitter.raiseEvent("add-button-clicked", {
                     args: {
                         laneId: idAsString(stack.config.id),
                         workspaceId: id,
-                        bounds: getElementBounds(button),
+                        bounds: getElementBounds(addWindowButton),
                     }
                 });
             };
@@ -1471,7 +1488,7 @@ export class LayoutController {
             });
 
             if (!this._options.disableCustomButtons) {
-                stack.header.controlsContainer.prepend($(button));
+                stack.header.controlsContainer.prepend($(addWindowButton));
             }
 
             if (layout.config.workspacesOptions.showAddWindowButtons === false && wrapper.showAddWindowButton !== true) {
@@ -1647,7 +1664,10 @@ export class LayoutController {
                     };
                 }
 
+
                 const headerElement: HTMLElement = stack.header.element[0];
+                const hasCustomAddWorkspaceButton = componentStateMonitor.decoratedFactory?.createAddWorkspace;
+
                 const mutationObserver = new MutationObserver(() => {
                     const addButton = this.getElementByClass(headerElement, "lm_add_button");
 
@@ -1662,8 +1682,7 @@ export class LayoutController {
                 const observerConfig = { attributes: false, childList: true, subtree: true };
 
                 mutationObserver.observe(stack.header.element[0], observerConfig);
-                if (!this._options.disableCustomButtons && !componentStateMonitor.decoratedFactory?.createAddWorkspace) {
-
+                if (!hasCustomAddWorkspaceButton) {
                     const button = document.createElement("li");
                     button.classList.add("lm_add_button");
 
@@ -1680,7 +1699,7 @@ export class LayoutController {
 
                     glueLogo.classList.add("logo_type");
 
-                    const container = stack.header.element[0].getElementsByClassName("lm_logo")[0];
+                    const container = headerElement.getElementsByClassName("lm_logo")[0];
 
                     if (container) {
                         container.appendChild(glueLogo);
@@ -1730,8 +1749,10 @@ export class LayoutController {
                     this.emitter.raiseEvent("workspace-save-requested", { workspaceId: idAsString(tab.contentItem.config.id) });
                 };
                 if (!this._options.disableCustomButtons) {
-                    tab.element[0].prepend(iconButton);
-                    tab.element[0].prepend(saveButton);
+                    if (!componentStateMonitor.decoratedFactory.createWorkspaceTabs) {
+                        tab.element[0].prepend(iconButton);
+                        tab.element[0].prepend(saveButton);
+                    }
                     tab.element[0].onclick = (e): void => {
                         if (e.composedPath().indexOf(saveButton) !== -1) {
                             (document.activeElement as any).blur();

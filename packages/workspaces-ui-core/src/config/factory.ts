@@ -115,7 +115,7 @@ export class WorkspacesConfigurationFactory {
         };
     }
 
-    public getDefaultFrameConfig(): FrameLayoutConfig {
+    public getDefaultFrameConfig(workspaceTitles: string[]): FrameLayoutConfig {
         const workspaceId = shortId.generate();
         const workspaceConfig: GoldenLayout.Config = this.getDefaultWorkspaceConfig();
 
@@ -131,7 +131,7 @@ export class WorkspacesConfigurationFactory {
                             componentName: this.getWorkspaceLayoutComponentName(workspaceId),
                             componentState: {},
                             workspacesConfig: {},
-                            title: this.getWorkspaceTitle(store.workspaceTitles)
+                            title: this.getWorkspaceTitle(workspaceTitles)
                         }
                     ],
                     workspacesConfig: {}

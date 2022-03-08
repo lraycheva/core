@@ -12,7 +12,7 @@ interface ExecutionOptions {
 export class DelayedExecutor<T> {
     private actionsInProgress: Array<Action<T>> = [];
 
-    public async startExecution(actions: Array<Action<T>>, executionOptions: ExecutionOptions) {
+    public async startExecution(actions: Array<Action<T>>, executionOptions: ExecutionOptions): Promise<void> {
         const batchesArray = this.splitInBatches(actions, executionOptions.batchSize);
 
         await this.waitFor(executionOptions.initialDelay);
@@ -29,7 +29,7 @@ export class DelayedExecutor<T> {
         });
     }
 
-    public isActionInProgress(id: string) {
+    public isActionInProgress(id: string): boolean {
         return this.actionsInProgress.some((a) => a.id === id);
     }
 

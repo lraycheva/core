@@ -137,6 +137,11 @@ export class LayoutEventEmitter {
         return this._registry.add("item-dropped", callback);
     }
 
+    public onContentItemRemoved(callback: (workspaceId: string, item: GoldenLayout.ContentItem) => void): UnsubscribeFunction {
+        return this._registry.add("content-item-removed", callback);
+    }
+
+    public raiseEvent(name: "content-item-removed", data: { workspaceId: string; item: GoldenLayout.ContentItem }): Promise<void> | Array<Promise<void>>;
     public raiseEvent(name: "item-dropped", data: { item: GoldenLayout.ContentItem }): Promise<void> | Array<Promise<void>>;
     public raiseEvent(name: "container-maximized" | "container-restored", data: { container: GoldenLayout.ContentItem }): Promise<void> | Array<Promise<void>>;
     public raiseEvent(name: "workspace-save-requested" | "workspace-container-resized", data: { workspaceId: string }): Promise<void> | Array<Promise<void>>;

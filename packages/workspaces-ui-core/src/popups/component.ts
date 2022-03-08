@@ -1,4 +1,5 @@
-import { AddApplicationPopupOptions, Bounds, ComponentFactory, SaveWorkspacePopupOptions, Size } from "../types/internal";
+import { AddApplicationPopupOptions, ComponentFactory, SaveWorkspacePopupOptions } from "../types/componentFactory";
+import { Bounds, Size } from "../types/internal";
 
 export class ComponentPopupManager {
     private _popup: HTMLElement;
@@ -36,7 +37,7 @@ export class ComponentPopupManager {
 
         $(this._popup).css("visibility", "hidden");
 
-        return new Promise((res) => {
+        return new Promise<void>((res) => {
             if (this._componentFactory?.hideSystemPopups) {
                 this._componentFactory.hideSystemPopups(res);
             } else {

@@ -9,19 +9,22 @@
 lm.controls.Tab = function (header, contentItem) {
 	this.header = header;
 	this.contentItem = contentItem;
-	this.element = $(lm.controls.Tab._template);
+	this._layoutManager = this.contentItem.layoutManager;
+	const isWorkspaceTab = this._layoutManager.config.settings.mode === "workspace";
+	const isCustomWorkspaceTab = isWorkspaceTab && this._layoutManager._componentFactory && this._layoutManager._componentFactory.createWorkspaceTabs;
+	this.element = isCustomWorkspaceTab ? $(lm.controls.Tab._customTabTemplate) : $(lm.controls.Tab._template);
+	
 	this._elementOffset = 0;
 	this._xOfLastReorder = 0;
-	this.titleElement = this.element.find('.lm_title');
-	this.closeElement = this.element.find('.lm_close_tab');
+	this.titleElement = isCustomWorkspaceTab ? $(undefined) : this.element.find('.lm_title');
+	this.closeElement = isCustomWorkspaceTab ? $(undefined) : this.element.find('.lm_close_tab');
 	this.closeElement[contentItem.config.isClosable ? 'show' : 'hide']();
 	this.isActive = false;
 	this.isPinned = false;
+	this.title = contentItem.config.title;
 
-	this.setTitle(contentItem.config.title);
+	this.setTitle(this.title);
 	this.contentItem.on('titleChanged', this.setTitle, this);
-
-	this._layoutManager = this.contentItem.layoutManager;
 
 	if (
 		this._layoutManager.config.settings.reorderEnabled === true &&
@@ -36,7 +39,7 @@ lm.controls.Tab = function (header, contentItem) {
 	this._onTabClickFn = lm.utils.fnBind(this._onTabClick, this);
 	this._onCloseClickFn = lm.utils.fnBind(this._onCloseClick, this);
 
-	if (this._layoutManager.config.settings.mode === "workspace" && contentItem.config.noTabHeader) {
+	if (isWorkspaceTab && contentItem.config.noTabHeader) {
 		this.element.hide();
 	}
 
@@ -57,6 +60,11 @@ lm.controls.Tab = function (header, contentItem) {
 		this.contentItem.container.tab = this;
 		this.contentItem.container.emit('tab', this);
 	}
+
+	if (isCustomWorkspaceTab) {
+		const workspaceTabOptions = this._layoutManager._componentFactory.createWorkspaceTabsOptions({ element: this.element[0], contentItem })
+		this._layoutManager._componentFactory.createWorkspaceTabs(workspaceTabOptions);
+	}
 };
 
 /**
@@ -67,6 +75,8 @@ lm.controls.Tab = function (header, contentItem) {
 lm.controls.Tab._template = '<li class="lm_tab"><i class="lm_left"></i>' +
 	'<span class="lm_title"></span><div class="lm_close_tab"></div>' +
 	'<i class="lm_right"></i></li>';
+
+lm.controls.Tab._customTabTemplate = `<li class="lm_tab"></li>`;
 
 lm.utils.copy(lm.controls.Tab.prototype, {
 
@@ -79,7 +89,10 @@ lm.utils.copy(lm.controls.Tab.prototype, {
 	 * @param {String} title can contain html
 	 */
 	setTitle: function (title) {
-		this.element.attr('title', lm.utils.stripTags(title));
+		this.title = title;
+		if (!this._layoutManager._componentFactory || !this._layoutManager._componentFactory.createWorkspaceTabs) {
+			this.element.attr('title', lm.utils.stripTags(title));
+		}
 		this.titleElement.html(title);
 	},
 

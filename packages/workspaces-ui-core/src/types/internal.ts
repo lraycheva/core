@@ -320,59 +320,6 @@ export interface WorkspaceDropOptions {
     allowDropBottom?: boolean;
 }
 
-export interface ComponentFactory {
-    createLogo?: (options: { domNode: HTMLElement }, frameId: string) => void;
-    createAddWorkspace?: (options: { domNode: HTMLElement }, frameId: string) => void;
-    createSystemButtons?: (options: { domNode: HTMLElement }, frameId: string) => void;
-    createWorkspaceContents?: (options: { domNode: HTMLElement, workspaceId: string }) => void;
-    createAddApplicationPopup?: (options: AddApplicationPopupOptions) => void;
-    createSaveWorkspacePopup?: (options: SaveWorkspacePopupOptions) => void;
-    createAddWorkspacePopup?: (options: OpenWorkspacePopupOptions) => void;
-
-    hideSystemPopups?: (cb: () => void) => void;
-}
-
-export interface DecoratedComponentFactory {
-    createLogo?: (options: { domNode: HTMLElement }) => void;
-    createAddWorkspace?: (options: { domNode: HTMLElement }) => void;
-    createSystemButtons?: (options: { domNode: HTMLElement }) => void;
-    createWorkspaceContents?: (options: { domNode: HTMLElement, workspaceId: string }) => void;
-    createAddApplicationPopup?: (options: AddApplicationPopupOptions) => void;
-    createSaveWorkspacePopup?: (options: SaveWorkspacePopupOptions) => void;
-    createAddWorkspacePopup?: (options: OpenWorkspacePopupOptions) => void;
-
-    hideSystemPopups?: (cb: () => void) => void;
-}
-
-interface BasePayloadOptions {
-    domNode: HTMLElement;
-    resizePopup: (size: any) => void;
-    hidePopup: () => void;
-    callback?: () => void;
-    frameId: string;
-}
-
-export interface AddApplicationPopupOptions extends BasePayloadOptions {
-    boxId: string;
-    workspaceId: string;
-    parentType?: string;
-}
-
-export interface SaveWorkspacePopupOptions extends BasePayloadOptions {
-    workspaceId: string;
-    buildMode: boolean;
-}
-
-// tslint:disable-next-line: no-empty-interface
-export interface OpenWorkspacePopupOptions extends BasePayloadOptions {
-}
-
-export interface VisibilityState {
-    logo: [options: { domNode: HTMLElement }, frameId: string],
-    addWorkspace: [options: { domNode: HTMLElement }, frameId: string],
-    systemButtons: [options: { domNode: HTMLElement }, frameId: string],
-    workspaceContents: Array<[options: { domNode: HTMLElement, workspaceId: string }]>
-}
 
 export type WorkspaceOptionsWithTitle = GoldenLayout.WorkspacesOptions & { title?: string };
 export type WorkspaceOptionsWithLayoutName = GoldenLayout.WorkspacesOptions & { layoutName?: string };
@@ -411,7 +358,7 @@ export interface WorkspacesLoadingConfig {
          * Valid only in `delayed` mode. Number of applications in a batch to be loaded at each interval.
          */
         batch?: number;
-    }
+    };
     /**
      * Visual indicator `Zzz` on tabs of apps which are not loaded yet. Useful for developing and testing purposes.
      */

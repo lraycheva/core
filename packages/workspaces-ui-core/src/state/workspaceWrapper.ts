@@ -7,6 +7,7 @@ import { Bounds, Workspace, WorkspaceOptionsWithLayoutName, WorkspaceSummary } f
 import { DefaultMaxSize, DefaultMinSize, EmptyVisibleWindowName } from "../utils/constants";
 import { WorkspaceWindowWrapper } from "./windowWrapper";
 import { WorkspaceContainerWrapper } from "./containerWrapper";
+import componentStateMonitor from "../componentStateMonitor";
 
 export class WorkspaceWrapper {
     constructor(
@@ -22,7 +23,7 @@ export class WorkspaceWrapper {
 
     public get title(): string {
         const component = this.workspaceContentItem;
-        return component.config.title || component.config.componentName;
+        return component.tab?.title || (component.config as any).workspacesOptions.title || component.config.title || component.config.componentName;
     }
 
     public get lastFocusedWindowId(): string {
@@ -109,7 +110,7 @@ export class WorkspaceWrapper {
         glConfig.workspacesOptions.lastActive = workspace.lastActive;
 
         if (!glConfig.workspacesOptions.title) {
-            glConfig.workspacesOptions.title = store.getWorkspaceTitle(workspace.id);
+            glConfig.workspacesOptions.title = this.title;
         }
 
         glConfig.workspacesOptions.name = glConfig.workspacesOptions.name || glConfig.workspacesOptions.title;
@@ -126,8 +127,8 @@ export class WorkspaceWrapper {
         const summaryConfig = {
             frameId: this.frameId,
             positionIndex: workspaceIndex,
-            title: config.workspacesOptions.title || config.title,
-            name: config.workspacesOptions.name || store.getWorkspaceTitle(this.workspace.id),
+            title: this.title,
+            name: config.workspacesOptions.name || this.title,
             layoutName: config.workspacesOptions.layoutName,
             isHibernated: this.isHibernated,
             isSelected: this.isSelected,
@@ -257,6 +258,8 @@ export class WorkspaceWrapper {
             this.workspace.layout.config.workspacesOptions.showSaveButton = value;
         }
         this.workspaceContentItem.config.workspacesConfig.showSaveButton = value;
+
+        componentStateMonitor.decoratedFactory.updateWorkspaceTabs({ workspaceId: this.workspace.id, showSaveButton: value });
     }
 
     public get showCloseButton(): boolean {
@@ -268,6 +271,8 @@ export class WorkspaceWrapper {
             this.workspace.layout.config.workspacesOptions.showCloseButton = value;
         }
         this.workspaceContentItem.config.workspacesConfig.showCloseButton = value;
+
+        componentStateMonitor.decoratedFactory.updateWorkspaceTabs({ workspaceId: this.workspace.id, showCloseButton: value });
     }
 
     public get showAddWindowButtons(): boolean {
@@ -370,6 +375,7 @@ export class WorkspaceWrapper {
             this.workspace.layout.config.workspacesOptions.icon = value;
         }
         this.workspaceContentItem.config.workspacesConfig.icon = value;
+        componentStateMonitor.decoratedFactory.updateWorkspaceTabs({ workspaceId: this.workspace.id, icon: value });
     }
 
     private transformComponentsToWindowSummary(glConfig: GoldenLayout.ItemConfig): void {

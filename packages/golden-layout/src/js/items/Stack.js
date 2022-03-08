@@ -1,6 +1,5 @@
 lm.items.Stack = function (layoutManager, config, parent) {
 	lm.items.AbstractContentItem.call(this, layoutManager, config, parent);
-
 	this.element = $('<div class="lm_item lm_stack"></div>');
 	this._activeContentItem = null;
 	var cfg = layoutManager.config;
@@ -24,6 +23,13 @@ lm.items.Stack = function (layoutManager, config, parent) {
 	this._dropIndex = null;
 
 	this.isStack = true;
+
+	if (layoutManager._componentFactory && layoutManager._componentFactory.createId && (!this.config.id || !this.config.id.length)) {
+		const newId = layoutManager._componentFactory.createId();
+		if (newId) {
+			this.addId(newId);
+		}
+	}
 
 	this.childElementContainer = $('<div class="lm_items"></div>');
 	this.header = new lm.controls.Header(layoutManager, this);
@@ -115,7 +121,6 @@ lm.utils.copy(lm.items.Stack.prototype, {
 	},
 	realHeight: function (obj) {
 		if (!obj || !obj[0]) {
-			console.log("returning 0", obj);
 			return 0;
 		}
 		const heightWithoutClone = obj.height();

@@ -1,5 +1,5 @@
 import { Bounds } from "./types/internal";
-import callbackRegistry from "callback-registry";
+import callbackRegistry, { UnsubscribeFunction } from "callback-registry";
 import { generate } from "shortid";
 import { Glue42Web } from "@glue42/web";
 
@@ -15,7 +15,7 @@ export class IFrameController {
         return this.startCore(id, url, layoutState, windowId);
     }
 
-    public moveFrame(id: string, bounds: Bounds) {
+    public moveFrame(id: string, bounds: Bounds): void {
         const frame = this._idToFrame[id];
         const jFrame = $(frame);
 
@@ -43,15 +43,15 @@ export class IFrameController {
         });
     }
 
-    public maximizeTab(id: string) {
+    public maximizeTab(id: string): void {
         $(this._idToFrame[id]).addClass("maximized-active-tab");
     }
 
-    public restoreTab(id: string) {
+    public restoreTab(id: string): void {
         $(this._idToFrame[id]).removeClass("maximized-active-tab");
     }
 
-    public selectionChangedDeep(toFront: string[], toBack: string[]) {
+    public selectionChangedDeep(toFront: string[], toBack: string[]): void {
         toBack.forEach(id => {
             // The numbers is based on the z index of golden layout elements
             $(this._idToFrame[id]).css("z-index", "-1");
@@ -68,12 +68,12 @@ export class IFrameController {
         });
     }
 
-    public bringToFront(id: string) {
+    public bringToFront(id: string): void {
         // Z index is this high to guarantee top most position
         $(this._idToFrame[id]).css("z-index", "999");
     }
 
-    public remove(id: string) {
+    public remove(id: string): void {
         const frame = this._idToFrame[id];
         if (frame) {
             delete this._idToFrame[id];
@@ -89,19 +89,19 @@ export class IFrameController {
         }
     }
 
-    public onFrameLoaded(callback: (frameId: string) => void) {
+    public onFrameLoaded(callback: (frameId: string) => void): UnsubscribeFunction {
         return this._registry.add("frameLoaded", callback);
     }
 
-    public onFrameRemoved(callback: (frameId: string) => void) {
+    public onFrameRemoved(callback: (frameId: string) => void): UnsubscribeFunction {
         return this._registry.add("frame-removed", callback);
     }
 
-    public onFrameContentClicked(callback: () => void) {
+    public onFrameContentClicked(callback: () => void): UnsubscribeFunction {
         return this._registry.add("frame-content-clicked", callback);
     }
 
-    public onWindowTitleChanged(callback: (id: string, newTitle: string) => void) {
+    public onWindowTitleChanged(callback: (id: string, newTitle: string) => void): UnsubscribeFunction {
         return this._registry.add("window-title-changed", callback);
     }
 
@@ -109,7 +109,7 @@ export class IFrameController {
         return !!this._idToFrame[id];
     }
 
-    private async startCore(id: string, url: string, layoutState?: object, windowId?: string) {
+    private async startCore(id: string, url: string, layoutState?: object, windowId?: string): Promise<HTMLIFrameElement> {
         windowId = windowId || generate();
         if (this._idToFrame[id]) {
             return this._idToFrame[id];
@@ -147,9 +147,9 @@ export class IFrameController {
         return frame;
     }
 
-    private waitForWindow(windowId: string) {
+    private waitForWindow(windowId: string): Promise<void> {
         return new Promise<void>((res, rej) => {
-            let unsub = () => {
+            let unsub = (): void => {
                 // safety
             };
             const timeout = setTimeout(() => {

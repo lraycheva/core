@@ -208,3 +208,7 @@ lm.utils.filterXss = function (input, keepTags) {
 lm.utils.stripTags = function (input) {
 	return $.trim(input.replace(/(<([^>]+)>)/ig, ''));
 };
+
+lm.utils.idAsString = function (id) {
+	return Array.isArray(id) ? id[0] : id;
+}

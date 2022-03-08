@@ -471,6 +471,7 @@ declare module '@glue42/golden-layout' {
              */
             positionIndex?: number;
 
+            layoutName?: string;
             /**
              * Indicates whether the item is maximized
              */
@@ -661,6 +662,10 @@ declare module '@glue42/golden-layout' {
              */
             layoutName?: string;
 
+            /**
+             * The id of the corresponding workspace
+             */
+            workspaceId?:string;
             /**
              * Controls whether the tab should be opened as pinned or not 
              */
@@ -1406,6 +1411,11 @@ declare module '@glue42/golden-layout' {
              * Indicates whether the tab is pinned or not
              */
             isPinned: boolean;
+
+            /**
+             * The title of the tab
+             */
+            title: string;
         }
 
         export interface EventEmitter {

@@ -73,7 +73,7 @@ export class LayoutsManager {
             }
         }
         // Default
-        return this._configFactory.getDefaultFrameConfig();
+        return this._configFactory.getDefaultFrameConfig(this.resolver.getWorkspaceTitles());
     }
 
     public getLastSession() {

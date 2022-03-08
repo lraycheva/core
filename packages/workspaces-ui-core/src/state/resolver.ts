@@ -240,6 +240,14 @@ export class LayoutStateResolver {
         return wrapper.icon;
     }
 
+    public getWorkspaceTitles(): string[] {
+        return store.workspaceIds.map((wid) => {
+            const wrapper = new WorkspaceWrapper(this, store.getById(wid), store.getWorkspaceContentItem(wid), this._frameId);
+
+            return wrapper.title;
+        });
+    }
+
     private waitForWindowContentItem(windowId: string): Promise<void> {
         return new Promise<void>((res) => {
             const unsub = this._layoutEventEmitter.onContentComponentCreated((component) => {
