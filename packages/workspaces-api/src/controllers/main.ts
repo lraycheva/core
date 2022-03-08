@@ -12,7 +12,6 @@ import { WorkspacesController } from "../types/controller";
 import { GDWindow } from "../types/glue";
 import { BaseController } from "./base";
 import { UnsubscribeFunction } from "callback-registry";
-import { EmptyFrameDefinition, FrameInitializationConfig } from "../../temp";
 
 export class MainController implements WorkspacesController {
 
@@ -38,11 +37,11 @@ export class MainController implements WorkspacesController {
         return await this.base.createWorkspace(createConfig);
     }
 
-    public async createEmptyFrame(definition: EmptyFrameDefinition): Promise<Frame> {
+    public async createEmptyFrame(definition: Glue42Workspaces.EmptyFrameDefinition): Promise<Frame> {
         return await this.base.createEmptyFrame(definition);
     }
 
-    public async initFrame(frameId: string, config: FrameInitializationConfig): Promise<void> {
+    public async initFrame(frameId: string, config: Glue42Workspaces.FrameInitializationConfig): Promise<void> {
         return this.base.initFrame(frameId, config);
     }
 

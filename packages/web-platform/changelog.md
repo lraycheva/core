@@ -1,3 +1,5 @@
+1.11.0
+chore: updated the workspaces typings with the latest features
 1.10.1 
 chore: updated the decoders to pass isMaximized in window layout items
 1.10.0

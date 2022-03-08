@@ -13,7 +13,6 @@ import { AllParentTypes, Child, ContainerLockConfig, SubParentTypes } from "../t
 import { PrivateDataManager } from "../shared/privateDataManager";
 import { Window } from "../models/window";
 import { UnsubscribeFunction } from "callback-registry";
-import { EmptyFrameDefinition, FrameInitializationConfig } from "../../temp";
 
 export class BaseController {
 
@@ -49,7 +48,7 @@ export class BaseController {
         return this.ioc.getModel<"workspace">("workspace", workspaceConfig);
     }
 
-    public async createEmptyFrame(definition: EmptyFrameDefinition): Promise<Frame> {
+    public async createEmptyFrame(definition: Glue42Workspaces.EmptyFrameDefinition): Promise<Frame> {
         const frameSummary = await this.bridge.send<FrameSummaryResult>(OPERATIONS.createFrame.name, definition);
         const frameConfig: FrameCreateConfig = {
             summary: frameSummary
@@ -58,7 +57,7 @@ export class BaseController {
         return this.ioc.getModel<"frame">("frame", frameConfig);
     }
 
-    public async initFrame(frameId: string, config: FrameInitializationConfig): Promise<void> {
+    public async initFrame(frameId: string, config: Glue42Workspaces.FrameInitializationConfig): Promise<void> {
         await this.bridge.send<void>(OPERATIONS.initFrame.name, { frameId, ...config });
     }
 

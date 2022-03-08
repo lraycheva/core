@@ -4,7 +4,6 @@ import { PrivateDataManager } from "../shared/privateDataManager";
 import { FrameStreamData, WorkspaceStreamData, WindowStreamData } from "../types/protocol";
 import { Glue42Workspaces } from "../../workspaces.d";
 import { FramePrivateData } from "../types/privateData";
-import { FrameInitializationConfig, FrameInitializationContext } from "../../temp";
 
 interface PrivateData {
     manager: PrivateDataManager;
@@ -123,7 +122,7 @@ export class Frame implements Glue42Workspaces.Frame {
         return getData(this).controller.createWorkspace(validatedDefinition, validatedConfig);
     }
 
-    public async init(config: FrameInitializationConfig): Promise<void> {
+    public async init(config: Glue42Workspaces.FrameInitializationConfig): Promise<void> {
         frameInitConfigDecoder.runWithException(config);
 
         if (getData(this).summary.isInitialized) {
@@ -321,7 +320,7 @@ export class Frame implements Glue42Workspaces.Frame {
         return unsubscribe;
     }
 
-    public async onInitializationRequested(callback: (context?: FrameInitializationContext) => Promise<void>): Promise<void> {
+    public async onInitializationRequested(callback: (context?: Glue42Workspaces.FrameInitializationContext) => Promise<void>): Promise<void> {
         checkThrowCallback(callback);
 
         if (!this.isInitialized) {

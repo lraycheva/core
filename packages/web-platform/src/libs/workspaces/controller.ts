@@ -2,7 +2,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Glue42Web } from "@glue42/web";
 import { Glue42Workspaces } from "@glue42/workspaces-api";
-import { EmptyFrameDefinition} from "@glue42/workspaces-api/temp";
 import { BridgeOperation, InternalPlatformConfig, LibController } from "../../common/types";
 import { addContainerConfigDecoder, addItemResultDecoder, addWindowConfigDecoder, bundleConfigDecoder, deleteLayoutConfigDecoder, emptyFrameDefinitionDecoder, exportedLayoutsResultDecoder, frameBoundsResultDecoder, frameHelloDecoder, frameInitProtocolConfigDecoder, frameSnapshotResultDecoder, frameStateConfigDecoder, frameStateResultDecoder, frameSummariesResultDecoder, frameSummaryDecoder, frameSummaryResultDecoder, getFrameSummaryConfigDecoder, isWindowInSwimlaneResultDecoder, layoutSummariesDecoder, lockContainerDecoder, lockWindowDecoder, lockWorkspaceDecoder, moveFrameConfigDecoder, moveWindowConfigDecoder, openWorkspaceConfigDecoder, pinWorkspaceDecoder, resizeItemConfigDecoder, setItemTitleConfigDecoder, setWorkspaceIconDecoder, simpleItemConfigDecoder, simpleWindowOperationSuccessResultDecoder, voidResultDecoder, workspaceCreateConfigDecoder, workspaceIconDecoder, workspaceLayoutDecoder, workspaceLayoutSaveConfigDecoder, workspaceSelectorDecoder, workspacesLayoutImportConfigDecoder, workspaceSnapshotResultDecoder, workspacesOperationDecoder, workspaceSummariesResultDecoder } from "./decoders";
 import { FramesController } from "./frames";
@@ -258,13 +257,13 @@ export class WorkspacesController implements LibController {
         return result;
     }
 
-    private async createFrame(config: EmptyFrameDefinition, commandId: string): Promise<FrameSummaryResult> {
+    private async createFrame(config: Glue42Workspaces.EmptyFrameDefinition, commandId: string): Promise<FrameSummaryResult> {
         this.logger?.trace(`[${commandId}] handling createFrame command`);
 
         const frame = await this.framesController.openFrame(config.frameConfig);
 
         this.logger?.trace(`[${commandId}] calling frame: ${frame.windowId}}`);
-        const result = await this.glueController.callFrame<EmptyFrameDefinition, FrameSummaryResult>(this.operations.createFrame, config, frame.windowId);
+        const result = await this.glueController.callFrame<Glue42Workspaces.EmptyFrameDefinition, FrameSummaryResult>(this.operations.createFrame, config, frame.windowId);
         this.logger?.trace(`[${commandId}] frame ${frame.windowId} responded returning to caller`);
 
         return result;

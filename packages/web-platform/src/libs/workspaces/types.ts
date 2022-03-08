@@ -1,5 +1,4 @@
 import { Glue42Workspaces } from "@glue42/workspaces-api";
-import { FrameInitializationConfig } from "@glue42/workspaces-api/temp";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export interface WorkspaceWindowData {
@@ -240,7 +239,7 @@ export interface WorkspaceCreateConfigProtocol extends Glue42Workspaces.Workspac
     saveConfig?: Glue42Workspaces.WorkspaceCreateConfig;
 }
 
-export interface FrameInitializationConfigProtocol extends FrameInitializationConfig {
+export interface FrameInitializationConfigProtocol extends Glue42Workspaces.FrameInitializationConfig {
     frameId: string;
 }
 

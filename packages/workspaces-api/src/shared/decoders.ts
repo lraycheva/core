@@ -56,7 +56,6 @@ import {
 } from "../types/protocol";
 import { WorkspaceEventType, WorkspaceEventAction } from "../types/subscription";
 import { Glue42Workspaces } from "../../workspaces";
-import { EmptyFrameDefinition, FrameInitializationConfig, FrameInitializationContext, RestoreWorkspaceDefinition, WorkspacePinOptions } from "../../temp";
 
 export const nonEmptyStringDecoder: Decoder<string> = string().where((s) => s.length > 0, "Expected a non-empty string");
 export const nonNegativeNumberDecoder: Decoder<number> = number().where((num) => num >= 0, "Expected a non-negative number");
@@ -308,18 +307,18 @@ export const workspaceSelectorDecoder: Decoder<WorkspaceSelector> = object({
     workspaceId: nonEmptyStringDecoder
 });
 
-export const restoreWorkspaceDefinitionDecoder: Decoder<RestoreWorkspaceDefinition> = object({
+export const restoreWorkspaceDefinitionDecoder: Decoder<Glue42Workspaces.RestoreWorkspaceDefinition> = object({
     name: nonEmptyStringDecoder,
     restoreOptions: optional(restoreWorkspaceConfigDecoder)
 });
 
-export const emptyFrameDefinitionDecoder: Decoder<EmptyFrameDefinition> = optional(object({
+export const emptyFrameDefinitionDecoder: Decoder<Glue42Workspaces.EmptyFrameDefinition> = optional(object({
     frameConfig: optional(newFrameConfigDecoder),
     context: optional(object())
 }));
 
-export const frameInitConfigDecoder: Decoder<FrameInitializationConfig> = object({
-    workspaces: array(oneOf<Glue42Workspaces.WorkspaceDefinition | RestoreWorkspaceDefinition>(
+export const frameInitConfigDecoder: Decoder<Glue42Workspaces.FrameInitializationConfig> = object({
+    workspaces: array(oneOf<Glue42Workspaces.WorkspaceDefinition | Glue42Workspaces.RestoreWorkspaceDefinition>(
         optional(workspaceDefinitionDecoder),
         optional(restoreWorkspaceDefinitionDecoder)
     ))
@@ -327,7 +326,7 @@ export const frameInitConfigDecoder: Decoder<FrameInitializationConfig> = object
 
 export const frameInitProtocolConfigDecoder: Decoder<FrameInitializationConfigProtocol> = object({
     frameId: nonEmptyStringDecoder,
-    workspaces: array(oneOf<Glue42Workspaces.WorkspaceDefinition | RestoreWorkspaceDefinition>(
+    workspaces: array(oneOf<Glue42Workspaces.WorkspaceDefinition | Glue42Workspaces.RestoreWorkspaceDefinition>(
         workspaceDefinitionDecoder,
         restoreWorkspaceDefinitionDecoder
     ))
@@ -354,7 +353,7 @@ export const getFrameSummaryConfigDecoder: Decoder<GetFrameSummaryConfig> = obje
     itemId: nonEmptyStringDecoder
 });
 
-export const frameInitializationContextDecoder: Decoder<FrameInitializationContext> = object({
+export const frameInitializationContextDecoder: Decoder<Glue42Workspaces.FrameInitializationContext> = object({
     context: optional(object())
 });
 
@@ -822,6 +821,6 @@ export const setWorkspaceIconDecoder: Decoder<SetWorkspaceIconConfig> = object({
     icon: optional(nonEmptyStringDecoder) // to enable the user to remove the icon from the workspace altogether
 });
 
-export const workspacePinOptionsDecoder: Decoder<WorkspacePinOptions> = optional(object({
+export const workspacePinOptionsDecoder: Decoder<Glue42Workspaces.WorkspacePinOptions> = optional(object({
     icon: optional(nonEmptyStringDecoder)
 }));

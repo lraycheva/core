@@ -5,9 +5,8 @@ import { FrameStreamData, WorkspaceStreamData, WorkspaceSnapshotResult, WindowSt
 import { FrameCreateConfig, WorkspaceIoCCreateConfig } from "./types/ioc";
 import { Glue42Workspaces } from "./../workspaces";
 import { WorkspacesController } from "./types/controller";
-import { API, EmptyFrameDefinition } from "../temp";
 
-export const composeAPI = (glue: any, ioc: IoC): API => {
+export const composeAPI = (glue: any, ioc: IoC): Glue42Workspaces.API => {
 
     const controller: WorkspacesController = ioc.controller;
 
@@ -114,7 +113,7 @@ export const composeAPI = (glue: any, ioc: IoC): API => {
         return controller.createWorkspace(validatedDefinition, validatedConfig);
     };
 
-    const createEmptyFrame = async (definition?: EmptyFrameDefinition): Promise<Glue42Workspaces.Frame> => {
+    const createEmptyFrame = async (definition?: Glue42Workspaces.EmptyFrameDefinition): Promise<Glue42Workspaces.Frame> => {
         const validatedDefinition = emptyFrameDefinitionDecoder.runWithException(definition);
 
         return controller.createEmptyFrame(validatedDefinition ?? {});

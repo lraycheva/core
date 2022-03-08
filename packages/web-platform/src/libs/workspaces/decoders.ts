@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-use-before-define */
 import { Glue42Workspaces } from "@glue42/workspaces-api";
-import { EmptyFrameDefinition, RestoreWorkspaceDefinition } from "@glue42/workspaces-api/temp";
 import { anyJson, array, boolean, constant, Decoder, intersection, lazy, number, object, oneOf, optional, string } from "decoder-validate";
 import { nonEmptyStringDecoder, nonNegativeNumberDecoder, windowLayoutItemDecoder } from "../../shared/decoders";
 import { AddContainerConfig, AddItemResult, AddWindowConfig, BaseChildSnapshotConfig, BundleConfig, ChildSnapshotResult, ColumnDefinitionConfig, ContainerStreamData, ContainerSummaryResult, DeleteLayoutConfig, ExportedLayoutsResult, FrameBoundsResult, FrameHello, FrameInitializationConfigProtocol, FrameSnapshotResult, FrameStateConfig, FrameStateResult, FrameStreamData, FrameSummariesResult, FrameSummaryResult, GetFrameSummaryConfig, GroupDefinitionConfig, IsWindowInSwimlaneResult, LayoutSummariesResult, LayoutSummary, LockColumnConfig, LockContainerConfig, LockGroupConfig, LockRowConfig, LockWindowConfig, LockWorkspaceConfig, MoveFrameConfig, MoveWindowConfig, OpenWorkspaceConfig, ParentSnapshotConfig, PingResult, PinWorkspaceConfig, ResizeItemConfig, RowDefinitionConfig, SetItemTitleConfig, SetWorkspaceIconConfig, SimpleItemConfig, SimpleWindowOperationSuccessResult, SwimlaneWindowSnapshotConfig, WindowStreamData, WorkspaceConfigResult, WorkspaceCreateConfigProtocol, WorkspaceEventAction, WorkspaceEventType, WorkspaceIconResult, WorkspaceSelector, WorkspacesLayoutImportConfig, WorkspaceSnapshotResult, WorkspacesOperationsTypes, WorkspaceStreamData, WorkspaceSummariesResult, WorkspaceSummaryResult, WorkspaceWindowData } from "./types";
@@ -764,19 +763,19 @@ export const workspaceIconDecoder: Decoder<WorkspaceIconResult> = object({
     icon: optional(nonEmptyStringDecoder)
 });
 
-export const emptyFrameDefinitionDecoder: Decoder<EmptyFrameDefinition> = object({
+export const emptyFrameDefinitionDecoder: Decoder<Glue42Workspaces.EmptyFrameDefinition> = object({
     frameConfig: optional(newFrameConfigDecoder),
     context: optional(object())
 });
 
-export const restoreWorkspaceDefinitionDecoder: Decoder<RestoreWorkspaceDefinition> = object({
+export const restoreWorkspaceDefinitionDecoder: Decoder<Glue42Workspaces.RestoreWorkspaceDefinition> = object({
     name: nonEmptyStringDecoder,
     restoreOptions: optional(restoreWorkspaceConfigDecoder)
 });
 
 export const frameInitProtocolConfigDecoder: Decoder<FrameInitializationConfigProtocol> = object({
     frameId: nonEmptyStringDecoder,
-    workspaces: array(oneOf<Glue42Workspaces.WorkspaceDefinition | RestoreWorkspaceDefinition>(
+    workspaces: array(oneOf<Glue42Workspaces.WorkspaceDefinition | Glue42Workspaces.RestoreWorkspaceDefinition>(
         workspaceDefinitionDecoder,
         restoreWorkspaceDefinitionDecoder
     ))

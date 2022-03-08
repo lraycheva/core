@@ -7,7 +7,6 @@ import { Frame } from "./frame";
 import { SubscriptionConfig } from "../types/subscription";
 import { WorkspacePrivateData } from "../types/privateData";
 import { Glue42Workspaces } from "../../workspaces";
-import { WorkspacePinOptions } from "../../temp";
 
 interface PrivateData {
     manager: PrivateDataManager;
@@ -412,7 +411,7 @@ export class Workspace implements Glue42Workspaces.Workspace {
         await this.refreshReference();
     }
 
-    public async pin(options: WorkspacePinOptions): Promise<void> {
+    public async pin(options: Glue42Workspaces.WorkspacePinOptions): Promise<void> {
         workspacePinOptionsDecoder.runWithException(options);
         await getData(this).controller.pinWorkspace(this.id, options?.icon);
         await this.refreshReference();
