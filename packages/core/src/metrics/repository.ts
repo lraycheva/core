@@ -26,11 +26,12 @@ export class Repository implements Glue42Core.Metrics.Repository {
                     return;
                 }
                 const target = e.target as HTMLAnchorElement;
+                const className = target ? target.getAttribute("class") ?? "" : "";
                 clickStream.objectMetric("LastBrowserEvent", {
                     type: "click",
                     timestamp: new Date(),
                     target: {
-                        className: e.target ? target.className : "",
+                        className,
                         id: target.id,
                         type: "<" + target.tagName.toLowerCase() + ">",
                         href: target.href || "",
