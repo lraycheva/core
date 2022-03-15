@@ -1,3 +1,5 @@
+5.6.3
+fix: improve className reporting in LastBrowserEvent metric
 5.6.2
 fix: fixed a race between contexts get and subscribe
 5.6.1
