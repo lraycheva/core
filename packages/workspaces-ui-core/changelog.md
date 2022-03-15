@@ -1,3 +1,5 @@
+1.7.7
+chore: bump due to dependencies update
 1.7.6
 feat: started applying the maximized state of elements in the layout upon initialization
 1.7.5

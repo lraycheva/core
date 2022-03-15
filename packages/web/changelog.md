@@ -1,3 +1,5 @@
+2.5.7
+chore: bump due to dependencies update
 2.5.6
 chore: updated the decoders to pass isMaximized in window layout items
 2.5.5

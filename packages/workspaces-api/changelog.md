@@ -1,3 +1,5 @@
+1.11.1
+chore: bump due to dependencies update
 1.11.0
 chore: updated the workspaces typings with the latest features
 1.10.6
