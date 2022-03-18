@@ -1,8 +1,10 @@
 ## Overview
 
-The [Main application](../../developers/core-concepts/web-platform/overview/index.html) and all [Web Client](../../developers/core-concepts/web-client/overview/index.html) apps can run in [**Glue42 Enterprise**](https://glue42.com/enterprise/) without any code modification. The Main app will automatically detect that it is running in [**Glue42 Enterprise**](https://glue42.com/enterprise/) and won't initialize any of its [Web Platform](https://www.npmjs.com/package/@glue42/web-platform) logic - it will default to being a normal [**Glue42 Enterprise**](https://glue42.com/enterprise/) client application. The Web Client apps will also auto detect the environment and will initialize the [`@glue42/desktop`](https://www.npmjs.com/package/@glue42/desktop) library (instead of [Glue42 Web](https://www.npmjs.com/package/@glue42/web)) with all necessary features enabled and set to the highest possible level (e.g., the Aplication Management API will be initialized in `"full"` mode) to ensure correct app functionality. This gives you the option to easily experiment with your apps running in a functionally richer environment with more integration options.
+The [Main application](../../developers/core-concepts/web-platform/overview/index.html) and all [Web Client](../../developers/core-concepts/web-client/overview/index.html) apps can run in [**Glue42 Enterprise**](https://glue42.com/enterprise/) without any code modification. The Main app will automatically detect that it is running in [**Glue42 Enterprise**](https://glue42.com/enterprise/) and won't initialize any of its [Web Platform](https://www.npmjs.com/package/@glue42/web-platform) logic - it will default to being a normal [**Glue42 Enterprise**](https://glue42.com/enterprise/) client application. The Web Client apps will also auto detect the environment and will initialize the [`@glue42/desktop`](https://www.npmjs.com/package/@glue42/desktop) library instead of [Glue42 Web](https://www.npmjs.com/package/@glue42/web), with all necessary features enabled and set to the highest possible level (e.g., the Aplication Management API will be initialized in `"full"` mode) to ensure correct app functionality. This gives you the option to easily experiment with your apps running in a functionally richer environment with more integration options.
 
-## How To 
+*For more information, see the [Glue42 Enterprise product page](https://glue42.com/enterprise/) and the official [Glue42 Enterprise documentation](https://docs.glue42.com/).*
+
+## How To
 
 1. Install [**Glue42 Enterprise**](https://glue42.com/enterprise/) version 3.9 or newer. Download the trial version of [**Glue42 Enterprise**](https://glue42.com/enterprise/) from [here](https://glue42.com/free-trial/).
 
@@ -38,11 +40,11 @@ The [Main application](../../developers/core-concepts/web-platform/overview/inde
             "left": 200,
             "width": 600,
             "height": 300,
-            "mode": "tab"      
-        }   
+            "mode": "tab"
+        }
     }
 ]
-``` 
+```
 
 Save the configuration file as a JSON file and place it in the application definitions folder. Usually, this is the `%LocalAppData%\Tick42\UserData\<ENV-REG>\apps` folder where `<ENV-REG>` should be replaced with the region and environment folder name used for the deployment of your [**Glue42 Enterprise**](https://glue42.com/enterprise/) - e.g., `T42-DEMO`.
 
@@ -59,7 +61,7 @@ For example, you may want to register a global hotkey shortcut using the [Hotkey
 ```javascript
 // Check whether the app is running in Glue42 Enterprise in order to use the Hotkeys API.
 if (typeof glue42gd !== "undefined") {
-   
+
     // Define a hotkey object.
     const hotkeyClientDetails = {
         hotkey: "shift+alt+c",
@@ -80,7 +82,7 @@ If you are using TypeScript, cast your Glue42 Web API (`@glue42/web`) to the [**
 
 ```typescript
 // Import the types.
-import { Glue42 } from "@glue42/desktop"; 
+import { Glue42 } from "@glue42/desktop";
 
 if (typeof glue42gd !== "undefined") {
     // Running in Glue42 Enterprise, you can now use Glue42 Enterprise specific APIs.

@@ -821,7 +821,7 @@ On load, Application B registers an Interop stream called "G42Core.Stream.Basic"
 
 The applications below demonstrate handling streaming events - adding/removing subscribers and closing the stream.
 
-Click the "Create Stream" button in Application B to register an Interop stream called "G42Core.Stream.Basic". Click the "Subscribe" button in Application A to subscribe to the registered stream - Application B will print to the page when a new subscriber is added. Each time Application A receives data, it will be printed on the page (time stamp and a message). Click the "Start Publishing" button in Application B to start publishing data to the stream every 3 seconds.
+Click the "Create Stream" button in Application B to register an Interop stream called "G42Core.Stream.Basic". Click the "Subscribe" button in Application A to subscribe to the registered stream - Application B will print to the page when a new subscriber is added. Each time Application A receives data, it will be printed on the page (time stamp and a message).
 
 Click the "Unsubscribe" button in Application A to close the subscription to the stream - Application B will print to the page when a subscriber is removed. Click the "Close Stream" button in Application B to close the stream - Application A will print to the page when the stream is closed.
 
