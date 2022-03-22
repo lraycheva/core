@@ -40,7 +40,7 @@ The **Glue42 Core** [documentation](https://core-docs.glue42.com/getting-started
 
 ### Getting Started and Tutorials
 
-The [Getting Started](https://core-docs.glue42.com/getting-started/quick-start/index.html) section provides detailed explanations on how to set up and configure all Glue42 elements. You can also find full JavaScript and React [tutorials](https://core-docs.glue42.com/tutorials/index.html) containing starting and solution files.
+The [Getting Started](https://core-docs.glue42.com/getting-started/quick-start/index.html) section provides detailed explanations on how to set up and configure all Glue42 elements. You can also find full JavaScript and React [tutorials](https://core-docs.glue42.com/tutorials/javascript/index.html#overview) containing starting and solution files.
 
 ## Demos
 
