@@ -212,3 +212,10 @@ lm.utils.stripTags = function (input) {
 lm.utils.idAsString = function (id) {
 	return Array.isArray(id) ? id[0] : id;
 }
+
+lm.utils.isCustomWorkspaceTab = function (tab) {
+	const isWorkspaceTab = tab._layoutManager.config.settings.mode === "workspace";
+	const isCustomWorkspaceTab = isWorkspaceTab && tab._layoutManager._componentFactory && tab._layoutManager._componentFactory.createWorkspaceTabs;
+
+	return isCustomWorkspaceTab;
+}

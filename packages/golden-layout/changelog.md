@@ -1,3 +1,5 @@
+2.2.6
+fix: missing window tooltip when using custom workspace tabs
 2.2.5
 feat: started applying the maximized state of elements when initializing the layout
 2.2.4

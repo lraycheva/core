@@ -11,9 +11,9 @@ lm.controls.Tab = function (header, contentItem) {
 	this.contentItem = contentItem;
 	this._layoutManager = this.contentItem.layoutManager;
 	const isWorkspaceTab = this._layoutManager.config.settings.mode === "workspace";
-	const isCustomWorkspaceTab = isWorkspaceTab && this._layoutManager._componentFactory && this._layoutManager._componentFactory.createWorkspaceTabs;
+	const isCustomWorkspaceTab = lm.utils.isCustomWorkspaceTab(this);
 	this.element = isCustomWorkspaceTab ? $(lm.controls.Tab._customTabTemplate) : $(lm.controls.Tab._template);
-	
+
 	this._elementOffset = 0;
 	this._xOfLastReorder = 0;
 	this.titleElement = isCustomWorkspaceTab ? $(undefined) : this.element.find('.lm_title');
@@ -90,7 +90,7 @@ lm.utils.copy(lm.controls.Tab.prototype, {
 	 */
 	setTitle: function (title) {
 		this.title = title;
-		if (!this._layoutManager._componentFactory || !this._layoutManager._componentFactory.createWorkspaceTabs) {
+		if (!lm.utils.isCustomWorkspaceTab(this)) {
 			this.element.attr('title', lm.utils.stripTags(title));
 		}
 		this.titleElement.html(title);
