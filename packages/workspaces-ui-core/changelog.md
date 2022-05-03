@@ -1,3 +1,5 @@
+1.7.9
+feat: updated the styles to be compatible with the GD transparent mode
 1.7.8
 chore: updated workspace with new logo
 1.7.7

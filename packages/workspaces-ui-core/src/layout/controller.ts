@@ -1859,6 +1859,7 @@ export class LayoutController {
 
             const div = document.createElement("div");
             div.setAttribute("style", "height:calc(100% - 1px); width:calc(100% - 1px);");
+            div.classList.add("empty-container-background");
             div.id = `nestHere${workspaceId}`;
             const newButton = document.createElement("button");
             newButton.classList.add("add-button");
