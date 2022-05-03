@@ -1,6 +1,6 @@
 {
   "name": "dev-workspaces-frame",
-  "version": "2.2.9",
+  "version": "2.2.10",
   "private": true,
   "homepage": "./",
   "dependencies": {
@@ -10,7 +10,7 @@
     "@glue42/web-platform": "^1.11.1",
     "@glue42/web-worker": "^1.1.0",
     "@glue42/workspaces-api": "^1.11.1",
-    "@glue42/workspaces-ui-react": "^1.7.8",
+    "@glue42/workspaces-ui-react": "^1.7.9",
     "react": "^17.0.1",
     "react-dom": "^17.0.1"
   },
