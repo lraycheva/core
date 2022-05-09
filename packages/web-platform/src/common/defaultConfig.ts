@@ -28,8 +28,11 @@ export const defaultPlatformConfig: InternalPlatformConfig = {
             level: "info"
         }
     },
+    connection: {},
     glue: {},
-    environment: {}
+    environment: {},
+    workspacesFrameCache: true,
+    communicationId: ""
 };
 
 export const defaultTargetString = "*";
@@ -37,3 +40,9 @@ export const defaultTargetString = "*";
 export const defaultFetchTimeoutMs = 3000;
 
 export const defaultOpenerTimeoutMs = 1000;
+
+export const defaultPreferredDiscoveryIntervalMS = 15000;
+
+export const defaultClientPortRequestTimeoutMS = 15000;
+
+export const defaultClientPreferredLogicTestTimeoutMS = 5000;

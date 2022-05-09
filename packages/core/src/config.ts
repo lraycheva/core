@@ -120,6 +120,23 @@ export default function (configuration: Glue42Core.Config, ext: Glue42Core.Exten
         };
     }
 
+    function getContexts(): boolean | Glue42Core.ContextsConfig {
+
+        if (typeof configuration.contexts === "undefined") {
+            return { reAnnounceKnownContexts: true };
+        }
+
+        if (typeof configuration.contexts === "boolean" && configuration.contexts) {
+            return { reAnnounceKnownContexts: true };
+        }
+
+        if (typeof configuration.contexts === "object") {
+            return Object.assign({}, { reAnnounceKnownContexts: true }, configuration.contexts);
+        }
+
+        return false;
+    }
+
     function getApplication() {
         if (configuration.application) {
             return configuration.application;
@@ -215,7 +232,7 @@ export default function (configuration: Glue42Core.Config, ext: Glue42Core.Exten
         logger: getLogger(),
         connection,
         metrics: configuration.metrics ?? true,
-        contexts: configuration.contexts ?? true,
+        contexts: getContexts(),
         version: ext.version || pjsonVersion,
         libs: ext.libs ?? [],
         customLogger: configuration.customLogger

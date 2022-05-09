@@ -1,5 +1,5 @@
 import { Glue42Core } from "@glue42/core";
-import { SessionNonGlueData, SessionWindowData, WorkspaceWindowSession } from "../common/types";
+import { SessionNonGlueData, SessionSystemSettings, SessionWindowData, WorkspaceWindowSession } from "../common/types";
 import { BaseApplicationData, BridgeInstanceData, InstanceData } from "../libs/applications/types";
 import { LayoutsSnapshot } from "../libs/layouts/types";
 import { ExtensionNotification } from "../libs/notifications/types";
@@ -19,6 +19,7 @@ export class SessionStorageController {
     private readonly appDefsNamespace = "g42_core_app_definitions";
     private readonly appDefsInmemoryNamespace = "g42_core_app_definitions_inmemory";
     private readonly extNotificationsNamespace = "g42_ext_notifications";
+    private readonly systemNamespace = "g42_system";
 
     constructor() {
         this.sessionStorage = window.sessionStorage;
@@ -46,6 +47,20 @@ export class SessionStorageController {
 
     private get logger(): Glue42Core.Logger.API | undefined {
         return logger.get("session.storage");
+    }
+
+    public getSystemSettings(): SessionSystemSettings | undefined {
+        const settingsAsString = this.sessionStorage.getItem(this.systemNamespace);
+
+        if (!settingsAsString) {
+            return;
+        }
+
+        return JSON.parse(settingsAsString);
+    }
+
+    public saveSystemSettings(settings: SessionSystemSettings): void {
+        this.sessionStorage.setItem(this.systemNamespace, JSON.stringify(settings));
     }
 
     public getTimeout(workspaceId: string): number | undefined {

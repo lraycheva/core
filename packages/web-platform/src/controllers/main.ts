@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Glue42Web } from "@glue42/web";
+import { UnsubscribeFunction } from "callback-registry";
 import { ControlMessage, CoreClientData, InternalPlatformConfig, LibController, LibDomains } from "../common/types";
 import { libDomainDecoder } from "../shared/decoders";
 import { GlueController } from "./glue";
@@ -18,6 +19,7 @@ import { SystemController } from "./system";
 import { ServiceWorkerController } from "./serviceWorker";
 import { NotificationsController } from "../libs/notifications/controller";
 import { ExtensionController } from "../libs/extension/controller";
+import { PreferredConnectionController } from "../connection/preferred";
 
 export class PlatformController {
 
@@ -46,7 +48,8 @@ export class PlatformController {
         private readonly portsBridge: PortsBridge,
         private readonly stateController: WindowsStateController,
         private readonly serviceWorkerController: ServiceWorkerController,
-        private readonly extensionController: ExtensionController
+        private readonly extensionController: ExtensionController,
+        private readonly preferredConnectionController: PreferredConnectionController
     ) { }
 
     private get logger(): Glue42Web.Logger.API | undefined {
@@ -55,7 +58,7 @@ export class PlatformController {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async start(config: InternalPlatformConfig): Promise<void> {
-        await this.portsBridge.start(config.gateway);
+        await this.portsBridge.configure(config);
 
         this.portsBridge.onClientUnloaded(this.handleClientUnloaded.bind(this));
 
@@ -81,10 +84,20 @@ export class PlatformController {
         }
 
         this.serviceWorkerController.notifyReady();
+
+        if (config.connection.preferred) {
+            await this.preferredConnectionController.start(config.connection.preferred);
+        }
+
+        this.portsBridge.start();
     }
 
     public async connectExtClient(client: any, port: any): Promise<void> {
         await this.portsBridge.handleExtConnectionRequest(client, port);
+    }
+
+    public onSystemReconnect(callback: () => void): UnsubscribeFunction {
+        return this.preferredConnectionController.onReconnect(callback);
     }
 
     public getClientGlue(): Glue42Web.API {
@@ -100,7 +113,7 @@ export class PlatformController {
 
             await definition.start(this.glueController.clientGlue, definition.config, platformControls);
 
-        } catch (error) {
+        } catch (error: any) {
             const stringError = typeof error === "string" ? error : JSON.stringify(error.message);
             const message = `Plugin: ${definition.name} threw while initiating: ${stringError}`;
 
@@ -172,7 +185,7 @@ export class PlatformController {
         Object.values(this.controllers).forEach((controller, idx) => {
             try {
                 controller.handleClientUnloaded?.(client.windowId, client.win);
-            } catch (error) {
+            } catch (error: any) {
                 const stringError = typeof error === "string" ? error : JSON.stringify(error.message);
                 const controllerName = Object.keys(this.controllers)[idx];
                 this.logger?.error(`${controllerName} controller threw when handling unloaded client ${client.windowId} with error message: ${stringError}`);

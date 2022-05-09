@@ -1,5 +1,5 @@
 import { Glue42Web } from "../../../packages/web/web.d";
-import { Gtf } from "./types";
+import { Gtf } from "./gtf";
 
 export class GtfConnection implements Gtf.Connection {
     public async disconnectGlues(gluesToDisconnect: Glue42Web.API[]): Promise<void> {

@@ -37,7 +37,7 @@ export interface InternalConfig {
     logger: { console: Glue42Core.LogLevel; publish: Glue42Core.LogLevel };
     auth: Glue42Core.Auth | undefined;
     metrics: boolean | Glue42Core.MetricsConfig;
-    contexts: boolean | undefined;
+    contexts: boolean | Glue42Core.ContextsConfig;
     version: string;
     libs: any[];
     bus: boolean;

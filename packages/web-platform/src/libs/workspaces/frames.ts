@@ -30,7 +30,7 @@ export class FramesController {
 
         if (config.isFrame) {
             this.myFrameId = this.sessionController.getAllFrames().find((frame) => frame.isPlatform)?.windowId;
-            window.addEventListener("beforeunload", () => {
+            window.addEventListener("unload", () => {
                 if (this.myFrameId) {
                     this.clearAllWorkspaceWindows(this.myFrameId);
                 }

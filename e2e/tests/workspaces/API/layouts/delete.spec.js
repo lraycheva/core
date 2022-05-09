@@ -39,9 +39,7 @@ describe('delete() Should ', function () {
         await glue.workspaces.layouts.delete(layoutName);
 
         const summaries = await glue.workspaces.layouts.getSummaries();
-        
-        summaries.forEach((s) => console.log(s.name));
-        
+                
         expect(summaries.filter(s => s.name === layoutName).length).to.eql(0);
     });
     Array.from([null, undefined, 42, {}, []]).forEach((input) => {

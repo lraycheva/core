@@ -22,7 +22,8 @@ export class SystemController implements LibController {
     public async start(config: InternalPlatformConfig): Promise<void> {
         this.environment = config.environment;
         this.base = {
-            workspacesFrameCache: typeof config.workspaces?.frameCache === "boolean" ? config.workspaces?.frameCache : true
+            workspacesFrameCache: config.workspacesFrameCache,
+            communicationId: config.communicationId
         };
     }
 

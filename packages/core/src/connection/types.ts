@@ -1,3 +1,4 @@
+import { UnsubscribeFunction } from "callback-registry";
 import { Glue42Core } from "../../glue";
 import { Logger } from "../logger/logger";
 
@@ -71,9 +72,9 @@ export interface Transport {
 
     send(msg: string, options?: Glue42Core.Connection.SendMessageOptions): Promise<void>;
 
-    onMessage(callback: (msg: string | object) => void): void;
+    onMessage(callback: (msg: string | object) => void): UnsubscribeFunction;
 
-    onConnectedChanged(callback: (connected: boolean, reason?: string) => void): void;
+    onConnectedChanged(callback: (connected: boolean, reason?: string) => void): UnsubscribeFunction;
 
     open(): Promise<void>;
 

@@ -1,40 +1,63 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* tslint:disable:no-console no-empty */
 import { Gateway } from "./gateway";
 import { IoC } from "../shared/ioc";
-import { defaultTargetString } from "../common/defaultConfig";
-import { Glue42CoreMessageTypes } from "../common/constants";
+import { Glue42CoreMessageTypes, webPlatformTransportName } from "../common/constants";
 import {
     default as CallbackRegistryFactory,
     CallbackRegistry,
     UnsubscribeFunction,
 } from "callback-registry";
-import { CoreClientData, SessionWindowData } from "../common/types";
+import { ClientPortRequest, CoreClientData, InternalPlatformConfig, SessionWindowData, TransportState } from "../common/types";
 import { SessionStorageController } from "../controllers/session";
-import { Glue42WebPlatform } from "../../platform";
+import { Glue42Core } from "@glue42/core";
+import { GwClient } from "@glue42/gateway-web/web/gateway-web.js";
+import { TransactionsController } from "../controllers/transactions";
+import { defaultClientPortRequestTimeoutMS, defaultClientPreferredLogicTestTimeoutMS } from "../common/defaultConfig";
 
 export class PortsBridge {
 
     private readonly registry: CallbackRegistry = CallbackRegistryFactory();
-    private clients: { [key: string]: Window | chrome.runtime.Port } = {};
+    private readonly transactionsController: TransactionsController;
+    private allPorts: { [key: string]: MessagePort | chrome.runtime.Port } = {};
     private unLoadStarted = false;
+    private isPreferredActivated = false;
+    private activePreferredTransportConfig: Glue42Core.Connection.TransportSwitchSettings | undefined;
+    private communicationId!: string;
+    private readonly startUpPromise: Promise<void>;
+    private startupResolve!: (value: void | PromiseLike<void>) => void;
 
     constructor(
         private readonly gateway: Gateway,
         private readonly sessionStorage: SessionStorageController,
         private readonly ioc: IoC
-    ) { }
+    ) {
+        this.transactionsController = this.ioc.transactionsController;
+        this.startUpPromise = new Promise<void>((resolve) => {
+            this.startupResolve = resolve;
+        });
+    }
 
-    public async start(config?: Glue42WebPlatform.Gateway.Config): Promise<void> {
-        await this.gateway.start(config);
+    public async configure(config: InternalPlatformConfig): Promise<void> {
+
+        this.communicationId = config.communicationId;
+
+        await this.gateway.start(config?.gateway);
+
         this.setUpGenericMessageHandler();
-        this.setUpBeforeUnload();
+
+        this.setUpUnload();
+    }
+
+    public start(): void {
+        this.startupResolve();
     }
 
     public async createInternalClient(): Promise<MessagePort> {
 
         const channel = this.ioc.createMessageChannel();
 
-        await this.gateway.connectClient(channel.port1);
+        await this.gateway.setupInternalClient(channel.port1);
 
         return channel.port2;
     }
@@ -76,23 +99,78 @@ export class PortsBridge {
             }
         };
 
-        this.clients[client.clientId] = port;
+        this.allPorts[client.clientId] = port;
 
         port.postMessage(message);
     }
 
-    private setUpBeforeUnload(): void {
-        window.addEventListener("beforeunload", () => {
+    public setActivePreferredTransportConfig(transportConfig: Glue42Core.Connection.TransportSwitchSettings): void {
+        if (transportConfig.type === "secondary") {
+            this.activePreferredTransportConfig = transportConfig;
+
+            return;
+        }
+
+        delete this.activePreferredTransportConfig;
+    }
+
+    public setPreferredActivated(): void {
+        this.isPreferredActivated = true;
+    }
+
+    public async switchAllClientsTransport(transportConfig: Glue42Core.Connection.TransportSwitchSettings): Promise<void> {
+
+        const transactions: Array<Promise<void>> = Object.keys(this.allPorts)
+            .map((id) => this.sendClientPortRequest<void>({
+                type: Glue42CoreMessageTypes.transportSwitchRequest.name,
+                timeout: defaultClientPortRequestTimeoutMS,
+                clientId: id,
+                args: { switchSettings: transportConfig }
+            }));
+
+        await Promise.all(transactions);
+    }
+
+    public async checkClientsPreferredLogic(): Promise<{ success: boolean }> {
+        const transactions: Array<Promise<void>> = Object.keys(this.allPorts)
+            .map((id) => this.sendClientPortRequest<void>({
+                type: Glue42CoreMessageTypes.checkPreferredLogic.name,
+                timeout: defaultClientPreferredLogicTestTimeoutMS,
+                clientId: id
+            }));
+
+        try {
+            await Promise.all(transactions);
+            return { success: true };
+        } catch (error) {
+            return { success: false };
+        }
+    }
+
+    public async checkClientsPreferredConnection(url: string): Promise<{ success: boolean }> {
+        const transactions: Array<Promise<void>> = Object.keys(this.allPorts)
+            .map((id) => this.sendClientPortRequest<void>({
+                type: Glue42CoreMessageTypes.checkPreferredConnection.name,
+                args: { url },
+                timeout: defaultClientPortRequestTimeoutMS,
+                clientId: id
+            }));
+
+        try {
+            await Promise.all(transactions);
+            return { success: true };
+        } catch (error) {
+            return { success: false };
+        }
+    }
+
+    private setUpUnload(): void {
+        window.addEventListener("unload", () => {
 
             this.unLoadStarted = true;
-            const message = {
-                glue42core: {
-                    type: Glue42CoreMessageTypes.platformUnload.name
-                }
-            };
 
-            for (const id in this.clients) {
-                this.clients[id].postMessage(message, defaultTargetString);
+            for (const id in this.allPorts) {
+                this.allPorts[id].postMessage({ type: "platformUnload" });
             }
         });
     }
@@ -118,15 +196,15 @@ export class PortsBridge {
             }
 
             if (data.type === Glue42CoreMessageTypes.connectionRequest.name) {
-                return this.handleRemoteConnectionRequest(event.source as Window, event.origin, data.clientId, data.clientType, data.bridgeInstanceId);
+                return this.startUpPromise.then(() => this.handleRemoteConnectionRequest(event.source as Window, event.origin, data.clientId, data.clientType, data.bridgeInstanceId));
             }
 
             if (data.type === Glue42CoreMessageTypes.platformPing.name) {
-                return this.handlePlatformPing(event.source as Window, event.origin);
+                return this.startUpPromise.then(() => this.handlePlatformPing(event.source as Window, event.origin));
             }
 
             if (data.type === Glue42CoreMessageTypes.parentPing.name) {
-                return this.handleParentPing(event.source as Window, event.origin);
+                return this.startUpPromise.then(() => this.handleParentPing(event.source as Window, event.origin));
             }
         });
     }
@@ -134,7 +212,9 @@ export class PortsBridge {
     private async handleRemoteConnectionRequest(source: Window, origin: string, clientId: string, clientType: "child" | "grandChild", bridgeInstanceId: string): Promise<void> {
         const channel = this.ioc.createMessageChannel();
 
-        await this.gateway.connectClient(channel.port1, this.removeClient.bind(this));
+        const gwClient = await this.gateway.connectClient(channel.port1, this.removeClient.bind(this));
+
+        this.setupGwClientPort({ client: gwClient, clientId: clientId, clientPort: channel.port1 });
 
         const foundData = this.sessionStorage.getBridgeInstanceData(bridgeInstanceId);
         const appName = foundData?.appName;
@@ -145,14 +225,12 @@ export class PortsBridge {
             glue42core: {
                 type: Glue42CoreMessageTypes.connectionAccepted.name,
                 port: channel.port2,
+                communicationId: this.communicationId,
+                isPreferredActivated: this.isPreferredActivated,
                 parentWindowId: myWindowId,
                 appName, clientId, clientType
             }
         };
-
-        if (clientType === "child") {
-            this.clients[clientId] = source;
-        }
 
         source.postMessage(message, origin, [channel.port2]);
     }
@@ -177,21 +255,124 @@ export class PortsBridge {
         source.postMessage(message, origin);
     }
 
-    private removeClient(clientId: string, announce?: boolean): void {
+    private removeClient(clientId: string, announce?: boolean, preservePort?: boolean): void {
         if (!clientId) {
             return;
         }
-        if (this.clients[clientId]) {
-            delete this.clients[clientId];
+
+        if (this.allPorts[clientId] && !preservePort) {
+            delete this.allPorts[clientId];
         }
 
-        if (announce) {
-
-            const client = {
-                windowId: clientId
-            };
-
-            this.registry.execute("client-unloaded", client);
+        if (!announce) {
+            return;
         }
+
+        const client = { windowId: clientId };
+
+        this.registry.execute("client-unloaded", client);
+    }
+
+    private setupGwClientPort(config: { client: GwClient; clientPort: MessagePort; clientId: string }): void {
+
+        if (this.allPorts[config.clientId] && (this.allPorts[config.clientId] as MessagePort).onmessage) {
+            (this.allPorts[config.clientId] as MessagePort).onmessage = null;
+        }
+
+        this.allPorts[config.clientId] = config.clientPort;
+
+        config.clientPort.onmessage = (event): void => {
+
+            const data = event.data?.glue42core;
+
+            if (data && (data.type === Glue42CoreMessageTypes.clientUnload.name || data.type === Glue42CoreMessageTypes.gatewayDisconnect.name)) {
+
+                this.removeClient(data.data.clientId, false, data.type === Glue42CoreMessageTypes.gatewayDisconnect.name);
+
+                config.client.disconnect();
+
+                return;
+            }
+
+            if (data && data.type === Glue42CoreMessageTypes.transportSwitchResponse.name) {
+
+                const args = data.args;
+
+                if (args.success) {
+                    this.transactionsController.completeTransaction(data.transactionId);
+                } else {
+                    this.transactionsController.failTransaction(data.transactionId, `The client: ${config.clientId} could not connect using the provided transport config.`);
+                }
+
+                return;
+            }
+
+            if (data && data.type === Glue42CoreMessageTypes.getCurrentTransport.name) {
+
+                const transactionId = data.transactionId;
+
+                config.clientPort.postMessage({
+                    type: Glue42CoreMessageTypes.getCurrentTransportResponse.name,
+                    args: {
+                        transportState: this.getCurrentTransportState(),
+                    },
+                    transactionId
+                });
+
+                return;
+            }
+
+            if (data && data.type === Glue42CoreMessageTypes.checkPreferredLogicResponse.name) {
+                return this.transactionsController.completeTransaction(data.transactionId);
+            }
+
+            if (data && data.type === Glue42CoreMessageTypes.checkPreferredConnectionResponse.name) {
+
+                const args = data.args;
+
+                if (args.error) {
+                    return this.transactionsController.failTransaction(data.transactionId, args.error);
+                }
+
+                if (!args.live) {
+                    return this.transactionsController.failTransaction(data.transactionId, `Client ${config.clientId} could not connect to the preferred WS.`);
+                }
+
+                return this.transactionsController.completeTransaction(data.transactionId);
+            }
+
+            config.client.send(event.data);
+        };
+    }
+
+    private getCurrentTransportState(): TransportState {
+        // my transport state === the system glue transport state
+
+        const transportName = this.ioc.glueController.getSystemGlueTransportName();
+
+        const transportState: TransportState = {
+            transportName,
+            type: transportName === webPlatformTransportName ? "default" : "secondary",
+            transportConfig: transportName === webPlatformTransportName ? undefined : this.activePreferredTransportConfig?.transportConfig
+        };
+
+        return transportState;
+    }
+
+    private sendClientPortRequest<T>(request: ClientPortRequest): Promise<T> {
+        const client = this.allPorts[request.clientId];
+
+        if (!client) {
+            throw new Error(`Cannot sent port request: ${request.type} to ${request.clientId}, because there is no such client`);
+        }
+
+        const transaction = this.transactionsController.createTransaction<T>(request.type, request.timeout || defaultClientPortRequestTimeoutMS);
+
+        const type = request.type;
+        const args = request.args;
+
+        client.postMessage({ type, args, transactionId: transaction.id });
+
+        return transaction.lock;
     }
 }

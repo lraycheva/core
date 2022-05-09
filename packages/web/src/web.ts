@@ -15,7 +15,6 @@ import { version } from "../package.json";
 export const createFactoryFunction = (coreFactoryFunction: GlueCoreFactoryFunction): Glue42WebFactoryFunction => {
 
     return async (userConfig?: Glue42Web.Config): Promise<Glue42Web.API | Glue42.Glue> => {
-
         const config = parseConfig(userConfig);
 
         if (window.glue42gd) {
@@ -29,6 +28,8 @@ export const createFactoryFunction = (coreFactoryFunction: GlueCoreFactoryFuncti
         const logger = glue.logger.subLogger("web.main.controller");
 
         const ioc = new IoC(glue);
+
+        await ioc.preferredConnectionController.start(config);
 
         await ioc.bridge.start(ioc.controllers);
 

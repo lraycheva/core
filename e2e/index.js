@@ -22,6 +22,8 @@ const runningProcesses = [];
 let httpServer;
 let wspServer;
 
+const isRunningPuppetMode = process.env.RUNNER === "Puppet";
+
 const deleteTestCollectionDir = () => {
     rimraf.sync(PATH_TO_TEST_COLLECTION_DIR);
 };
@@ -40,6 +42,13 @@ const cleanUp = () => {
     // Delete the test collection directory.
     deleteTestCollectionDir();
 };
+
+const exitWithError = () => {
+    cleanUp();
+
+    process.exit(1);
+};
+
 
 const extractUniqueProcessNames = (testGroups) => {
     return Array.from(testGroups.reduce((uniqueProcessNames, testGroup) => {
@@ -79,6 +88,9 @@ const runHttpServer = () => {
                     res.writeHead(404);
                     res.end(JSON.stringify(error));
                 } else {
+                    if (req.url.includes(".js")) {
+                        res.setHeader("Content-Type", "text/javascript");
+                    }
                     res.writeHead(200);
                     res.end(data);
                 }
@@ -89,7 +101,8 @@ const runHttpServer = () => {
 };
 
 const runConfigProcesses = async () => {
-    const uniqueProcessNames = extractUniqueProcessNames(config.run);
+    const runCollection = isRunningPuppetMode ? config.runPuppet : config.run;
+    const uniqueProcessNames = extractUniqueProcessNames(runCollection);
     const processDefinitions = mapProcessNamesToProcessDefinitions(config.processes, uniqueProcessNames);
 
     await Promise.all(processDefinitions.map((processDefinition) => {
@@ -120,17 +133,23 @@ const spawnKarmaServer = () => {
         cwd: karmaConfigPath,
         stdio: 'inherit'
     });
+
     validateChildProcessStarted(karma);
-    karma.on('exit', () => {
-        cleanUp();
+
+    karma.on('exit', (code) => {
+        if (code === 0) {
+            cleanUp();
+        } else {
+            exitWithError();
+        }
     });
+
     karma.on('error', () => {
         console.log('karma process error!');
 
-        cleanUp();
-
-        process.exit(1);
+        exitWithError();
     });
+
     return karma;
 };
 
@@ -161,7 +180,9 @@ const prepareTestCollection = async () => {
     }
     fs.mkdirSync(PATH_TO_TEST_COLLECTION_DIR);
 
-    const groupsWithNameAndTimesToRun = config.run.map(({ groupName, timesToRun }) => {
+    const runCollection = isRunningPuppetMode ? config.runPuppet : config.run;
+
+    const groupsWithNameAndTimesToRun = runCollection.map(({ groupName, timesToRun }) => {
         if (typeof groupName !== 'string') {
             throw new Error('Please provide groupName as a string!');
         }

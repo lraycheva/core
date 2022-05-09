@@ -1,5 +1,5 @@
 import { Glue42Web } from "../../../packages/web/web.d";
-import { Gtf } from "./types";
+import { Gtf } from "./gtf";
 
 export class GtfLogger implements Gtf.Logger {
     private readonly loggerMethodName = "G42Core.E2E.Logger";

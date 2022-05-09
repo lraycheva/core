@@ -80,7 +80,7 @@ export default class WS implements Transport {
     }
 
     public name(): string {
-        return `ws ${this.settings.ws}`;
+        return this.settings.ws as string;
     }
 
     public reconnect(): Promise<void> {
@@ -127,6 +127,10 @@ export default class WS implements Transport {
         this.startupTimer.mark("opening-socket");
         if (retryInterval === undefined) {
             retryInterval = this.settings.reconnectInterval;
+        }
+
+        if (typeof retriesLeft === "undefined") {
+            retriesLeft = this.settings.reconnectAttempts;
         }
 
         if (retriesLeft !== undefined) {

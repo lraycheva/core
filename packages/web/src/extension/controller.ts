@@ -28,7 +28,7 @@ export class ExtController implements LibController {
 
         this.logger = coreGlue.logger.subLogger("extension.controller.web");
         
-        this.windowId = (coreGlue as any).connection.transport.publicWindowId;
+        this.windowId = ioc.publicWindowId;
 
         this.logger.trace("starting the extension web controller");
 

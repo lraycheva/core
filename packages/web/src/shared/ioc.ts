@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { WebWindowModel } from "../windows/webWindow";
 import { LibController, LibDomains, ParsedConfig } from "./types";
 import { WindowsController } from "../windows/controller";
@@ -17,8 +18,12 @@ import { SystemController } from "../system/controller";
 import { Notification } from "../notifications/notification";
 import { ExtController } from "../extension/controller";
 import { EventsDispatcher } from "./dispatcher";
+import { PreferredConnectionController } from "../communication/preferred";
 
 export class IoC {
+    private readonly _communicationId!: string;
+    private _actualWindowId: string;
+    private _publicWindowId: string;
     private _webConfig!: ParsedConfig;
     private _windowsControllerInstance!: WindowsController;
     private _appManagerControllerInstance!: AppManagerController;
@@ -30,6 +35,7 @@ export class IoC {
     private _systemControllerInstance!: SystemController;
     private _bridgeInstance!: GlueBridge;
     private _eventsDispatcher!: EventsDispatcher;
+    private _preferredConnectionController!: PreferredConnectionController
 
     public controllers: { [key in LibDomains]: LibController } = {
         windows: this.windowsController,
@@ -42,7 +48,35 @@ export class IoC {
         extension: this.extensionController
     }
 
-    constructor(private readonly coreGlue: Glue42Core.GlueCore) { }
+    constructor(private readonly coreGlue: Glue42Core.GlueCore) {
+        this._publicWindowId = (coreGlue as any).connection.transport.publicWindowId;
+        this._actualWindowId = coreGlue.interop.instance.windowId as string;
+
+        // the communicationId will be available in the glue42core namespace if this client is an internal client to the platform
+        this._communicationId = (this.coreGlue as any).connection.transport.communicationId || (window as any).glue42core.communicationId;
+
+        if (!this._communicationId) {
+            throw new Error("Cannot configure the Glue Bridge, because no communication id was provided.");
+        }
+    }
+
+    public get communicationId(): string {
+        return this._communicationId;
+    }
+
+    public get publicWindowId(): string {
+        if (!this._publicWindowId) {
+            throw new Error("Accessing undefined public window id.");
+        }
+
+        return this._publicWindowId;
+    }
+
+    public get actualWindowId(): string {
+        // the non-workspaces iframes are not considered "GDWindows", so they do not have an actual window id
+        // they present themselves with the windowId of their parent.
+        return this._actualWindowId;
+    }
 
     public get windowsController(): WindowsController {
         if (!this._windowsControllerInstance) {
@@ -118,12 +152,20 @@ export class IoC {
 
     public get bridge(): GlueBridge {
         if (!this._bridgeInstance) {
-            this._bridgeInstance = new GlueBridge(this.coreGlue);
+            this._bridgeInstance = new GlueBridge(this.coreGlue, this.communicationId);
         }
 
         return this._bridgeInstance;
     }
-    
+
+    public get preferredConnectionController(): PreferredConnectionController {
+        if (!this._preferredConnectionController) {
+            this._preferredConnectionController = new PreferredConnectionController(this.coreGlue);
+        }
+
+        return this._preferredConnectionController;
+    }
+
     public get config(): ParsedConfig {
         return this._webConfig;
     }

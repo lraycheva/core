@@ -1,5 +1,5 @@
 import { Glue42Web } from "../../../packages/web/web";
-import { Gtf, ControlArgs, SubscriptionFacade, StreamFacade } from "./types";
+import { Gtf, ControlArgs, SubscriptionFacade, StreamFacade } from "./gtf";
 
 export class GtfApp implements Gtf.App {
     private registerResponseCounter = 0;

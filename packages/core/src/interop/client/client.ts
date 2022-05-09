@@ -527,6 +527,7 @@ export default class Client {
         const filterProps = Object.keys(filter)
             .filter((prop) => {
                 return filter[prop] !== undefined
+                    && filter[prop] !== null
                     && typeof filter[prop] !== "function"
                     && prop !== "object_types"
                     && prop !== "display_name"

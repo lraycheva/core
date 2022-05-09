@@ -22,9 +22,11 @@ import { ServiceWorkerController } from "../controllers/serviceWorker";
 import { NotificationsController } from "../libs/notifications/controller";
 import { ExtensionController } from "../libs/extension/controller";
 import { AsyncSequelizer } from "./sequelizer";
+import { PreferredConnectionController } from "../connection/preferred";
 import { Glue42CoreDB } from "../common/types";
 import { IDBPDatabase, openDB } from "idb";
 import { dbName, dbVersion } from "../common/constants";
+import { TransactionsController } from "../controllers/transactions";
 
 export class IoC {
     private _gatewayInstance!: Gateway;
@@ -49,7 +51,9 @@ export class IoC {
     private _systemController!: SystemController;
     private _idbStore!: IdbLayoutsStore;
     private _serviceWorkerController!: ServiceWorkerController;
+    private _preferredConnectionController!: PreferredConnectionController;
     private _database!: IDBPDatabase<Glue42CoreDB> | undefined;
+    private _transactionsController!: TransactionsController;
     
     constructor(private readonly config?: Glue42WebPlatform.Config) { }
 
@@ -63,7 +67,7 @@ export class IoC {
 
     public get platform(): Platform {
         if (!this._platformInstance) {
-            this._platformInstance = new Platform(this.controller, this.config);
+            this._platformInstance = new Platform(this.controller, this.sessionController, this.config);
         }
 
         return this._platformInstance;
@@ -84,7 +88,8 @@ export class IoC {
                 this.portsBridge,
                 this.stateController,
                 this.serviceWorkerController,
-                this.extensionController
+                this.extensionController,
+                this.preferredConnectionController
             );
         }
 
@@ -276,6 +281,14 @@ export class IoC {
 
         return this._serviceWorkerController;
     }
+
+    public get transactionsController(): TransactionsController {
+        if (!this._transactionsController) {
+            this._transactionsController = new TransactionsController();
+        }
+
+        return this._transactionsController;
+    }
     
     public getDatabase(): Promise<IDBPDatabase<Glue42CoreDB>> {
         if (this._database) {
@@ -290,6 +303,14 @@ export class IoC {
                     resolve(this._database);
                 });
         });
+    }
+
+    public get preferredConnectionController(): PreferredConnectionController {
+        if (!this._preferredConnectionController) {
+            this._preferredConnectionController = new PreferredConnectionController(this.glueController, this.portsBridge, this.createSequelizer());
+        }
+
+        return this._preferredConnectionController;
     }
 
     public createMessageChannel(): MessageChannel {

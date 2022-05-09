@@ -7,6 +7,9 @@ import { version } from "../package.json";
 import { PlatformController } from "./controllers/main";
 import { Glue42Web } from "@glue42/web";
 import { InternalPlatformConfig } from "./common/types";
+import { generate } from "shortid";
+import { SessionStorageController } from "./controllers/session";
+import { UnsubscribeFunction } from "callback-registry";
 
 export class Platform {
 
@@ -14,6 +17,7 @@ export class Platform {
 
     constructor(
         private readonly controller: PlatformController,
+        private readonly session: SessionStorageController,
         config?: Glue42WebPlatform.Config,
     ) {
         this.checkSingleton();
@@ -33,6 +37,9 @@ export class Platform {
             version: this.version,
             connectExtClient: (client: any, port: any) => {
                 return this.controller.connectExtClient(client, port);
+            },
+            onSystemReconnect: (callback: () => void): UnsubscribeFunction => {
+                return this.controller.onSystemReconnect(callback);
             }
         } as Glue42WebPlatform.API;
     }
@@ -56,6 +63,20 @@ export class Platform {
 
         this.platformConfig = deepMerge<InternalPlatformConfig>(defaultPlatformConfig, verifiedConfig as any);
 
+        let systemSettings = this.session.getSystemSettings();
+
+        if (!systemSettings) {
+            systemSettings = {
+                communicationId: generate()
+            };
+        }
+
+        this.session.saveSystemSettings(systemSettings);
+
+        this.platformConfig.workspacesFrameCache = typeof config.workspaces?.frameCache === "boolean" ? config.workspaces?.frameCache : true;
+
+        this.platformConfig.communicationId = systemSettings.communicationId;
+
         // deep merge deletes the promise object when merging, probably due to some cyclical references 
         this.transferPromiseObjects(verifiedConfig);
 
@@ -63,7 +84,8 @@ export class Platform {
             platformStarted: true,
             isPlatformFrame: !!config?.workspaces?.isFrame,
             environment: Object.assign({}, this.platformConfig.environment, { extension: undefined }),
-            workspacesFrameCache: typeof config.workspaces?.frameCache === "boolean" ? config.workspaces?.frameCache : true
+            workspacesFrameCache: this.platformConfig.workspacesFrameCache,
+            communicationId: this.platformConfig.communicationId
         };
 
         (window as any).glue42core = glue42core;

@@ -1,5 +1,5 @@
 import { Glue42Web } from "../../../packages/web/web.d";
-import { Gtf } from "./types";
+import { Gtf } from "./gtf";
 
 export class GtfIntents implements Gtf.Intents {
     private intentsMethodPrefix = "Tick42.FDC3.Intents.";

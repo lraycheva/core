@@ -29,7 +29,7 @@ export const glueWebPlatformFactory: Glue42WebPlatformFactoryFunction = async (c
 
     await ioc.platform.ready();
 
-    const glue = await ioc.platform.getClientGlue();
+    const glue = ioc.platform.getClientGlue();
 
     return { glue, platform: ioc?.platform.exposeAPI() };
 };

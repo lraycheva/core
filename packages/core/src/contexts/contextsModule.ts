@@ -9,6 +9,8 @@ import { ContextName, ContextSubscriptionKey } from "./bridges/types";
 export interface ContextsConfig {
     connection: Connection;
     logger: Logger;
+    trackAllContexts?: boolean;
+    reAnnounceKnownContexts?: boolean;
 }
 
 export class ContextsModule implements Glue42Core.Contexts.API {

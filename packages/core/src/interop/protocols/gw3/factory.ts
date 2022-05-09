@@ -21,17 +21,24 @@ export default function (instance: Glue42Core.AGM.Instance, connection: Connecti
     const server = new ServerProtocol(session, clientRepository, serverRepository, logger.subLogger("server"));
     const client = new ClientProtocol(session, clientRepository, logger.subLogger("client"));
 
-    function handleReconnect() {
+    async function handleReconnect(): Promise<void> {
         // we're reconnecting
         logger.info("reconnected - will replay registered methods and subscriptions");
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const reconnectionPromises: Array<Promise<any>> = [];
 
         const existingSubscriptions = client.drainSubscriptions();
         for (const sub of existingSubscriptions) {
             const methodInfo = sub.method;
             const params = Object.assign({}, sub.params);
             // remove handlers, otherwise they will be added twice
-            logger.info(`trying to re-subscribe to method ${methodInfo.name}`);
-            interop.client.subscribe(methodInfo, params, undefined, undefined, sub);
+            logger.info(`trying to re-subscribe to method ${methodInfo.name}, with params: ${JSON.stringify(params)}`);
+
+            reconnectionPromises.push(
+                interop.client.subscribe(methodInfo, params, undefined, undefined, sub).then(() => logger.info(`subscribing to method ${methodInfo.name} DONE`))
+            );
+
         }
 
         // server side
@@ -42,15 +49,28 @@ export default function (instance: Glue42Core.AGM.Instance, connection: Connecti
         for (const method of registeredMethods) {
             const def = method.definition;
             logger.info(`re-publishing method ${def.name}`);
+
             if (method.stream) {
                 // streaming method
-                interop.server.createStream(def, method.streamCallbacks, undefined, undefined, method.stream);
+                reconnectionPromises.push(
+                    interop.server.createStream(def, method.streamCallbacks, undefined, undefined, method.stream).then(() => logger.info(`subscribing to method ${def.name} DONE`))
+                );
             } else if (method.theFunction && method.theFunction.userCallback) {
-                interop.register(def, method.theFunction.userCallback);
+                reconnectionPromises.push(
+                    interop.register(def, method.theFunction.userCallback).then(() => logger.info(`subscribing to method ${def.name} DONE`))
+                );
             } else if (method.theFunction && method.theFunction.userCallbackAsync) {
-                interop.registerAsync(def, method.theFunction.userCallbackAsync);
+                reconnectionPromises.push(
+                    interop.registerAsync(def, method.theFunction.userCallbackAsync).then(() => logger.info(`subscribing to method ${def.name} DONE`))
+                );
             }
+
+            logger.info(`re-publishing method ${def.name} DONE`);
         }
+
+        await Promise.all(reconnectionPromises);
+
+        logger.info("Interop is re-announced");
     }
 
     function handleInitialJoin() {
@@ -69,7 +89,7 @@ export default function (instance: Glue42Core.AGM.Instance, connection: Connecti
         clientRepository.addServer(instance, connection.peerId);
 
         if (reconnect) {
-            handleReconnect();
+            handleReconnect().then(() => connection.setLibReAnnounced({ name: "interop" })).catch((error) => logger.warn(`Error while re-announcing interop: ${JSON.stringify(error)}`));
         } else {
             handleInitialJoin();
         }

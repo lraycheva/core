@@ -354,12 +354,10 @@ describe("lock()", () => {
             const childrenOfChildren = column.children.reduce((acc, c) => [...acc, ...c.children], []);
 
             immediateChildren.filter((ic) => ic.type === "row" || ic.type === "column").forEach((ic) => {
-                console.log(ic.type);
                 expect(ic.allowSplitters).to.eql(false);
             });
 
             childrenOfChildren.filter((ic) => ic.type === "row" || ic.type === "column").forEach((coc) => {
-                console.log(coc.type);
                 expect(coc.allowSplitters).to.eql(false);
             });
         });

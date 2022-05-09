@@ -63,7 +63,6 @@ export class WebWindowModel {
 
     private async getURL(): Promise<string> {
         const result = await this._bridge.send<SimpleWindowCommand, WindowUrlResult>("windows", operations.getUrl, { windowId: this.id });
-
         return result.url;
     }
 

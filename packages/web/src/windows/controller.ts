@@ -30,8 +30,8 @@ export class WindowsController implements LibController {
 
         this.logger.trace("starting the web windows controller");
 
-        this.publicWindowId = (coreGlue as any).connection.transport.publicWindowId;
-        this.actualWindowId = coreGlue.interop.instance.windowId;
+        this.publicWindowId = ioc.publicWindowId;
+        this.actualWindowId = ioc.actualWindowId;
 
         this.addWindowOperationExecutors();
 

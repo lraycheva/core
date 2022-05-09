@@ -238,8 +238,8 @@ export default class ClientRepository {
 
     private createMethodIdentifier(methodInfo: MethodInfoMessage) {
         // Setting properties to defaults:
-        const accepts = methodInfo.input_signature !== undefined ? methodInfo.input_signature : "";
-        const returns = methodInfo.result_signature !== undefined ? methodInfo.result_signature : "";
+        const accepts = methodInfo.input_signature ?? "";
+        const returns = methodInfo.result_signature ?? "";
         return (methodInfo.name + accepts + returns).toLowerCase();
     }
 

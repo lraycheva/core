@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import GlueCore, { Glue42Core } from "@glue42/core";
 import GlueWeb, { Glue42Web, Glue42WebFactoryFunction } from "@glue42/web";
-import { GlueClientControlName, GlueWebPlatformControlName, GlueWebPlatformStreamName, GlueWebPlatformWorkspacesStreamName, GlueWorkspaceFrameClientControlName } from "../common/constants";
+import { GlueClientControlName, GlueWebPlatformControlName, GlueWebPlatformStreamName, GlueWebPlatformWorkspacesStreamName, GlueWorkspaceFrameClientControlName, GlueWorkspacesEventsReceiverName } from "../common/constants";
 import { BridgeOperation, ControlMessage, InternalPlatformConfig, LibDomains } from "../common/types";
 import { PortsBridge } from "../connection/portsBridge";
 import { generate } from "shortid";
@@ -13,7 +13,9 @@ import { UnsubscribeFunction } from "callback-registry";
 import { FrameSessionData } from "../libs/workspaces/types";
 
 export class GlueController {
+    private _config!: InternalPlatformConfig;
     private _systemGlue!: Glue42Core.GlueCore;
+    private _contextsTrackingGlue: Glue42Core.GlueCore | undefined;
     private _clientGlue!: Glue42Web.API;
     private _systemStream: Glue42Core.Interop.Stream | undefined;
     private _workspacesStream: Glue42Core.Interop.Stream | undefined;
@@ -33,8 +35,21 @@ export class GlueController {
     }
 
     public async start(config: InternalPlatformConfig): Promise<void> {
+        this._config = config;
         this._systemGlue = await this.initSystemGlue(config.glue);
+
         logger.setLogger(this._systemGlue.logger);
+
+        this._contextsTrackingGlue = await this.setUpCtxTracking(config);
+    }
+
+    private async setUpCtxTracking(config: InternalPlatformConfig): Promise<Glue42Core.GlueCore | undefined> {
+        if (this._config.connection.preferred) {
+            return await this.initContextsTrackingGlue({
+                reAnnounceKnownContexts: true,
+                trackAllContexts: true
+            }, config);
+        }
     }
 
     public async initClientGlue(config?: Glue42Web.Config, factory?: Glue42WebFactoryFunction, isWorkspaceFrame?: boolean): Promise<Glue42Web.API> {
@@ -45,8 +60,8 @@ export class GlueController {
         const webConfig = {
             application: "Platform",
             gateway: { webPlatform: { port, windowId: this.platformWindowId } }
-        };
-
+        } as Glue42Web.Config;
+        
         const c = Object.assign({}, config, webConfig);
 
         this._clientGlue = factory ? await factory(c) : await GlueWeb(c) as any;
@@ -55,19 +70,19 @@ export class GlueController {
     }
 
     public async createPlatformSystemMethod(handler: (args: ControlMessage, caller: Glue42Web.Interop.Instance, success: (args?: ControlMessage) => void, error: (error?: string | object) => void) => void): Promise<void> {
-        await this.createMethodAsync(GlueWebPlatformControlName, handler);
+        await this.createMethodAsync(this.decorateCommunicationId(GlueWebPlatformControlName), handler);
     }
 
     public async createPlatformSystemStream(): Promise<void> {
-        this._systemStream = await this.createStream(GlueWebPlatformStreamName);
+        this._systemStream = await this.createStream(this.decorateCommunicationId(GlueWebPlatformStreamName));
     }
 
     public async createWorkspacesStream(): Promise<void> {
-        this._workspacesStream = await this.createStream(GlueWebPlatformWorkspacesStreamName);
+        this._workspacesStream = await this.createStream(this.decorateCommunicationId(GlueWebPlatformWorkspacesStreamName));
     }
 
     public async createWorkspacesEventsReceiver(callback: (data: any) => void): Promise<void> {
-        await this._systemGlue.interop.register("T42.Workspaces.Events", (args) => callback(args));
+        await this._systemGlue.interop.register(this.decorateCommunicationId(GlueWorkspacesEventsReceiverName), (args) => callback(args));
     }
 
     public pushSystemMessage(domain: LibDomains, operation: string, data: any): void {
@@ -99,7 +114,7 @@ export class GlueController {
             }
         }
 
-        const result = await this.transmitMessage<InBound>(GlueWorkspaceFrameClientControlName, messageData, baseErrorMessage, { windowId }, { methodResponseTimeoutMs: 30000, waitTimeoutMs: 30000 });
+        const result = await this.transmitMessage<InBound>(this.decorateCommunicationId(GlueWorkspaceFrameClientControlName), messageData, baseErrorMessage, { windowId }, { methodResponseTimeoutMs: 30000, waitTimeoutMs: 30000 });
 
         if (operationDefinition.resultDecoder) {
             const decodeResult = operationDefinition.resultDecoder.run(result);
@@ -128,7 +143,7 @@ export class GlueController {
             }
         }
 
-        const result = await this.transmitMessage<InBound>(GlueClientControlName, messageData, baseErrorMessage, { windowId }, { methodResponseTimeoutMs: 30000, waitTimeoutMs: 30000 });
+        const result = await this.transmitMessage<InBound>(this.decorateCommunicationId(GlueClientControlName), messageData, baseErrorMessage, { windowId }, { methodResponseTimeoutMs: 30000, waitTimeoutMs: 30000 });
 
         if (operationDefinition.resultDecoder) {
             const decodeResult = operationDefinition.resultDecoder.run(result);
@@ -181,21 +196,58 @@ export class GlueController {
         return this._clientGlue.interop.invoke(method, argumentObj, target, options, success, error);
     }
 
+    public setContext(name: string, data: any): Promise<void> {
+        return this._systemGlue.contexts.set(name, data);
+    }
+
+    public switchTransport(config: Glue42Core.Connection.TransportSwitchSettings, target: "client" | "system" | "contextsTrack"): Promise<{ success: boolean }> {
+
+        if (target === "contextsTrack") {
+            return this._contextsTrackingGlue ?
+                this._contextsTrackingGlue.connection.switchTransport(config) :
+                Promise.resolve({ success: true });
+        }
+
+        const glueToSwitch = target === "system" ? this._systemGlue : this._clientGlue;
+
+        return glueToSwitch.connection.switchTransport(config);
+    }
+
+    public onDisconnected(callback: () => void): UnsubscribeFunction {
+        return this._systemGlue.connection.disconnected(callback);
+    }
+
+    public getSystemGlueTransportName(): string {
+        return (this._systemGlue as any).connection.transport.name();
+    }
+
     private async initSystemGlue(config?: Glue42Web.Config): Promise<Glue42Core.GlueCore> {
 
         const port = await this.portsBridge.createInternalClient();
 
-        const logLevel = config?.systemLogger?.level ?? "info";
+        const logLevel = config?.systemLogger?.level ?? "warn";
 
         return await GlueCore({
-            application: "Platform",
+            application: "Platform-System",
             gateway: { webPlatform: { port } },
-            logger: logLevel
+            logger: logLevel,
+            contexts: {
+                reAnnounceKnownContexts: false,
+                trackAllContexts: false
+            }
         });
     }
 
-    public setContext(name: string, data: any): Promise<void> {
-        return this._systemGlue.contexts.set(name, data);
+    private async initContextsTrackingGlue(contextsSettings: Glue42Core.ContextsConfig, config: InternalPlatformConfig): Promise<Glue42Core.GlueCore> {
+
+        const port = await this.portsBridge.createInternalClient();
+
+        return await GlueCore({
+            application: "Platform-Contexts-Track",
+            gateway: { webPlatform: { port } },
+            logger: config?.glue?.systemLogger?.level ?? "warn",
+            contexts: contextsSettings
+        });
     }
 
     private registerClientWindow(isWorkspaceFrame?: boolean): void {
@@ -244,7 +296,7 @@ export class GlueController {
             if (!Array.isArray(invocationResult.all_return_values) || invocationResult.all_return_values.length === 0) {
                 throw new Error(`${baseErrorMessage} Received unsupported result from the client - empty values collection`);
             }
-        } catch (error) {
+        } catch (error: any) {
             if (error && error.all_errors && error.all_errors.length) {
                 // IMPORTANT: Do NOT change the `Inner message:` string, because it is used by other programs to extract the inner message of a communication error
                 const invocationErrorMessage = error.all_errors[0].message;
@@ -256,5 +308,9 @@ export class GlueController {
         }
 
         return invocationResult.all_return_values[0].returned;
+    }
+
+    private decorateCommunicationId(base: string): string {
+        return `${base}.${this._config.communicationId}`;
     }
 }

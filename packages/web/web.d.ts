@@ -89,6 +89,9 @@ export namespace Glue42Web {
          */
         notifications?: Notifications.Settings;
 
+        /** Enable, disable and configure the Contexts API. Enabled by default */
+        contexts?: Glue42Core.ContextsConfig;
+
         /**
          * A list of glue libraries which will be initiated internally and provide access to specific functionalities
          */

@@ -4,6 +4,7 @@ import { Glue42Web } from "@glue42/web";
 import { Decoder } from "decoder-validate";
 import { Glue42WebPlatform } from "../../platform";
 import { DBSchema } from "idb";
+import { Glue42Core } from "@glue42/core";
 
 export type Glue42API = Glue42.Glue;
 export type Glue42Config = Glue42.Config;
@@ -62,7 +63,10 @@ export interface InternalPlatformConfig {
     };
     serviceWorker?: Glue42WebPlatform.ServiceWorker.Config;
     workspaces?: Glue42WebPlatform.Workspaces.Config;
+    connection: Glue42WebPlatform.Connection.Config;
     environment: any;
+    workspacesFrameCache: boolean;
+    communicationId: string;
 }
 
 export interface CoreClientData {
@@ -120,4 +124,32 @@ export type SystemOperationTypes = "getEnvironment" | "getBase";
 
 export interface ControlMessage extends Glue42WebPlatform.Plugins.ControlMessage {
     commandId?: string;
+}
+
+export interface ClientTransportSwitchLock {
+    promise: Promise<void>;
+    lift: (value: void | PromiseLike<void>) => void;
+    fail: (reason?: any) => void;
+}
+
+export interface Transaction<T> {
+    id: string;
+    lock: Promise<T>;
+    lift: (value: T) => void;
+    fail: (reason?: any) => void;
+}
+
+export interface TransportState extends Glue42Core.Connection.TransportSwitchSettings {
+    transportName: string;
+}
+
+export interface ClientPortRequest {
+    type: string; 
+    clientId: string;
+    timeout?: number;
+    args?: any;
+}
+
+export interface SessionSystemSettings {
+    communicationId: string;
 }

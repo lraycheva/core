@@ -1,5 +1,5 @@
 import { Glue42Web } from "../../../packages/web/web";
-import { Gtf } from "./types";
+import { Gtf } from "./gtf";
 import { promisePlus } from "./utils";
 
 export class GtfAgm implements Gtf.Agm {
@@ -47,7 +47,7 @@ export class GtfAgm implements Gtf.Agm {
     public async unregisterAllMyNonSystemMethods(): Promise<void> {
         const allMethods = this.glue.interop.methods().filter((method) => !method.supportsStreaming);
         const allMyMethods = allMethods.filter((method) => method.getServers().some((server) => server.instance === this.glue.interop.instance.instance));
-        const allMyNonSystemMethods = allMyMethods.filter((method) => !this.systemMethodNames.includes(method.name));
+        const allMyNonSystemMethods = allMyMethods.filter((method) => this.systemMethodNames.every((systemMethodName) => !method.name.includes(systemMethodName)));
 
         const unregisterPromises = allMyNonSystemMethods.map((method) => {
             const unregisterPromise = this.waitForMethodRemoved(method);

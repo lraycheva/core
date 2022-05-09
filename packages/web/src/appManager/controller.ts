@@ -33,8 +33,8 @@ export class AppManagerController implements LibController {
 
         this.logger.trace("starting the web appManager controller");
 
-        this.publicWindowId = (coreGlue as any).connection.transport.publicWindowId;
-        this.actualWindowId = coreGlue.interop.instance.windowId;
+        this.publicWindowId = ioc.publicWindowId;
+        this.actualWindowId = ioc.actualWindowId;
 
         this.addOperationsExecutors();
 

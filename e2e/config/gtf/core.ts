@@ -1,16 +1,38 @@
 import { Glue42Web } from "../../../packages/web/web.d";
 import { GtfApp } from "./app";
-import { CancellablePromise, Gtf } from "./types";
+import { CancellablePromise, Gtf } from "./gtf";
 import { Glue42WebPlatform } from "../../../packages/web-platform/platform.d";
 import { channelsConfig, remoteStoreConfig } from "./config";
 
 export class GtfCore implements Gtf.Core {
     private readonly controlMethodName = "G42Core.E2E.Control";
     private windowNameCounter = 0;
+    private counter = 0;
     private activeWindowHooks: (() => void | Promise<void>)[] = [];
 
-    constructor(private readonly glue: Glue42Web.API) {
+    constructor(private readonly glue?: Glue42Web.API) {
         console.log("GTF CREATED");
+    }
+
+    public wrapPromise(): { promise: Promise<void>; resolve: () => void, reject: (reason?: any) => void } {
+        let wrapperResolve;
+        let wrapperReject;
+
+        const promise = new Promise<void>((resolve, reject) => {
+            wrapperResolve = resolve;
+            wrapperReject = reject;
+        });
+
+        return { promise, resolve: wrapperResolve, reject: wrapperReject };
+    }
+
+    public simpleWait(milliseconds: number): Promise<void> {
+        return new Promise<void>((resolve) => setTimeout(resolve, milliseconds));
+    }
+
+    public getName(): string {
+        this.counter++;
+        return `core.e2e.name.${Date.now()}.${this.counter}`;
     }
 
     public addWindowHook(hook: () => void | Promise<void>): void {
@@ -37,7 +59,7 @@ export class GtfCore implements Gtf.Core {
             fakePromiseResolve = res;
         });
 
-        const promise = new Promise((res, rej) => {
+        const promise = new Promise<void>((res, rej) => {
             setTimeout(() => {
                 if (isCancelled) {
                     return;
@@ -109,6 +131,11 @@ export class GtfCore implements Gtf.Core {
     }
 
     public async createApp(appName = "coreSupport"): Promise<Gtf.App> {
+
+        if (!this.glue) {
+            throw new Error("GTF cannot create an app, because it is running in Puppet mode, please use the gtf.puppet API");
+        }
+
         const foundApp = this.glue.appManager.application(appName);
 
         if (!foundApp) {

@@ -299,6 +299,26 @@ export const workspacesConfigDecoder: Decoder<Glue42WebPlatform.Workspaces.Confi
     frameCache: optional(boolean())
 });
 
+export const preferredConnectionSettingsDecoder: Decoder<Glue42WebPlatform.Connection.PreferredConnectionSettings> = object({
+    url: nonEmptyStringDecoder,
+    auth: optional(object({
+        username: optional(nonEmptyStringDecoder),
+        password: optional(nonEmptyStringDecoder),
+        sessionId: optional(nonEmptyStringDecoder),
+        provider: optional(nonEmptyStringDecoder),
+        token: optional(nonEmptyStringDecoder),
+        gatewayToken: optional(nonEmptyStringDecoder),
+        flowName: optional(constant<"sspi">("sspi")),
+        flowCallback: optional(anyJson().andThen((result) => functionCheck(result, "flowCallback function")))
+    })),
+    forceIncompleteSwitch: optional(boolean()),
+    discoveryIntervalMS: optional(nonNegativeNumberDecoder)
+});
+
+export const connectionConfigDecoder: Decoder<Glue42WebPlatform.Connection.Config> = object({
+    preferred: optional(preferredConnectionSettingsDecoder)
+});
+
 export const windowsConfigDecoder: Decoder<Glue42WebPlatform.Windows.Config> = object({
     windowResponseTimeoutMs: optional(nonNegativeNumberDecoder),
     defaultWindowOpenBounds: optional(object({
@@ -322,6 +342,7 @@ export const platformConfigDecoder: Decoder<Glue42WebPlatform.Config> = object({
     plugins: optional(pluginsConfigDecoder),
     serviceWorker: optional(serviceWorkerConfigDecoder),
     gateway: optional(gatewayConfigDecoder),
+    connection: optional(connectionConfigDecoder),
     glue: optional(glueConfigDecoder),
     workspaces: optional(workspacesConfigDecoder),
     environment: optional(anyJson()),

@@ -7,6 +7,7 @@ import { IoC } from "./ioc";
 
 export interface ParsedConfig extends Glue42Web.Config {
     logger: any;
+    isPlatformInternal: boolean;
     libraries: Array<(glue: Glue42Web.API, config?: Glue42Web.Config | Glue42.Config) => Promise<void>>;
 }
 
@@ -22,4 +23,19 @@ export interface BridgeOperation {
     dataDecoder?: Decoder<any>;
     resultDecoder?: Decoder<any>;
     execute?: (args: any) => Promise<any>;
+}
+
+export type PlatformMessages = "transportSwitchRequest" | "transportSwitchResponse" | "getCurrentTransport" |
+    "platformUnload" | "getCurrentTransportResponse" | "checkPreferredLogic" | "checkPreferredConnection" |
+    "checkPreferredLogicResponse" | "checkPreferredConnectionResponse";
+
+export interface Transaction<T> {
+    id: string;
+    lock: Promise<T>;
+    lift: (value: T) => void;
+    fail: (reason?: any) => void;
+}
+
+export interface TransportState extends Glue42Core.Connection.TransportSwitchSettings {
+    transportName: string;
 }

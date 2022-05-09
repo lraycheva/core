@@ -1,5 +1,5 @@
 import { Glue42Web } from "../../../packages/web/web";
-import { Gtf } from "./types";
+import { Gtf } from "./gtf";
 
 export class GtfWindows implements Gtf.Windows {
     private counter = 0;

@@ -1,5 +1,5 @@
 import { Glue42Web } from "../../../packages/web/web.d";
-import { Gtf } from "./types";
+import { Gtf } from "./gtf";
 
 export class GtfChannels implements Gtf.Channels {
     constructor(private readonly glue: Glue42Web.API) {

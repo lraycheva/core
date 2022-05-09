@@ -6,7 +6,7 @@
 
 import { Glue42WebPlatform } from "../../platform";
 import "@glue42/gateway-web/web/gateway-web.js";
-import { GatewayWebAPI, configure_logging, create } from "@glue42/gateway-web/web/gateway-web.js";
+import { GatewayWebAPI, configure_logging, create, GwClient } from "@glue42/gateway-web/web/gateway-web.js";
 import { Glue42CoreMessageTypes } from "../common/constants";
 
 export class Gateway {
@@ -32,30 +32,11 @@ export class Gateway {
         await this._gatewayWebInstance.start();
     }
 
-    public async connectClient(clientPort: MessagePort, removeFromPlatform?: (clientId: string) => void): Promise<void> {
+    public async connectClient(clientPort: MessagePort, removeFromPlatform?: (clientId: string, announce?: boolean, preservePort?: boolean) => void): Promise<GwClient> {
 
         const client = await this._gatewayWebInstance.connect((_: object, message: string) => clientPort.postMessage(message));
 
-        clientPort.onmessage = (event): void => {
-            const data = event.data?.glue42core;
-
-            if ((clientPort as any).closed) {
-                return;
-            }
-
-            if (data && data.type === Glue42CoreMessageTypes.clientUnload.name) {
-
-                (clientPort as any).closed = true;
-
-                if (removeFromPlatform) {
-                    removeFromPlatform(data.data.clientId);
-                }
-                client.disconnect();
-                return;
-            }
-
-            client.send(event.data);
-        };
+        return client;
     }
 
     public async connectExtClient(port: chrome.runtime.Port, removeFromPlatform?: (clientId: string, announce?: boolean) => void): Promise<void> {
@@ -88,5 +69,60 @@ export class Gateway {
             }
 
         });
+    }
+
+    public async setupInternalClient(clientPort: MessagePort): Promise<void> {
+
+        let client: GwClient | undefined;
+
+        clientPort.onmessage = async (event): Promise<void> => {
+            const data = event.data?.glue42core;
+
+            if (data && data.type === Glue42CoreMessageTypes.gatewayInternalConnect.name) {
+                client = await this.handleInternalGatewayConnectionRequest(clientPort);
+                return;
+            }
+
+            if (!client || (clientPort as any).closed) {
+                return;
+            }
+
+            if (data && data.type === Glue42CoreMessageTypes.gatewayDisconnect.name) {
+
+                (clientPort as any).closed = true;
+
+                client?.disconnect();
+                return;
+            }
+
+            client?.send(event.data);
+        };
+    }
+
+    private async handleInternalGatewayConnectionRequest(clientPort: MessagePort): Promise<GwClient | undefined> {
+        (clientPort as any).closed = false;
+
+        try {
+            const client = await this._gatewayWebInstance.connect((_: object, message: string) => clientPort.postMessage(message));
+
+            clientPort.postMessage({
+                glue42core: {
+                    type: Glue42CoreMessageTypes.gatewayInternalConnect.name,
+                    success: true
+                }
+            });
+
+            return client;
+        } catch (err: any) {
+            const stringError = typeof err === "string" ? err : JSON.stringify(err.message);
+
+            clientPort.postMessage({
+                glue42core: {
+                    type: Glue42CoreMessageTypes.gatewayInternalConnect.name,
+                    error: stringError
+                }
+            });
+            return;
+        }
     }
 }

@@ -193,7 +193,9 @@ const GlueCore = (userConfig?: Glue42Core.Config, ext?: Glue42Core.Extension): P
 
             _contexts = new ContextsModule({
                 connection: _connection,
-                logger: _logger.subLogger("contexts")
+                logger: _logger.subLogger("contexts"),
+                trackAllContexts: typeof internalConfig.contexts === "object" ? internalConfig.contexts.trackAllContexts : false,
+                reAnnounceKnownContexts: typeof internalConfig.contexts === "object" ? internalConfig.contexts.reAnnounceKnownContexts : false
             });
             registerLib("contexts", _contexts, initTimer);
             return _contexts;

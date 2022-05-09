@@ -27,8 +27,8 @@ export namespace Glue42Core {
         /** Metrics configurations. */
         metrics?: boolean | MetricsConfig;
 
-        /** Enable or disable the Contexts API. */
-        contexts?: boolean;
+        /** Enable, disable and configure the Contexts API. */
+        contexts?: boolean | ContextsConfig;
 
         /** Enable or disable the Pub/Sub API. */
         bus?: boolean;
@@ -128,6 +128,15 @@ export namespace Glue42Core {
         pagePerformanceMetrics?: PagePerformanceMetricsConfig;
     }
 
+    /** Contexts configurations. */
+    export interface ContextsConfig {
+        /** Subscribes to all known contexts, which allows glue to re-announce as many contexts as possible when a gateway reconnection happens */
+        trackAllContexts?: boolean;
+
+        /** Enables or disables re-announcing known contexts when a gateway reconnection happens */
+        reAnnounceKnownContexts?: boolean;
+    }
+
     export interface PagePerformanceMetricsConfig {
         enabled: boolean;
         initialPublishTimeout: number;
@@ -182,6 +191,9 @@ export namespace Glue42Core {
          * Authenticate using gatewayToken
          */
         gatewayToken?: string;
+
+        /** GW auth provider to be used */
+        provider?: string;
     }
 
     /**
@@ -1064,6 +1076,15 @@ export namespace Glue42Core {
             authToken(): Promise<string>;
 
             reconnect(): Promise<void>;
+
+            /** @ignore */
+            switchTransport(settings: TransportSwitchSettings): Promise<{ success: boolean }>;
+
+            /** @ignore */
+            onLibReAnnounced(callback: (lib: { name: "interop" | "contexts" }) => void): UnsubscribeFunction;
+
+            /** @ignore */
+            setLibReAnnounced(lib: { name: "interop" | "contexts" }): void;
         }
         /**
          * GW3 domain session
@@ -1110,6 +1131,15 @@ export namespace Glue42Core {
             loggedIn(callback: (() => void)): void;
             connected(callback: (server: string) => void): void;
             disconnected(callback: () => void): void;
+        }
+
+        /** @ignore */
+        export interface TransportSwitchSettings {
+            type: "default" | "secondary";
+            transportConfig?: {
+                auth: Glue42Core.Auth;
+                url: string;
+            };
         }
 
         /** @ignore */

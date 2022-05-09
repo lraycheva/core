@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-empty-function */
 import { Transport } from "../types";
 import {
     default as CallbackRegistryFactory,
@@ -61,6 +62,8 @@ export default class SharedWorkerTransport implements Transport {
 
     public onConnectedChanged(callback: (connected: boolean) => void) {
         callback(true);
+        // tslint:disable-next-line:no-empty
+        return (): void => {};
     }
 
     public close() {

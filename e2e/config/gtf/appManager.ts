@@ -1,7 +1,7 @@
 import { Glue42WebPlatform } from "../../../packages/web-platform/platform";
 import { Glue42Web } from "../../../packages/web/web.d";
 import { localApplicationsConfig } from "./config";
-import { Gtf } from "./types";
+import { Gtf } from "./gtf";
 
 export class GtfAppManager implements Gtf.AppManager {
     constructor(private readonly glue: Glue42Web.API) {

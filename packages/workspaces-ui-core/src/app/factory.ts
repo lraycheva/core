@@ -116,7 +116,7 @@ export class ApplicationFactory {
     }
 
     public notifyFrameWillClose(windowId: string, appName?: string): Promise<any> {
-        return this._glue.interop.invoke(PlatformControlMethod, {
+        return this._glue.interop.invoke(this.decorateCommunicationId(PlatformControlMethod), {
             domain: appName ? "appManager" : "windows",
             operation: appName ? "unregisterWorkspaceApp" : "unregisterWorkspaceWindow",
             data: {
@@ -192,7 +192,7 @@ export class ApplicationFactory {
     }
 
     private notifyFrameWillStart(windowId: string, appName?: string, context?: any, title?: string) {
-        return this._glue.interop.invoke(PlatformControlMethod, {
+        return this._glue.interop.invoke(this.decorateCommunicationId(PlatformControlMethod), {
             domain: appName ? "appManager" : "windows",
             operation: appName ? "registerWorkspaceApp" : "registerWorkspaceWindow",
             data: {
@@ -364,5 +364,10 @@ export class ApplicationFactory {
         } finally {
             workspace.hibernatedWindows = workspace.hibernatedWindows.filter((hw) => hw.id !== idAsString(component.config.id));
         }
+    }
+
+    private decorateCommunicationId(base: string): string {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return `${base}.${(window as any).glue42core.communicationId}`;
     }
 }

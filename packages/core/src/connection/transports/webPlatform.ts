@@ -11,16 +11,19 @@ import generate from "shortid";
 import { PromisePlus } from "../../utils/promise-plus";
 
 type MessageType = "connectionAccepted" | "connectionRejected" | "connectionRequest" | "parentReady" |
-    "parentPing" | "platformPing" | "platformUnload" | "platformReady" | "clientUnload" | "manualUnload" |
-    "extConnectionResponse" | "extSetupRequest";
+    "parentPing" | "platformPing" | "platformReady" | "clientUnload" | "manualUnload" |
+    "extConnectionResponse" | "extSetupRequest" | "gatewayDisconnect" | "gatewayInternalConnect";
 
 export default class WebPlatformTransport implements Transport {
+    public isPreferredActivated: boolean | undefined;
 
+    private _communicationId: string | undefined;
     private publicWindowId: string | undefined;
-    private parentReady = false;
     private iAmConnected = false;
+    private parentReady = false;
     private rejected = false;
     private parentPingResolve: ((value?: void | PromiseLike<void> | undefined) => void) | undefined;
+    private parentPingInterval: NodeJS.Timeout | undefined;
     private connectionResolve: ((value?: void | PromiseLike<void> | undefined) => void) | undefined;
     private extConnectionResolve: ((value: void | PromiseLike<void>) => void) | undefined;
     private extConnectionReject: ((reason?: any) => void) | undefined;
@@ -37,8 +40,8 @@ export default class WebPlatformTransport implements Transport {
 
     private readonly parent: Window | undefined;
     private readonly parentType: "opener" | "top" | "workspace" | undefined;
-    private readonly parentPingTimeout = 3000;
-    private readonly connectionRequestTimeout = 5000;
+    private readonly parentPingTimeout = 5000;
+    private readonly connectionRequestTimeout = 7000;
     private readonly defaultTargetString = "*";
     private readonly registry: CallbackRegistry = CallbackRegistryFactory();
     private readonly messages: { [key in MessageType]: { name: string; handle: (event: MessageEvent) => void } } = {
@@ -48,12 +51,13 @@ export default class WebPlatformTransport implements Transport {
         parentReady: { name: "parentReady", handle: this.handleParentReady.bind(this) },
         parentPing: { name: "parentPing", handle: this.handleParentPing.bind(this) },
         platformPing: { name: "platformPing", handle: this.handlePlatformPing.bind(this) },
-        platformUnload: { name: "platformUnload", handle: this.handlePlatformUnload.bind(this) },
         platformReady: { name: "platformReady", handle: this.handlePlatformReady.bind(this) },
         clientUnload: { name: "clientUnload", handle: this.handleClientUnload.bind(this) },
         manualUnload: { name: "manualUnload", handle: this.handleManualUnload.bind(this) },
         extConnectionResponse: { name: "extConnectionResponse", handle: this.handleExtConnectionResponse.bind(this) },
-        extSetupRequest: { name: "extSetupRequest", handle: this.handleExtSetupRequest.bind(this) }
+        extSetupRequest: { name: "extSetupRequest", handle: this.handleExtSetupRequest.bind(this) },
+        gatewayDisconnect: { name: "gatewayDisconnect", handle: this.handleGatewayDisconnect.bind(this) },
+        gatewayInternalConnect: { name: "gatewayInternalConnect", handle: this.handleGatewayInternalConnect.bind(this) }
     };
 
     constructor(private readonly settings: Glue42Core.WebPlatformConnection, private readonly logger: Logger, private readonly identity?: Identity) {
@@ -61,6 +65,7 @@ export default class WebPlatformTransport implements Transport {
 
         this.setUpMessageListener();
         this.setUpUnload();
+        this.setupPlatformUnloadListener();
 
         if (!this.settings.port) {
             this.parent = window.opener || window.top;
@@ -70,8 +75,17 @@ export default class WebPlatformTransport implements Transport {
         }
     }
 
+    public manualSetReadyState(): void {
+        this.iAmConnected = true;
+        this.parentReady = true;
+    }
+
     public get transportWindowId(): string | undefined {
         return this.publicWindowId;
+    }
+
+    public get communicationId(): string | undefined {
+        return this._communicationId;
     }
 
     public async sendObject(msg: object): Promise<void> {
@@ -103,7 +117,6 @@ export default class WebPlatformTransport implements Transport {
     }
 
     public async open(): Promise<void> {
-
         this.logger.debug("opening a connection to the web platform gateway.");
 
         await this.connect();
@@ -112,7 +125,22 @@ export default class WebPlatformTransport implements Transport {
     }
 
     public close(): Promise<void> {
-        // DO NOTHING
+        const message = {
+            glue42core: {
+                type: this.messages.gatewayDisconnect.name,
+                data: {
+                    clientId: this.myClientId,
+                    ownWindowId: this.identity?.windowId
+                }
+            }
+        };
+
+        this.port?.postMessage(message);
+
+        this.parentReady = false;
+
+        this.notifyStatusChanged(false, "manual reconnection");
+
         return Promise.resolve();
     }
 
@@ -120,29 +148,16 @@ export default class WebPlatformTransport implements Transport {
         return "web-platform";
     }
 
-    public reconnect(): Promise<void> {
-        // DO NOTHING
+    public async reconnect(): Promise<void> {
+        await this.close();
+
         return Promise.resolve();
     }
 
     private async connect(): Promise<void> {
 
-        if (this.parentReady) {
-            this.logger.debug("cancelling connection attempt, because this client's parent has already given a ready signal");
-            return;
-        }
-
         if (this.settings.port) {
-            this.logger.debug("opening an internal web platform connection");
-            this.port = this.settings.port;
-
-            this.publicWindowId = this.settings.windowId;
-
-            if (this.identity) {
-                this.identity.windowId = this.publicWindowId;
-            }
-
-            this.port.onmessage = (event): object[] => this.registry.execute("onMessage", event.data);
+            await this.initiateInternalConnection();
             this.logger.debug("internal web platform connection completed");
             return;
         }
@@ -164,13 +179,60 @@ export default class WebPlatformTransport implements Transport {
         this.logger.debug(`the ${this.parentType === "opener" ? "child" : "grandchild"} client is connected`);
     }
 
+    private initiateInternalConnection(): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            this.logger.debug("opening an internal web platform connection");
+            this.port = this.settings.port;
+
+            if (this.iAmConnected) {
+                this.logger.warn("cannot open a new connection, because this client is currently connected");
+                return;
+            }
+
+            this.port.onmessage = (event): void => {
+
+                if (this.iAmConnected && !event.data?.glue42core) {
+                    this.registry.execute("onMessage", event.data);
+                    return;
+                }
+
+                const data = event.data?.glue42core;
+
+                if (!data) {
+                    return;
+                }
+
+                if (data.type === this.messages.gatewayInternalConnect.name && data.success) {
+                    this.publicWindowId = this.settings.windowId;
+
+                    if (this.identity) {
+                        this.identity.windowId = this.publicWindowId;
+                    }
+                    resolve();
+                }
+
+                if (data.type === this.messages.gatewayInternalConnect.name && data.error) {
+                    reject(data.error);
+                }
+            };
+
+            this.port.postMessage({
+                glue42core: {
+                    type: this.messages.gatewayInternalConnect.name
+                }
+            });
+
+        });
+    }
+
     private initiateRemoteConnection(target: Window, parentType: "opener" | "top" | "workspace"): Promise<void> {
 
         return PromisePlus<void>((resolve, reject) => {
             this.connectionResolve = resolve;
             this.connectionReject = reject;
 
-            this.myClientId = generate();
+            // if I am reconnecting, I want to reuse my original client id
+            this.myClientId = this.myClientId ?? generate();
 
             const bridgeInstanceId = this.parentType === "workspace" ? window.name.substring(0, window.name.indexOf("#wsp")) : window.name;
 
@@ -218,8 +280,18 @@ export default class WebPlatformTransport implements Transport {
 
             this.logger.debug(`checking for ${parentType} window availability`);
 
-            target.postMessage(message, this.defaultTargetString);
+            this.parentPingInterval = setInterval(() => {
+                target.postMessage(message, this.defaultTargetString);
+            }, 1000);
+
         }, this.parentPingTimeout, connectionNotPossibleMsg);
+
+        parentCheck.catch(() => {
+            if (this.parentPingInterval) {
+                clearInterval(this.parentPingInterval);
+                delete this.parentPingInterval;
+            }
+        });
 
         if (!this.extContentAvailable) {
             return parentCheck;
@@ -312,10 +384,12 @@ export default class WebPlatformTransport implements Transport {
         if (this.parentPingResolve) {
             this.parentPingResolve();
             delete this.parentPingResolve;
-            return;
         }
 
-        this.logger.debug("silently handling the ready signal from the top parent, because there is no defined promise");
+        if (this.parentPingInterval) {
+            clearInterval(this.parentPingInterval);
+            delete this.parentPingInterval;
+        }
     }
 
     private handlePlatformReady(): void {
@@ -325,10 +399,12 @@ export default class WebPlatformTransport implements Transport {
         if (this.parentPingResolve) {
             this.parentPingResolve();
             delete this.parentPingResolve;
-            return;
         }
 
-        this.logger.debug("silently handling the ready signal from the top parent, because there is no defined promise");
+        if (this.parentPingInterval) {
+            clearInterval(this.parentPingInterval);
+            delete this.parentPingInterval;
+        }
     }
 
     private handleConnectionAccepted(event: MessageEvent): void {
@@ -344,6 +420,7 @@ export default class WebPlatformTransport implements Transport {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private handleAcceptanceOfMyRequest(data: any): void {
         this.logger.debug("handling a connection accepted signal targeted at me.");
+        this.isPreferredActivated = data.isPreferredActivated;
 
         if (this.extContentConnecting) {
             return this.processExtContentConnection(data);
@@ -366,6 +443,8 @@ export default class WebPlatformTransport implements Transport {
             this.identity.application = data.appName;
             this.identity.applicationName = data.appName;
         }
+
+        this._communicationId = data.communicationId;
 
         this.port = data.port as MessagePort;
         this.port.onmessage = (e): object[] => this.registry.execute("onMessage", e.data);
@@ -509,18 +588,16 @@ export default class WebPlatformTransport implements Transport {
         source.postMessage(message, event.origin);
     }
 
-    private handlePlatformUnload(event: MessageEvent): void {
-        this.logger.debug("detected a web platform unload");
+    private setupPlatformUnloadListener(): void {
+        this.onMessage((msg) => {
+            if ((msg as any).type === "platformUnload") {
+                this.logger.debug("detected a web platform unload");
 
-        this.parentReady = false;
+                this.parentReady = false;
 
-        if (this.children.length) {
-            this.logger.debug("forwarding the platform unload to all known children and starting platform discovery polling");
-            this.children.forEach((child) => child.source.postMessage(event.data, child.origin));
-        }
-
-        this.notifyStatusChanged(false, "Gateway unloaded");
-
+                this.notifyStatusChanged(false, "Gateway unloaded");
+            }
+        });
     }
 
     private handleManualUnload(): void {
@@ -632,6 +709,16 @@ export default class WebPlatformTransport implements Transport {
 
     private handleExtSetupRequest(): void {
         // this is handled by the associated content script
+        return;
+    }
+
+    private handleGatewayDisconnect(): void {
+        // this is handled only in the web platform gateway;
+        return;
+    }
+
+    private handleGatewayInternalConnect(): void {
+        // this is handled only in the internal connection port;
         return;
     }
 

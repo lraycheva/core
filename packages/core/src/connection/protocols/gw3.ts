@@ -157,6 +157,8 @@ export default class GW3ProtocolImpl implements GW3Protocol {
             authentication.method = "secret";
             authentication.login = config.username;
             authentication.secret = config.password;
+        } else if (config.provider) {
+            authentication.provider = config.provider;
         } else {
             throw new Error("invalid auth message" + JSON.stringify(config));
         }

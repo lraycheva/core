@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { Glue42Core } from "@glue42/core";
 import { Glue42Web } from "@glue42/web";
 import { Glue42API } from "./src/common/types";
 
@@ -250,6 +251,20 @@ export namespace Glue42WebPlatform {
         }
     }
 
+    export namespace Connection {
+
+        export interface PreferredConnectionSettings {
+            url: string;
+            auth?: Glue42Core.Auth;
+            forceIncompleteSwitch?: boolean;
+            discoveryIntervalMS?: number;
+        }
+
+        export interface Config {
+            preferred?: PreferredConnectionSettings;
+        }
+    }
+
     export namespace Workspaces {
         export interface MaximumActiveWorkspacesRule {
             threshold: number;
@@ -314,6 +329,7 @@ export namespace Glue42WebPlatform {
         plugins?: Plugins.Config;
         serviceWorker?: ServiceWorker.Config;
         gateway?: Gateway.Config;
+        connection?: Connection.Config;
         glue?: Glue42Web.Config;
         workspaces?: Workspaces.Config;
         environment?: any;

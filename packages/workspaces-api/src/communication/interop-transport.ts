@@ -27,8 +27,8 @@ export class InteropTransport {
         }
 
         await Promise.all([
-            this.verifyMethodLive(webPlatformMethodName),
-            this.verifyMethodLive(webPlatformWspStreamName)
+            this.verifyMethodLive(this.decorateCommunicationId(webPlatformMethodName)),
+            this.verifyMethodLive(this.decorateCommunicationId(webPlatformWspStreamName))
         ]);
 
         await this.transmitControl("frameHello", { windowId: actualWindowId });
@@ -44,7 +44,7 @@ export class InteropTransport {
     public subscribePlatform(eventCallback: (args?: any) => void): void {
         this.coreEventMethodInitiated = true;
 
-        this.corePlatformSubPromise = this.agm.subscribe(webPlatformWspStreamName);
+        this.corePlatformSubPromise = this.agm.subscribe(this.decorateCommunicationId(webPlatformWspStreamName));
 
         this.corePlatformSubPromise
             .then((sub) => {
@@ -74,7 +74,7 @@ export class InteropTransport {
     public async transmitControl(operation: string, operationArguments: any): Promise<any> {
 
         const invocationArguments = window.glue42gd ? { operation, operationArguments } : { operation, domain: "workspaces", data: operationArguments };
-        const methodName = window.glue42gd ? METHODS.control.name : webPlatformMethodName;
+        const methodName = window.glue42gd ? METHODS.control.name : this.decorateCommunicationId(webPlatformMethodName);
 
         let invocationResult: InvocationResult<any>;
         const baseErrorMessage = `Internal Workspaces Communication Error. Attempted operation: ${JSON.stringify(invocationArguments)}. `;
@@ -135,5 +135,9 @@ export class InteropTransport {
                 });
             });
         }, 15000, "Timeout waiting for the Workspaces communication channels");
+    }
+
+    private decorateCommunicationId(base: string): string {
+        return `${base}.${(window as any).glue42core.communicationId}`;
     }
 }

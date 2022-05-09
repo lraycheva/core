@@ -1,15 +1,16 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Glue42Core } from "@glue42/core";
 import { libDomainDecoder } from "../shared/decoders";
 import { PromisePlus } from "../shared/promise-plus";
 import { BridgeOperation, LibController, LibDomains } from "../shared/types";
 import { GlueClientControlName, GlueWebPlatformControlName, GlueWebPlatformStreamName } from "./constants";
-// todo - subscribe for connection state?
+
 export class GlueBridge {
     private readonly platformMethodTimeoutMs = 10000;
     private controllers!: { [key in LibDomains]: LibController };
     private sub!: Glue42Core.AGM.Subscription;
 
-    constructor(private readonly coreGlue: Glue42Core.GlueCore) { }
+    constructor(private readonly coreGlue: Glue42Core.GlueCore, private readonly communicationId: string) { }
 
     public get contextLib(): Glue42Core.Contexts.API {
         return this.coreGlue.contexts;
@@ -23,13 +24,13 @@ export class GlueBridge {
         this.controllers = controllers;
 
         await Promise.all([
-            this.checkWaitMethod(GlueWebPlatformControlName),
-            this.checkWaitMethod(GlueWebPlatformStreamName)
+            this.checkWaitMethod(this.decorateCommunicationId(GlueWebPlatformControlName)),
+            this.checkWaitMethod(this.decorateCommunicationId(GlueWebPlatformStreamName))
         ]);
 
         const [sub] = await Promise.all([
-            this.coreGlue.interop.subscribe(GlueWebPlatformStreamName),
-            this.coreGlue.interop.registerAsync(GlueClientControlName, (args, _, success, error) => this.passMessageController(args, success, error))
+            this.coreGlue.interop.subscribe(this.decorateCommunicationId(GlueWebPlatformStreamName)),
+            this.coreGlue.interop.registerAsync(this.decorateCommunicationId(GlueClientControlName), (args, _, success, error) => this.passMessageController(args, success, error))
         ]);
 
         this.sub = sub;
@@ -136,7 +137,7 @@ export class GlueBridge {
         const baseErrorMessage = `Internal Platform Communication Error. Attempted operation: ${JSON.stringify(operation.name)} with data: ${JSON.stringify(data)}. `;
 
         try {
-            invocationResult = await this.coreGlue.interop.invoke(GlueWebPlatformControlName, messageData, undefined, options);
+            invocationResult = await this.coreGlue.interop.invoke(this.decorateCommunicationId(GlueWebPlatformControlName), messageData, undefined, options);
 
             if (!invocationResult) {
                 throw new Error("Received unsupported result from the platform - empty result");
@@ -158,5 +159,9 @@ export class GlueBridge {
         }
 
         return invocationResult.all_return_values[0].returned;
+    }
+
+    private decorateCommunicationId(base: string): string {
+        return `${base}.${this.communicationId}`;
     }
 }
