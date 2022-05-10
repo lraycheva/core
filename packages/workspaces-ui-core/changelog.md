@@ -1,3 +1,5 @@
+1.8.0
+feat: added improvements for the connection transport switch functionality
 1.7.9
 feat: updated the styles to be compatible with the GD transparent mode
 1.7.8

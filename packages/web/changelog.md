@@ -1,3 +1,5 @@
+2.6.0
+feat: web clients can now understand instruction from the platform to modify their connection transports
 2.5.7
 chore: bump due to dependencies update
 2.5.6

@@ -1,3 +1,5 @@
+5.7.0
+feat: add the possibility to switch the connection transport after the initial connection
 5.6.3
 fix: improve className reporting in LastBrowserEvent metric
 5.6.2
