@@ -1,3 +1,6 @@
+5.7.1
+fix: improved the subscriptions restoration after reconnecting
+chore: resolved dependency vulnerabilities
 5.7.0
 feat: add the possibility to switch the connection transport after the initial connection
 5.6.3

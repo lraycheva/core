@@ -1,3 +1,5 @@
+1.8.1
+chore: resolved dependency vulnerabilities
 1.8.0
 feat: added improvements for the connection transport switch functionality
 1.7.9

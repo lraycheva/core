@@ -1,3 +1,5 @@
+1.12.1
+chore: bump due to dependencies update
 1.12.0
 feat: added improvements for the connection transport switch functionality
 1.11.1

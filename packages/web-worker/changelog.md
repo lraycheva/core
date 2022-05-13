@@ -1,3 +1,5 @@
+1.1.1
+chore: resolved dependency vulnerabilities
 1.1.0
 feat: added support for focusing the platform on click via notifications with action buttons
 1.0.2

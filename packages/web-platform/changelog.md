@@ -1,3 +1,5 @@
+1.12.1
+chore: resolved dependency vulnerabilities
 1.12.0
 feat: the platform can now search for, connect to and instruct it's clients to also connect to an alternative gateway 
 1.11.1

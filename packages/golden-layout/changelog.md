@@ -1,3 +1,5 @@
+2.2.7
+chore: resolved dependency vulnerabilities
 2.2.6
 fix: missing window tooltip when using custom workspace tabs
 2.2.5
