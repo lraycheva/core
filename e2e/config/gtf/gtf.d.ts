@@ -147,6 +147,7 @@ export namespace Gtf {
         isConnected(): Promise<boolean>;
         registerMethod(name: string, callback: (args: any, caller: any) => any): Promise<void>;
         invokeMethod(name: string, args: any, target?: "best" | "all"): Promise<Glue42Core.Interop.InvocationResult>;
+        waitContext(name: string, value: any): Promise<void>;
         getAllContexts(): Promise<string[]>;
         getContext(name: string): Promise<any>;
         setContext(name: string, data: any): Promise<void>;
@@ -165,6 +166,7 @@ export namespace Gtf {
 
     export interface GlueWebPlatform extends GlueBaseClient {
         openClient(config?: Glue42Web.Config): Promise<GlueWebClient>;
+        waitContextTrack(name: string, value: any): Promise<void>;
     }
 
     export interface Puppet {

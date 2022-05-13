@@ -57,6 +57,10 @@ export default class ClientProtocol implements ClientProtocolDefinition {
         return this.streaming.drainSubscriptions();
     }
 
+    public drainSubscriptionsCache(): SubscriptionInner[] {
+        return this.streaming.drainSubscriptionsCache();
+    }
+
     private handlePeerAdded(msg: PeerAddedMessage) {
         const newPeerId = msg.new_peer_id;
         const remoteId = msg.identity;

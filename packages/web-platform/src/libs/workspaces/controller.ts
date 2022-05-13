@@ -224,7 +224,7 @@ export class WorkspacesController implements LibController {
 
         const allFrames = this.framesController.getAll();
 
-        this.logger?.trace(`[${commandId}] sending isWindowInWorkspace to all known frames: ${allFrames.join(", ")}`);
+        this.logger?.trace(`[${commandId}] sending isWindowInWorkspace to all known frames: ${JSON.stringify(allFrames.join(", "))}`);
 
         const result = await Promise.all(allFrames.map((frame) => this.glueController.callFrame<SimpleItemConfig, IsWindowInSwimlaneResult>(
             this.operations.isWindowInWorkspace, config, frame.windowId

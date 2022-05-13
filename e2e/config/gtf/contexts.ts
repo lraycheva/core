@@ -1,4 +1,4 @@
-import { Gtf } from './types';
+import { Gtf } from './gtf';
 
 export class GtfContexts implements Gtf.Contexts {
   private counter = 0;

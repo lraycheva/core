@@ -89,6 +89,14 @@ export class BaseClient implements Gtf.GlueBaseClient {
         this.methodCallbacks[name] = callback;
     }
 
+    public async waitContextTrack(name: string, value: any): Promise<void> {
+        await this.sendCommand<"waitContextTrack">("waitContextTrack", { name, value });
+    }
+
+    public async waitContext(name: string, value: any): Promise<void> {
+        await this.sendCommand<"waitContext">("waitContext", { name, value });
+    }
+
     public async getAllContexts(): Promise<string[]> {
         const result = await this.sendCommand<"getAllContexts">("getAllContexts", null);
 
@@ -261,7 +269,7 @@ export class BaseClient implements Gtf.GlueBaseClient {
         this.registry.execute(`contextUpdate-${ctxName}`, ctx);
     }
 
-    private handleClientReady(event: MessageEvent<any>): void {
+    private handleClientReady(event: MessageEvent): void {
         const data = event.data;
 
         if (!data.ready || data.winId !== this.clientId) {
@@ -286,7 +294,7 @@ export class BaseClient implements Gtf.GlueBaseClient {
         }
 
         // console.log(`------- Lifting the lock on operation id: ${data.operationId} ------`);
-        
+
         this.commandsLocks[data.operationId]({ result: data.result, error: data.error });
 
         // console.log(`------- Deleting the lock on operation id: ${data.operationId} ------`);

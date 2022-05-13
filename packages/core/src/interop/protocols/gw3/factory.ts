@@ -25,10 +25,20 @@ export default function (instance: Glue42Core.AGM.Instance, connection: Connecti
         // we're reconnecting
         logger.info("reconnected - will replay registered methods and subscriptions");
 
+        client.drainSubscriptionsCache().forEach((sub) => {
+            const methodInfo = sub.method;
+            const params = Object.assign({}, sub.params);
+
+            logger.info(`trying to soft-re-subscribe to method ${methodInfo.name}, with params: ${JSON.stringify(params)}`);
+
+            interop.client.subscribe(methodInfo, params, undefined, undefined, sub).then(() => logger.info(`soft-subscribing to method ${methodInfo.name} DONE`)).catch((error) => logger.warn(`subscribing to method ${methodInfo.name} failed: ${JSON.stringify(error)}}`));
+        });
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const reconnectionPromises: Array<Promise<any>> = [];
 
         const existingSubscriptions = client.drainSubscriptions();
+
         for (const sub of existingSubscriptions) {
             const methodInfo = sub.method;
             const params = Object.assign({}, sub.params);

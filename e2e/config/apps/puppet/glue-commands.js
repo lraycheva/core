@@ -211,6 +211,34 @@ export const unsubscribeReconnected = () => {
     }
 };
 
+export const waitContext = (glue, config) => {
+    if (!glue) {
+        return Promise.reject("Cannot wait for context, because no glue was provided");
+    }
+
+    return new Promise((resolve) => {
+        const name = config.name;
+        const value = config.value;
+        let unsub;
+
+        const ready = waitFor(2, () => {
+            unsub();
+            resolve()
+        });
+
+        glue.contexts.subscribe(name, (data) => {
+
+            if (JSON.stringify(data) === JSON.stringify(value)) {
+                ready();
+            }
+
+        }).then((_unsub) => {
+            unsub = _unsub;
+            ready();
+        });
+    });
+}
+
 const subscribePlatformReconnected = (platform, raiseEvent) => {
     unsubLibsReAnnounce = platform.onSystemReconnect(() => {
         if (unsubLibsReAnnounce) {
@@ -226,3 +254,14 @@ const subscribePlatformReconnected = (platform, raiseEvent) => {
         }
     })
 };
+
+const waitFor = (invocations, callback) => {
+    let left = invocations;
+    return () => {
+        left--;
+
+        if (left === 0) {
+            callback();
+        }
+    };
+}

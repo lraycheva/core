@@ -30,6 +30,14 @@ export class GlueController {
         return this._clientGlue;
     }
 
+    public get contextsTrackingGlue(): Glue42Core.GlueCore | undefined {
+        return this._contextsTrackingGlue;
+    }
+
+    public get systemGlue(): Glue42Core.GlueCore {
+        return this._systemGlue;
+    }
+
     public get platformWindowId(): string {
         return this._platformClientWindowId.slice();
     }
@@ -114,7 +122,9 @@ export class GlueController {
             }
         }
 
-        const result = await this.transmitMessage<InBound>(this.decorateCommunicationId(GlueWorkspaceFrameClientControlName), messageData, baseErrorMessage, { windowId }, { methodResponseTimeoutMs: 30000, waitTimeoutMs: 30000 });
+        const methodName = this.decorateCommunicationId(GlueWorkspaceFrameClientControlName);
+
+        const result = await this.transmitMessage<InBound>(methodName, messageData, baseErrorMessage, { windowId }, { methodResponseTimeoutMs: 30000, waitTimeoutMs: 30000 });
 
         if (operationDefinition.resultDecoder) {
             const decodeResult = operationDefinition.resultDecoder.run(result);

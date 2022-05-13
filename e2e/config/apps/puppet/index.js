@@ -1,4 +1,4 @@
-import { getAllContexts, getContext, getIsConnected, invokeMethod, openWebClient, registerMethod, setContext, subscribeConnected, subscribeContext, subscribeDisconnected, subscribeReconnected, unsubscribeConnected, unsubscribeContext, unsubscribeDisconnected, unsubscribeReconnected, updateContext } from "./glue-commands.js";
+import { getAllContexts, getContext, getIsConnected, invokeMethod, openWebClient, registerMethod, setContext, subscribeConnected, subscribeContext, subscribeDisconnected, subscribeReconnected, unsubscribeConnected, unsubscribeContext, unsubscribeDisconnected, unsubscribeReconnected, updateContext, waitContext } from "./glue-commands.js";
 
 const sessionKey = "e2e";
 const myId = window.name;
@@ -195,7 +195,9 @@ const commands = {
     setContext: (config) => setContext(glue, config),
     updateContext: (config) => updateContext(glue, config),
     subscribeContext: (config) => subscribeContext(glue, config, raiseEvent),
-    unsubscribeContext: (config) => unsubscribeContext(glue, config)
+    unsubscribeContext: (config) => unsubscribeContext(glue, config),
+    waitContextTrack: (config) => waitContext(platform.contextTrackGlue, config),
+    waitContext: (config) => waitContext(glue, config)
 };
 
 const start = () => {

@@ -5,7 +5,15 @@ const fs = require('fs');
 const { join } = require('path');
 const { spawn } = require('child_process');
 const { PublishCommand } = require('@lerna/publish');
-const git = require('simple-git/promise')(__dirname);
+const git = require('simple-git')(__dirname);
+const pkg = require('./package.json');
+const typescript = require('rollup-plugin-typescript2');
+const commonjs = require('@rollup/plugin-commonjs');
+const node_resolve = require('@rollup/plugin-node-resolve');
+const json = require('@rollup/plugin-json');
+const terser = require('rollup-plugin-terser').terser;
+const rollup = require('rollup');
+const replace = require('@rollup/plugin-replace');
 // const sync = require('./scripts/preversion/sync.js');
 
 const stableBranch = 'master';
@@ -123,6 +131,43 @@ const publish = async () => {
     await command.runner;
 };
 
+const buildGtf = async (name) => {
+
+    console.log(`Runner?: ${process.env.RUNNER}`);
+
+    const buildConfig = {
+        input: './e2e/config/gtf/index.ts',
+        external: [
+            ...Object.keys(pkg.peerDependencies || {}),
+        ],
+        plugins: [
+            typescript({
+                typescript: require('typescript')
+            }),
+            json(),
+            commonjs(),
+            node_resolve.default({
+                mainFields: ['module', 'main', 'browser']
+            }),
+            terser(),
+            replace({
+                preventAssignment: true,
+                exclude: 'node_modules/**',
+                'process.env.RUNNER': JSON.stringify(process.env.RUNNER)
+            })
+        ]
+    };
+
+    const bundle = await rollup.rollup(buildConfig);
+
+    await bundle.write({
+        file: './e2e/config/gtf.js',
+        name: name,
+        format: 'umd',
+        sourcemap: false
+    });
+};
+
 exports.release = series(
     validateReleasePackages,
     checkoutRelease,
@@ -132,6 +177,10 @@ exports.release = series(
     commitIsolatedPackages,
     publish,
     checkoutMaster
+);
+
+exports.buildGtf = series(
+    buildGtf
 );
 
 // stopped publish and checkoutMaster to allow for dist-tags

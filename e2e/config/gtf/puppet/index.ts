@@ -42,13 +42,14 @@ export class GtfPuppet implements Gtf.Puppet {
     }
 
     public async stopDesktopGateway(gateway: DesktopGateway): Promise<void> {
+
         const stopResponse = await this.sendHttp<"stopGateway">("stopGateway", { config: { port: gateway.port } });
 
         if (!stopResponse.success) {
             throw new Error("The puppet bridge did not give the OK.");
         }
 
-        await this.pause(500);
+        await this.pause(1000);
     }
 
     public async startWebPlatform(config?: Glue42WebPlatform.Config): Promise<WebPlatform> {

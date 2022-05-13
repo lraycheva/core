@@ -93,6 +93,14 @@ export class WebPlatform implements Gtf.GlueWebPlatform {
         return webClient;
     }
 
+    public waitContextTrack(name: string, value: any): Promise<void> {
+        return this.base.waitContextTrack(name, value);
+    }
+
+    public waitContext(name: string, value: any): Promise<void> {
+        return this.base.waitContext(name, value);
+    }
+
     private pause(ms: number): Promise<void> {
         return new Promise((resolve) => setTimeout(resolve, ms));
     }

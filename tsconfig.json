@@ -10,7 +10,11 @@
         "pretty": true,
         "declaration": false,
         "removeComments": true,
-        "experimentalDecorators": true
+        "experimentalDecorators": true,
+        "lib": [
+            "es2019",
+            "DOM"
+        ]
     },
     "include": [
         "**/*.ts"

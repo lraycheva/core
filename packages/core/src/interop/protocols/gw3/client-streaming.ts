@@ -6,6 +6,7 @@ import { SubscriptionCancelledMessage, EventMessage, SubscribedMessage, ErrorSub
 import { SubscribeError, SubscriptionInner } from "../../types";
 import { Logger } from "../../../logger/logger";
 import { UserSubscription } from "./subscription";
+import { TimedCache } from "../../../utils/timed-cache";
 
 const STATUS_AWAITING_ACCEPT = "awaitingAccept"; // not even one server has accepted yet
 const STATUS_SUBSCRIBED = "subscribed"; // at least one server has responded as 'Accepting'
@@ -20,6 +21,7 @@ const ON_CLOSE_MSG_CLIENT_INIT = "ClientInitiated";
 export default class ClientStreaming {
 
     private subscriptionsList: { [key: number]: SubscriptionInner } = {};
+    private timedCache: TimedCache<SubscriptionInner> = new TimedCache({ ELEMENT_TTL_MS: 10000 });
     private subscriptionIdToLocalKeyMap: { [key: string]: number } = {};
     private nextSubLocalKey = 0;
 
@@ -94,6 +96,10 @@ export default class ClientStreaming {
         this.subscriptionsList = {};
         this.subscriptionIdToLocalKeyMap = {};
         return existing;
+    }
+
+    public drainSubscriptionsCache() {
+        return this.timedCache.flush();
     }
 
     private getNextSubscriptionLocalKey() {
@@ -362,6 +368,9 @@ export default class ClientStreaming {
 
         // Check if this was the last remaining server
         if (subscription.trackedServers.length <= 0) {
+            // this timed cache is used to ensure re-subscribing when reconnecting using a different transport and a different gateway than the default
+            this.timedCache.add(subscription);
+
             clearTimeout(subscription.timeoutId);
             this.callOnClosedHandlers(subscription);
             delete this.subscriptionsList[subLocalKey];

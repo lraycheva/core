@@ -20,6 +20,7 @@ import { ServiceWorkerController } from "./serviceWorker";
 import { NotificationsController } from "../libs/notifications/controller";
 import { ExtensionController } from "../libs/extension/controller";
 import { PreferredConnectionController } from "../connection/preferred";
+import { Glue42Core } from "@glue42/core";
 
 export class PlatformController {
 
@@ -54,6 +55,14 @@ export class PlatformController {
 
     private get logger(): Glue42Web.Logger.API | undefined {
         return logger.get("main.web.platform");
+    }
+
+    public get ctxTrackingGlue(): Glue42Core.GlueCore | undefined {
+        return this.glueController.contextsTrackingGlue;
+    }
+
+    public get systemGlue(): Glue42Core.GlueCore | undefined {
+        return this.glueController.systemGlue;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

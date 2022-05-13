@@ -7,7 +7,8 @@ export type HttpCommands = "startGateway" | "stopGateway";
 export type ClientCommands = "initiateWebPlatform" | "initiateCore" | "initiateWeb" | 
     "close" | "reload" | "openWebClient" | "ping" | "getIsConnected" | "invokeMethod" |
     "registerMethod" | "subscribeConnected" | "subscribeDisconnected" | "unsubscribeConnected" | "unsubscribeDisconnected" |
-    "subscribeReconnected" | "unsubscribeReconnected" | "getAllContexts" | "getContext" | "setContext" | "updateContext" | "subscribeContext" | "unsubscribeContext";
+    "subscribeReconnected" | "unsubscribeReconnected" | "getAllContexts" | "getContext" | "setContext" | "updateContext" | "subscribeContext" | "unsubscribeContext" | 
+    "waitContextTrack" | "waitContext";
 
 export interface HttpBody {
     startGateway: {
@@ -76,6 +77,14 @@ export interface ClientCommandArgs {
     unsubscribeDisconnected: null;
     subscribeReconnected: null;
     unsubscribeReconnected: null;
+    waitContextTrack: {
+        name: string,
+        value: any
+    },
+    waitContext: {
+        name: string,
+        value: any
+    }
 };
 
 export interface ClientCommandResult {
@@ -115,4 +124,6 @@ export interface ClientCommandResult {
     unsubscribeDisconnected: null;
     subscribeReconnected: null;
     unsubscribeReconnected: null;
+    waitContextTrack: null;
+    waitContext: null;
 };

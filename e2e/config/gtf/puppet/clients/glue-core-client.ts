@@ -73,4 +73,8 @@ export class GlueCoreClient implements Gtf.GlueCoreClient {
         await this.base.reload();
         await this.base.sendCommand<"initiateCore">("initiateCore", { config: this.coreConfig });
     }
+
+    public waitContext(name: string, value: any): Promise<void> {
+        return this.base.waitContext(name, value);
+    }
 }

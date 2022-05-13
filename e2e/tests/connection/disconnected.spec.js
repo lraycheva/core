@@ -143,7 +143,7 @@ describe("disconnected() ", function () {
                 preferred: {
                     url: gtf.puppet.defaultGWUrl,
                     auth: gtf.puppet.defaultGWAuth,
-                    discoveryIntervalMS: 5000
+                    discoveryIntervalMS: 1000
                 }
             }
         };

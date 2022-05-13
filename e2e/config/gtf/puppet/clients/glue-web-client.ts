@@ -73,4 +73,8 @@ export class GlueWebClient implements Gtf.GlueWebClient {
         await this.base.reload();
         await this.base.sendCommand<"initiateWeb">("initiateWeb", { config: this.coreConfig });
     }
+
+    public waitContext(name: string, value: any): Promise<void> {
+        return this.base.waitContext(name, value);
+    }
 }

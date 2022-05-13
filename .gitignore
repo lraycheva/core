@@ -10,6 +10,7 @@ coverage/
 .DS_Store
 .cache
 .eslintcache
+.parcel-cache
 
 yarn.lock
 *.log

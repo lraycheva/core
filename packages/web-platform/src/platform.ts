@@ -35,6 +35,8 @@ export class Platform {
     public exposeAPI(): Glue42WebPlatform.API {
         return {
             version: this.version,
+            contextTrackGlue: this.controller.ctxTrackingGlue,
+            systemGlue: this.controller.systemGlue,
             connectExtClient: (client: any, port: any) => {
                 return this.controller.connectExtClient(client, port);
             },

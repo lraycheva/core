@@ -1,4 +1,4 @@
-describe.only("contexts ", function () {
+describe("contexts ", function () {
     this.timeout(60000);
     before(() => coreReady);
 
@@ -30,31 +30,6 @@ describe.only("contexts ", function () {
         });
 
         return reconnectionWrapper.promise;
-    };
-
-    const waitContext = async (client, ctxName, ctxValue) => {
-        const ctxWrapper = gtf.wrapPromise();
-
-        const currentCtx = await client.getContext(ctxName);
-
-        try {
-            expect(currentCtx).to.eql(ctxValue);
-            return ctxWrapper.resolve();
-        } catch (error) {
-
-        }
-
-        const unsub = await client.subscribeContext(ctxName, (data) => {
-            try {
-                expect(ctxValue).to.eql(data);
-                unsub();
-                return ctxWrapper.resolve();
-            } catch (error) {
-                return;
-            }
-        });
-
-        return ctxWrapper.promise;
     };
 
     describe("web platform only", () => {
@@ -495,7 +470,7 @@ describe.only("contexts ", function () {
                 preferred: {
                     url: gtf.puppet.defaultGWUrl,
                     auth: gtf.puppet.defaultGWAuth,
-                    discoveryIntervalMS: 5000
+                    discoveryIntervalMS: 1000
                 }
             }
         };
@@ -511,6 +486,7 @@ describe.only("contexts ", function () {
                 const context = { complexObj: gtf.contexts.generateComplexObject(10) };
 
                 await platform.setContext(contextName, context);
+                await platform.waitContextTrack(contextName, context);
 
                 const initialContextNames = await platform.getAllContexts();
 
@@ -522,7 +498,7 @@ describe.only("contexts ", function () {
 
                 await reconnection;
 
-                await waitContext(platform, contextName, context);
+                await platform.waitContext(contextName, context);
                 const latestContextNames = await platform.getAllContexts();
 
                 expect(initialContextNames.every((ctxName) => latestContextNames.some((name) => name === ctxName))).to.be.true;
@@ -542,6 +518,7 @@ describe.only("contexts ", function () {
                 const context = { complexObj: gtf.contexts.generateComplexObject(10) };
 
                 await platform.setContext(contextName, context);
+                await platform.waitContextTrack(contextName, context);
 
                 const initialContextNames = await platform.getAllContexts();
 
@@ -557,7 +534,7 @@ describe.only("contexts ", function () {
 
                 await reconnectedTwo;
 
-                await waitContext(webClient, contextName, context);
+                await webClient.waitContext(contextName, context);
                 const latestContextNames = await webClient.getAllContexts();
 
                 expect(initialContextNames.every((ctxName) => latestContextNames.some((name) => name === ctxName))).to.be.true;
@@ -581,6 +558,7 @@ describe.only("contexts ", function () {
                 await reconnection;
 
                 await platform.setContext(contextName, context);
+                await platform.waitContextTrack(contextName, context);
 
                 const initialContextNames = await platform.getAllContexts();
 
@@ -590,7 +568,7 @@ describe.only("contexts ", function () {
 
                 await reconnectionTwo;
 
-                await waitContext(platform, contextName, context);
+                await platform.waitContext(contextName, context);
                 const latestContextNames = await platform.getAllContexts();
 
                 expect(initialContextNames.every((ctxName) => latestContextNames.some((name) => name === ctxName))).to.be.true;
@@ -620,6 +598,7 @@ describe.only("contexts ", function () {
                 await reconnectionWC;
 
                 await platform.setContext(contextName, context);
+                await platform.waitContextTrack(contextName, context);
 
                 const initialContextNames = await platform.getAllContexts();
 
@@ -631,7 +610,7 @@ describe.only("contexts ", function () {
                 await reconnectionTwo;
                 await reconnectionTwoWC;
 
-                await waitContext(webClient, contextName, context);
+                await webClient.waitContext(contextName, context);
                 const latestContextNames = await webClient.getAllContexts();
 
                 expect(initialContextNames.every((ctxName) => latestContextNames.some((name) => name === ctxName))).to.be.true;
@@ -647,6 +626,7 @@ describe.only("contexts ", function () {
                 const context = { complexObj: gtf.contexts.generateComplexObject(10) };
 
                 await platform.setContext(contextName, context);
+                await platform.waitContextTrack(contextName, context);
 
                 const reconnection = waitClientReconnect(platform);
 
@@ -656,7 +636,7 @@ describe.only("contexts ", function () {
 
                 await reconnection;
 
-                await waitContext(platform, contextName, context);
+                await platform.waitContext(contextName, context);
                 const latestCtx = await platform.getContext(contextName);
 
                 expect(latestCtx).to.eql(context);
@@ -676,8 +656,8 @@ describe.only("contexts ", function () {
                 const context = { complexObj: gtf.contexts.generateComplexObject(10) };
 
                 await webClient.setContext(contextName, context);
+                await platform.waitContextTrack(contextName, context);
 
-                await waitContext(platform, contextName, context);
                 const reconnection = waitClientReconnect(platform);
                 const reconnectionWC = waitClientReconnect(webClient);
 
@@ -688,7 +668,7 @@ describe.only("contexts ", function () {
                 await reconnection;
                 await reconnectionWC;
 
-                await waitContext(webClient, contextName, context);
+                await webClient.waitContext(contextName, context);
                 const latestCtx = await webClient.getContext(contextName);
 
                 expect(latestCtx).to.eql(context);
@@ -714,10 +694,11 @@ describe.only("contexts ", function () {
                 const context = { complexObj: gtf.contexts.generateComplexObject(10) };
 
                 await coreClient.setContext(contextName, context);
+                await platform.waitContextTrack(contextName, context);
 
                 await reconnection;
 
-                await waitContext(platform, contextName, context);
+                await platform.waitContext(contextName, context);
                 const latestCtx = await platform.getContext(contextName);
 
                 expect(latestCtx).to.eql(context);
@@ -748,11 +729,12 @@ describe.only("contexts ", function () {
                 const context = { complexObj: gtf.contexts.generateComplexObject(10) };
 
                 await coreClient.setContext(contextName, context);
+                await platform.waitContextTrack(contextName, context);
 
                 await reconnection;
                 await reconnectionWC;
 
-                await waitContext(webClient, contextName, context);
+                await webClient.waitContext(contextName, context);
 
                 const latestCtx = await webClient.getContext(contextName);
 
@@ -779,10 +761,11 @@ describe.only("contexts ", function () {
                 const context = { complexObj: gtf.contexts.generateComplexObject(10) };
 
                 await coreClient.setContext(contextName, context);
+                await platform.waitContextTrack(contextName, context);
 
                 await reconnection;
 
-                await waitContext(platform, contextName, context);
+                await platform.waitContext(contextName, context);
                 const latestCtx = await platform.getContext(contextName);
 
                 expect(latestCtx).to.eql(context);
@@ -798,6 +781,7 @@ describe.only("contexts ", function () {
                 const context = { complexObj: gtf.contexts.generateComplexObject(10) };
 
                 await platform.setContext(contextName, context);
+                await platform.waitContextTrack(contextName, context);
 
                 const reconnection = waitClientReconnect(platform);
 
@@ -811,7 +795,7 @@ describe.only("contexts ", function () {
 
                 await reconnection;
 
-                await waitContext(coreClient, contextName, context);
+                await coreClient.waitContext(contextName, context);
                 const latestCtx = await coreClient.getContext(contextName);
 
                 expect(latestCtx).to.eql(context);
@@ -832,7 +816,7 @@ describe.only("contexts ", function () {
 
                 await webClient.setContext(contextName, context);
 
-                await waitContext(platform, contextName, context);
+                await platform.waitContextTrack(contextName, context);
 
                 const reconnection = waitClientReconnect(platform);
                 const reconnectionWC = waitClientReconnect(webClient);
@@ -848,7 +832,7 @@ describe.only("contexts ", function () {
                 await reconnection;
                 await reconnectionWC;
 
-                await waitContext(coreClient, contextName, context);
+                await coreClient.waitContext(contextName, context);
 
                 const latestCtx = await coreClient.getContext(contextName);
 
@@ -873,6 +857,7 @@ describe.only("contexts ", function () {
                 const context = { complexObj: gtf.contexts.generateComplexObject(10) };
 
                 await platform.setContext(contextName, context);
+                await platform.waitContextTrack(contextName, context);
 
                 const reconnectionTwo = waitClientReconnect(platform);
 
@@ -880,7 +865,7 @@ describe.only("contexts ", function () {
 
                 await reconnectionTwo;
 
-                await waitContext(platform, contextName, context);
+                await platform.waitContext(contextName, context);
                 const latestCtx = await platform.getContext(contextName);
 
                 expect(latestCtx).to.eql(context);
@@ -896,6 +881,7 @@ describe.only("contexts ", function () {
                 const context = { complexObj: gtf.contexts.generateComplexObject(10) };
 
                 await platform.setContext(contextName, context);
+                await platform.waitContextTrack(contextName, context);
 
                 const reconnection = waitClientReconnect(platform);
 
@@ -908,6 +894,7 @@ describe.only("contexts ", function () {
                 const updatedCtx = { complexObj: 42 };
 
                 await platform.updateContext(contextName, updatedCtx);
+                await platform.waitContextTrack(contextName, updatedCtx);
 
                 const reconnectionTwo = waitClientReconnect(platform);
 
@@ -915,7 +902,7 @@ describe.only("contexts ", function () {
 
                 await reconnectionTwo;
 
-                await waitContext(platform, contextName, updatedCtx);
+                await platform.waitContext(contextName, updatedCtx)
                 const latestCtx = await platform.getContext(contextName);
 
                 expect(latestCtx).to.eql(updatedCtx);
@@ -944,7 +931,7 @@ describe.only("contexts ", function () {
 
                 await coreClient.setContext(contextName, context);
 
-                await waitContext(platform, contextName, context);
+                await platform.waitContextTrack(contextName, context);
 
                 const reconnectionTwo = waitClientReconnect(platform);
 
@@ -952,7 +939,7 @@ describe.only("contexts ", function () {
 
                 await reconnectionTwo;
 
-                await waitContext(platform, contextName, context);
+                await platform.waitContext(contextName, context);
 
                 const latestCtx = await platform.getContext(contextName);
 
@@ -971,6 +958,7 @@ describe.only("contexts ", function () {
                 const context = { complexObj: gtf.contexts.generateComplexObject(10) };
 
                 await platform.setContext(contextName, context);
+                await platform.waitContextTrack(contextName, context);
 
                 const gw = await gtf.puppet.startDesktopGateway();
 
@@ -982,11 +970,8 @@ describe.only("contexts ", function () {
 
                 await reconnection;
 
-                await waitContext(platform, contextName, context);
-
                 await coreClient.updateContext(contextName, { complexObj: 42 });
-
-                await waitContext(platform, contextName, { complexObj: 42 });
+                await platform.waitContextTrack(contextName, { complexObj: 42 });
 
                 const reconnectionTwo = waitClientReconnect(platform);
 
@@ -994,7 +979,7 @@ describe.only("contexts ", function () {
 
                 await reconnectionTwo;
 
-                await waitContext(platform, contextName, { complexObj: 42 });
+                await platform.waitContext(contextName, { complexObj: 42 });
                 const latestCtx = await platform.getContext(contextName);
 
                 expect(latestCtx).to.eql({ complexObj: 42 });
@@ -1024,8 +1009,7 @@ describe.only("contexts ", function () {
                 const context = { complexObj: gtf.contexts.generateComplexObject(10) };
 
                 await webClient.setContext(contextName, context);
-
-                await waitContext(platform, contextName, context);
+                await platform.waitContextTrack(contextName, context);
 
                 const reconnectionTwo = waitClientReconnect(platform);
                 const reconnectionTwoWC = waitClientReconnect(webClient);
@@ -1035,7 +1019,7 @@ describe.only("contexts ", function () {
                 await reconnectionTwo;
                 await reconnectionTwoWC;
 
-                await waitContext(platform, contextName, context);
+                await platform.waitContext(contextName, context);
                 const latestCtx = await platform.getContext(contextName);
 
                 expect(latestCtx).to.eql(context);
@@ -1058,8 +1042,7 @@ describe.only("contexts ", function () {
                 const context = { complexObj: gtf.contexts.generateComplexObject(10) };
 
                 await webClient.setContext(contextName, context);
-
-                await waitContext(platform, contextName, context);
+                await platform.waitContextTrack(contextName, context);
 
                 const gw = await gtf.puppet.startDesktopGateway();
 
@@ -1069,8 +1052,7 @@ describe.only("contexts ", function () {
                 await reconnectionWC;
 
                 await webClient.updateContext(contextName, { complexObj: 42 });
-
-                await waitContext(platform, contextName, { complexObj: 42 });
+                await platform.waitContextTrack(contextName, { complexObj: 42 });
 
                 const reconnectionTwo = waitClientReconnect(platform);
                 const reconnectionTwoWC = waitClientReconnect(webClient);
@@ -1080,7 +1062,7 @@ describe.only("contexts ", function () {
                 await reconnectionTwo;
                 await reconnectionTwoWC;
 
-                await waitContext(platform, contextName, { complexObj: 42 });
+                await platform.waitContext(contextName, { complexObj: 42 });
                 const latestCtx = await platform.getContext(contextName);
 
                 expect(latestCtx).to.eql({ complexObj: 42 });
@@ -1110,6 +1092,7 @@ describe.only("contexts ", function () {
                 const context = { complexObj: gtf.contexts.generateComplexObject(10) };
 
                 await platform.setContext(contextName, context);
+                await platform.waitContextTrack(contextName, context);
 
                 const reconnectionTwo = waitClientReconnect(platform);
                 const reconnectionTwoWC = waitClientReconnect(webClient);
@@ -1119,7 +1102,7 @@ describe.only("contexts ", function () {
                 await reconnectionTwo;
                 await reconnectionTwoWC;
 
-                await waitContext(webClient, contextName, context);
+                await webClient.waitContext(contextName, context);
                 const latestCtx = await webClient.getContext(contextName);
 
                 expect(latestCtx).to.eql(context);
@@ -1139,6 +1122,7 @@ describe.only("contexts ", function () {
                 const context = { complexObj: gtf.contexts.generateComplexObject(10) };
 
                 await platform.setContext(contextName, context);
+                await platform.waitContextTrack(contextName, context);
 
                 const reconnection = waitClientReconnect(platform);
                 const reconnectionWC = waitClientReconnect(webClient);
@@ -1151,6 +1135,7 @@ describe.only("contexts ", function () {
                 await reconnectionWC;
 
                 await platform.updateContext(contextName, { complexObj: 42 });
+                await platform.waitContextTrack(contextName, { complexObj: 42 });
 
                 const reconnectionTwo = waitClientReconnect(platform);
                 const reconnectionTwoWC = waitClientReconnect(webClient);
@@ -1160,8 +1145,7 @@ describe.only("contexts ", function () {
                 await reconnectionTwo;
                 await reconnectionTwoWC;
 
-                await waitContext(webClient, contextName, { complexObj: 42 });
-
+                await webClient.waitContext(contextName, { complexObj: 42 });
                 const latestCtx = await webClient.getContext(contextName);
 
                 expect(latestCtx).to.eql({ complexObj: 42 });
@@ -1195,8 +1179,7 @@ describe.only("contexts ", function () {
                 const context = { complexObj: gtf.contexts.generateComplexObject(10) };
 
                 await coreClient.setContext(contextName, context);
-
-                await waitContext(platform, contextName, context);
+                await platform.waitContextTrack(contextName, context);
 
                 const reconnectionTwo = waitClientReconnect(platform);
                 const reconnectionTwoWC = waitClientReconnect(webClient);
@@ -1206,7 +1189,7 @@ describe.only("contexts ", function () {
                 await reconnectionTwo;
                 await reconnectionTwoWC;
 
-                await waitContext(webClient, contextName, context);
+                await webClient.waitContext(contextName, context);
                 const latestCtx = await webClient.getContext(contextName);
 
                 expect(latestCtx).to.eql(context);
@@ -1226,6 +1209,7 @@ describe.only("contexts ", function () {
                 const context = { complexObj: gtf.contexts.generateComplexObject(10) };
 
                 await platform.setContext(contextName, context);
+                await platform.waitContextTrack(contextName, context);
 
                 const reconnection = waitClientReconnect(platform);
                 const reconnectionWC = waitClientReconnect(webClient);
@@ -1242,8 +1226,7 @@ describe.only("contexts ", function () {
                 await reconnectionWC;
 
                 await coreClient.updateContext(contextName, { complexObj: 42 });
-
-                await waitContext(platform, contextName, { complexObj: 42 });
+                await platform.waitContextTrack(contextName, { complexObj: 42 });
 
                 const reconnectionTwo = waitClientReconnect(platform);
                 const reconnectionTwoWC = waitClientReconnect(webClient);
@@ -1253,7 +1236,7 @@ describe.only("contexts ", function () {
                 await reconnectionTwo;
                 await reconnectionTwoWC;
 
-                await waitContext(webClient, contextName, { complexObj: 42 });
+                await webClient.waitContext(contextName, { complexObj: 42 });
                 const latestCtx = await webClient.getContext(contextName);
 
                 expect(latestCtx).to.eql({ complexObj: 42 });
@@ -1273,8 +1256,7 @@ describe.only("contexts ", function () {
                 const context = { complexObj: gtf.contexts.generateComplexObject(10) };
 
                 await webClient.setContext(contextName, context);
-
-                await waitContext(platform, contextName, context);
+                await platform.waitContextTrack(contextName, context);
 
                 const reconnection = waitClientReconnect(platform);
                 const reconnectionWC = waitClientReconnect(webClient);
@@ -1291,8 +1273,7 @@ describe.only("contexts ", function () {
                 await reconnectionWC;
 
                 await coreClient.updateContext(contextName, { complexObj: 42 });
-
-                await waitContext(platform, contextName, { complexObj: 42 });
+                await platform.waitContextTrack(contextName, { complexObj: 42 });
 
                 const reconnectionTwo = waitClientReconnect(platform);
                 const reconnectionTwoWC = waitClientReconnect(webClient);
@@ -1302,8 +1283,7 @@ describe.only("contexts ", function () {
                 await reconnectionTwo;
                 await reconnectionTwoWC;
 
-                await waitContext(webClient, contextName, { complexObj: 42 });
-                
+                await webClient.waitContext(contextName, { complexObj: 42 });
                 const latestCtx = await webClient.getContext(contextName);
 
                 expect(latestCtx).to.eql({ complexObj: 42 });
@@ -1339,8 +1319,7 @@ describe.only("contexts ", function () {
                 const context = { complexObj: gtf.contexts.generateComplexObject(10) };
 
                 await webClientTwo.setContext(contextName, context);
-
-                await waitContext(platform, contextName, context);
+                await platform.waitContextTrack(contextName, context);
 
                 const reconnectionTwo = waitClientReconnect(platform);
                 const reconnectionTwoWC = waitClientReconnect(webClient);
@@ -1352,8 +1331,7 @@ describe.only("contexts ", function () {
                 await reconnectionTwoWC;
                 await reconnectionTwoWCTwo;
 
-                await waitContext(webClient, contextName, context);
-
+                await webClient.waitContext(contextName, context);
                 const latestCtx = await webClient.getContext(contextName);
 
                 expect(latestCtx).to.eql(context);
@@ -1377,6 +1355,7 @@ describe.only("contexts ", function () {
                 const context = { complexObj: gtf.contexts.generateComplexObject(10) };
 
                 await platform.setContext(contextName, context);
+                await platform.waitContextTrack(contextName, context);
 
                 const reconnection = waitClientReconnect(platform);
                 const reconnectionWC = waitClientReconnect(webClient);
@@ -1391,8 +1370,7 @@ describe.only("contexts ", function () {
                 await reconnectionWCTwo;
 
                 await webClientTwo.updateContext(contextName, { complexObj: 42 })
-
-                await waitContext(platform, contextName, { complexObj: 42 });
+                await platform.waitContextTrack(contextName, { complexObj: 42 });
 
                 const reconnectionTwo = waitClientReconnect(platform);
                 const reconnectionTwoWC = waitClientReconnect(webClient);
@@ -1404,8 +1382,7 @@ describe.only("contexts ", function () {
                 await reconnectionTwoWC;
                 await reconnectionTwoWCTwo;
 
-                await waitContext(webClient, contextName, { complexObj: 42 });
-
+                await webClient.waitContext(contextName, { complexObj: 42 });
                 const latestCtx = await webClient.getContext(contextName);
 
                 expect(latestCtx).to.eql({ complexObj: 42 });
@@ -2136,8 +2113,7 @@ describe.only("contexts ", function () {
 
                 clientsToClear.push(platform);
 
-                await waitContext(platform, contextName, context);
-
+                await platform.waitContext(contextName, context);
                 const platformKnownContexts = await platform.getAllContexts();
 
                 expect(prePlatformContextNames.every((ctxName) => platformKnownContexts.some((name) => name === ctxName))).to.be.true;
@@ -2168,8 +2144,7 @@ describe.only("contexts ", function () {
 
                 clientsToClear.push(webClient);
 
-                await waitContext(webClient, contextName, context);
-
+                await webClient.waitContext(contextName, context);
                 const webKnownContexts = await webClient.getAllContexts();
 
                 expect(prePlatformContextNames.every((ctxName) => webKnownContexts.some((name) => name === ctxName))).to.be.true;
@@ -2194,8 +2169,7 @@ describe.only("contexts ", function () {
 
                 clientsToClear.push(platform);
 
-                await waitContext(platform, contextName, context);
-
+                await platform.waitContext(contextName, context);
                 const platformContext = await platform.getContext(contextName);
 
                 expect(platformContext).to.eql(context);
@@ -2224,8 +2198,7 @@ describe.only("contexts ", function () {
 
                 clientsToClear.push(webClient);
 
-                await waitContext(webClient, contextName, context);
-
+                await webClient.waitContext(contextName, context);
                 const webContext = await webClient.getContext(contextName);
 
                 expect(webContext).to.eql(context);
@@ -2252,7 +2225,7 @@ describe.only("contexts ", function () {
 
                 await platform.reload();
 
-                await waitContext(platform, contextName, context);
+                await platform.waitContextTrack(contextName, context);
 
                 const reconnection = waitClientReconnect(platform);
 
@@ -2260,8 +2233,7 @@ describe.only("contexts ", function () {
 
                 await reconnection;
 
-                await waitContext(platform, contextName, context);
-
+                await platform.waitContext(contextName, context);
                 const platformContext = await platform.getContext(contextName);
 
                 expect(platformContext).to.eql(context);
@@ -2298,8 +2270,7 @@ describe.only("contexts ", function () {
 
                 await webClient.setContext(contextName, context);
 
-                await waitContext(platform, contextName, context);
-
+                await platform.waitContext(contextName, context);
                 const platformContext = await platform.getContext(contextName);
 
                 expect(platformContext).to.eql(context);
@@ -2329,13 +2300,14 @@ describe.only("contexts ", function () {
                 const reconnection = waitClientReconnect(platform);
                 const reconnectionWC = waitClientReconnect(webClient);
 
+                await platform.waitContextTrack(contextName, context);
+
                 await gtf.puppet.stopDesktopGateway(gw);
 
                 await reconnection;
                 await reconnectionWC;
 
-                await waitContext(platform, contextName, context);
-
+                await platform.waitContext(contextName, context);
                 const platformContext = await platform.getContext(contextName);
 
                 expect(platformContext).to.eql(context);
@@ -2361,8 +2333,7 @@ describe.only("contexts ", function () {
                 await platform.reload();
 
                 await webClient.setContext(contextName, context);
-
-                await waitContext(platform, contextName, context);
+                await platform.waitContextTrack(contextName, context);
 
                 const reconnection = waitClientReconnect(platform);
                 const reconnectionWC = waitClientReconnect(webClient);
@@ -2372,8 +2343,7 @@ describe.only("contexts ", function () {
                 await reconnection;
                 await reconnectionWC;
 
-                await waitContext(platform, contextName, context);
-
+                await platform.waitContext(contextName, context);
                 const platformContext = await platform.getContext(contextName);
 
                 expect(platformContext).to.eql(context);
@@ -2397,8 +2367,7 @@ describe.only("contexts ", function () {
                 clientsToClear.push(webClient);
 
                 await platform.setContext(contextName, context);
-
-                await waitContext(webClient, contextName, context);
+                await platform.waitContextTrack(contextName, context);
 
                 await webClient.getContext(contextName);
 
@@ -2407,13 +2376,14 @@ describe.only("contexts ", function () {
                 const reconnection = waitClientReconnect(platform);
                 const reconnectionWC = waitClientReconnect(webClient);
 
+                await platform.waitContextTrack(contextName, context);
+
                 await gtf.puppet.stopDesktopGateway(gw);
 
                 await reconnection;
                 await reconnectionWC;
 
-                await waitContext(platform, contextName, context);
-
+                await platform.waitContext(contextName, context);
                 const platformContext = await platform.getContext(contextName);
 
                 expect(platformContext).to.eql(context);
@@ -2444,7 +2414,7 @@ describe.only("contexts ", function () {
 
                 await platform.reload();
 
-                await waitContext(platform, contextName, context);
+                await platform.waitContextTrack(contextName, context);
 
                 const reconnection = waitClientReconnect(platform);
                 const reconnectionWC = waitClientReconnect(webClient);
@@ -2454,8 +2424,7 @@ describe.only("contexts ", function () {
                 await reconnection;
                 await reconnectionWC;
 
-                await waitContext(webClient, contextName, context);
-
+                await webClient.waitContext(contextName, context);
                 const webContext = await webClient.getContext(contextName);
 
                 expect(webContext).to.eql(context);
@@ -2495,9 +2464,9 @@ describe.only("contexts ", function () {
                 await reconnectionWC2;
 
                 await webClient2.setContext(contextName, context);
+                await platform.waitContextTrack(contextName, context);
 
-                await waitContext(webClient, contextName, context);
-
+                await webClient.waitContext(contextName, context);
                 const webContext = await webClient.getContext(contextName);
 
                 expect(webContext).to.eql(context);
@@ -2525,8 +2494,7 @@ describe.only("contexts ", function () {
                 clientsToClear.push(webClient2);
 
                 await platform.setContext(contextName, context);
-
-                await waitContext(webClient2, contextName, context);
+                await platform.waitContextTrack(contextName, context);
 
                 await platform.reload();
 
@@ -2534,14 +2502,15 @@ describe.only("contexts ", function () {
                 const reconnectionWC = waitClientReconnect(webClient);
                 const reconnectionWC2 = waitClientReconnect(webClient2);
 
+                await platform.waitContextTrack(contextName, context);
+
                 await gtf.puppet.stopDesktopGateway(gw);
 
                 await reconnection;
                 await reconnectionWC;
                 await reconnectionWC2;
 
-                await waitContext(webClient2, contextName, context);
-
+                await webClient.waitContext(contextName, context);
                 const platformContext = await webClient.getContext(contextName);
 
                 expect(platformContext).to.eql(context);
