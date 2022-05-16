@@ -1033,7 +1033,11 @@
         activateFrame: optional(boolean()),
         newFrame: optional(oneOf(newFrameConfigDecoder, boolean())),
         noTabHeader: optional(boolean()),
-        inMemoryLayout: optional(boolean())
+        inMemoryLayout: optional(boolean()),
+        icon: optional(nonEmptyStringDecoder),
+        isPinned: optional(boolean()),
+        isSelected: optional(boolean()),
+        positionIndex: optional(nonNegativeNumberDecoder)
     }));
     const openWorkspaceConfigDecoder = object({
         name: nonEmptyStringDecoder,
@@ -1060,12 +1064,34 @@
             allowSplitters: optional(boolean()),
             showWindowCloseButtons: optional(boolean()),
             showEjectButtons: optional(boolean()),
-            showAddWindowButtons: optional(boolean())
+            showAddWindowButtons: optional(boolean()),
+            icon: optional(nonEmptyStringDecoder),
+            isPinned: optional(boolean()),
+            isSelected: optional(boolean()),
+            positionIndex: optional(nonNegativeNumberDecoder)
         })),
         frame: optional(object({
             reuseFrameId: optional(nonEmptyStringDecoder),
             newFrame: optional(oneOf(boolean(), newFrameConfigDecoder))
         }))
+    });
+    const workspaceSelectorDecoder = object({
+        workspaceId: nonEmptyStringDecoder
+    });
+    const restoreWorkspaceDefinitionDecoder = object({
+        name: nonEmptyStringDecoder,
+        restoreOptions: optional(restoreWorkspaceConfigDecoder)
+    });
+    const emptyFrameDefinitionDecoder = optional(object({
+        frameConfig: optional(newFrameConfigDecoder),
+        context: optional(object())
+    }));
+    const frameInitConfigDecoder = object({
+        workspaces: array(oneOf(optional(workspaceDefinitionDecoder), optional(restoreWorkspaceDefinitionDecoder)))
+    });
+    const frameInitProtocolConfigDecoder = object({
+        frameId: nonEmptyStringDecoder,
+        workspaces: array(oneOf(workspaceDefinitionDecoder, restoreWorkspaceDefinitionDecoder))
     });
     const builderConfigDecoder = object({
         type: allParentDecoder,
@@ -1079,8 +1105,13 @@
     const getFrameSummaryConfigDecoder = object({
         itemId: nonEmptyStringDecoder
     });
+    const frameInitializationContextDecoder = object({
+        context: optional(object())
+    });
     const frameSummaryDecoder = object({
-        id: nonEmptyStringDecoder
+        id: nonEmptyStringDecoder,
+        isInitialized: optional(boolean()),
+        initializationContext: optional(frameInitializationContextDecoder)
     });
     const containerSummaryDecoder = object({
         type: subParentDecoder,
@@ -1120,7 +1151,8 @@
         showEjectButtons: optional(boolean()),
         showWindowCloseButtons: optional(boolean()),
         widthInPx: optional(number()),
-        heightInPx: optional(number())
+        heightInPx: optional(number()),
+        isPinned: optional(boolean()),
     });
     const baseChildSnapshotConfigDecoder = object({
         frameId: nonEmptyStringDecoder,
@@ -1177,7 +1209,8 @@
             minWidth: optional(number()),
             minHeigth: optional(number()),
             maxWidth: optional(number()),
-            maxHeight: optional(number())
+            maxHeight: optional(number()),
+            isMaximized: optional(boolean())
         })
     });
     const groupLayoutItemDecoder = object({
@@ -1217,6 +1250,8 @@
     });
     const frameSummaryResultDecoder = object({
         id: nonEmptyStringDecoder,
+        isInitialized: optional(boolean()),
+        initializationContext: optional(frameInitializationContextDecoder)
     });
     const frameSummariesResultDecoder = object({
         summaries: array(frameSummaryResultDecoder)
@@ -1253,6 +1288,9 @@
             width: nonNegativeNumberDecoder,
             height: nonNegativeNumberDecoder
         })
+    });
+    const getWorkspaceIconResultDecoder = object({
+        icon: optional(nonEmptyStringDecoder)
     });
     const resizeConfigDecoder = object({
         width: optional(positiveNumberDecoder),
@@ -1331,10 +1369,8 @@
     const workspaceLayoutSaveConfigDecoder = object({
         name: nonEmptyStringDecoder,
         workspaceId: nonEmptyStringDecoder,
-        saveContext: optional(boolean())
-    });
-    const workspaceSelectorDecoder = object({
-        workspaceId: nonEmptyStringDecoder,
+        saveContext: optional(boolean()),
+        metadata: optional(object())
     });
     const workspaceLockConfigDecoder = object({
         allowDrop: optional(boolean()),
@@ -1402,6 +1438,17 @@
         config: optional(groupLockConfigDecoder)
     });
     const lockContainerDecoder = oneOf(lockRowDecoder, lockColumnDecoder, lockGroupDecoder);
+    const pinWorkspaceDecoder = object({
+        workspaceId: nonEmptyStringDecoder,
+        icon: optional(nonEmptyStringDecoder)
+    });
+    const setWorkspaceIconDecoder = object({
+        workspaceId: nonEmptyStringDecoder,
+        icon: optional(nonEmptyStringDecoder)
+    });
+    const workspacePinOptionsDecoder = optional(object({
+        icon: optional(nonEmptyStringDecoder)
+    }));
 
     const webPlatformMethodName = "T42.Web.Platform.Control";
     const webPlatformWspStreamName = "T42.Web.Platform.WSP.Stream";
@@ -1422,6 +1469,8 @@
         ping: { name: "ping", resultDecoder: pingResultDecoder },
         isWindowInWorkspace: { name: "isWindowInWorkspace", argsDecoder: simpleItemConfigDecoder, resultDecoder: isWindowInSwimlaneResultDecoder },
         createWorkspace: { name: "createWorkspace", resultDecoder: workspaceSnapshotResultDecoder, argsDecoder: workspaceCreateConfigDecoder },
+        createFrame: { name: "createFrame", resultDecoder: frameSummaryResultDecoder, argsDecoder: emptyFrameDefinitionDecoder },
+        initFrame: { name: "initFrame", resultDecoder: voidResultDecoder, argsDecoder: frameInitProtocolConfigDecoder },
         getAllFramesSummaries: { name: "getAllFramesSummaries", resultDecoder: frameSummariesResultDecoder },
         getFrameSummary: { name: "getFrameSummary", resultDecoder: frameSummaryDecoder, argsDecoder: getFrameSummaryConfigDecoder },
         getAllWorkspacesSummaries: { name: "getAllWorkspacesSummaries", resultDecoder: workspaceSummariesResultDecoder },
@@ -1453,7 +1502,11 @@
         resumeWorkspace: { name: "resumeWorkspace", argsDecoder: workspaceSelectorDecoder, resultDecoder: voidResultDecoder },
         lockWorkspace: { name: "lockWorkspace", argsDecoder: lockWorkspaceDecoder, resultDecoder: voidResultDecoder },
         lockWindow: { name: "lockWindow", argsDecoder: lockWindowDecoder, resultDecoder: voidResultDecoder },
-        lockContainer: { name: "lockContainer", argsDecoder: lockContainerDecoder, resultDecoder: voidResultDecoder }
+        lockContainer: { name: "lockContainer", argsDecoder: lockContainerDecoder, resultDecoder: voidResultDecoder },
+        pinWorkspace: { name: "pinWorkspace", argsDecoder: pinWorkspaceDecoder, resultDecoder: voidResultDecoder },
+        unpinWorkspace: { name: "unpinWorkspace", argsDecoder: workspaceSelectorDecoder, resultDecoder: voidResultDecoder },
+        getWorkspaceIcon: { name: "getWorkspaceIcon", argsDecoder: workspaceSelectorDecoder, resultDecoder: getWorkspaceIconResultDecoder },
+        setWorkspaceIcon: { name: "setWorkspaceIcon", argsDecoder: setWorkspaceIconDecoder, resultDecoder: voidResultDecoder }
     };
 
     class Bridge {
@@ -1649,8 +1702,8 @@
                     return;
                 }
                 yield Promise.all([
-                    this.verifyMethodLive(webPlatformMethodName),
-                    this.verifyMethodLive(webPlatformWspStreamName)
+                    this.verifyMethodLive(this.decorateCommunicationId(webPlatformMethodName)),
+                    this.verifyMethodLive(this.decorateCommunicationId(webPlatformWspStreamName))
                 ]);
                 yield this.transmitControl("frameHello", { windowId: actualWindowId });
             });
@@ -1663,7 +1716,7 @@
         }
         subscribePlatform(eventCallback) {
             this.coreEventMethodInitiated = true;
-            this.corePlatformSubPromise = this.agm.subscribe(webPlatformWspStreamName);
+            this.corePlatformSubPromise = this.agm.subscribe(this.decorateCommunicationId(webPlatformWspStreamName));
             this.corePlatformSubPromise
                 .then((sub) => {
                 sub.onData((data) => eventCallback(data.data));
@@ -1689,7 +1742,7 @@
         transmitControl(operation, operationArguments) {
             return __awaiter(this, void 0, void 0, function* () {
                 const invocationArguments = window.glue42gd ? { operation, operationArguments } : { operation, domain: "workspaces", data: operationArguments };
-                const methodName = window.glue42gd ? METHODS.control.name : webPlatformMethodName;
+                const methodName = window.glue42gd ? METHODS.control.name : this.decorateCommunicationId(webPlatformMethodName);
                 let invocationResult;
                 const baseErrorMessage = `Internal Workspaces Communication Error. Attempted operation: ${JSON.stringify(invocationArguments)}. `;
                 try {
@@ -1738,6 +1791,9 @@
                     });
                 });
             }, 15000, "Timeout waiting for the Workspaces communication channels");
+        }
+        decorateCommunicationId(base) {
+            return `${base}.${window.glue42core.communicationId}`;
         }
     }
 
@@ -2358,6 +2414,9 @@
         get showAddWindowButtons() {
             return getData(this).config.showAddWindowButtons;
         }
+        get isPinned() {
+            return getData(this).config.isPinned;
+        }
         removeChild(predicate) {
             return __awaiter(this, void 0, void 0, function* () {
                 checkThrowCallback(predicate);
@@ -2401,7 +2460,7 @@
         saveLayout(name, config) {
             return __awaiter(this, void 0, void 0, function* () {
                 nonEmptyStringDecoder.runWithException(name);
-                yield getData(this).controller.saveLayout({ name, workspaceId: this.id, saveContext: config === null || config === void 0 ? void 0 : config.saveContext });
+                yield getData(this).controller.saveLayout({ name, workspaceId: this.id, saveContext: config === null || config === void 0 ? void 0 : config.saveContext, metadata: config === null || config === void 0 ? void 0 : config.metadata });
             });
         }
         setTitle(title) {
@@ -2456,6 +2515,18 @@
                     children: newChildren,
                     frame: actualFrame
                 });
+            });
+        }
+        getIcon() {
+            return __awaiter(this, void 0, void 0, function* () {
+                const controller = getData(this).controller;
+                return controller.getWorkspaceIcon(this.id);
+            });
+        }
+        setIcon(icon) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const controller = getData(this).controller;
+                return controller.setWorkspaceIcon(this.id, icon);
             });
         }
         getBox(predicate) {
@@ -2584,6 +2655,19 @@
                 }
                 const verifiedConfig = lockConfigResult === undefined ? undefined : workspaceLockConfigDecoder.runWithException(lockConfigResult);
                 yield getData(this).controller.lockWorkspace(this.id, verifiedConfig);
+                yield this.refreshReference();
+            });
+        }
+        pin(options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                workspacePinOptionsDecoder.runWithException(options);
+                yield getData(this).controller.pinWorkspace(this.id, options === null || options === void 0 ? void 0 : options.icon);
+                yield this.refreshReference();
+            });
+        }
+        unpin() {
+            return __awaiter(this, void 0, void 0, function* () {
+                yield getData(this).controller.unpinWorkspace(this.id);
                 yield this.refreshReference();
             });
         }
@@ -2903,6 +2987,9 @@
         get id() {
             return getData$2(this).summary.id;
         }
+        get isInitialized() {
+            return getData$2(this).summary.isInitialized;
+        }
         getBounds() {
             const myId = getData$2(this).summary.id;
             return getData$2(this).controller.getFrameBounds(myId);
@@ -2993,6 +3080,15 @@
             const validatedDefinition = workspaceDefinitionDecoder.runWithException(definition);
             const validatedConfig = workspaceBuilderCreateConfigDecoder.runWithException(config);
             return getData$2(this).controller.createWorkspace(validatedDefinition, validatedConfig);
+        }
+        init(config) {
+            return __awaiter(this, void 0, void 0, function* () {
+                frameInitConfigDecoder.runWithException(config);
+                if (getData$2(this).summary.isInitialized) {
+                    throw new Error("The frame has already been initialized");
+                }
+                return getData$2(this).controller.initFrame(this.id, config);
+            });
         }
         onClosed(callback) {
             return __awaiter(this, void 0, void 0, function* () {
@@ -3171,6 +3267,14 @@
                 };
                 const unsubscribe = yield getData$2(this).controller.processLocalSubscription(config, myId);
                 return unsubscribe;
+            });
+        }
+        onInitializationRequested(callback) {
+            return __awaiter(this, void 0, void 0, function* () {
+                checkThrowCallback(callback);
+                if (!this.isInitialized) {
+                    yield callback(getData$2(this).summary.initializationContext);
+                }
             });
         }
     }
@@ -3599,6 +3703,20 @@
                 return this.ioc.getModel("workspace", workspaceConfig);
             });
         }
+        createEmptyFrame(definition) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const frameSummary = yield this.bridge.send(OPERATIONS.createFrame.name, definition);
+                const frameConfig = {
+                    summary: frameSummary
+                };
+                return this.ioc.getModel("frame", frameConfig);
+            });
+        }
+        initFrame(frameId, config) {
+            return __awaiter(this, void 0, void 0, function* () {
+                yield this.bridge.send(OPERATIONS.initFrame.name, Object.assign({ frameId }, config));
+            });
+        }
         restoreWorkspace(name, options) {
             return __awaiter(this, void 0, void 0, function* () {
                 const snapshot = yield this.bridge.send(OPERATIONS.openWorkspace.name, { name, restoreOptions: options });
@@ -3916,6 +4034,25 @@
                 yield this.bridge.send(OPERATIONS.lockContainer.name, { itemId, type, config });
             });
         }
+        pinWorkspace(workspaceId, icon) {
+            return __awaiter(this, void 0, void 0, function* () {
+                yield this.bridge.send(OPERATIONS.pinWorkspace.name, { workspaceId, icon });
+            });
+        }
+        unpinWorkspace(workspaceId) {
+            return __awaiter(this, void 0, void 0, function* () {
+                yield this.bridge.send(OPERATIONS.unpinWorkspace.name, { workspaceId });
+            });
+        }
+        getWorkspaceIcon(workspaceId) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const result = yield this.bridge.send(OPERATIONS.getWorkspaceIcon.name, { workspaceId });
+                return result.icon;
+            });
+        }
+        setWorkspaceIcon(workspaceId, icon) {
+            return this.bridge.send(OPERATIONS.setWorkspaceIcon.name, { workspaceId, icon });
+        }
     }
 
     class MainController {
@@ -3936,6 +4073,16 @@
             return __awaiter(this, void 0, void 0, function* () {
                 const createConfig = Object.assign({}, definition, { saveConfig });
                 return yield this.base.createWorkspace(createConfig);
+            });
+        }
+        createEmptyFrame(definition) {
+            return __awaiter(this, void 0, void 0, function* () {
+                return yield this.base.createEmptyFrame(definition);
+            });
+        }
+        initFrame(frameId, config) {
+            return __awaiter(this, void 0, void 0, function* () {
+                return this.base.initFrame(frameId, config);
             });
         }
         restoreWorkspace(name, options) {
@@ -4224,6 +4371,18 @@
         }
         lockContainer(itemId, type, config) {
             return this.base.lockContainer(itemId, type, config);
+        }
+        pinWorkspace(workspaceId, icon) {
+            return this.base.pinWorkspace(workspaceId, icon);
+        }
+        unpinWorkspace(workspaceId) {
+            return this.base.unpinWorkspace(workspaceId);
+        }
+        getWorkspaceIcon(workspaceId) {
+            return this.base.getWorkspaceIcon(workspaceId);
+        }
+        setWorkspaceIcon(workspaceId, icon) {
+            return this.base.setWorkspaceIcon(workspaceId, icon);
         }
         getFrameConstraints(frameId) {
             return __awaiter(this, void 0, void 0, function* () {
@@ -4540,6 +4699,10 @@
             const validatedConfig = workspaceBuilderCreateConfigDecoder.runWithException(saveConfig);
             return controller.createWorkspace(validatedDefinition, validatedConfig);
         });
+        const createEmptyFrame = (definition) => __awaiter(void 0, void 0, void 0, function* () {
+            const validatedDefinition = emptyFrameDefinitionDecoder.runWithException(definition);
+            return controller.createEmptyFrame(validatedDefinition !== null && validatedDefinition !== void 0 ? validatedDefinition : {});
+        });
         const layouts = {
             getSummaries: () => {
                 return controller.getLayoutSummaries();
@@ -4651,6 +4814,28 @@
             const unsubscribe = yield controller.processGlobalSubscription(wrappedCallback, "window", "removed");
             return unsubscribe;
         });
+        const waitForFrame = (id) => __awaiter(void 0, void 0, void 0, function* () {
+            nonEmptyStringDecoder.runWithException(id);
+            return new Promise((res, rej) => {
+                let unsub = () => {
+                };
+                onFrameOpened((f) => {
+                    if (f.id === id) {
+                        res(f);
+                        unsub();
+                    }
+                }).then((u) => {
+                    unsub = u;
+                    return getAllFrames();
+                }).then((frames) => {
+                    const myFrame = frames.find((f) => f.id === id);
+                    if (myFrame) {
+                        res(myFrame);
+                        unsub();
+                    }
+                }).catch(rej);
+            });
+        });
         return {
             inWorkspace,
             getBuilder,
@@ -4666,6 +4851,8 @@
             getBox: getParent,
             restoreWorkspace,
             createWorkspace,
+            createEmptyFrame,
+            waitForFrame,
             layouts,
             onFrameOpened,
             onFrameClosed,

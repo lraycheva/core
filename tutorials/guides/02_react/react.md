@@ -72,7 +72,6 @@ The three apps of your [**Glue42 Core**](https://glue42.com/core/) project conta
 - `/public` - holds static assets for each application, including a `manifest.json`, `sw.js` (Service Worker), icons and an `index.html` file;
 - `/src` - holds the main entry point - `index.js`, and the `Clients.jsx`/`Stocks.jsx` react component. Also, a `glue.js` file (methods for interaction with the Glue42 framework), CSS files and a `serviceWorker` file which only registers the Service Worker for the app;
 - `.env` - environment variables for CRA;
-- `config-overrides.js` - defines additional WebPack configuration to resolve `react` and `react-dom` modules from within the `node_modules` in the current directory;
 
 Go to the directories of all apps (including the Workspaces App), open a command prompt and run:
 
@@ -90,15 +89,13 @@ Before you continue, take a look at the solution files. You are free to use the 
 
 Go to the `/rest-server` directory and start the REST Server (as described in the [REST Server](#1_initial_setup-13_rest_server) chapter). 
 
-Install all dependencies in `/react/solution/clients`, `/react/solution/client-details`, `/react/solution/stocks`, `/react/solution/stock-details` and start all apps by running the following commands: 
+Install all dependencies in `/react/solution/clients`, `/react/solution/client-details`, `/react/solution/stocks`, `/react/solution/stock-details` and `/react/solution/workspace` by running the following commands: 
 
 ```cmd
 npm install
-
-npm start
 ```
 
-Go to the `/react/solution/workspace` directory, open a command prompt and run the following commands to install the necessary dependencies and host the Workspaces App run the project:
+Go to the `/react/solution` directory, open a command prompt and run the following commands to install the necessary dependencies and start all apps by running the following commands:
 
 ```cmd
 npm install
@@ -133,7 +130,7 @@ npx create-react-app my-app
 2. Install the following dependencies in the root directory of your app:
 
 ```cmd
-npm install --save @glue42/react-hooks bootstrap@4.4.1 react-app-rewired@2.1.5
+npm install --save @glue42/react-hooks bootstrap@4.4.1
 ```
 
 3. Edit the `package.json` file of your app:
@@ -142,14 +139,6 @@ npm install --save @glue42/react-hooks bootstrap@4.4.1 react-app-rewired@2.1.5
 
 ```json
 "homepage": "/my-app/"
-```
-
-- change the `start`, `build` and `test` scripts to the following:
-
-```json
-"start": "react-app-rewired start --scripts-version react-scripts",
-"build": "react-app-rewired build --scripts-version react-scripts",
-"test": "react-app-rewired test --scripts-version react-scripts",
 ```
 
 4. Create a `.env` file in the root directory of your app with the following settings:
@@ -161,15 +150,13 @@ PORT=3003
 
 *Note that the `PORT` value must be different for each app in the project. The three initial apps already occupy ports 3000, 3001 and 3002.*
 
-5. Go to the root directory of one of the existing tutorial apps, copy the `config-overrides.js` file and paste it in the root directory of your app.
-
-6. Start your app by running the following command from its root directory:
+5. Start your app by running the following command from its root directory:
 
 ```cmd 
 npm start
 ```
 
-7. Create or edit the code for the new app by following the specific instructions in the respective chapters.
+6. Create or edit the code for the new app by following the specific instructions in the respective chapters.
 
 ## 2. Project Setup
 

@@ -1,0 +1,19 @@
+{
+  "name": "react-tutorial",
+  "version": "1.0.0",
+  "description": "Glue42 Core React Tutorial",
+  "scripts": {
+    "start:clients": "cd ./clients && npm start",
+    "start:stocks": "cd ./stocks && npm start",
+    "start:clientDetails": "cd ./client-details && npm start",
+    "start:stockDetails": "cd ./stock-details && npm start",
+    "start:workspace": "cd ./workspace && npm start",
+    "start": "concurrently \"npm run start:clients\" \"npm run start:stocks\" \"npm run start:clientDetails\" \"npm run start:stockDetails\" \"npm run start:workspace\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "concurrently": "^5.3.0"
+  }
+}
