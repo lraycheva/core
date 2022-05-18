@@ -23,7 +23,7 @@ export class PortsBridge {
     private unLoadStarted = false;
     private isPreferredActivated = false;
     private activePreferredTransportConfig: Glue42Core.Connection.TransportSwitchSettings | undefined;
-    private communicationId!: string;
+    private _communicationId!: string;
     private readonly startUpPromise: Promise<void>;
     private startupResolve!: (value: void | PromiseLike<void>) => void;
 
@@ -40,7 +40,13 @@ export class PortsBridge {
 
     public async configure(config: InternalPlatformConfig): Promise<void> {
 
-        this.communicationId = config.communicationId;
+        const systemSettings = this.sessionStorage.getSystemSettings();
+
+        if (!systemSettings) {
+            throw new Error("Cannot initiate the platform port bridge, because the system settings are not defined");
+        }
+
+        this._communicationId = systemSettings.systemInstanceId;
 
         await this.gateway.start(config?.gateway);
 
@@ -225,7 +231,7 @@ export class PortsBridge {
             glue42core: {
                 type: Glue42CoreMessageTypes.connectionAccepted.name,
                 port: channel.port2,
-                communicationId: this.communicationId,
+                communicationId: this._communicationId,
                 isPreferredActivated: this.isPreferredActivated,
                 parentWindowId: myWindowId,
                 appName, clientId, clientType

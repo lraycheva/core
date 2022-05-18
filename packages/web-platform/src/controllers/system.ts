@@ -3,6 +3,7 @@ import { Glue42Core } from "@glue42/core";
 import { BridgeOperation, InternalPlatformConfig, LibController, SystemOperationTypes } from "../common/types";
 import { anyDecoder, systemOperationTypesDecoder } from "../shared/decoders";
 import logger from "../shared/logger";
+import { SessionStorageController } from "./session";
 
 export class SystemController implements LibController {
 
@@ -15,6 +16,8 @@ export class SystemController implements LibController {
         getBase: { name: "getBase", resultDecoder: anyDecoder, execute: this.handleGetBase.bind(this) }
     }
 
+    constructor(private readonly session: SessionStorageController) { }
+
     private get logger(): Glue42Core.Logger.API | undefined {
         return logger.get("applications.controller");
     }
@@ -23,7 +26,7 @@ export class SystemController implements LibController {
         this.environment = config.environment;
         this.base = {
             workspacesFrameCache: config.workspacesFrameCache,
-            communicationId: config.communicationId
+            communicationId: this.session.getSystemSettings()?.systemInstanceId
         };
     }
 

@@ -54,7 +54,7 @@ export class IoC {
     private _preferredConnectionController!: PreferredConnectionController;
     private _database!: IDBPDatabase<Glue42CoreDB> | undefined;
     private _transactionsController!: TransactionsController;
-    
+
     constructor(private readonly config?: Glue42WebPlatform.Config) { }
 
     public get gateway(): Gateway {
@@ -106,7 +106,7 @@ export class IoC {
 
     public get systemController(): SystemController {
         if (!this._systemController) {
-            this._systemController = new SystemController();
+            this._systemController = new SystemController(this.sessionController);
         }
 
         return this._systemController;
@@ -289,7 +289,7 @@ export class IoC {
 
         return this._transactionsController;
     }
-    
+
     public getDatabase(): Promise<IDBPDatabase<Glue42CoreDB>> {
         if (this._database) {
             return Promise.resolve(this._database);

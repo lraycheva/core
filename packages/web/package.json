@@ -39,6 +39,7 @@
         "callback-registry": "^2.6.0",
         "decoder-validate": "0.0.2",
         "idb": "^5.0.4",
+        "nanoid": "^3.3.4",
         "shortid": "^2.2.15"
     },
     "devDependencies": {

@@ -9,6 +9,7 @@ export interface ParsedConfig extends Glue42Web.Config {
     logger: any;
     isPlatformInternal: boolean;
     libraries: Array<(glue: Glue42Web.API, config?: Glue42Web.Config | Glue42.Config) => Promise<void>>;
+    identity?: { [key: string]: string | number | boolean };
 }
 
 export interface LibController {
@@ -38,4 +39,8 @@ export interface Transaction<T> {
 
 export interface TransportState extends Glue42Core.Connection.TransportSwitchSettings {
     transportName: string;
+}
+
+export interface SessionWebSettings {
+    clientInstanceId: string;
 }

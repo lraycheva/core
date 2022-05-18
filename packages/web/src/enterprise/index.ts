@@ -3,14 +3,14 @@
 import { Glue42 } from "@glue42/desktop";
 import { Glue42Web } from "../../web";
 
-export const enterprise = (config: Glue42Web.Config): Glue42.Glue => {
+export const enterprise = (config?: Glue42Web.Config): Glue42.Glue => {
 
     const enterpriseConfig = {
         windows: true,
         layouts: "full",
         appManager: "full",
         channels: true,
-        libraries: config.libraries,
+        libraries: config?.libraries ?? [],
         logger: config?.systemLogger?.level ?? "warn"
     };
 

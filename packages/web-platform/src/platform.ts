@@ -8,6 +8,7 @@ import { PlatformController } from "./controllers/main";
 import { Glue42Web } from "@glue42/web";
 import { InternalPlatformConfig } from "./common/types";
 import { generate } from "shortid";
+import { nanoid } from "nanoid";
 import { SessionStorageController } from "./controllers/session";
 import { UnsubscribeFunction } from "callback-registry";
 
@@ -69,15 +70,14 @@ export class Platform {
 
         if (!systemSettings) {
             systemSettings = {
-                communicationId: generate()
+                systemInstanceId: nanoid(),
+                ctxTrackInstanceId: nanoid()
             };
+
+            this.session.saveSystemSettings(systemSettings);
         }
 
-        this.session.saveSystemSettings(systemSettings);
-
         this.platformConfig.workspacesFrameCache = typeof config.workspaces?.frameCache === "boolean" ? config.workspaces?.frameCache : true;
-
-        this.platformConfig.communicationId = systemSettings.communicationId;
 
         // deep merge deletes the promise object when merging, probably due to some cyclical references 
         this.transferPromiseObjects(verifiedConfig);
@@ -87,7 +87,7 @@ export class Platform {
             isPlatformFrame: !!config?.workspaces?.isFrame,
             environment: Object.assign({}, this.platformConfig.environment, { extension: undefined }),
             workspacesFrameCache: this.platformConfig.workspacesFrameCache,
-            communicationId: this.platformConfig.communicationId
+            communicationId: systemSettings.systemInstanceId
         };
 
         (window as any).glue42core = glue42core;

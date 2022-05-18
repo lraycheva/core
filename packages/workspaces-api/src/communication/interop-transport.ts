@@ -26,9 +26,11 @@ export class InteropTransport {
             return;
         }
 
+        const systemId = (window as any).glue42core.communicationId;
+
         await Promise.all([
-            this.verifyMethodLive(this.decorateCommunicationId(webPlatformMethodName)),
-            this.verifyMethodLive(this.decorateCommunicationId(webPlatformWspStreamName))
+            this.verifyMethodLive(webPlatformMethodName, systemId),
+            this.verifyMethodLive(webPlatformWspStreamName, systemId)
         ]);
 
         await this.transmitControl("frameHello", { windowId: actualWindowId });
@@ -44,7 +46,9 @@ export class InteropTransport {
     public subscribePlatform(eventCallback: (args?: any) => void): void {
         this.coreEventMethodInitiated = true;
 
-        this.corePlatformSubPromise = this.agm.subscribe(this.decorateCommunicationId(webPlatformWspStreamName));
+        const systemId = (window as any).glue42core.communicationId;
+
+        this.corePlatformSubPromise = this.agm.subscribe(webPlatformWspStreamName, systemId ? { target: { instance: systemId } } : undefined);
 
         this.corePlatformSubPromise
             .then((sub) => {
@@ -74,7 +78,9 @@ export class InteropTransport {
     public async transmitControl(operation: string, operationArguments: any): Promise<any> {
 
         const invocationArguments = window.glue42gd ? { operation, operationArguments } : { operation, domain: "workspaces", data: operationArguments };
-        const methodName = window.glue42gd ? METHODS.control.name : this.decorateCommunicationId(webPlatformMethodName);
+        const methodName = window.glue42gd ? METHODS.control.name : webPlatformMethodName;
+
+        const platformTarget = window.glue42gd ? undefined : (window as any).glue42core.communicationId;
 
         let invocationResult: InvocationResult<any>;
         const baseErrorMessage = `Internal Workspaces Communication Error. Attempted operation: ${JSON.stringify(invocationArguments)}. `;
@@ -82,7 +88,7 @@ export class InteropTransport {
         // using the 0 index of the errors and values collections, because we expect only one server and
         // this is to safeguard in case in future we decide to deprecate the default returned/message properties in favor of using only collections
         try {
-            invocationResult = await this.agm.invoke(methodName, invocationArguments, "best", { methodResponseTimeoutMs: this.defaultTransportTimeout });
+            invocationResult = await this.agm.invoke(methodName, invocationArguments, platformTarget ? { instance: platformTarget } : "best", { methodResponseTimeoutMs: this.defaultTransportTimeout });
 
             if (!invocationResult) {
                 throw new Error("Received unsupported result from GD - empty result");
@@ -106,38 +112,38 @@ export class InteropTransport {
         return invocationResult.all_return_values[0].returned;
     }
 
-    private verifyMethodLive(name: string): Promise<void> {
+    private verifyMethodLive(name: string, systemId?: string): Promise<void> {
         return promisePlus(() => {
             return new Promise((resolve) => {
-                const hasMethod = this.agm.methods().some((method) => method.name === name);
+                const hasMethod = this.agm.methods().some((method) => {
+                    const nameMatch = method.name === name;
+    
+                    const serverMatch = systemId ?
+                        method.getServers().some((server) => server.instance === systemId) :
+                        true;
+    
+                    return nameMatch && serverMatch;
+                });
 
                 if (hasMethod) {
                     resolve();
                     return;
                 }
 
-                let unsubscribe = this.agm.methodAdded((method) => {
-                    if (method.name !== name) {
-                        return;
+                const unSub = this.agm.serverMethodAdded((data) => {
+                    const method = data.method;
+                    const server = data.server;
+    
+                    const serverMatch = systemId ?
+                        server.instance === systemId :
+                        true;
+    
+                    if (method.name === name && serverMatch) {
+                        unSub();
+                        resolve();
                     }
-
-                    if (unsubscribe) {
-                        unsubscribe();
-                        unsubscribe = null;
-                    } else {
-                        setTimeout(() => {
-                            if (unsubscribe) {
-                                unsubscribe();
-                            }
-                        }, 0);
-                    }
-                    resolve();
                 });
             });
         }, 15000, "Timeout waiting for the Workspaces communication channels");
-    }
-
-    private decorateCommunicationId(base: string): string {
-        return `${base}.${(window as any).glue42core.communicationId}`;
     }
 }

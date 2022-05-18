@@ -31,8 +31,7 @@ export const defaultPlatformConfig: InternalPlatformConfig = {
     connection: {},
     glue: {},
     environment: {},
-    workspacesFrameCache: true,
-    communicationId: ""
+    workspacesFrameCache: true
 };
 
 export const defaultTargetString = "*";

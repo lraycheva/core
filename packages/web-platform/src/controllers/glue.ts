@@ -2,7 +2,7 @@
 import GlueCore, { Glue42Core } from "@glue42/core";
 import GlueWeb, { Glue42Web, Glue42WebFactoryFunction } from "@glue42/web";
 import { GlueClientControlName, GlueWebPlatformControlName, GlueWebPlatformStreamName, GlueWebPlatformWorkspacesStreamName, GlueWorkspaceFrameClientControlName, GlueWorkspacesEventsReceiverName } from "../common/constants";
-import { BridgeOperation, ControlMessage, InternalPlatformConfig, LibDomains } from "../common/types";
+import { BridgeOperation, ControlMessage, InternalPlatformConfig, LibDomains, SessionSystemSettings } from "../common/types";
 import { PortsBridge } from "../connection/portsBridge";
 import { generate } from "shortid";
 import { SessionStorageController } from "./session";
@@ -20,6 +20,7 @@ export class GlueController {
     private _systemStream: Glue42Core.Interop.Stream | undefined;
     private _workspacesStream: Glue42Core.Interop.Stream | undefined;
     private _platformClientWindowId!: string;
+    private _systemSettings!: SessionSystemSettings;
 
     constructor(
         private readonly portsBridge: PortsBridge,
@@ -44,20 +45,20 @@ export class GlueController {
 
     public async start(config: InternalPlatformConfig): Promise<void> {
         this._config = config;
+
+        const systemSettings = this.sessionStorage.getSystemSettings();
+
+        if (!systemSettings) {
+            throw new Error("Cannot initiate the glue controller, because the system settings are not defined");
+        }
+
+        this._systemSettings = systemSettings;
+
         this._systemGlue = await this.initSystemGlue(config.glue);
 
         logger.setLogger(this._systemGlue.logger);
 
         this._contextsTrackingGlue = await this.setUpCtxTracking(config);
-    }
-
-    private async setUpCtxTracking(config: InternalPlatformConfig): Promise<Glue42Core.GlueCore | undefined> {
-        if (this._config.connection.preferred) {
-            return await this.initContextsTrackingGlue({
-                reAnnounceKnownContexts: true,
-                trackAllContexts: true
-            }, config);
-        }
     }
 
     public async initClientGlue(config?: Glue42Web.Config, factory?: Glue42WebFactoryFunction, isWorkspaceFrame?: boolean): Promise<Glue42Web.API> {
@@ -69,7 +70,7 @@ export class GlueController {
             application: "Platform",
             gateway: { webPlatform: { port, windowId: this.platformWindowId } }
         } as Glue42Web.Config;
-        
+
         const c = Object.assign({}, config, webConfig);
 
         this._clientGlue = factory ? await factory(c) : await GlueWeb(c) as any;
@@ -78,19 +79,19 @@ export class GlueController {
     }
 
     public async createPlatformSystemMethod(handler: (args: ControlMessage, caller: Glue42Web.Interop.Instance, success: (args?: ControlMessage) => void, error: (error?: string | object) => void) => void): Promise<void> {
-        await this.createMethodAsync(this.decorateCommunicationId(GlueWebPlatformControlName), handler);
+        await this.createMethodAsync(GlueWebPlatformControlName, handler);
     }
 
     public async createPlatformSystemStream(): Promise<void> {
-        this._systemStream = await this.createStream(this.decorateCommunicationId(GlueWebPlatformStreamName));
+        this._systemStream = await this.createStream(GlueWebPlatformStreamName);
     }
 
     public async createWorkspacesStream(): Promise<void> {
-        this._workspacesStream = await this.createStream(this.decorateCommunicationId(GlueWebPlatformWorkspacesStreamName));
+        this._workspacesStream = await this.createStream(GlueWebPlatformWorkspacesStreamName);
     }
 
     public async createWorkspacesEventsReceiver(callback: (data: any) => void): Promise<void> {
-        await this._systemGlue.interop.register(this.decorateCommunicationId(GlueWorkspacesEventsReceiverName), (args) => callback(args));
+        await this._systemGlue.interop.register(GlueWorkspacesEventsReceiverName, (args) => callback(args));
     }
 
     public pushSystemMessage(domain: LibDomains, operation: string, data: any): void {
@@ -122,7 +123,7 @@ export class GlueController {
             }
         }
 
-        const methodName = this.decorateCommunicationId(GlueWorkspaceFrameClientControlName);
+        const methodName = GlueWorkspaceFrameClientControlName;
 
         const result = await this.transmitMessage<InBound>(methodName, messageData, baseErrorMessage, { windowId }, { methodResponseTimeoutMs: 30000, waitTimeoutMs: 30000 });
 
@@ -153,7 +154,7 @@ export class GlueController {
             }
         }
 
-        const result = await this.transmitMessage<InBound>(this.decorateCommunicationId(GlueClientControlName), messageData, baseErrorMessage, { windowId }, { methodResponseTimeoutMs: 30000, waitTimeoutMs: 30000 });
+        const result = await this.transmitMessage<InBound>(GlueClientControlName, messageData, baseErrorMessage, { windowId }, { methodResponseTimeoutMs: 30000, waitTimeoutMs: 30000 });
 
         if (operationDefinition.resultDecoder) {
             const decodeResult = operationDefinition.resultDecoder.run(result);
@@ -244,8 +245,20 @@ export class GlueController {
             contexts: {
                 reAnnounceKnownContexts: false,
                 trackAllContexts: false
+            },
+            identity: {
+                instance: this._systemSettings.systemInstanceId
             }
         });
+    }
+
+    private async setUpCtxTracking(config: InternalPlatformConfig): Promise<Glue42Core.GlueCore | undefined> {
+        if (this._config.connection.preferred) {
+            return await this.initContextsTrackingGlue({
+                reAnnounceKnownContexts: true,
+                trackAllContexts: true
+            }, config);
+        }
     }
 
     private async initContextsTrackingGlue(contextsSettings: Glue42Core.ContextsConfig, config: InternalPlatformConfig): Promise<Glue42Core.GlueCore> {
@@ -256,7 +269,10 @@ export class GlueController {
             application: "Platform-Contexts-Track",
             gateway: { webPlatform: { port } },
             logger: config?.glue?.systemLogger?.level ?? "warn",
-            contexts: contextsSettings
+            contexts: contextsSettings,
+            identity: {
+                instance: this._systemSettings.ctxTrackInstanceId
+            }
         });
     }
 
@@ -318,9 +334,5 @@ export class GlueController {
         }
 
         return invocationResult.all_return_values[0].returned;
-    }
-
-    private decorateCommunicationId(base: string): string {
-        return `${base}.${this._config.communicationId}`;
     }
 }

@@ -24,13 +24,16 @@ export class GlueBridge {
         this.controllers = controllers;
 
         await Promise.all([
-            this.checkWaitMethod(this.decorateCommunicationId(GlueWebPlatformControlName)),
-            this.checkWaitMethod(this.decorateCommunicationId(GlueWebPlatformStreamName))
+            this.checkWaitMethod(GlueWebPlatformControlName),
+            this.checkWaitMethod(GlueWebPlatformStreamName)
         ]);
 
+        // this systemId will be missing if the platform is older than 1.12.X
+        const systemId = this.communicationId;
+
         const [sub] = await Promise.all([
-            this.coreGlue.interop.subscribe(this.decorateCommunicationId(GlueWebPlatformStreamName)),
-            this.coreGlue.interop.registerAsync(this.decorateCommunicationId(GlueClientControlName), (args, _, success, error) => this.passMessageController(args, success, error))
+            this.coreGlue.interop.subscribe(GlueWebPlatformStreamName, systemId ? { target: { instance: this.communicationId } } : undefined),
+            this.coreGlue.interop.registerAsync(GlueClientControlName, (args, _, success, error) => this.passMessageController(args, success, error))
         ]);
 
         this.sub = sub;
@@ -83,14 +86,29 @@ export class GlueBridge {
     private checkWaitMethod(name: string): Promise<void> {
         return PromisePlus<void>((resolve) => {
 
-            const hasMethod = this.coreGlue.interop.methods().some((method) => method.name === name);
+            const hasMethod = this.coreGlue.interop.methods().some((method) => {
+                const nameMatch = method.name === name;
+
+                const serverMatch = this.communicationId ?
+                    method.getServers().some((server) => server.instance === this.communicationId) :
+                    true;
+
+                return nameMatch && serverMatch;
+            });
 
             if (hasMethod) {
                 return resolve();
             }
 
-            const unSub = this.coreGlue.interop.methodAdded((method) => {
-                if (method.name === name) {
+            const unSub = this.coreGlue.interop.serverMethodAdded((data) => {
+                const method = data.method;
+                const server = data.server;
+
+                const serverMatch = this.communicationId ?
+                    server.instance === this.communicationId :
+                    true;
+
+                if (method.name === name && serverMatch) {
                     unSub();
                     resolve();
                 }
@@ -136,8 +154,11 @@ export class GlueBridge {
         let invocationResult: Glue42Core.Interop.InvocationResult<any>;
         const baseErrorMessage = `Internal Platform Communication Error. Attempted operation: ${JSON.stringify(operation.name)} with data: ${JSON.stringify(data)}. `;
 
+
+        const systemId = this.communicationId;
+
         try {
-            invocationResult = await this.coreGlue.interop.invoke(this.decorateCommunicationId(GlueWebPlatformControlName), messageData, undefined, options);
+            invocationResult = await this.coreGlue.interop.invoke(GlueWebPlatformControlName, messageData, systemId ? { instance: this.communicationId } : undefined, options);
 
             if (!invocationResult) {
                 throw new Error("Received unsupported result from the platform - empty result");
@@ -159,9 +180,5 @@ export class GlueBridge {
         }
 
         return invocationResult.all_return_values[0].returned;
-    }
-
-    private decorateCommunicationId(base: string): string {
-        return `${base}.${this.communicationId}`;
     }
 }

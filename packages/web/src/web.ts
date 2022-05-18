@@ -15,11 +15,13 @@ import { version } from "../package.json";
 export const createFactoryFunction = (coreFactoryFunction: GlueCoreFactoryFunction): Glue42WebFactoryFunction => {
 
     return async (userConfig?: Glue42Web.Config): Promise<Glue42Web.API | Glue42.Glue> => {
-        const config = parseConfig(userConfig);
-
         if (window.glue42gd) {
-            return enterprise(config);
+            return enterprise(userConfig);
         }
+
+        const ioc = new IoC();
+
+        const config = parseConfig(ioc.sessionController, userConfig);
 
         checkSingleton();
 
@@ -27,7 +29,7 @@ export const createFactoryFunction = (coreFactoryFunction: GlueCoreFactoryFuncti
 
         const logger = glue.logger.subLogger("web.main.controller");
 
-        const ioc = new IoC(glue);
+        ioc.defineGlue(glue);
 
         await ioc.preferredConnectionController.start(config);
 

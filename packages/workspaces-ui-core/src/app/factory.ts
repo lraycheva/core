@@ -116,13 +116,15 @@ export class ApplicationFactory {
     }
 
     public notifyFrameWillClose(windowId: string, appName?: string): Promise<any> {
-        return this._glue.interop.invoke(this.decorateCommunicationId(PlatformControlMethod), {
+        const systemId = (window as any).glue42core.communicationId;
+
+        return this._glue.interop.invoke(PlatformControlMethod, {
             domain: appName ? "appManager" : "windows",
             operation: appName ? "unregisterWorkspaceApp" : "unregisterWorkspaceWindow",
             data: {
                 windowId,
             }
-        });
+        }, systemId ? { instance: systemId } : undefined);
     }
 
     public onStarted(callback: (args: { summary: WindowSummary }) => void): UnsubscribeFunction {
@@ -192,7 +194,9 @@ export class ApplicationFactory {
     }
 
     private notifyFrameWillStart(windowId: string, appName?: string, context?: any, title?: string) {
-        return this._glue.interop.invoke(this.decorateCommunicationId(PlatformControlMethod), {
+        const systemId = (window as any).glue42core.communicationId;
+
+        return this._glue.interop.invoke(PlatformControlMethod, {
             domain: appName ? "appManager" : "windows",
             operation: appName ? "registerWorkspaceApp" : "registerWorkspaceWindow",
             data: {
@@ -203,7 +207,7 @@ export class ApplicationFactory {
                 context,
                 title
             }
-        });
+        }, systemId ? { instance: systemId } : undefined);
     }
 
     private waitFor(numberOfTriggers: number, callback: () => void): [(x: any) => void, () => void] {
@@ -344,7 +348,7 @@ export class ApplicationFactory {
 
             if (components.some(c => c === component)) {
                 this._frameController.maximizeTab(componentId);
-                this._frameController.selectionChanged([componentId],[]);
+                this._frameController.selectionChanged([componentId], []);
             }
 
         } catch (error) {
@@ -364,10 +368,5 @@ export class ApplicationFactory {
         } finally {
             workspace.hibernatedWindows = workspace.hibernatedWindows.filter((hw) => hw.id !== idAsString(component.config.id));
         }
-    }
-
-    private decorateCommunicationId(base: string): string {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return `${base}.${(window as any).glue42core.communicationId}`;
     }
 }

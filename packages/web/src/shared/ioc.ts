@@ -19,11 +19,13 @@ import { Notification } from "../notifications/notification";
 import { ExtController } from "../extension/controller";
 import { EventsDispatcher } from "./dispatcher";
 import { PreferredConnectionController } from "../communication/preferred";
+import { SessionStorageController } from "./session";
 
 export class IoC {
-    private readonly _communicationId!: string;
-    private _actualWindowId: string;
-    private _publicWindowId: string;
+    private _coreGlue!: Glue42Core.GlueCore;
+    private _communicationId!: string;
+    private _actualWindowId!: string;
+    private _publicWindowId!: string;
     private _webConfig!: ParsedConfig;
     private _windowsControllerInstance!: WindowsController;
     private _appManagerControllerInstance!: AppManagerController;
@@ -35,7 +37,8 @@ export class IoC {
     private _systemControllerInstance!: SystemController;
     private _bridgeInstance!: GlueBridge;
     private _eventsDispatcher!: EventsDispatcher;
-    private _preferredConnectionController!: PreferredConnectionController
+    private _preferredConnectionController!: PreferredConnectionController;
+    private _sessionStorage!: SessionStorageController;
 
     public controllers: { [key in LibDomains]: LibController } = {
         windows: this.windowsController,
@@ -46,18 +49,6 @@ export class IoC {
         channels: this.channelsController,
         system: this.systemController,
         extension: this.extensionController
-    }
-
-    constructor(private readonly coreGlue: Glue42Core.GlueCore) {
-        this._publicWindowId = (coreGlue as any).connection.transport.publicWindowId;
-        this._actualWindowId = coreGlue.interop.instance.windowId as string;
-
-        // the communicationId will be available in the glue42core namespace if this client is an internal client to the platform
-        this._communicationId = (this.coreGlue as any).connection.transport.communicationId || (window as any).glue42core.communicationId;
-
-        if (!this._communicationId) {
-            throw new Error("Cannot configure the Glue Bridge, because no communication id was provided.");
-        }
     }
 
     public get communicationId(): string {
@@ -152,7 +143,7 @@ export class IoC {
 
     public get bridge(): GlueBridge {
         if (!this._bridgeInstance) {
-            this._bridgeInstance = new GlueBridge(this.coreGlue, this.communicationId);
+            this._bridgeInstance = new GlueBridge(this._coreGlue, this.communicationId);
         }
 
         return this._bridgeInstance;
@@ -160,14 +151,32 @@ export class IoC {
 
     public get preferredConnectionController(): PreferredConnectionController {
         if (!this._preferredConnectionController) {
-            this._preferredConnectionController = new PreferredConnectionController(this.coreGlue);
+            this._preferredConnectionController = new PreferredConnectionController(this._coreGlue);
         }
 
         return this._preferredConnectionController;
     }
 
+    public get sessionController(): SessionStorageController {
+        if (!this._sessionStorage) {
+            this._sessionStorage = new SessionStorageController();
+        }
+
+        return this._sessionStorage;
+    }
+
     public get config(): ParsedConfig {
         return this._webConfig;
+    }
+
+    public defineGlue(coreGlue: Glue42Core.GlueCore): void {
+        this._coreGlue = coreGlue;
+
+        this._publicWindowId = (coreGlue as any).connection.transport.publicWindowId;
+        this._actualWindowId = coreGlue.interop.instance.windowId as string;
+
+        // the communicationId will be available in the glue42core namespace if this client is an internal client to the platform
+        this._communicationId = (coreGlue as any).connection.transport.communicationId || (window as any).glue42core.communicationId;
     }
 
     public defineConfig(config: ParsedConfig): void {

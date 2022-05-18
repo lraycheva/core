@@ -1,3 +1,5 @@
+1.8.2
+fix: fixes the breaking change introduced in 1.8.0 which caused incompatibility between 1.12.X platform and workspaces prior to 1.8.0
 1.8.1
 chore: resolved dependency vulnerabilities
 1.8.0

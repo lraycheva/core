@@ -1,3 +1,5 @@
+2.6.2
+fix: fixes the breaking change introduced in 2.6.0 which caused incompatibility between 1.12.X platform and web clients prior to 2.6.0
 2.6.1
 chore: resolved dependency vulnerabilities
 2.6.0

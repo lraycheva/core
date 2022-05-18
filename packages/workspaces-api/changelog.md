@@ -1,3 +1,5 @@
+1.12.2
+fix: fixes the breaking change introduced in 1.12.0 which caused incompatibility between 1.12.X platform and api clients prior to 1.12.0
 1.12.1
 chore: bump due to dependencies update
 1.12.0

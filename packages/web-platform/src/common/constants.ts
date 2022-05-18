@@ -27,9 +27,9 @@ export const GlueClientControlName = "T42.Web.Client.Control";
 
 export const GlueWebPlatformWorkspacesStreamName = "T42.Web.Platform.WSP.Stream";
 
-export const GlueWorkspaceFrameClientControlName = "T42.Web.Workspaces.Control";
+export const GlueWorkspaceFrameClientControlName = "T42.Workspaces.Control";
 
-export const GlueWorkspacesEventsReceiverName = "T42.Web.Workspaces.Events";
+export const GlueWorkspacesEventsReceiverName = "T42.Workspaces.Events";
 
 export const GlueWebIntentsPrefix = "Tick42.FDC3.Intents.";
 

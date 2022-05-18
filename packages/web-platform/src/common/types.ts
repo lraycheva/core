@@ -66,7 +66,6 @@ export interface InternalPlatformConfig {
     connection: Glue42WebPlatform.Connection.Config;
     environment: any;
     workspacesFrameCache: boolean;
-    communicationId: string;
 }
 
 export interface CoreClientData {
@@ -144,12 +143,13 @@ export interface TransportState extends Glue42Core.Connection.TransportSwitchSet
 }
 
 export interface ClientPortRequest {
-    type: string; 
+    type: string;
     clientId: string;
     timeout?: number;
     args?: any;
 }
 
 export interface SessionSystemSettings {
-    communicationId: string;
+    systemInstanceId: string;
+    ctxTrackInstanceId: string;
 }

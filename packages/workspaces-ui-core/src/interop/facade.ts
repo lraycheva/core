@@ -47,8 +47,8 @@ import { WorkspacesLocker } from "../locking";
 declare const window: Window & { glue: Glue42Web.API };
 
 export class GlueFacade {
-    private _workspacesControlMethod: string;
-    private _workspacesEventMethod: string;
+    private readonly _workspacesControlMethod = "T42.Workspaces.Control";
+    private readonly _workspacesEventMethod = "T42.Workspaces.Events";
     private _configFactory: WorkspacesConfigurationFactory;
     private _glue: Glue42Web.API;
     private _inDisposing = false;
@@ -59,8 +59,6 @@ export class GlueFacade {
     private _locker: WorkspacesLocker;
 
     public async init(glue: Glue42Web.API, frameId: string): Promise<void> {
-        this._workspacesControlMethod = `T42.Web.Workspaces.Control.${(window as any).glue42core.communicationId}`;
-        this._workspacesEventMethod = `T42.Web.Workspaces.Events.${(window as any).glue42core.communicationId}`;
         this._frameId = frameId;
         this._glue = glue;
         this._configFactory = new WorkspacesConfigurationFactory(glue);
