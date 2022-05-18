@@ -1,3 +1,5 @@
+1.8.2
+chore: bump due to dependencies update
 1.8.1
 chore: resolved dependency vulnerabilities
 1.8.0

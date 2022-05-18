@@ -1,3 +1,5 @@
+2.6.2
+chore: bump due to dependencies update
 2.6.1
 chore: resolved dependency vulnerabilities
 2.6.0
