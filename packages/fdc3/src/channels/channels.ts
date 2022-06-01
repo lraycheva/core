@@ -10,16 +10,18 @@ import {
 } from "../utils";
 import { Channel, ChannelError, Context, Listener } from "@finos/fdc3";
 import { ChannelsAPI } from "../types/channelsAPI";
+import { nanoid } from "nanoid";
 
 interface PendingSubscription {
+    id: string;
     contextType: string;
     handler: (context: Context) => void;
-    setActualUnsub: (actualUnsub: () => void) => void;
+    setActualUnsub: (actualUnsub: () => void) => void
 }
 
 const createChannelsAgent = (): ChannelsAPI => {
     let currentChannel: Channel | null = null;
-    let pendingSubscription: PendingSubscription | null;
+    let pendingSubscriptions: PendingSubscription[] = [];
 
     const channels: { [name: string]: Channel } = {};
 
@@ -43,7 +45,7 @@ const createChannelsAgent = (): ChannelsAPI => {
 
         });
 
-        const setSystemChannelsPromise = (window as WindowType).glue.channels.all().then((channels) => {
+        const setSystemChannelsPromise = (window as WindowType).glue.channels.all().then((channels: string[]) => {
             systemChannels = channels;
         });
 
@@ -52,7 +54,7 @@ const createChannelsAgent = (): ChannelsAPI => {
 
     const doesAppChannelExist = async (name: string): Promise<boolean> => {
         const exists = (await (window as WindowType).glue.contexts.all())
-            .some((ctxName) => ctxName === name);
+            .some((ctxName: string) => ctxName === name);
 
         return exists;
     };
@@ -85,20 +87,22 @@ const createChannelsAgent = (): ChannelsAPI => {
     };
 
     const createPendingListener = (contextType: string, handler: (context: Context) => void): Listener => {
+        const id = nanoid();
+        
         let unsubscribe = (): void => {
-            pendingSubscription = null;
+            pendingSubscriptions = pendingSubscriptions.filter(sub => sub.id !== id);
         };
-
+        
+        const result = { unsubscribe };
+        
         const setActualUnsub = (actualUnsub: () => void): void => {
-            unsubscribe = actualUnsub;
+            result.unsubscribe = actualUnsub;
         };
-
+        
         // Used inside of setCurrentChannel.
-        pendingSubscription = { contextType, handler, setActualUnsub };
+        pendingSubscriptions.push({ id, contextType, handler, setActualUnsub });
 
-        return {
-            unsubscribe
-        };
+        return result;
     };
 
     const getSystemChannels = async (): Promise<Channel[]> => {
@@ -248,15 +252,15 @@ const createChannelsAgent = (): ChannelsAPI => {
     const setCurrentChannel = (newChannel: Channel): void => {
         currentChannel = newChannel;
 
-        if (pendingSubscription) {
+        pendingSubscriptions.forEach((pendingSubscription) => {
             const { contextType, handler, setActualUnsub } = pendingSubscription;
-
+            
             const listener = addContextListener(contextType, handler);
-
+            
             setActualUnsub(listener.unsubscribe);
-
-            pendingSubscription = null;
-        }
+        })
+        
+        pendingSubscriptions = [];
     };
 
     return {

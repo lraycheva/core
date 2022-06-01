@@ -32,7 +32,8 @@
         "@finos/fdc3": "^1.2.0",
         "@glue42/desktop": "^5.7.6",
         "@glue42/web": "^2.6.2",
-        "@glue42/web-platform": "^1.12.2"
+        "@glue42/web-platform": "^1.12.2",
+        "nanoid": "^3.3.4"
     },
     "devDependencies": {
         "@rollup/plugin-commonjs": "^14.0.0",
