@@ -4,7 +4,7 @@
 
 ## FDC3 for Glue42 Core
 
-This guide explains how to run an FDC3 compliant app in a [**Glue42 Core**](https://glue42.com/core/) project. For detailed information on the FDC3 API itself, see the [FDC3 documentation](https://fdc3.finos.org/docs/next/api/overview).
+This guide explains how to run an FDC3 compliant app in a [**Glue42 Core**](https://glue42.com/core/) project. For detailed information on the FDC3 API itself, see the [FDC3 documentation](https://fdc3.finos.org/docs/api/overview).
 
 ### Initialization
 
@@ -46,7 +46,7 @@ See below how to use the different FDC3 features.
 
 ### Intents
 
-The [FDC3 Intents](https://fdc3.finos.org/docs/next/intents/overview) concept enables the creation of cross-application workflows on the desktop. An application declares an Intent through configuration. An Intent specifies what action the application can execute and what data structure it can work with.
+The [FDC3 Intents](https://fdc3.finos.org/docs/intents/overview) concept enables the creation of cross-application workflows on the desktop. An application declares an Intent through configuration. An Intent specifies what action the application can execute and what data structure it can work with.
 
 To define an Intent, add it to the application definition object in the configuration of the [Main application](../../developers/core-concepts/web-platform/setup/index.html#configuration) or in the application definitions provided by a remote source. For more details on defining applications, see the [Application Management: Application Definitions](../../capabilities/application-management/index.html#application_definitions) section. Intents can be configured under the `intents` top-level key of the application definition:
 
@@ -82,13 +82,13 @@ To define an Intent, add it to the application definition object in the configur
 |----------|-------------|
 | `name` | **Required**. The name of the Intent. |
 | `displayName` | The human readable name of the Intent. Can be used in context menus, etc., to visualize the Intent. |
-| `contexts` | The type of predefined data structures with which the application can work (see [FDC3 Contexts](https://fdc3.finos.org/docs/next/context/overview)). |
+| `contexts` | The type of predefined data structures with which the application can work (see [FDC3 Contexts](https://fdc3.finos.org/docs/context/overview)). |
 
-*For more information on using Intents, see the [FDC3 Intents API](https://fdc3.finos.org/docs/next/intents/overview).*
+*For more information on using Intents, see the [FDC3 Intents API](https://fdc3.finos.org/docs/intents/overview).*
 
 ### Channels
 
-An [FDC3 Channel](https://fdc3.finos.org/docs/next/api/ref/Channel) is a named context object that an application can join in order to share and update context data and also be alerted when the context data changes. By [specification](https://fdc3.finos.org/docs/next/api/spec#context-channels), Channels can either be well-known system Channels or Channels created by apps. On a UI level, Channels can be represented by colors and names.
+An [FDC3 Channel](https://fdc3.finos.org/docs/api/ref/Channel) is a named context object that an application can join in order to share and update context data and also be alerted when the context data changes. By [specification](https://fdc3.finos.org/docs/api/spec#context-channels), Channels can either be well-known system Channels or Channels created by apps. On a UI level, Channels can be represented by colors and names.
 
 To define Channels, use the [Main application](../../developers/core-concepts/web-platform/setup/index.html#configuration) configuration:
 
@@ -124,11 +124,11 @@ All Glue42 Channels are available as FDC3 system Channels.
 
 *For a sample Channel Selector widget implementation, see the [Channels: Channel Selector UI](../../capabilities/data-sharing-between-apps/channels/index.html#live_examples-channel_selector_ui) section. Note that internally the example uses the [**Glue42 Core**](https://glue42.com/core/) Channels API and not the FDC3 Channels API.*
 
-*For more information on using Channels, see the [FDC3 Channels API](https://fdc3.finos.org/docs/next/api/ref/Channel).*
+*For more information on using Channels, see the [FDC3 Channels API](https://fdc3.finos.org/docs/api/ref/Channel).*
 
 ### App Directory
 
-The goal of the [FDC3 App Directory](https://fdc3.finos.org/docs/next/app-directory/overview) REST service is to provide trusted identity for desktop apps. Application definitions are provided by one or more App Directory REST services where user entitlements and security can also be handled.
+The goal of the [FDC3 App Directory](https://fdc3.finos.org/docs/app-directory/overview) REST service is to provide trusted identity for desktop apps. Application definitions are provided by one or more App Directory REST services where user entitlements and security can also be handled.
 
 To connect to a remote source of application definitions, attach a `remoteSources` configuration object to the global `window` object before referencing [`@glue42/fdc3`](https://www.npmjs.com/package/@glue42/fdc3):
 
@@ -178,7 +178,7 @@ Below is an example of an FDC3 application definition:
 }
 ```
 
-*For more information on using App Directory, see the [FDC3 App Directory documentation](https://fdc3.finos.org/docs/next/app-directory/overview).*
+*For more information on using App Directory, see the [FDC3 App Directory documentation](https://fdc3.finos.org/docs/app-directory/overview).*
 
 ### Demo
 

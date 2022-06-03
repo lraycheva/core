@@ -47,7 +47,7 @@ The `<Workspaces />` component has two props - `glue` and `components`. The `glu
 The following example shows the `<Workspaces />` component props, their properties and default values:
 
 ```javascript
-<Workspaces 
+<Workspaces
     components={{
         header: {
             LogoComponent: GlueLogo,
@@ -55,7 +55,7 @@ The following example shows the `<Workspaces />` component props, their properti
             SystemButtonsComponent: () => {
                 return (
                     <>
-                        <MinimizeFrameButton /> 
+                        <MinimizeFrameButton />
                         <MaximizeFrameButton />
                         <CloseFrameButton />
                     </>
@@ -99,7 +99,7 @@ Adding a custom toolbar with buttons to the Workspaces App:
 
 ## Header Area Components
 
-Use the default header components or replace them with your custom ones. Compose more than one component in a [header area zone](#header_area_zones) by passing a function that returns a `<Fragment />` component. 
+Use the default header components or replace them with your custom ones. Compose more than one component in a [header area zone](#header_area_zones) by passing a function that returns a `<Fragment />` component.
 
 ### Logo
 
@@ -167,7 +167,7 @@ The following example demonstrates adding a custom button to the System Buttons 
 
 ```javascript
 import React from "react";
-import Workspaces, { 
+import Workspaces, {
     MinimizeFrameButton,
     MaximizeFrameButton,
     CloseFrameButton
@@ -184,7 +184,7 @@ const App = () => {
                             return (
                                 <>
                                     <CustomButton />
-                                    <MinimizeFrameButton /> 
+                                    <MinimizeFrameButton />
                                     <MaximizeFrameButton />
                                     <CloseFrameButton />
                                 </>
@@ -214,7 +214,7 @@ Using a custom button and a custom popup for the Add Workspace component:
 
 ### Replacing the System Popups
 
-The `components` prop of the `<Workspaces />` component has a `popups` property that enables you to pass custom components or Glue42 apps that will act as system popups. To specify a custom Glue42 app as a system popup, pass its name as a string. 
+The `components` prop of the `<Workspaces />` component has a `popups` property that enables you to pass custom components or Glue42 apps that will act as system popups. To specify a custom Glue42 app as a system popup, pass its name as a string.
 
 *Note that if you decide to use the default system popups, you must ensure that they receive their required props. This includes a `glue` object with initialized [Workspaces](../workspaces-api/index.html) library and [Application Management](../../../application-management/index.html) library initialized in `"full"` or `"skipIcons"` mode.*
 
@@ -222,7 +222,7 @@ The following example demonstrates how to pass default popup components and thei
 
 ```javascript
 import React from "react";
-import Workspaces, { 
+import Workspaces, {
     SaveWorkspacePopup,
     AddApplicationPopup
 } from "@glue42/workspaces-ui-react";
@@ -230,7 +230,7 @@ import Workspaces, {
 const App = () => {
     return (
         <div className="App">
-            <Workspaces 
+            <Workspaces
                 components={{
                     popups: {
                         // Props are passed automatically.
@@ -286,24 +286,24 @@ The following example demonstrates a reference implementation of a custom system
 import React, { useEffect } from "react";
 
 const SaveWorkspacePopup = ({ resizePopup, hidePopup }) => {
-    const containerRef = React.createRef(); 
+    const containerRef = React.createRef();
     const refreshHeight = () => {
         if (!containerRef?.current) {
             return;
         }
- 
+
         const bounds = containerRef.current.getBoundingClientRect();
- 
+
         resizePopup({
             height: bounds.height,
             width: bounds.width
         });
     };
- 
+
     useEffect(() => {
         refreshHeight();
     }, []);
- 
+
     return (
         <div onClick={(e) =>e.stopPropagation()} ref={containerRef}>
             Custom Popup
@@ -312,7 +312,7 @@ const SaveWorkspacePopup = ({ resizePopup, hidePopup }) => {
     );
 };
 
-export default SaveWorkspacePopup; 
+export default SaveWorkspacePopup;
 ```
 
 The following example demonstrates how to use the default `<AddApplicationPopup />` system popup and filter the applications that will be available in the "Add Application" menu by a custom user-defined property:
@@ -346,7 +346,7 @@ export default App;
 
 ### User Defined Popups
 
-There are two ways for you to create custom popups from HTML elements - by using the `<WorkspacePopup />` component, or by using the `useWorkspacePopup()` and `useWorkspaceWindowClicked()` hooks. 
+There are two ways for you to create custom popups from HTML elements - by using the `<WorkspacePopup />` component, or by using the `useWorkspacePopup()` and `useWorkspaceWindowClicked()` hooks.
 
 The `<WorkspacePopup />` component is based on the popular [`reactjs-popup`](https://www.npmjs.com/package/reactjs-popup) library. All features of the library are supported with the addition of two new properties:
 
@@ -360,20 +360,20 @@ The following example demonstrates how to create a custom popup using the `<Wors
 ```javascript
 import React from "react";
 import { WorkspacePopup } from "@glue42/workspaces-ui-react";
- 
+
 const CustomPopup = ({ trigger }) => {
     const popupRef = React.createRef();
 
     return (
-        <WorkspacePopup innerContentStyle={{ height:300 }} popupRef={popupRef} trigger={trigger}> 
+        <WorkspacePopup innerContentStyle={{ height:300 }} popupRef={popupRef} trigger={trigger}>
             <div style={{ backgroundColor:"blue", height:"100%" }}>
-                Custom Popup 
+                Custom Popup
                 <button onClick={() => popupRef.current?.close()}>Close</button>
             </div>
         </WorkspacePopup>
     );
 };
- 
+
 export default CustomPopup;
 ```
 
@@ -394,17 +394,17 @@ The following example demonstrates how to create a custom popup using the `useWo
 
 ```javascript
 import React from "react";
-import { 
-    useWorkspacePopup, 
+import {
+    useWorkspacePopup,
     useWorkspaceWindowClicked
 } from "@glue42/workspaces-ui-react";
- 
+
 const CustomPopup = ({ closePopup }) => {
     const popupRef = React.createRef();
-    
+
     useWorkspacePopup(popupRef);
     useWorkspaceWindowClicked(closePopup);
-    
+
     return (
         <div ref={popupRef} style={popupStyle}>
             Custom Popup
@@ -412,7 +412,7 @@ const CustomPopup = ({ closePopup }) => {
         </div>
     );
 };
- 
+
 const popupStyle = {
     backgroundColor:"blue",
     height:100,
@@ -422,7 +422,7 @@ const popupStyle = {
     left:100,
     width:100
 };
- 
+
 export default CustomPopup;
 ```
 
@@ -446,7 +446,7 @@ const App = () => {
                     <WorkspaceContents {...props} /> :
                     // Or show custom Workspace content with your custom component.
                     <CustomWorkspaceContent workspaceId={props.workspaceId} />
-            }} 
+            }}
         />
     )
 };
@@ -473,7 +473,7 @@ const App = () => {
             components={{
                 WorkspaceContents: props => <> <Toolbar /> <WorkspaceContents {...props}/> </>
             }}
-        />       
+        />
     );
 };
 
@@ -496,7 +496,7 @@ import "@glue42/workspaces-ui-react/dist/styles/goldenlayout-base.css";
 import "@glue42/workspaces-ui-react/dist/styles/glue42-theme.css";
 ```
 
-To use custom styles for the Workspaces App, simply import a your CSS file after the default CSS imports to override them. The `goldenlayout-base.css` file is mandatory, but you may skip the `popup.css` or `glue42-theme.css` imports if you don't want to use the default styles for the system popups or the default Glue42 themes. Two default themes are available - **Day** and **Night** - and the trigger for switching between them is the class property of the `<html>` element - `"light"` for the **Day** theme and `"dark"` for the **Night** theme:
+To use custom styles for the Workspaces App, simply import your CSS file after the default CSS imports to override them. The `goldenlayout-base.css` file is mandatory, but you may skip the `popup.css` or `glue42-theme.css` imports if you don't want to use the default styles for the system popups or the default Glue42 themes. Two default themes are available - **Day** and **Night** - and the trigger for switching between them is the class property of the `<html>` element - `"light"` for the **Day** theme and `"dark"` for the **Night** theme:
 
 ```html
 <!-- Day theme -->

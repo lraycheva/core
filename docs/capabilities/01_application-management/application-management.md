@@ -47,7 +47,7 @@ Application definitions in [**Glue42 Core**](https://glue42.com/core/) are compa
 
 The [Main app](../../developers/core-concepts/web-platform/overview/index.html) is the central hub that provides application information to all [Web Client](../../developers/core-concepts/web-client/overview/index.html) apps. It is responsible for starting, managing, tracking the lifecycle and stopping all application instances, as well as for firing application related events.
 
-*The supported application definition formats are [**Glue42 Core**](https://glue42.com/core/) and [FDC3](https://fdc3.finos.org/schemas/next/app-directory#tag/Application). The only requirement for an FDC3 application definition to be usable in [**Glue42 Core**](https://glue42.com/core/) is to have a valid `details.url` property or a `url` top-level property in its `manifest` JSON string property. You can see an example FDC3 application definition in the [FDC3 Compliance: App Directory](../../getting-started/fdc3-compliance/index.html#fdc3_for_glue42_core-app_directory) section.*
+*The supported application definition formats are [**Glue42 Core**](https://glue42.com/core/) and [FDC3](https://fdc3.finos.org/schemas/1.2/app-directory#tag/Application). The only requirement for an FDC3 application definition to be usable in [**Glue42 Core**](https://glue42.com/core/) is to have a valid `details.url` property or a `url` top-level property in its `manifest` JSON string property. You can see an example FDC3 application definition in the [FDC3 Compliance: App Directory](../../getting-started/fdc3-compliance/index.html#fdc3_for_glue42_core-app_directory) section.*
 
 The [Live Examples](#live_examples) section demonstrates using the Application Management API. To see the code and experiment with it, open the embedded examples directly in [CodeSandbox](https://codesandbox.io).
 
@@ -55,7 +55,7 @@ The [Live Examples](#live_examples) section demonstrates using the Application M
 
 The Application Management API is accessible through the [`glue.appManager`](../../reference/core/latest/appmanager/index.html) object.
 
-Application definitions can be imported, exported and removed at runtime using the [`InMemory`](../../reference/core/latest/appmanager/index.html#InMemory) object of the Application Management API. 
+Application definitions can be imported, exported and removed at runtime using the [`InMemory`](../../reference/core/latest/appmanager/index.html#InMemory) object of the Application Management API.
 
 *Note that all application [`Definition`](../../reference/core/latest/appmanager/index.html#Definition) objects provided at runtime are stored in-memory and the methods of the `InMemory` object operate only on them - i.e., the application definitions provided during the initialization of the [Web Platform](https://www.npmjs.com/package/@glue42/web-platform) library aren't affected.*
 

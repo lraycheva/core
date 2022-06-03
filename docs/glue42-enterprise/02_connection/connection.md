@@ -57,8 +57,8 @@ const config = {
                 username: "user",
                 password: "password"
             },
-            forceIncompleteSwitch: true, // optional, by default is false
-            discoveryIntervalMS: 60000 // optional, by default is 15000
+            forceIncompleteSwitch: true,
+            discoveryIntervalMS: 60000
         }
     }
 };

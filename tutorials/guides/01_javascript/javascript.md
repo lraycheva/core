@@ -10,7 +10,7 @@ You are a part of the IT department of a big multi-national bank and you have be
 - **Clients** - displays a full list of clients and details about them;
 - **Stocks** - displays a full list of stocks with prices. When the user clicks on a stock, details about the selected stock should be displayed.
 
-All applications are being developed by different teams within the organizations and therefore are being hosted at different origins. 
+All applications are being developed by different teams within the organizations and therefore are being hosted at different origins.
 
 As an end result, the users want to be able to run two apps as Progressive Web Apps in separate windows in order to take advantage of their multi-monitor setups. Also, they want the apps, even though in separate windows, to be able to communicate with each other. For example, when a client is selected in the **Clients** app, the **Stocks** app should display only the stocks of the selected client.
 
@@ -734,7 +734,7 @@ This, however, will not re-render the Channel selector widget in the **Stocks** 
 // In `start()`.
 
 // The `createChannelSelectorWidget()` function returns a function which
-// accepts the new Channel name as a parameter and updates the widget. 
+// accepts the new Channel name as a parameter and updates the widget.
 const updateChannelSelectorWidget = createChannelSelectorWidget(
     NO_CHANNEL_VALUE,
     channelNamesAndColors,
@@ -791,7 +791,7 @@ The new requirement is that when a user clicks on a client in the **Clients** ap
 
 Go to the `index.html` and `index.js` files of the **Clients** app and comment out or delete the "Stocks" button and the `stocksButtonHandler()`. Also remove all logic and references related to Channels from the **Clients** and **Stocks** apps that was introduced in a previous chapter. Instead, you will use Workspaces to allow the users to work with multiple clients at once and organize their desktop at the same time. Channels and Workspaces can, of course, be used together to provide extremely enhanced user experience, but in order to focus entirely on working with Workspaces, the Channels functionality will be ignored.
 
-Use the [Workspaces API](../../reference/core/latest/workspaces/index.html) documentation as a reference when working on this chapter. 
+Use the [Workspaces API](../../reference/core/latest/workspaces/index.html) documentation as a reference when working on this chapter.
 
 ### 8.1. Setup
 
@@ -826,7 +826,7 @@ const layouts = {
     mode: "idb",
     local: [
         {
-            name: "client-space",
+            name: "Client Space",
             type: "Workspace",
             metadata: {},
             components: [
@@ -954,15 +954,15 @@ Next, you have to implement opening a new Workspace when the user clicks on a cl
 
 ```javascript
 const clientClickedHandler = (client) => {
-    const restoreConfig = { 
-        context: { client } 
+    const restoreConfig = {
+        context: { client }
     };
 
     glue.workspaces.restoreWorkspace("Client Space", restoreConfig).catch(console.error);
 };
 ```
 
-If everything is correct, a new Workspace should now open every time you click a client. 
+If everything is correct, a new Workspace should now open every time you click a client.
 
 ### 8.5. Starting Context
 
@@ -997,7 +997,7 @@ if (myWorkspace) {
         if (context.client) {
             const clientPortfolio = context.client.portfolio;
             const stockToShow = stocks.filter((stock) => clientPortfolio.includes(stock.RIC));
-            
+
             setupStocks(stockToShow);
         };
     });
