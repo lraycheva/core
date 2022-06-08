@@ -194,6 +194,9 @@ export namespace Glue42Core {
 
         /** GW auth provider to be used */
         provider?: string;
+
+        /** A context object, which will be passed along to the GW auth provider to be used to request verification */
+        providerContext?: any;
     }
 
     /**

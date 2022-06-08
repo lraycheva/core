@@ -36,7 +36,7 @@ export class PreferredConnectionController {
 
         this.preferredUrl = config.url;
 
-        this.preferredAuth = config.auth ? config.auth : { provider: "core" };
+        this.preferredAuth = Object.assign({}, { provider: "core" }, config.auth);
 
         this.shouldForceTransfer = typeof config.forceIncompleteSwitch === "boolean" ? config.forceIncompleteSwitch : false;
 

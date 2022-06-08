@@ -122,6 +122,7 @@ export default class GW3ProtocolImpl implements GW3Protocol {
             login?: string,
             secret?: string,
             provider?: string
+            providerContext?: any
         } = {};
 
         this.connection.gatewayToken = config.gatewayToken;
@@ -159,6 +160,7 @@ export default class GW3ProtocolImpl implements GW3Protocol {
             authentication.secret = config.password;
         } else if (config.provider) {
             authentication.provider = config.provider;
+            authentication.providerContext = config.providerContext;
         } else {
             throw new Error("invalid auth message" + JSON.stringify(config));
         }

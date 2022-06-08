@@ -306,6 +306,7 @@ export const preferredConnectionSettingsDecoder: Decoder<Glue42WebPlatform.Conne
         password: optional(nonEmptyStringDecoder),
         sessionId: optional(nonEmptyStringDecoder),
         provider: optional(nonEmptyStringDecoder),
+        providerContext: optional(anyJson()),
         token: optional(nonEmptyStringDecoder),
         gatewayToken: optional(nonEmptyStringDecoder),
         flowName: optional(constant<"sspi">("sspi")),
