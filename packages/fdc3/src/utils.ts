@@ -102,6 +102,8 @@ export const isEmptyObject = (obj: object): boolean => {
 
 export const isInElectron = navigator.userAgent.toLowerCase().includes(" electron/");
 
+export const isInGdContainer = navigator.userAgent.toLowerCase().includes(" tick42-glue-desktop/");
+
 export const isGlue42Electron = !!(window as any).glue42electron;
 
 export const isGlue42Enterprise = typeof window.glue42gd !== "undefined";
