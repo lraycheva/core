@@ -1,3 +1,5 @@
+1.12.3
+feat: added support for the new provider context in the authentication object of the preferred connection config
 1.12.2
 fix: fixes the breaking change introduced in 1.12.0 which caused incompatibility between 1.12.X platform and web clients prior to 2.6.0
 1.12.1

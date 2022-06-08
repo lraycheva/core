@@ -1,3 +1,6 @@
+2.5.3
+feat: added the option for multiple context listeners before joining a channel
+fix: added additional check to detect when running in Enterprise by expecting the user agent
 2.5.2
 chore: bump due to dependencies update
 2.5.1

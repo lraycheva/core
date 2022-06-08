@@ -1,3 +1,5 @@
+5.7.2
+feat: added support for a provider context in the authentication object, passed along to the custom Enterprise authenticators
 5.7.1
 fix: improved the subscriptions restoration after reconnecting
 chore: resolved dependency vulnerabilities
