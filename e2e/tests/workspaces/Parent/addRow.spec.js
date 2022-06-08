@@ -123,7 +123,7 @@ describe("addRow() Should", () => {
         expect(boxesInWorkspace.length).to.eql(1);
     });
 
-    it("add multiple empty rows to an empty column when the workspace is empty", async ()=>{
+    it("add multiple empty rows to an empty column when the workspace is empty", async () => {
         const emptyWorkspace = await glue.workspaces.createWorkspace({ children: [] });
         const column = await emptyWorkspace.addColumn();
 
@@ -528,6 +528,66 @@ describe("addRow() Should", () => {
         expect(workspace.getAllGroups().length).to.eql(1);
     });
 
+    it("preserve the maximized window when a row is added", async () => {
+        const workspace = await glue.workspaces.createWorkspace(config);
+        const column = await workspace.getAllColumns().find(c => !c.children.length);
+        const window = workspace.getAllWindows()[0];
+
+        await window.maximize();
+        await column.addRow({ children: [{ appName: "noGlueApp", type: "window" }] });
+
+        expect(window.isMaximized).to.be.true;
+        expect(column.children.length > 0).to.be.true;
+    });
+
+    it("preserve the maximized container when a row is added", async () => {
+        const config = {
+            children: [
+                {
+                    type: "column",
+                    children: [
+                        {
+                            type: "row",
+                            children: [
+                                {
+                                    type: "column",
+                                    children: []
+                                }
+                            ]
+                        },
+                        {
+                            type: "row",
+                            children: [
+                                {
+                                    type: "group",
+                                    children: [
+                                        {
+                                            type: "window",
+                                            appName: "dummyApp"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            type: "row",
+                            children: []
+                        }
+                    ]
+                }
+            ]
+        };
+        const workspace = await glue.workspaces.createWorkspace(config);
+        const column = await workspace.getAllColumns().find(c => !c.children.length);
+        const row = workspace.getAllRows().find(r => r.children[0]?.type === "group");
+
+        await row.maximize();
+        await column.addRow({ children: [{ appName: "noGlueApp", type: "window" }] });
+
+        expect(row.isMaximized).to.be.true;
+        expect(column.children.length > 0).to.be.true;
+    });
+
     it("reject when the parent is a row and is passed a row definition", (done) => {
         const allBoxes = workspace.getAllBoxes();
         const row = allBoxes.find(p => p.type === "row");
@@ -567,29 +627,5 @@ describe("addRow() Should", () => {
         column.addRow({ type: "window" }).then(() => {
             done("Should not resolve");
         }).catch(() => done());
-    });
-
-    it("reject when there is a maximized window in the workspace", (done) => {
-        const allBoxes = workspace.getAllBoxes();
-        const window = workspace.getAllWindows()[0];
-        const column = allBoxes.find(p => p.type === "column");
-        window.maximize().then(() => {
-            return column.addRow({ type: "row", children: [] });
-        }).then(() => {
-            done("Should not resolve");
-        }).catch(() => done());
-    });
-
-    Array.from(["row", "column", "group"]).forEach((maximizedParentType) => {
-        it(`reject when there is a maximized ${maximizedParentType} in the workspace`, (done) => {
-            const allBoxes = workspace.getAllBoxes();
-            const parent = allBoxes.find(b => b.type === maximizedParentType);
-            const column = allBoxes.find(p => p.type === "column");
-            parent.maximize().then(() => {
-                return column.addRow({ type: "row", children: [] });
-            }).then(() => {
-                done("Should not resolve");
-            }).catch(() => done());
-        });
     });
 });

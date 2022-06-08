@@ -28,7 +28,7 @@ lm.items.AbstractContentItem = function (layoutManager, config, parent) {
 	this.parent = parent;
 
 	this.isInitialised = false;
-	this.isMaximized = false;
+	this.isMaximized = Array.isArray(config.id) && config.id.includes("__glMaximised");
 	this.isRoot = false;
 	this.isRow = false;
 	this.isColumn = false;

@@ -176,7 +176,7 @@ describe("addColumn() Should", () => {
         expect(boxesInWorkspace.length).to.eql(1);
     });
 
-    it("add multiple empty columns to an empty row when the workspace is empty", async ()=>{
+    it("add multiple empty columns to an empty row when the workspace is empty", async () => {
         const emptyWorkspace = await glue.workspaces.createWorkspace({ children: [] });
         const row = await emptyWorkspace.addRow();
 
@@ -395,8 +395,8 @@ describe("addColumn() Should", () => {
         const column = await row.addColumn({
             children: [
                 {
-                    type:"row",
-                    children:[
+                    type: "row",
+                    children: [
                         {
                             type: "group",
                             children: [
@@ -408,7 +408,7 @@ describe("addColumn() Should", () => {
                         }
                     ]
                 }
-               
+
             ],
             config: {
                 allowSplitters: false
@@ -426,8 +426,8 @@ describe("addColumn() Should", () => {
         const column = await row.addColumn({
             children: [
                 {
-                    type:"row",
-                    children:[
+                    type: "row",
+                    children: [
                         {
                             type: "group",
                             children: [
@@ -497,6 +497,30 @@ describe("addColumn() Should", () => {
         await workspace.refreshReference();
 
         expect(workspace.getAllGroups().length).to.eql(1);
+    });
+
+    it("preserve the maximized window when a column is added", async () => {
+        const workspace = await glue.workspaces.createWorkspace(config);
+        const row = await workspace.getAllRows().find(r => !r.children.length);
+        const window = workspace.getAllWindows()[0];
+
+        await window.maximize();
+        await row.addColumn({ children: [{ appName: "noGlueApp", type: "window" }] });
+
+        expect(window.isMaximized).to.be.true;
+        expect(row.children.length > 0).to.be.true;
+    });
+
+    it("preserve the maximized container when a column is added", async () => {
+        const workspace = await glue.workspaces.createWorkspace(config);
+        const row = await workspace.getAllRows().find(r => !r.children.length);
+        const column = workspace.getAllColumns().find(c => c.children[0]?.type === "group");
+
+        await column.maximize();
+        await row.addColumn({ children: [{ appName: "noGlueApp", type: "window" }] });
+
+        expect(column.isMaximized).to.be.true;
+        expect(row.children.length > 0).to.be.true;
     });
 
     describe("", () => {
@@ -665,29 +689,5 @@ describe("addColumn() Should", () => {
         row.addColumn({ type: "window" }).then(() => {
             done("Should not resolve");
         }).catch(() => done());
-    });
-
-    it("reject when there is a maximized window in the workspace", (done) => {
-        const allBoxes = workspace.getAllBoxes();
-        const window = workspace.getAllWindows()[0];
-        const row = allBoxes.find(p => p.type === "row");
-        window.maximize().then(() => {
-            return row.addColumn({ type: "column", children: [] });
-        }).then(() => {
-            done("Should not resolve");
-        }).catch(() => done());
-    });
-
-    Array.from(["row", "column", "group"]).forEach((maximizedParentType) => {
-        it(`reject when there is a maximized ${maximizedParentType} in the workspace`, (done) => {
-            const allBoxes = workspace.getAllBoxes();
-            const parent = allBoxes.find(b => b.type === maximizedParentType);
-            const row = allBoxes.find(p => p.type === "row");
-            parent.maximize().then(() => {
-                return row.addColumn({ type: "column", children: [] });
-            }).then(() => {
-                done("Should not resolve");
-            }).catch(() => done());
-        });
     });
 });

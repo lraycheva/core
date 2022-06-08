@@ -114,6 +114,41 @@ describe('addRow() Should ', function () {
         expect(workspace.getAllRows().length).to.eql(1);
     });
 
+    it("add the row successfully when the workspace has a maximized window", async () => {
+        const workspace = await glue.workspaces.createWorkspace({
+            children: [{
+                type: "column",
+                children: [
+                    {
+                        type: "group",
+                        children: [
+                            {
+                                type: "window",
+                                appName: "noGlueApp"
+                            }
+                        ]
+                    }
+                ]
+            }]
+        });
+
+        const window = workspace.getAllWindows()[0];
+        await window.maximize();
+        await workspace.addRow({
+            children: [{
+                type: "group",
+                children: [
+                    {
+                        type: "window",
+                        appName: "noGlueApp"
+                    }
+                ]
+            }]
+        });
+
+        expect(workspace.getAllRows().length >= 1).to.be.true;
+        expect(window.isMaximized).to.be.true;
+    });
 
     describe("", () => {
         beforeEach(async () => {

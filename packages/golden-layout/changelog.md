@@ -1,3 +1,5 @@
+2.2.8
+fix: isMaximized property wasn't valid after adding a new item while there is a maximized item
 2.2.7
 chore: resolved dependency vulnerabilities
 2.2.6

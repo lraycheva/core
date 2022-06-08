@@ -293,10 +293,11 @@ export class WorkspacesManager {
         const workspaceContentItem = store.getWorkspaceContentItem(workspace.id);
         const workspaceWrapper = new WorkspaceWrapper(this.stateResolver, workspace, workspaceContentItem, this.frameId);
 
-        if (workspaceWrapper.hasMaximizedItems) {
-            throw new Error(`Cannot add a new container to workspace ${workspaceWrapper.id}, because it contains maximized items`);
-        }
         const result = await this._controller.addContainer(configWithoutIsPinned, parentId);
+
+        if (workspaceWrapper.hasMaximizedItems) {
+            this._controller.refreshWorkspaceSize(workspace.id);
+        }
 
         const itemConfig = store.getContainer(result);
         if (itemConfig) {
@@ -323,10 +324,11 @@ export class WorkspacesManager {
         const workspaceContentItem = store.getWorkspaceContentItem(workspace.id);
         const workspaceWrapper = new WorkspaceWrapper(this.stateResolver, workspace, workspaceContentItem, this.frameId);
 
-        if (workspaceWrapper.hasMaximizedItems) {
-            throw new Error(`Cannot add a new window to workspace ${workspaceWrapper.id}, because it contains maximized items`);
-        }
         await this._controller.addWindow(itemConfig, parentId);
+
+        if (workspaceWrapper.hasMaximizedItems) {
+            this._controller.refreshWorkspaceSize(workspace.id);
+        }
 
         const allWindowsInConfig = getAllWindowsFromConfig([itemConfig]);
         const component = store.getWindowContentItem(idAsString(allWindowsInConfig[0].id));

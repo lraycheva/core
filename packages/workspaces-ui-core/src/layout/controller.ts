@@ -85,11 +85,6 @@ export class LayoutController {
             return;
         }
 
-        const maximizedItem = (workspace.layout as LayoutWithMaximizedItem)._maximizedItem as GoldenLayout.ContentItem;
-        if (maximizedItem) {
-            maximizedItem.toggleMaximise();
-        }
-
         let contentItem = workspace.layout.root.getItemsByFilter((ci) => ci.isColumn || ci.isRow)[0];
         if (parentId && parentId !== workspace.id) {
             contentItem = workspace.layout.root.getItemsById(parentId)[0];
@@ -169,11 +164,6 @@ export class LayoutController {
             this.hideAddButton(workspace.id);
             await this.initWorkspaceContents(workspace.id, config, true);
             return idAsString(containerId);
-        }
-
-        const maximizedItem = (workspace.layout as LayoutWithMaximizedItem)._maximizedItem as GoldenLayout.ContentItem;
-        if (maximizedItem) {
-            maximizedItem.toggleMaximise();
         }
 
         let contentItem = workspace.layout.root.getItemsByFilter((ci) => ci.isColumn || ci.isRow)[0];

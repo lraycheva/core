@@ -95,6 +95,23 @@ describe("addWindow() Should", () => {
                 expect(windowContext).to.eql(context);
             });
 
+            it(`preserve the maximized window when a window is added and the parent is a ${parentType}`, async () => {
+                const box = workspace.getAllBoxes().find(p => p.type === parentType);
+                const windowToMaximize = workspace.getAllWindows()[0];
+                await windowToMaximize.maximize();
+                await box.addWindow({
+                    type: "window",
+                    appName: "dummyApp"
+                });
+
+                await workspace.refreshReference();
+
+                const windows = workspace.getAllWindows();
+
+                expect(windows.length).to.eql(2);
+                expect(windowToMaximize.isMaximized).to.be.true;
+            });
+
             describe("", () => {
                 beforeEach(async () => {
                     await glue.workspaces.createWorkspace(config);
@@ -143,43 +160,6 @@ describe("addWindow() Should", () => {
                     expect(windowContext).to.eql(context);
                 });
             });
-
-            it(`reject when the parent is a ${parentType} and there is a maximized window in the workspace`, (done) => {
-                const window = workspace.getAllWindows()[0];
-                const box = workspace.getAllBoxes().find(p => p.type === parentType);
-                window.maximize().then(() => {
-                    return box.addWindow({
-                        type: "window",
-                        appName: "noGlueApp",
-                        config: {
-                            allowExtract: false,
-                            showCloseButton: false
-                        }
-                    })
-                }).then(() => {
-                    done("Should not resolve");
-                }).catch(() => done());
-            });
-
-            Array.from(["row", "column", "group"]).forEach((maximizedParentType) => {
-                it(`reject when the parent is a ${parentType} and there is a maximized ${maximizedParentType} in the workspace`, (done) => {
-                    const parent = workspace.getAllBoxes().find(p => p.type === maximizedParentType);
-                    const box = workspace.getAllBoxes().find(p => p.type === parentType);
-                    parent.maximize().then(() => {
-                        return box.addWindow({
-                            type: "window",
-                            appName: "noGlueApp",
-                            config: {
-                                allowExtract: false,
-                                showCloseButton: false
-                            }
-                        })
-                    }).then(() => {
-                        done("Should not resolve");
-                    }).catch(() => done());
-                });
-            })
-
 
             Array.from(["42", 42, [], {}, undefined, null]).forEach((input) => {
                 it(`reject when the parent is ${parentType} and the argument is ${JSON.stringify(input)}`, (done) => {

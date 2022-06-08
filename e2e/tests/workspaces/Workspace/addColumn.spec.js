@@ -148,7 +148,7 @@ describe('addColumn() Should ', function () {
             expect(columnChildren.length).to.eql(0);
         });
     });
-    
+
     it("add the row successfully when the workspace has been populated by replacing a placeholder and the window has been closed", async () => {
         const workspace = await glue.workspaces.createWorkspace({ children: [] });
 
@@ -160,6 +160,48 @@ describe('addColumn() Should ', function () {
         await workspace.addColumn();
 
         expect(workspace.getAllColumns().length).to.eql(1);
+    });
+
+    it("add the column successfully when the workspace has a maximized window", async () => {
+        const workspace = await glue.workspaces.createWorkspace({
+            children: [
+                {
+                    type: "row",
+                    children: [
+                        {
+                            type: "group",
+                            children: [
+                                {
+                                    type: "window",
+                                    appName: "noGlueApp"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        });
+
+        const window = workspace.getAllWindows()[0];
+
+        await window.maximize();
+
+        await workspace.addColumn({
+            children: [
+                {
+                    type: "group",
+                    children: [
+                        {
+                            type: "window",
+                            appName: "noGlueApp"
+                        }
+                    ]
+                }
+            ]
+        });
+
+        expect(workspace.getAllColumns().length >= 1).to.be.true;
+        expect(window.isMaximized).to.be.true;
     });
 
     describe("", () => {

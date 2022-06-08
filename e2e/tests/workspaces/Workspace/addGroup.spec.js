@@ -233,6 +233,103 @@ describe('addGroup() Should ', function () {
         expect(workspace.getAllGroups().length).to.eql(1);
     });
 
+    it("add the group successfully when the workspace has a maximized window", async () => {
+        const workspace = await glue.workspaces.createWorkspace({
+            children: [
+                {
+                    type: "row",
+                    children: [
+                        {
+                            type: "group",
+                            children: [
+                                {
+                                    type: "window",
+                                    appName: "noGlueApp"
+                                }
+                            ]
+                        },
+                        {
+                            type: "group",
+                            children: [
+                                {
+                                    type: "window",
+                                    appName: "noGlueApp"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        });
+
+        const window = workspace.getAllWindows()[0];
+
+        await window.maximize();
+
+        await workspace.addGroup({
+            children: [{
+                type: "window",
+                appName: "noGlueApp"
+            }]
+        });
+
+        await workspace.refreshReference();
+
+        expect(workspace.getAllGroups().length).to.eql(3);
+        expect(window.isMaximized).to.be.true;
+    });
+
+    it("add the group successfully when the workspace has only one group with a window as a child", async () => {
+        const definition = {
+            children: [
+                {
+                    type: "group",
+                    children: [
+                        {
+                            type: "window",
+                            appName: "noGlueApp"
+                        }
+                    ]
+                }
+            ]
+        };
+
+        const workspace = await glue.workspaces.createWorkspace(definition);
+
+        await workspace.addGroup({
+            children: [{
+                type: "window",
+                appName: "noGlueApp"
+            }]
+        });
+
+        expect(workspace.children.length).to.eql(1)
+        expect(workspace.children[0].type === "row" || workspace.children[0].type === "column").to.be.true;
+    });
+
+    it("add the group successfully when the workspace has only one empty group", async () => {
+        const definition = {
+            children: [
+                {
+                    type: "group",
+                    children: []
+                }
+            ]
+        };
+
+        const workspace = await glue.workspaces.createWorkspace(definition);
+
+        await workspace.addGroup({
+            children: [{
+                type: "window",
+                appName: "noGlueApp"
+            }]
+        });
+
+        expect(workspace.getAllGroups().length).to.eql(2);
+        expect(workspace.children[0].type === "row" || workspace.children[0].type === "column").to.be.true;
+    });
+
     describe("", () => {
         beforeEach(async () => {
             await glue.workspaces.createWorkspace(basicConfig);

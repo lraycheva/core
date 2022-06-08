@@ -74,6 +74,31 @@ describe('addWindow() Should ', function () {
         })
     });
 
+    it("add the window successfully when the workspace has a maximized window", async () => {
+        const workspace = await glue.workspaces.createWorkspace({
+            children: [{
+                type: "group",
+                children: [
+                    {
+                        type: "window",
+                        appName: "noGlueApp"
+                    }
+                ]
+            }]
+        });
+
+        const window = workspace.getAllWindows()[0];
+
+        await window.maximize();
+
+        await workspace.addWindow({
+            type: "window",
+            appName: "noGlueApp"
+        });
+
+        expect(workspace.getAllWindows().length).to.eql(2);
+    });
+
     // Not focused workspace
     describe("", () => {
         beforeEach(async () => {
