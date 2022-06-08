@@ -1,16 +1,38 @@
 import resolve from '@rollup/plugin-node-resolve'
 import commonjs from '@rollup/plugin-commonjs'
 import typescript from 'rollup-plugin-typescript2'
-import external from 'rollup-plugin-peer-deps-external';
 import { terser } from "rollup-plugin-terser";
-import copy from 'rollup-plugin-copy'
+import copy from 'rollup-plugin-copy';
+const packageJson = require('./package.json');
+
+const globals = {
+    react: 'React',
+    'react-dom': 'ReactDOM',
+    '@glue42/react-hooks': "glue-hooks"
+};
 
 export default [
     {
         input: 'src/index.tsx',
+        output: [
+            {
+                file: packageJson.module,
+                format: 'esm',
+                sourcemap: true
+            },
+            {
+                file: packageJson.main,
+                name: 'workspaces-ui-react',
+                format: 'umd',
+                sourcemap: true,
+                globals,
+            }
+        ],
+        external: [...Object.keys(packageJson.peerDependencies || {})],
         plugins: [
-            resolve(),
-            external(),
+            resolve({
+                mainFields: ['module', 'main', 'browser'],
+            }),
             commonjs(),
             typescript(),
             terser({
@@ -23,6 +45,5 @@ export default [
                 ]
             })
         ],
-        output: [{ dir: 'dist', format: 'es', sourcemap: true }]
     }
 ]
