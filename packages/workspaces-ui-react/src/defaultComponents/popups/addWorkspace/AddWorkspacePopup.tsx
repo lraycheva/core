@@ -4,7 +4,7 @@ import Feedback from "../Feedback";
 import WorkspaceLayoutsList from "./WorkspaceLayoutsList";
 import withGlueInstance from "../../../withGlueInstance";
 
-const AddWorkspacePopup: React.FC<AddWorkspacePopupProps> = ({ frameId, hidePopup, resizePopup, glue, ...props }) => {
+const AddWorkspacePopup: React.FC<AddWorkspacePopupProps> = ({ frameId, hidePopup, resizePopup, filterLayouts, glue, ...props }) => {
     const [feedbackText, setFeedbackText] = useState<string | undefined>(undefined);
     const containerRef = React.createRef<HTMLDivElement>();
 
@@ -48,6 +48,7 @@ const AddWorkspacePopup: React.FC<AddWorkspacePopupProps> = ({ frameId, hidePopu
                         <WorkspaceLayoutsList
                             frameId={frameId}
                             glue={glue}
+                            filterLayouts={filterLayouts}
                             showFeedback={setFeedbackText}
                             hidePopup={hidePopup}
                             resizePopup={resizePopupWithContainerHeight}

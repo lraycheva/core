@@ -217,6 +217,7 @@ export interface AddApplicationPopupProps extends React.DetailedHTMLProps<React.
 export interface AddWorkspacePopupProps extends React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
   frameId: string,
   glue?: any,
+  filterLayouts?: (layouts: any) => boolean;
   resizePopup: (s: Size) => void,
   hidePopup: () => void
 }
@@ -281,6 +282,7 @@ export interface WorkspaceLayoutsListProps {
   showFeedback: (errMsg: string) => void;
   hidePopup: () => void;
   resizePopup: () => void;
+  filterLayouts?: (layout: any) => boolean;
 }
 
 export interface SaveContextCheckboxProps {

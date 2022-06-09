@@ -229,7 +229,8 @@ export const newFrameConfigDecoder: Decoder<Glue42Workspaces.NewFrameConfig> = o
         top: optional(number()),
         width: optional(nonNegativeNumberDecoder),
         height: optional(nonNegativeNumberDecoder)
-    }))
+    })),
+    applicationName: optional(nonEmptyStringDecoder),
 });
 
 export const loadingStrategyDecoder: Decoder<Glue42Workspaces.LoadingStrategy> = oneOf<"direct" | "delayed" | "lazy">(
@@ -543,6 +544,7 @@ export const workspaceLayoutDecoder: Decoder<Glue42Workspaces.WorkspaceLayout> =
     metadata: optional(anyJson()),
     components: array(object({
         type: constant("Workspace"),
+        application: optional(string()),
         state: object({
             config: anyJson(),
             context: anyJson(),
@@ -594,7 +596,8 @@ export const frameSnapshotResultDecoder: Decoder<FrameSnapshotResult> = object({
 });
 
 export const layoutSummaryDecoder: Decoder<LayoutSummary> = object({
-    name: nonEmptyStringDecoder
+    name: nonEmptyStringDecoder,
+    applicationName: optional(string())
 });
 
 export const layoutSummariesDecoder: Decoder<LayoutSummariesResult> = object({

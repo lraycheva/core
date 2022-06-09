@@ -156,6 +156,7 @@ export interface WorkspaceSummariesResult {
 
 export interface LayoutSummary {
     name: string;
+    applicationName?: string;
 }
 
 export interface LayoutSummariesResult {

@@ -2,20 +2,26 @@ import React, { useEffect, useState } from "react";
 import { WorkspaceLayoutsListProps } from "../../../types/internal";
 import WorkspaceLayoutItem from "./WorkspaceLayoutItem";
 
-const WorkspaceLayoutsList: React.FC<WorkspaceLayoutsListProps> = ({ glue, frameId, showFeedback, hidePopup, resizePopup }) => {
+const WorkspaceLayoutsList: React.FC<WorkspaceLayoutsListProps> = ({ glue, frameId, showFeedback, hidePopup, resizePopup, filterLayouts }) => {
     const [layoutSummaries, setLayoutSummaries] = useState([] as any[]);
 
     const getSummaries = () => {
-        return glue.workspaces.layouts.getSummaries();
+        return glue.workspaces.layouts.getSummaries().then((s: any[]) => {
+              let filtered = s
+              if (typeof filterLayouts === 'function') {
+                  filtered = s.filter((l) => filterLayouts(l))
+              } 
+              return filtered;
+        });
     };
 
     useEffect(() => {
         let shouldUpdate = true;
-        getSummaries().then((s: any) => {
+        getSummaries().then((s: any[]) => {
             if (!shouldUpdate) {
                 return;
             }
-            setLayoutSummaries(s);
+            setLayoutSummaries(s)
         });
         return () => {
             shouldUpdate = false;
@@ -41,7 +47,7 @@ const WorkspaceLayoutsList: React.FC<WorkspaceLayoutsListProps> = ({ glue, frame
             glue.workspaces.layouts.delete(layoutName).catch((e: Error) => {
                 showFeedback(e.message);
             }).then(() => {
-                getSummaries().then((s: any) => { setLayoutSummaries(s); });
+                getSummaries().then((s: any[]) => { setLayoutSummaries(s); });
             });
         };
     }

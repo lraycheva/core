@@ -51,6 +51,9 @@ export namespace Glue42Workspaces {
         /** The type of the workspace element. */
         type: "Workspace";
 
+        /** The name of the workspaces app with which the layout is associated (available only in Glue42 Enterprise) */
+        application?: string;
+
         state: WorkspaceLayoutComponentState;
     }
 
@@ -165,6 +168,8 @@ export namespace Glue42Workspaces {
     export interface NewFrameConfig {
         /** An object describing the possible settings when defining a new frame. */
         bounds?: FrameBounds;
+        /** The application name of the workspace app that should be used for the new frame (available only for Glue42 Enterprise) */
+        applicationName?: string;
     }
 
     /** An object defining the resize parameters of a frame. */
@@ -598,6 +603,9 @@ export namespace Glue42Workspaces {
     export interface WorkspaceLayoutSummary {
         /** An unique string name and identifier of the layout */
         name: string;
+        
+        /** The name of the workspaces app with which the layout is associated (available only in Glue42 Enterprise) */
+        applicationName?: string;
     }
 
     export interface EmptyFrameDefinition {

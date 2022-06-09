@@ -132,6 +132,7 @@ export const rowLayoutItemDecoder: Decoder<Glue42Workspaces.RowLayoutItem> = obj
 
 export const workspaceLayoutComponentDecoder: Decoder<Glue42Workspaces.WorkspaceComponent> = object({
     type: constant("Workspace"),
+    application: optional(string()),
     state: object({
         config: anyJson(),
         context: anyJson(),
