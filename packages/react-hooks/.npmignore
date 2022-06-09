@@ -1,0 +1,5 @@
+*
+!dist/**/*
+!package.json
+!react-hooks.d.ts
+*.md
