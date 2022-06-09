@@ -1,6 +1,6 @@
 {
     "name": "@glue42/react-hooks",
-    "version": "2.6.5",
+    "version": "2.6.6",
     "description": "React Hooks Wrapper for Glue42 Web and Enterprise",
     "main": "dist/npm/index.js",
     "module": "dist/es/index.js",
