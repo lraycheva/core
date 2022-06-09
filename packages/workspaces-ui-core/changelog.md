@@ -1,3 +1,5 @@
+1.8.4
+feat: updated the @glue42/desktop to 5.12.0
 1.8.3
 fix: enabled window and container add when there is a maximized item in the workspace
 1.8.2

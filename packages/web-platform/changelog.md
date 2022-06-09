@@ -1,3 +1,5 @@
+1.12.4
+feat: extended the workspace layout decoder to validate an application property
 1.12.3
 feat: added support for the new provider context in the authentication object of the preferred connection config
 1.12.2

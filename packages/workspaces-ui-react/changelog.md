@@ -1,3 +1,5 @@
+1.8.4
+feat: added layouts filtering in the workspace layout list
 1.8.3
 chore: updated the build process to export in both umd and esm formats
 1.8.2

@@ -1,3 +1,5 @@
+2.5.4
+feat: updated the @glue42/desktop to 5.12.0
 2.5.3
 feat: added the option for multiple context listeners before joining a channel
 fix: added additional check to detect when running in Enterprise by expecting the user agent

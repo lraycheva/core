@@ -1,3 +1,5 @@
+2.6.4
+feat: updated the @glue42/desktop to 5.12.0
 2.6.2
 fix: fixes the breaking change introduced in 2.6.0 which caused incompatibility between 1.12.X platform and web clients prior to 2.6.0
 2.6.1
