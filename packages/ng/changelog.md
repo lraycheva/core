@@ -1,3 +1,5 @@
+2.6.6
+chore: bump due to dependencies update
 2.6.5
 feat: updated the @glue42/desktop to 5.12.0
 2.6.2

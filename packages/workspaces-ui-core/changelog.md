@@ -1,3 +1,5 @@
+1.8.5
+chore: bump due to dependencies update
 1.8.4
 feat: updated the @glue42/desktop to 5.12.0
 1.8.3

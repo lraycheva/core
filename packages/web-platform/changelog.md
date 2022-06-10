@@ -1,3 +1,5 @@
+1.12.5
+chore: bump due to dependencies update
 1.12.4
 feat: extended the workspace layout decoder to validate an application property
 1.12.3

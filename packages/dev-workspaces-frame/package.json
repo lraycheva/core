@@ -1,16 +1,16 @@
 {
   "name": "dev-workspaces-frame",
-  "version": "2.3.4",
+  "version": "2.3.5",
   "private": true,
   "homepage": "./",
   "dependencies": {
     "@glue42/desktop": "^5.12.0",
     "@glue42/react-hooks": "1.2.7",
-    "@glue42/web": "^2.6.4",
-    "@glue42/web-platform": "^1.12.4",
+    "@glue42/web": "^2.6.5",
+    "@glue42/web-platform": "^1.12.5",
     "@glue42/web-worker": "^1.1.1",
-    "@glue42/workspaces-api": "^1.13.0",
-    "@glue42/workspaces-ui-react": "^1.8.4",
+    "@glue42/workspaces-api": "^1.14.0",
+    "@glue42/workspaces-ui-react": "^1.8.5",
     "react": "^17.0.1",
     "react-dom": "^17.0.1"
   },
