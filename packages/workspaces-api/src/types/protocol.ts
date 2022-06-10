@@ -386,4 +386,13 @@ export interface SetWorkspaceIconConfig {
     icon?: string;
 }
 
+export interface ShortcutConfig {
+    shortcut: string;
+    frameId: string;
+}
+
+export interface ShortcutClickedData {
+    shortcut: string;
+}
+
 // #endregion

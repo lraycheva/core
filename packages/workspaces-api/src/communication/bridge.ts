@@ -1,10 +1,11 @@
 import { CallbackRegistry, UnsubscribeFunction } from "callback-registry";
 import { SubscriptionConfig, ActiveSubscription, WorkspaceEventType, WorkspaceEventAction, WorkspacePayload, WorkspaceEventScope } from "../types/subscription";
-import { STREAMS } from "./constants";
+import { ClientOperations, CLIENT_OPERATIONS, STREAMS } from "./constants";
 import { OPERATIONS } from "./constants";
 import { eventTypeDecoder, streamRequestArgumentsDecoder, workspaceEventActionDecoder } from "../shared/decoders";
 import { Glue42Workspaces } from "../../workspaces";
 import { InteropTransport } from "./interop-transport";
+import { Glue42Core } from "@glue42/core";
 
 export class Bridge {
 
@@ -136,6 +137,30 @@ export class Bridge {
                 this.activeSubscriptions.splice(this.activeSubscriptions.indexOf(activeSub), 1);
             }
         };
+    }
+
+    public onOperation(callback: (operation: ClientOperations, caller: Glue42Core.Interop.Instance) => void) {
+        
+        const wrappedCallback = (payload: ClientOperations, caller: Glue42Core.Interop.Instance) => {
+            const operationName = payload.operation;
+            const operationArgs = payload.data;
+            const operationDefinition = Object.values(CLIENT_OPERATIONS).find((operation) => operation.name === operationName);
+
+            if (!operationDefinition) {
+                throw new Error(`Cannot find definition for operation name: ${operationName}`);
+            }
+
+            if (operationDefinition.argsDecoder) {
+                try {
+                    operationDefinition.argsDecoder.runWithException(operationArgs);
+                } catch (error) {
+                    throw new Error(`Unexpected internal outgoing validation error: ${error.message}, for input: ${JSON.stringify(error.input)}, for operation ${operationName}`);
+                }
+            }
+
+            callback(payload, caller);
+        }
+        return this.transport.onInternalMethodInvoked("control", wrappedCallback)
     }
 
     private checkScopeMatch(scope: { type: WorkspaceEventScope; id?: string }, receivedIds: { frame: string; workspace: string; window: string }): boolean {

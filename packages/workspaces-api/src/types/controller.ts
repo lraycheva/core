@@ -68,4 +68,5 @@ export interface WorkspacesController {
     unpinWorkspace(workspaceId: string): Promise<void>;
     getWorkspaceIcon(workspaceId: string): Promise<string>;
     setWorkspaceIcon(workspaceId: string, icon: string): Promise<void>;
+    registerShortcut(shortcut: string, frameId: string, callback: () => void): Promise<UnsubscribeFunction>;
 }

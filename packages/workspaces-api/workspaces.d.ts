@@ -644,6 +644,15 @@ export namespace Glue42Workspaces {
 
     /** An object describing a frame */
     export interface Frame extends FrameSummary {
+      /**
+       * An API which gives full read, write and delete access to the workspaces layouts.
+       */
+
+        /**
+         * Registers keyboard shortcut to the current frame (available only in Glue42 Enterprise).
+         */
+        registerShortcut(shortcut: string, callback: () => void): Promise<Unsubscribe>;
+
         /**
          * Retrieves the current bounds of the frame.
          */

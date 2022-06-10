@@ -52,7 +52,9 @@ import {
     PinWorkspaceConfig,
     SetWorkspaceIconConfig,
     FrameInitializationConfigProtocol,
-    WorkspaceSelector
+    WorkspaceSelector,
+    ShortcutClickedData,
+    ShortcutConfig
 } from "../types/protocol";
 import { WorkspaceEventType, WorkspaceEventAction } from "../types/subscription";
 import { Glue42Workspaces } from "../../workspaces";
@@ -827,3 +829,12 @@ export const setWorkspaceIconDecoder: Decoder<SetWorkspaceIconConfig> = object({
 export const workspacePinOptionsDecoder: Decoder<Glue42Workspaces.WorkspacePinOptions> = optional(object({
     icon: optional(nonEmptyStringDecoder)
 }));
+
+export const shortcutConfigDecoder: Decoder<ShortcutConfig> = object({
+    shortcut: nonEmptyStringDecoder,
+    frameId: nonEmptyStringDecoder
+});
+
+export const shortcutClickedDataDecoder: Decoder<ShortcutClickedData> = object({
+    shortcut: nonEmptyStringDecoder
+});

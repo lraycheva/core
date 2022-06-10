@@ -12,12 +12,14 @@ import { WorkspacesController } from "../types/controller";
 import { GDWindow } from "../types/glue";
 import { BaseController } from "./base";
 import { UnsubscribeFunction } from "callback-registry";
+import { ShortcutsController } from "./shortcuts";
 
 export class MainController implements WorkspacesController {
 
     constructor(
         private readonly bridge: Bridge,
-        private readonly base: BaseController
+        private readonly base: BaseController,
+        private readonly shortcutsController: ShortcutsController
     ) { }
 
     public checkIsWindowLoaded(windowId: string): boolean {
@@ -385,6 +387,10 @@ export class MainController implements WorkspacesController {
             minHeight: frameSnapshot.config.minHeight,
             maxHeight: frameSnapshot.config.maxHeight,
         };
+    }
+
+    public registerShortcut(shortcut: string, frameId: string, callback: () => void): Promise<UnsubscribeFunction> {
+        return this.shortcutsController.registerShortcut(shortcut, frameId, callback);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

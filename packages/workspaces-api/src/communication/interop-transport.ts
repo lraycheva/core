@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { METHODS, webPlatformMethodName, webPlatformWspStreamName } from "./constants";
+import { ClientOperations, IncomingMethodTypes, INCOMING_METHODS, OUTGOING_METHODS, webPlatformMethodName, webPlatformWspStreamName } from "./constants";
 import { promisePlus } from "../shared/promisePlus";
 import { WorkspaceEventType } from "../types/subscription";
 import { InteropAPI, Subscription, InvocationResult } from "../types/glue";
 import { Glue42Core } from "@glue42/core";
+import { CallbackRegistry } from "callback-registry";
 
 export class InteropTransport {
 
@@ -11,15 +12,21 @@ export class InteropTransport {
     private coreEventMethodInitiated = false;
     private corePlatformSubPromise: Promise<Glue42Core.Interop.Subscription>;
 
-    constructor(private readonly agm: InteropAPI) { }
+    constructor(private readonly agm: InteropAPI,
+        private readonly registry: CallbackRegistry) { }
 
     public async initiate(actualWindowId: string): Promise<void> {
 
         if (window.glue42gd) {
             await Promise.all(
-                Object.values(METHODS).map((method) => {
-
+                Object.values(OUTGOING_METHODS).map((method) => {
                     return this.verifyMethodLive(method.name);
+                })
+            );
+
+            await Promise.all(
+                Object.keys(INCOMING_METHODS).map((method: IncomingMethodTypes) => {
+                    return this.registerMethod(method);
                 })
             );
 
@@ -78,7 +85,7 @@ export class InteropTransport {
     public async transmitControl(operation: string, operationArguments: any): Promise<any> {
 
         const invocationArguments = window.glue42gd ? { operation, operationArguments } : { operation, domain: "workspaces", data: operationArguments };
-        const methodName = window.glue42gd ? METHODS.control.name : webPlatformMethodName;
+        const methodName = window.glue42gd ? OUTGOING_METHODS.control.name : webPlatformMethodName;
 
         const platformTarget = window.glue42gd ? undefined : (window as any).glue42core.communicationId;
 
@@ -110,6 +117,10 @@ export class InteropTransport {
         }
 
         return invocationResult.all_return_values[0].returned;
+    }
+
+    public onInternalMethodInvoked(key: IncomingMethodTypes, callback: (operation: ClientOperations, caller: Glue42Core.Interop.Instance) => void) {
+        return this.registry.add(key, callback);
     }
 
     private verifyMethodLive(name: string, systemId?: string): Promise<void> {
@@ -145,5 +156,12 @@ export class InteropTransport {
                 });
             });
         }, 15000, "Timeout waiting for the Workspaces communication channels");
+    }
+
+    private registerMethod(key: IncomingMethodTypes) {
+        const method = INCOMING_METHODS[key];
+        return this.agm.register(method.name, (args, caller) => {
+            this.registry.execute(key, args, caller);
+        })
     }
 }

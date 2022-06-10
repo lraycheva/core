@@ -21,6 +21,14 @@ export class Frame implements Glue42Workspaces.Frame {
         data.set(this, { manager: dataManager });
     }
 
+    public async registerShortcut(shortcut: string, callback: () => void): Promise<Glue42Workspaces.Unsubscribe> {
+        nonEmptyStringDecoder.runWithException(shortcut);
+        checkThrowCallback(callback);
+        const myId = getData(this).summary.id;
+        const unsubscribe = await getData(this).controller.registerShortcut(shortcut, myId, callback);
+        return unsubscribe;
+    }
+
     public get id(): string {
         return getData(this).summary.id;
     }

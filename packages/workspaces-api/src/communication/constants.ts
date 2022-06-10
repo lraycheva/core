@@ -42,7 +42,9 @@ import {
     setWorkspaceIconDecoder,
     frameSummaryResultDecoder,
     emptyFrameDefinitionDecoder,
-    frameInitProtocolConfigDecoder
+    frameInitProtocolConfigDecoder,
+    shortcutClickedDataDecoder,
+    shortcutConfigDecoder
 } from "../shared/decoders";
 import { ControlOperation, StreamOperation } from "../types/protocol";
 import { WorkspaceEventType } from "../types/subscription";
@@ -87,18 +89,25 @@ type OperationsTypes = "isWindowInWorkspace" |
     "getWorkspaceIcon" |
     "setWorkspaceIcon" |
     "createFrame" |
+    "registerShortcut" |
+    "unregisterShortcut" |
     "initFrame";
-type MethodsTypes = "control" | "frameStream" | "workspaceStream" | "containerStream" | "windowStream";
+type OutgoingMethodTypes = "control" | "frameStream" | "workspaceStream" | "containerStream" | "windowStream";
+export type IncomingMethodTypes = "control";
 
 export const webPlatformMethodName = "T42.Web.Platform.Control";
 export const webPlatformWspStreamName = "T42.Web.Platform.WSP.Stream";
 
-export const METHODS: { [key in MethodsTypes]: { name: string; isStream: boolean } } = {
+export const OUTGOING_METHODS: { [key in OutgoingMethodTypes]: { name: string; isStream: boolean } } = {
     control: { name: "T42.Workspaces.Control", isStream: false },
     frameStream: { name: "T42.Workspaces.Stream.Frame", isStream: true },
     workspaceStream: { name: "T42.Workspaces.Stream.Workspace", isStream: true },
     containerStream: { name: "T42.Workspaces.Stream.Container", isStream: true },
     windowStream: { name: "T42.Workspaces.Stream.Window", isStream: true }
+};
+
+export const INCOMING_METHODS: { [key in IncomingMethodTypes]: { name: string; isStream: boolean } } = {
+    control: { name: "T42.Workspaces.Client.Control", isStream: false },
 };
 
 export const STREAMS: { [key in WorkspaceEventType]: StreamOperation } = {
@@ -107,6 +116,21 @@ export const STREAMS: { [key in WorkspaceEventType]: StreamOperation } = {
     container: { name: "T42.Workspaces.Stream.Container", payloadDecoder: containerStreamDataDecoder },
     window: { name: "T42.Workspaces.Stream.Window", payloadDecoder: windowStreamDataDecoder }
 };
+
+interface ShortcutClicked {
+    operation: "shortcutClicked",
+    data: {
+        shortcut: string;
+    }
+}
+
+export type ClientOperations = ShortcutClicked;
+
+export type OnOperationsTypes = "shortcutClicked";
+
+export const CLIENT_OPERATIONS: { [key in OnOperationsTypes]: ControlOperation } = { 
+    shortcutClicked: { name: "shortcutClicked", argsDecoder: shortcutClickedDataDecoder, resultDecoder: voidResultDecoder },
+}
 
 export const OPERATIONS: { [key in OperationsTypes]: ControlOperation } = {
     ping: { name: "ping", resultDecoder: pingResultDecoder },
@@ -149,5 +173,7 @@ export const OPERATIONS: { [key in OperationsTypes]: ControlOperation } = {
     pinWorkspace: { name: "pinWorkspace", argsDecoder: pinWorkspaceDecoder, resultDecoder: voidResultDecoder },
     unpinWorkspace: { name: "unpinWorkspace", argsDecoder: workspaceSelectorDecoder, resultDecoder: voidResultDecoder },
     getWorkspaceIcon: { name: "getWorkspaceIcon", argsDecoder: workspaceSelectorDecoder, resultDecoder: getWorkspaceIconResultDecoder },
-    setWorkspaceIcon: { name: "setWorkspaceIcon", argsDecoder: setWorkspaceIconDecoder, resultDecoder: voidResultDecoder }
+    setWorkspaceIcon: { name: "setWorkspaceIcon", argsDecoder: setWorkspaceIconDecoder, resultDecoder: voidResultDecoder },
+    registerShortcut: { name: "registerShortcut", argsDecoder: shortcutConfigDecoder, resultDecoder: voidResultDecoder },
+    unregisterShortcut: { name: "unregisterShortcut", argsDecoder: shortcutConfigDecoder, resultDecoder: voidResultDecoder }
 };

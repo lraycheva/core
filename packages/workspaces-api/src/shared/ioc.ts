@@ -22,6 +22,7 @@ import { WorkspacesController } from "../types/controller";
 import { InteropAPI, WindowsAPI, LayoutsAPI, ContextsAPI } from "../types/glue";
 import { BaseController } from "../controllers/base";
 import { MainController } from "../controllers/main";
+import { ShortcutsController } from "../controllers/shortcuts";
 
 export class IoC {
 
@@ -31,6 +32,7 @@ export class IoC {
     private _privateDataManagerInstance: PrivateDataManager;
     private _parentBaseInstance: Base;
     private _baseController: BaseController;
+    private _shortcutsController: ShortcutsController;
 
     constructor(
         private readonly agm: InteropAPI,
@@ -49,9 +51,16 @@ export class IoC {
 
     public get controller(): WorkspacesController {
         if (!this._controllerInstance) {
-            this._controllerInstance = new MainController(this.bridge, this.baseController);
+            this._controllerInstance = new MainController(this.bridge, this.baseController, this.shortcutsController);
         }
         return this._controllerInstance;
+    }
+
+    public get shortcutsController(): ShortcutsController {
+        if (!this._shortcutsController) {
+            this._shortcutsController = new ShortcutsController(this.bridge);
+        }
+        return this._shortcutsController;
     }
 
     public get bridge(): Bridge {
@@ -64,7 +73,7 @@ export class IoC {
     public get transport(): InteropTransport {
 
         if (!this._transportInstance) {
-            this._transportInstance = new InteropTransport(this.agm);
+            this._transportInstance = new InteropTransport(this.agm, CallbackFactory());
         }
 
         return this._transportInstance;
