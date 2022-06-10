@@ -1,3 +1,5 @@
+1.14.0
+feat: added support for shortcuts in Enterprise
 1.13.0
 feat: added support for application name when restoring a workspace in Enterprise
 1.12.2
