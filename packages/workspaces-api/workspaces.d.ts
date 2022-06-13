@@ -483,6 +483,9 @@ export namespace Glue42Workspaces {
 
         /** Specifies if a row should be pinned. A pinned row will always maintain it's height, unless the user manually changes it by dragging the splitter */
         isPinned?: boolean;
+
+        /** If set to true any child that is maximized will have its width and height constricted to the current element's size */
+        maximizationBoundary?: boolean;
     }
 
     /** A config object which defines various column-specific settings */
@@ -501,6 +504,9 @@ export namespace Glue42Workspaces {
 
         /** Specifies if a column should be pinned. A pinned column will always maintain it's width, unless the user manually changes it by dragging the splitter */
         isPinned?: boolean;
+
+        /** If set to true any child that is maximized will have its width and height constricted to the current element's size */
+        maximizationBoundary?: boolean;
     }
 
     export interface FrameTargetingOptions {
@@ -603,7 +609,7 @@ export namespace Glue42Workspaces {
     export interface WorkspaceLayoutSummary {
         /** An unique string name and identifier of the layout */
         name: string;
-        
+
         /** The name of the workspaces app with which the layout is associated (available only in Glue42 Enterprise) */
         applicationName?: string;
     }
@@ -644,9 +650,9 @@ export namespace Glue42Workspaces {
 
     /** An object describing a frame */
     export interface Frame extends FrameSummary {
-      /**
-       * An API which gives full read, write and delete access to the workspaces layouts.
-       */
+        /**
+         * An API which gives full read, write and delete access to the workspaces layouts.
+         */
 
         /**
          * Registers keyboard shortcut to the current frame (available only in Glue42 Enterprise).
@@ -1240,6 +1246,9 @@ export namespace Glue42Workspaces {
         /** Indicates whether or not the row is pinned */
         isPinned?: boolean;
 
+        /** If set to true any child that is maximized will have its width and height constricted to the current element's size */
+        maximizationBoundary?: boolean;
+
         /**
          * Locks the row using a provided config object, which restricts various modification functionalities of the row
          * @param config This can be either an object or a function. When the object is provided, it overrides all other lock properties. When a function is provided, it will be called with the current lock settings and it should return a lock config, which will override the current settings. The function is recommended in all cases where overriding of the settings is not desired.
@@ -1262,6 +1271,9 @@ export namespace Glue42Workspaces {
 
         /** Indicates whether or not the column is pinned */
         isPinned?: boolean;
+
+        /** If set to true any child that is maximized will have its width and height constricted to the current element's size */
+        maximizationBoundary?: boolean;
 
         /**
          * Locks the column using a provided config object, which restricts various modification functionalities of the column

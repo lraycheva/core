@@ -67,6 +67,7 @@ export interface RowSnapshotConfig extends BaseChildSnapshotConfig {
     heightInPx?: number;
     isPinned?: boolean;
     isMaximized?: boolean;
+    maximizationBoundary?: boolean
 }
 
 export interface ColumnSnapshotConfig extends BaseChildSnapshotConfig {
@@ -77,6 +78,7 @@ export interface ColumnSnapshotConfig extends BaseChildSnapshotConfig {
     heightInPx?: number;
     isPinned?: boolean;
     isMaximized?: boolean;
+    maximizationBoundary?: boolean
 }
 
 export interface GroupSnapshotConfig extends BaseChildSnapshotConfig {

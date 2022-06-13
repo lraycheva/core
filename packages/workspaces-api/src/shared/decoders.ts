@@ -138,7 +138,8 @@ export const rowDefinitionConfigDecoder: Decoder<Glue42Workspaces.RowDefinitionC
     maxHeight: optional(number()),
     allowDrop: optional(boolean()),
     allowSplitters: optional(boolean()),
-    isPinned: optional(boolean())
+    isPinned: optional(boolean()),
+    maximizationBoundary: optional(boolean())
 });
 
 export const columnDefinitionConfigDecoder: Decoder<Glue42Workspaces.ColumnDefinitionConfig> = object({
@@ -146,7 +147,8 @@ export const columnDefinitionConfigDecoder: Decoder<Glue42Workspaces.ColumnDefin
     maxWidth: optional(number()),
     allowDrop: optional(boolean()),
     allowSplitters: optional(boolean()),
-    isPinned: optional(boolean())
+    isPinned: optional(boolean()),
+    maximizationBoundary: optional(boolean())
 });
 
 export const swimlaneWindowDefinitionDecoder: Decoder<Glue42Workspaces.WorkspaceWindowDefinition> = object({

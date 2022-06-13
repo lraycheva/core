@@ -1,3 +1,5 @@
+1.15.0
+feat: added support for maximization boundaries
 1.14.0
 feat: added support for shortcuts in Enterprise
 1.13.0

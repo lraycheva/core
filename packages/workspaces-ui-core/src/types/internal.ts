@@ -323,7 +323,6 @@ export interface WorkspaceDropOptions {
 
 export type WorkspaceOptionsWithTitle = GoldenLayout.WorkspacesOptions & { title?: string };
 export type WorkspaceOptionsWithLayoutName = GoldenLayout.WorkspacesOptions & { layoutName?: string };
-export type LayoutWithMaximizedItem = GoldenLayout & { _maximizedItem?: GoldenLayout.ContentItem };
 
 export interface MaximumActiveWorkspacesRule {
     threshold: number;

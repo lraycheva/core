@@ -28,6 +28,7 @@ lm.LayoutManager = function (config, container, componentFactory) {
 	this._resizeFunction = lm.utils.fnBind(this._onResize, this);
 	this._unloadFunction = lm.utils.fnBind(this._onUnload, this);
 	this._maximizedItem = null;
+	this._maximizedItemsInTargetContainer = {};
 	this._maximizePlaceholder = $('<div class="lm_maximise_place"></div>');
 	this._creationTimeoutPassed = false;
 	this._subWindowsCreated = false;
@@ -304,6 +305,15 @@ lm.utils.copy(lm.LayoutManager.prototype, {
 				this._maximizedItem.callDownwards('setSize');
 			}
 
+			Object.values(this._maximizedItemsInTargetContainer).forEach((maximizedItemData) => {
+				const maximizedItem = maximizedItemData.contentItem;
+				const maximizationContainer = maximizedItemData.maximizationContainer;
+
+				maximizedItem.element.width(maximizationContainer.element.width());
+				maximizedItem.element.height(maximizationContainer.element.height());
+				maximizedItem.callDownwards('setSize');
+			});
+
 			this._adjustColumnsResponsive();
 		}
 	},
@@ -549,8 +559,17 @@ lm.utils.copy(lm.LayoutManager.prototype, {
 	 * PACKAGE PRIVATE
 	 *************************/
 	_$maximiseItem: function (contentItem) {
+		const maximizationContainer = this._findItemToMaximizeIn(contentItem);
+
+		if (maximizationContainer != this.root) {
+			this._$maximiseInContainer(contentItem, maximizationContainer);
+			return;
+		}
+
 		if (this._maximizedItem !== null) {
+			const contentItem = this._maximizedItem;
 			this._$minimiseItem(this._maximizedItem);
+			contentItem.isMaximized = false;
 		}
 		this._maximizedItem = contentItem;
 		this._maximizedItem.addId('__glMaximised');
@@ -565,6 +584,10 @@ lm.utils.copy(lm.LayoutManager.prototype, {
 	},
 
 	_$minimiseItem: function (contentItem) {
+		if (this._maximizedItemsInTargetContainer[lm.utils.idAsString(contentItem.config.id)]) {
+			this._$minimiseInContainer(contentItem);
+			return;
+		}
 		contentItem.element.removeClass('lm_maximised');
 		contentItem.removeId('__glMaximised');
 		this._maximizePlaceholder.after(contentItem.element);
@@ -575,6 +598,46 @@ lm.utils.copy(lm.LayoutManager.prototype, {
 		this.emit('stateChanged');
 	},
 
+	_findItemToMaximizeIn: function (contentItem) {
+		if (!contentItem) {
+			return this.root;
+		}
+
+		if (contentItem.config.workspacesConfig.maximizationBoundary) {
+			return contentItem;
+		}
+
+		return this._findItemToMaximizeIn(contentItem.parent);
+	},
+	_$maximiseInContainer: function (contentItem, maximizationContainer) {
+		const maximizedDataForTargetContainer = Object.values(this._maximizedItemsInTargetContainer).find(data => data.maximizationContainer === maximizationContainer);
+		if (maximizedDataForTargetContainer) {
+			this._$minimiseItem(maximizedDataForTargetContainer.contentItem);
+			maximizedDataForTargetContainer.contentItem.isMaximized = false;
+		}
+		const placeholder = $(`<div id="${lm.utils.idAsString(contentItem.config.id)}" class="lm_maximise_target_container_placeholder"></div>`);
+		this._maximizedItemsInTargetContainer[lm.utils.idAsString(contentItem.config.id)] = { contentItem, maximizationContainer, placeholder };
+		contentItem.addId('__glMaximised');
+		contentItem.element.addClass('lm_maximised_in_container');
+		contentItem.element.after(placeholder);
+		maximizationContainer.element.prepend(contentItem.element);
+		contentItem.element.width(maximizationContainer.element.width());
+		contentItem.element.height(maximizationContainer.element.height());
+		contentItem.callDownwards('setSize');
+		contentItem.emit('maximized');
+		this.emit('stateChanged');
+	},
+	_$minimiseInContainer: function (contentItem) {
+		contentItem.element.removeClass('lm_maximised_in_container');
+		const placeholder = this._maximizedItemsInTargetContainer[lm.utils.idAsString(contentItem.config.id)].placeholder;
+		contentItem.removeId('__glMaximised');
+		placeholder.after(contentItem.element);
+		placeholder.remove();
+		contentItem.parent.callDownwards('setSize');
+		delete this._maximizedItemsInTargetContainer[lm.utils.idAsString(contentItem.config.id)];
+		contentItem.emit('minimized');
+		this.emit('stateChanged');
+	},
 	/**
 	 * This method is used to get around sandboxed iframe restrictions.
 	 * If 'allow-top-navigation' is not specified in the iframe's 'sandbox' attribute
@@ -1081,7 +1144,9 @@ lm.utils.copy(lm.LayoutManager.prototype, {
 		});
 
 		if (maximizedItems.length) {
-			maximizedItems[0].toggleMaximise();
+			maximizedItems.forEach((mi) => {
+				mi.toggleMaximise();
+			});
 		}
 	},
 	/**

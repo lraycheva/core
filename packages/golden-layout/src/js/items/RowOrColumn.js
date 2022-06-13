@@ -881,6 +881,11 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
 		lm.utils.animFrame(() => {
 			lm.utils.fnBind(this.callDownwards, this, ['setSize'])();
 			this._layoutManager._ignorePinned = false;
+			// ensuring that if there are maximized items after splitter drag their bounds will be correct
+			// they will be correct because update size applies again the rule that the maximized items should have the size of their maximization container
+			if(Object.values(this.layoutManager._maximizedItemsInTargetContainer).length){
+				this._layoutManager.updateSize();
+			}
 		});
 
 		this._layoutManager.emit("splitterDragStopped", splitter);

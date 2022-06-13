@@ -4,7 +4,7 @@ import GoldenLayout from "@glue42/golden-layout";
 import registryFactory from "callback-registry";
 const ResizeObserver = require("resize-observer-polyfill").default || require("resize-observer-polyfill");
 import { idAsString, getAllWindowsFromConfig, createWaitFor, getElementBounds, getAllItemsFromConfig, getRealHeight } from "../utils";
-import { Workspace, Window, FrameLayoutConfig, StartupConfig, ComponentState, LayoutWithMaximizedItem, WorkspaceDropOptions, Bounds } from "../types/internal";
+import { Workspace, Window, FrameLayoutConfig, StartupConfig, ComponentState, WorkspaceDropOptions, Bounds } from "../types/internal";
 import { LayoutEventEmitter } from "./eventEmitter";
 import store from "../state/store";
 import { LayoutStateResolver } from "../state/resolver";

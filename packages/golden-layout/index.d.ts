@@ -196,6 +196,8 @@ declare module '@glue42/golden-layout' {
          * Alias for unbind
          */
         off(eventName: string, callback?: Function, context?: any): void;
+
+        _maximizedItemsInTargetContainer: GoldenLayout.MaximizedData[];
     }
 
     namespace GoldenLayout {
@@ -476,6 +478,8 @@ declare module '@glue42/golden-layout' {
              * Indicates whether the item is maximized
              */
             isMaximized?: boolean;
+
+            maximizationBoundary?: boolean;
         }
 
         interface BaseItemConfig {
@@ -1452,6 +1456,12 @@ declare module '@glue42/golden-layout' {
              * Alias for unbind
              */
             off(eventName: string, callback?: Function, context?: any): void;
+        }
+
+        export interface MaximizedData{
+          contentItem: ContentItem;
+          placeholder: Element | HTMLElement | JQuery;
+          maximizationContainer: ContentItem;
         }
     }
 

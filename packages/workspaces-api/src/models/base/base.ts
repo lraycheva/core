@@ -329,6 +329,12 @@ export class Base {
         return (privateData.config as RowSnapshotConfig | ColumnSnapshotConfig | GroupSnapshotConfig).isMaximized;
     }
 
+    public getMaximizationBoundary(model: Column|Row):boolean{
+        const privateData = getData(this, model);
+
+        return (privateData.config as RowSnapshotConfig | ColumnSnapshotConfig).maximizationBoundary;
+    }
+
     public async setHeight(model: Row, height: number): Promise<void> {
         const modelData = getData(this, model) as ParentPrivateData;
         const { controller } = modelData;
