@@ -11,7 +11,7 @@ export const newContextsSubscribe = (id: string, callback: (data: any, delta: an
     let didReplay = false;
 
     return (window as WindowType).glue.contexts.subscribe(id, (data: any, delta: any, removed: string[], unsubscribe: () => void, extraData?: any) => {
-        if (!didReplay) {
+        if (!Object.keys(data).length && !didReplay) {
             didReplay = true;
             return;
         }
@@ -25,11 +25,18 @@ export const newContextsSubscribe = (id: string, callback: (data: any, delta: an
 };
 
 export const newChannelsSubscribe = (callback: (data: any) => void): () => void => {
-    return (window as WindowType).glue.channels.subscribe((data: any, _: Glue42.ChannelContext, updaterId: string) => {
-        if (updaterId === (window as WindowType).glue.interop.instance.peerId) {
+    let didReplay = false;
+
+    return (window as WindowType).glue.channels.subscribe((data: any, context: Glue42.ChannelContext, updaterId: string) => {
+        if (!Object.keys(data).length && !didReplay) {
+            didReplay = true;
             return;
         }
 
+        if (updaterId === (window as WindowType).glue.interop.instance.peerId) {
+            return;
+        }
+        
         callback(data);
     });
 };

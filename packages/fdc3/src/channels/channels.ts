@@ -16,12 +16,13 @@ interface PendingSubscription {
     id: string;
     contextType: string;
     handler: (context: Context) => void;
-    setActualUnsub: (actualUnsub: () => void) => void
+    setActualUnsub: (actualUnsub: () => void) => void;
 }
 
 const createChannelsAgent = (): ChannelsAPI => {
     let currentChannel: Channel | null = null;
     let pendingSubscriptions: PendingSubscription[] = [];
+    let activeListeners: Listener[] = [];
 
     const channels: { [name: string]: Channel } = {};
 
@@ -34,6 +35,7 @@ const createChannelsAgent = (): ChannelsAPI => {
             handleSwitchChannelUI(current);
         }
 
+        // Used in Glue42 Enterprise for navigating through system channels with the channelSelectorWidget
         (window as WindowType).glue.channels.changed((channelId: string) => {
             handleSwitchChannelUI(channelId);
         });
@@ -60,7 +62,7 @@ const createChannelsAgent = (): ChannelsAPI => {
     };
 
     const createNewAppChannel = async (channelId: string): Promise<void> => {
-        await (window as WindowType).glue.contexts.set(channelId, null);
+        await (window as WindowType).glue.contexts.set(channelId, {});
     };
 
     const isSystem = (channel: Channel | null): boolean => {
@@ -96,7 +98,13 @@ const createChannelsAgent = (): ChannelsAPI => {
         const result = { unsubscribe };
         
         const setActualUnsub = (actualUnsub: () => void): void => {
-            result.unsubscribe = actualUnsub;
+            const removePendingListenerAndUnsubscribe = () => {
+                unsubscribe();
+
+                actualUnsub();
+            }
+
+            result.unsubscribe = removePendingListenerAndUnsubscribe;
         };
         
         // Used inside of setCurrentChannel.
@@ -171,9 +179,9 @@ const createChannelsAgent = (): ChannelsAPI => {
             (channel as SystemChannel).join();
         } else {
             await tryLeaveSystem();
+            // Used only for joining an app channel. For system channels it's invoked by handleSwitchChannelUI()
+            setCurrentChannel(channel);
         }
-
-        setCurrentChannel(channel);
     };
 
     const getCurrentChannel = async (): Promise<Channel | null> => {
@@ -241,6 +249,7 @@ const createChannelsAgent = (): ChannelsAPI => {
                 }
                 return;
             }
+
             handler(data);
         };
 
@@ -250,18 +259,28 @@ const createChannelsAgent = (): ChannelsAPI => {
     }
 
     const setCurrentChannel = (newChannel: Channel): void => {
+        removeActiveListeners();
+
         currentChannel = newChannel;
 
+        addPendingSubscriptions();
+    };
+
+    const removeActiveListeners = (): void => {
+        activeListeners = activeListeners.filter(listener => listener.unsubscribe());
+    }
+
+    const addPendingSubscriptions = (): void => {
         pendingSubscriptions.forEach((pendingSubscription) => {
             const { contextType, handler, setActualUnsub } = pendingSubscription;
             
             const listener = addContextListener(contextType, handler);
             
             setActualUnsub(listener.unsubscribe);
-        })
-        
-        pendingSubscriptions = [];
-    };
+
+            activeListeners.push(listener);
+        });
+    }
 
     return {
         getSystemChannels,
