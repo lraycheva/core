@@ -22,3 +22,10 @@ export interface ActiveSubscription {
     callbacksCount: number;
     gdSub: Subscription;
 }
+
+export interface PendingSubscription {
+    streamType: WorkspaceEventType;
+    level: WorkspaceEventScope;
+    levelId?: string;
+    promise: Promise<void>;
+}

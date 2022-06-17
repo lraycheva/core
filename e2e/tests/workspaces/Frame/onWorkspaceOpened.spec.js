@@ -111,6 +111,44 @@ describe('frame.onWorkspaceOpened ', () => {
             .catch(done);
     });
 
+    Array.from({ length: 3 }).forEach((_, i) => {
+        it(`should notify exactly once when one new workspace was opened in the frame and ${i + 1} new subscriptions are being made at the same time`, (done) => {
+            const ready = gtf.waitFor(3, done);
+            let workspaceOpenedCalled = false;
+
+            timeout = setTimeout(ready, 3000);
+
+            const subPromises = [];
+
+            Array.from({ length: i + 1 }).forEach(() => {
+                const promise = defaultFrame.onWorkspaceOpened(() => {
+                    // do nothing
+                }).then((unSub) => {
+                    unSubFuncs.push(unSub);
+                });
+
+                subPromises.push(promise);
+            });
+
+            const openedPromise = defaultFrame.onWorkspaceOpened(() => {
+                if (workspaceOpenedCalled) {
+                    done("Workspace opened was already triggered!");
+                    return;
+                }
+                workspaceOpenedCalled = true;
+                ready();
+            });
+
+            Promise.all([...subPromises, openedPromise]).then((unSub) => {
+                unSubFuncs.push(unSub);
+                return glue.workspaces.createWorkspace(basicConfig);
+            })
+                .then(ready)
+                .catch(done);
+        });
+    });
+
+
     it('should notify twice with different instances when two workspaces are opened in the same frame (sequential)', (done) => {
 
         const ready = gtf.waitFor(3, done);

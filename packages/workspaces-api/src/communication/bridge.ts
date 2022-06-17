@@ -1,15 +1,17 @@
 import { CallbackRegistry, UnsubscribeFunction } from "callback-registry";
-import { SubscriptionConfig, ActiveSubscription, WorkspaceEventType, WorkspaceEventAction, WorkspacePayload, WorkspaceEventScope } from "../types/subscription";
+import { SubscriptionConfig, ActiveSubscription, WorkspaceEventType, WorkspaceEventAction, WorkspacePayload, WorkspaceEventScope, PendingSubscription } from "../types/subscription";
 import { ClientOperations, CLIENT_OPERATIONS, STREAMS } from "./constants";
 import { OPERATIONS } from "./constants";
 import { eventTypeDecoder, streamRequestArgumentsDecoder, workspaceEventActionDecoder } from "../shared/decoders";
 import { Glue42Workspaces } from "../../workspaces";
 import { InteropTransport } from "./interop-transport";
 import { Glue42Core } from "@glue42/core";
+import { PromiseWrapper } from "../shared/promiseWrapper";
 
 export class Bridge {
 
     private readonly activeSubscriptions: ActiveSubscription[] = [];
+    private readonly pendingSubScriptions: PendingSubscription[] = [];
 
     constructor(
         private readonly transport: InteropTransport,
@@ -80,47 +82,70 @@ export class Bridge {
     }
 
     public async subscribe(config: SubscriptionConfig): Promise<Glue42Workspaces.Unsubscribe> {
+        const pendingSub = this.getPendingSubscription(config);
+        if (pendingSub) {
+            await pendingSub.promise;
+        }
+
         let activeSub = this.getActiveSubscription(config);
         const registryKey = this.getRegistryKey(config);
 
         if (!activeSub) {
-            const stream = STREAMS[config.eventType];
-            const gdSub = await this.transport.subscribe(stream.name, this.getBranchKey(config), config.eventType);
-
-            gdSub.onData((streamData) => {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const data = streamData.data as { action: string; payload: any };
-
-                // important to decode without exception, because we do not want to throw an exception here
-                const requestedArgumentsResult = streamRequestArgumentsDecoder.run(streamData.requestArguments);
-                const actionResult = workspaceEventActionDecoder.run(data.action);
-
-                if (!requestedArgumentsResult.ok || !actionResult.ok) {
-                    return;
-                }
-
-                const streamType = requestedArgumentsResult.result.type;
-                const branch = requestedArgumentsResult.result.branch;
-
-                const validatedPayload = STREAMS[streamType].payloadDecoder.run(data.payload);
-
-                if (!validatedPayload.ok) {
-                    return;
-                }
-
-                const keyToExecute = `${streamType}-${branch}-${actionResult.result}`;
-                this.registry.execute(keyToExecute, validatedPayload.result);
-            });
-
-            activeSub = {
+            const pendingPromise = new PromiseWrapper<void>();
+            const pendingSubscription = {
                 streamType: config.eventType,
                 level: config.scope,
                 levelId: config.scopeId,
-                callbacksCount: 0,
-                gdSub
+                promise: pendingPromise.promise
             };
+            this.pendingSubScriptions.push(pendingSubscription);
+            try {
+                const stream = STREAMS[config.eventType];
+                const gdSub = await this.transport.subscribe(stream.name, this.getBranchKey(config), config.eventType);
 
-            this.activeSubscriptions.push(activeSub);
+                gdSub.onData((streamData) => {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const data = streamData.data as { action: string; payload: any };
+
+                    // important to decode without exception, because we do not want to throw an exception here
+                    const requestedArgumentsResult = streamRequestArgumentsDecoder.run(streamData.requestArguments);
+                    const actionResult = workspaceEventActionDecoder.run(data.action);
+
+                    if (!requestedArgumentsResult.ok || !actionResult.ok) {
+                        return;
+                    }
+
+                    const streamType = requestedArgumentsResult.result.type;
+                    const branch = requestedArgumentsResult.result.branch;
+
+                    const keyToExecute = `${streamType}-${branch}-${actionResult.result}`;
+                    const validatedPayload = STREAMS[streamType].payloadDecoder.run(data.payload);
+                    if (!validatedPayload.ok) {
+                        return;
+                    }
+
+                    this.registry.execute(keyToExecute, validatedPayload.result);
+                });
+
+                activeSub = {
+                    streamType: config.eventType,
+                    level: config.scope,
+                    levelId: config.scopeId,
+                    callbacksCount: 0,
+                    gdSub
+                };
+
+                this.activeSubscriptions.push(activeSub);
+
+                pendingPromise.resolve();
+            } catch (error) {
+                pendingPromise.reject(error);
+
+                throw error;
+            } finally {
+                this.removePendingSubscription(pendingSubscription);
+            }
+
         }
 
         const unsubscribe = this.registry.add(registryKey, config.callback);
@@ -140,7 +165,7 @@ export class Bridge {
     }
 
     public onOperation(callback: (operation: ClientOperations, caller: Glue42Core.Interop.Instance) => void) {
-        
+
         const wrappedCallback = (payload: ClientOperations, caller: Glue42Core.Interop.Instance) => {
             const operationName = payload.operation;
             const operationArgs = payload.data;
@@ -214,5 +239,21 @@ export class Bridge {
                 activeSub.level === config.scope &&
                 activeSub.levelId === config.scopeId
             );
+    }
+
+    private getPendingSubscription(config: SubscriptionConfig): PendingSubscription {
+        return this.pendingSubScriptions
+            .find((activeSub) => activeSub.streamType === config.eventType &&
+                activeSub.level === config.scope &&
+                activeSub.levelId === config.scopeId
+            );
+    }
+
+    private removePendingSubscription(pendingSubscription: PendingSubscription): void {
+        const index = this.pendingSubScriptions.indexOf(pendingSubscription);
+
+        if (index >= 0) {
+            this.pendingSubScriptions.splice(index, 1);
+        }
     }
 }

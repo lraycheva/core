@@ -124,6 +124,26 @@ describe("onWindowAdded() Should", () => {
         }).catch(done);
     });
 
+    it(`invoke the callback once when a new workspace with 1 window is opened and there is a window loaded subscription`, (done) => {
+        let createdWindows = 0;
+        timeout = setTimeout(() => {
+            if (createdWindows === 1) {
+                done();
+            }
+        }, 3000);
+        glue.workspaces.onWindowLoaded(() => {
+            //do nothing
+        }).then((unSub) => {
+            unSubFuncs.push(unSub);
+            return glue.workspaces.onWindowAdded(() => {
+                createdWindows += 1;
+            })
+        }).then((unSub) => {
+            unSubFuncs.push(unSub);
+            return glue.workspaces.createWorkspace(basicConfig);
+        }).catch(done);
+    });
+
     it("not notify that a window has been added when the unsubscribe function is immediately invoked", (done) => {
         timeout = setTimeout(() => {
             done();
