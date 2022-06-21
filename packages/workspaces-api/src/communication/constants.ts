@@ -121,6 +121,7 @@ interface ShortcutClicked {
     operation: "shortcutClicked",
     data: {
         shortcut: string;
+        frameId: string;
     }
 }
 
@@ -128,7 +129,7 @@ export type ClientOperations = ShortcutClicked;
 
 export type OnOperationsTypes = "shortcutClicked";
 
-export const CLIENT_OPERATIONS: { [key in OnOperationsTypes]: ControlOperation } = { 
+export const CLIENT_OPERATIONS: { [key in OnOperationsTypes]: ControlOperation } = {
     shortcutClicked: { name: "shortcutClicked", argsDecoder: shortcutClickedDataDecoder, resultDecoder: voidResultDecoder },
 }
 

@@ -8,17 +8,18 @@ export class ShortcutsController {
     private _shortcuts = CallbackRegistry();
     constructor(
         private readonly bridge: Bridge,
-    ) { 
+    ) {
         this.bridge.onOperation((payload, caller) => {
             if (payload.operation === CLIENT_OPERATIONS.shortcutClicked.name) {
-                this._shortcuts.execute(payload.data.shortcut);
+                const data = payload.data;
+                this._shortcuts.execute(`${data.frameId}-${data.shortcut}`);
             }
         })
     }
 
     public async registerShortcut(shortcut: string, frameId: string, callback: () => void): Promise<UnsubscribeFunction> {
         await this.bridge.send<void>(OPERATIONS.registerShortcut.name, { shortcut, frameId });
-        const un = this._shortcuts.add(shortcut, callback);
+        const un = this._shortcuts.add(`${frameId}-${shortcut}`, callback);
         return () => {
             un();
             this.bridge.send<void>(OPERATIONS.unregisterShortcut.name, { shortcut, frameId });

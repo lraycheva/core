@@ -395,6 +395,7 @@ export interface ShortcutConfig {
 
 export interface ShortcutClickedData {
     shortcut: string;
+    frameId: string;
 }
 
 // #endregion

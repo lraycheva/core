@@ -838,5 +838,6 @@ export const shortcutConfigDecoder: Decoder<ShortcutConfig> = object({
 });
 
 export const shortcutClickedDataDecoder: Decoder<ShortcutClickedData> = object({
-    shortcut: nonEmptyStringDecoder
+    shortcut: nonEmptyStringDecoder,
+    frameId: nonEmptyStringDecoder
 });
