@@ -76,6 +76,7 @@ lm.controls.Header = function (layoutManager, parent) {
 
 	this._lastVisibleTabIndex = -1;
 	this._tabControlOffset = this.layoutManager.config.settings.tabControlOffset;
+	this._isDestroyed = false;
 	if (!(this.layoutManager.config.settings.mode === "workspace" && this.layoutManager._componentFactory && this.layoutManager._componentFactory.createSystemButtons)) {
 		this._createControls();
 	}
@@ -240,11 +241,17 @@ lm.utils.copy(lm.controls.Header.prototype, {
 	 * @returns {void}
 	 */
 	_$destroy: function () {
+		if (this._isDestroyed) {
+			return;
+		}
+
+		this._isDestroyed = true;
 		this.emit('destroy', this);
 
 		for (var i = 0; i < this.tabs.length; i++) {
 			this.tabs[i]._$destroy();
 		}
+
 		$(document).off('mouseup', this.hideAdditionalTabsDropdown);
 		this.element.remove();
 	},

@@ -42,6 +42,7 @@ lm.items.AbstractContentItem = function (layoutManager, config, parent) {
 	this.layoutManager = layoutManager;
 	this._pendingEventPropagations = {};
 	this._throttledEvents = ['stateChanged'];
+	this._isDestroyed = false;
 
 	this.on(lm.utils.EventEmitter.ALL_EVENT, this._propagateEvent, this);
 
@@ -463,6 +464,11 @@ lm.utils.copy(lm.items.AbstractContentItem.prototype, {
 	 * @returns {void}
 	 */
 	_$destroy: function () {
+		if (this._isDestroyed) {
+			return;
+		}
+
+		this._isDestroyed = true;
 		this.emitBubblingEvent('beforeItemDestroyed');
 		this.callDownwards('_$destroy', [], true, true);
 		this.element.remove();

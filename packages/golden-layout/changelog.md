@@ -1,3 +1,5 @@
+2.3.1
+fix: improved the performance of the destroy function
 2.3.0
 feat: added support for maximization boundaries
 2.2.8
