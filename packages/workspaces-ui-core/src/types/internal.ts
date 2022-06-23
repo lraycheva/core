@@ -165,6 +165,7 @@ export interface ContainerSummary {
         heightInPx?: number;
         isPinned?: boolean;
         isMaximized: boolean;
+        maximizationBoundary: boolean;
     };
 }
 

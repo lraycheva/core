@@ -1914,7 +1914,7 @@ describe("properties: ", () => {
             const config = {
                 children: [
                     {
-                        type: "column",
+                        type: "row",
                         config: {
                             minHeight: 200,
                             maxHeight: 800

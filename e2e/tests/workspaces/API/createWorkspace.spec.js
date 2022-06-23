@@ -1364,9 +1364,7 @@ d='M224 448v-96h64v96l-32 64zM336 224v-160c48 0 80-32 80-64v0 0h-320c0 32 32 64 
                             }
                         ],
                         config: {
-                            minWidth: 100,
                             minHeight: 100,
-                            maxWidth: 1000,
                             maxHeight: 1000
                         }
                     }
@@ -1377,9 +1375,7 @@ d='M224 448v-96h64v96l-32 64zM336 224v-160c48 0 80-32 80-64v0 0h-320c0 32 32 64 
 
             const firstRow = workspace.getAllRows()[0];
 
-            expect(firstRow.minWidth).to.eql(100);
             expect(firstRow.minHeight).to.eql(100);
-            expect(firstRow.maxWidth).to.eql(1000);
             expect(firstRow.maxHeight).to.eql(1000);
         });
 
@@ -1401,9 +1397,7 @@ d='M224 448v-96h64v96l-32 64zM336 224v-160c48 0 80-32 80-64v0 0h-320c0 32 32 64 
                         ],
                         config: {
                             minWidth: 100,
-                            minHeight: 100,
                             maxWidth: 1000,
-                            maxHeight: 1000
                         }
                     }
                 ]
@@ -1414,9 +1408,7 @@ d='M224 448v-96h64v96l-32 64zM336 224v-160c48 0 80-32 80-64v0 0h-320c0 32 32 64 
             const firstColumn = workspace.getAllColumns()[0];
 
             expect(firstColumn.minWidth).to.eql(100);
-            expect(firstColumn.minHeight).to.eql(100);
             expect(firstColumn.maxWidth).to.eql(1000);
-            expect(firstColumn.maxHeight).to.eql(1000);
         });
 
         it("set the size constraints when the config contains a group with size constraints", async () => {
@@ -1786,6 +1778,106 @@ d='M224 448v-96h64v96l-32 64zM336 224v-160c48 0 80-32 80-64v0 0h-320c0 32 32 64 
             }).catch(() => {
                 done();
             });
+        });
+    });
+
+    describe("maximizationBoundary Should ",()=>{
+        const complexConfig = {
+            "children": [
+                {
+                    "config": {},
+                    "type": "column",
+                    "children": [
+                        {
+                            "config": {},
+                            "type": "row",
+                            "children": [
+                                {
+                                    type: "window",
+                                    appName: "noGlueApp"
+                                },
+                            ]
+                        },
+                        {
+                            "config": {
+                                maximizationBoundary: true
+                            },
+                            "type": "row",
+                            "children": [
+                                {
+                                    "config": {},
+                                    "type": "column",
+                                    "children": [
+                                        {
+                                            type: "window",
+                                            appName: "noGlueApp"
+                                        },
+                                    ]
+                                },
+                                {
+                                    "config": {
+                                        maximizationBoundary: true
+                                    },
+                                    "type": "column",
+                                    "children": [
+                                        {
+                                            "config": {},
+                                            "type": "row",
+                                            "children": [
+                                                {
+                                                    "config": {},
+                                                    "type": "group",
+                                                    "children": [
+                                                        {
+                                                            type: "window",
+                                                            appName: "noGlueApp"
+                                                        },
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "config": {},
+                                            "type": "row",
+                                            "children": [
+                                                {
+                                                    "config": {},
+                                                    "type": "group",
+                                                    "children": [
+                                                        {
+                                                            type: "window",
+                                                            appName: "noGlueApp"
+                                                        },
+                                                        {
+                                                            type: "window",
+                                                            appName: "noGlueApp"
+                                                        },
+                                                        {
+                                                            type: "window",
+                                                            appName: "noGlueApp"
+                                                        },
+                                                        {
+                                                            type: "window",
+                                                            appName: "noGlueApp"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+
+        it("create a workspace with a row and a column set as maximization boundaries", async ()=>{
+            const complexWorkspace = await glue.workspaces.createWorkspace(complexConfig);
+
+            expect(complexWorkspace.getAllColumns().filter(c=>c.maximizationBoundary).length).to.eql(1);
+            expect(complexWorkspace.getAllRows().filter(r=>r.maximizationBoundary).length).to.eql(1);
         });
     });
 

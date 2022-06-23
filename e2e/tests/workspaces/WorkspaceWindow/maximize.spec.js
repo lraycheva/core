@@ -14,6 +14,97 @@ describe("maximize() Should", () => {
         ]
     }
 
+    const complexConfig = {
+        "children": [
+            {
+                "config": {},
+                "type": "column",
+                "children": [
+                    {
+                        "config": {},
+                        "type": "row",
+                        "children": [
+                            {
+                                type: "window",
+                                appName: "noGlueApp"
+                            },
+                        ]
+                    },
+                    {
+                        "config": {
+                            maximizationBoundary: true
+                        },
+                        "type": "row",
+                        "children": [
+                            {
+                                "config": {},
+                                "type": "column",
+                                "children": [
+                                    {
+                                        type: "window",
+                                        appName: "noGlueApp"
+                                    },
+                                ]
+                            },
+                            {
+                                "config": {
+                                    maximizationBoundary: true
+                                },
+                                "type": "column",
+                                "children": [
+                                    {
+                                        "config": {},
+                                        "type": "row",
+                                        "children": [
+                                            {
+                                                "config": {},
+                                                "type": "group",
+                                                "children": [
+                                                    {
+                                                        type: "window",
+                                                        appName: "noGlueApp"
+                                                    },
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "config": {},
+                                        "type": "row",
+                                        "children": [
+                                            {
+                                                "config": {},
+                                                "type": "group",
+                                                "children": [
+                                                    {
+                                                        type: "window",
+                                                        appName: "noGlueApp"
+                                                    },
+                                                    {
+                                                        type: "window",
+                                                        appName: "noGlueApp"
+                                                    },
+                                                    {
+                                                        type: "window",
+                                                        appName: "noGlueApp"
+                                                    },
+                                                    {
+                                                        type: "window",
+                                                        appName: "noGlueApp"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+
     let workspace = undefined;
     let window = undefined;
 
@@ -70,6 +161,59 @@ describe("maximize() Should", () => {
         window = windows[0];
 
         expect(window.isMaximized).to.be.true;
+    });
+
+    it("maxmize the window successfully when there is a maximization boundary", async () => {
+        const complexWorkspace = await glue.workspaces.createWorkspace(complexConfig);
+
+        const groupWithWindowToMaximize = complexWorkspace.getAllGroups().find(g => g.children.length === 4);
+        const windowToMaximize = groupWithWindowToMaximize.children[0];
+        await windowToMaximize.maximize();
+
+        expect(windowToMaximize.isMaximized).to.be.true;
+    });
+
+    it("maximize the window successfully when there is already a maximized window within a boundary", async () => {
+        const complexWorkspace = await glue.workspaces.createWorkspace(complexConfig);
+
+        const groupWithWindowToMaximize = complexWorkspace.getAllGroups().find(g => g.children.length === 4);
+        const windowToMaximizeInBoundary = groupWithWindowToMaximize.children[0];
+        const windowToMaximize = workspace.children[0].children[0];
+
+        await windowToMaximizeInBoundary.maximize();
+        await windowToMaximize.maximize();
+
+        expect(windowToMaximizeInBoundary.isMaximized).to.be.true;
+        expect(windowToMaximize.isMaximized).to.be.true;
+    });
+
+    it("maxmize the window from the second invocation and restore the first one when trying to maximize to windows in the same boundary", async ()=>{
+        const complexWorkspace = await glue.workspaces.createWorkspace(complexConfig);
+
+        const groupWithWindowToMaximize = complexWorkspace.getAllGroups().find(g => g.children.length === 4);
+        const secondGroupWithWindowToMaximize = complexWorkspace.getAllGroups().find(g => g.children.length === 1);
+        const windowToMaximizeInBoundary = groupWithWindowToMaximize.children[0];
+        const secondWindowToMaximizeInBoundary = secondGroupWithWindowToMaximize.children[0];
+
+        await windowToMaximizeInBoundary.maximize();
+        await secondWindowToMaximizeInBoundary.maximize();
+
+        expect(windowToMaximizeInBoundary.isMaximized).to.be.false;
+        expect(secondWindowToMaximizeInBoundary.isMaximized).to.be.true;
+    });
+
+    it("maxmize two windows succesfully when they are targeting different boundarys", async ()=>{
+        const complexWorkspace = await glue.workspaces.createWorkspace(complexConfig);
+
+        const groupWithWindowToMaximize = complexWorkspace.getAllGroups().find(g => g.children.length === 4);
+        const windowToMaximizeInBoundary = groupWithWindowToMaximize.children[0];
+        const secondWindowToMaximizeInBoundary = complexWorkspace.children[0].children[1].children[0].children[0];
+
+        await windowToMaximizeInBoundary.maximize();
+        await secondWindowToMaximizeInBoundary.maximize();
+
+        expect(windowToMaximizeInBoundary.isMaximized).to.be.true;
+        expect(secondWindowToMaximizeInBoundary.isMaximized).to.be.true;
     });
 
     describe("", () => {

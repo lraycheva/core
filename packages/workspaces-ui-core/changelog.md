@@ -1,3 +1,5 @@
+1.8.7
+feat: added support for maximizationBoundary
 1.8.6
 chore: bump due to dependencies update
 1.8.5

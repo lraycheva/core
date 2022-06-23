@@ -589,7 +589,9 @@ lm.utils.copy(lm.LayoutManager.prototype, {
 			return;
 		}
 		contentItem.element.removeClass('lm_maximised');
-		contentItem.removeId('__glMaximised');
+		if(contentItem.hasId('__glMaximised')){
+			contentItem.removeId('__glMaximised');
+		}
 		this._maximizePlaceholder.after(contentItem.element);
 		this._maximizePlaceholder.remove();
 		contentItem.parent.callDownwards('setSize');
@@ -630,7 +632,9 @@ lm.utils.copy(lm.LayoutManager.prototype, {
 	_$minimiseInContainer: function (contentItem) {
 		contentItem.element.removeClass('lm_maximised_in_container');
 		const placeholder = this._maximizedItemsInTargetContainer[lm.utils.idAsString(contentItem.config.id)].placeholder;
-		contentItem.removeId('__glMaximised');
+		if(contentItem.hasId('__glMaximised')){
+			contentItem.removeId('__glMaximised');
+		}
 		placeholder.after(contentItem.element);
 		placeholder.remove();
 		contentItem.parent.callDownwards('setSize');

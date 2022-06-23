@@ -36,7 +36,7 @@ export class IFrameController {
 
         toFront.forEach(id => {
             if ($(this._idToFrame[id]).hasClass("maximized-active-tab")) {
-                $(this._idToFrame[id]).css("z-index", "42");
+                $(this._idToFrame[id]).css("z-index", this.getMaximizedFrameZIndex());
             } else {
                 $(this._idToFrame[id]).css("z-index", "19");
             }
@@ -173,5 +173,9 @@ export class IFrameController {
             }
         });
 
+    }
+
+    private getMaximizedFrameZIndex(): string {
+        return "42";
     }
 }

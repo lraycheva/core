@@ -411,36 +411,6 @@ describe("addWindow() Should", () => {
             expect(secondWorkspace.maxHeight).to.eql(1000);
         });
 
-        it(`add the window and not update the workspace constraints when the parent is a row and the window has incompatible width constraints`, async () => {
-            const secondWorkspace = await glue.workspaces.createWorkspace({
-                children: [
-                    {
-                        type: "row",
-                        children: [],
-                        config: {
-                            minWidth: 800,
-                            maxWidth: 1000
-                        }
-                    }
-                ]
-            });
-            const parent = secondWorkspace.getAllRows()[0];
-            const window = await parent.addWindow({
-                type: "window",
-                appName: "noGlueApp",
-                config: {
-                    minWidth: 600,
-                    maxWidth: 700,
-                }
-            });
-
-            await secondWorkspace.refreshReference();
-
-            expect(secondWorkspace.minWidth).to.eql(800);
-            expect(secondWorkspace.maxWidth).to.eql(1000);
-            expect(secondWorkspace.minHeight).to.eql(20);
-            expect(secondWorkspace.maxHeight).to.eql(32767);
-        });
 
         it(`add the window and not update the workspace constraints when the parent is a row and the window has incompatible height constraints`, async () => {
             const secondWorkspace = await glue.workspaces.createWorkspace({
@@ -502,37 +472,6 @@ describe("addWindow() Should", () => {
             expect(secondWorkspace.maxWidth).to.eql(1000);
             expect(secondWorkspace.minHeight).to.eql(20);
             expect(secondWorkspace.maxHeight).to.eql(32767);
-        });
-
-        it(`add the window and not update the workspace constraints when the parent is a column and the window has incompatible height constraints`, async () => {
-            const secondWorkspace = await glue.workspaces.createWorkspace({
-                children: [
-                    {
-                        type: "column",
-                        children: [],
-                        config: {
-                            minHeight: 800,
-                            maxHeight: 1000
-                        }
-                    }
-                ]
-            });
-            const parent = secondWorkspace.getAllColumns()[0];
-            const window = await parent.addWindow({
-                type: "window",
-                appName: "noGlueApp",
-                config: {
-                    minHeight: 600,
-                    maxHeight: 700,
-                }
-            });
-
-            await secondWorkspace.refreshReference();
-
-            expect(secondWorkspace.minWidth).to.eql(20);
-            expect(secondWorkspace.maxWidth).to.eql(32767);
-            expect(secondWorkspace.minHeight).to.eql(800);
-            expect(secondWorkspace.maxHeight).to.eql(1000);
         });
 
         it(`lock the window when the paret is a column and locking config has been passed`, async () => {

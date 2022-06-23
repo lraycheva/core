@@ -2529,4 +2529,186 @@ describe('restoreWorkspace() Should', function () {
         });
 
     });
+
+    describe("maximizationBoundary Should ", () => {
+        const complexConfig = {
+            "children": [
+                {
+                    "config": {},
+                    "type": "column",
+                    "children": [
+                        {
+                            "config": {},
+                            "type": "row",
+                            "children": [
+                                {
+                                    type: "window",
+                                    appName: "noGlueApp"
+                                },
+                            ]
+                        },
+                        {
+                            "config": {
+                                maximizationBoundary: true
+                            },
+                            "type": "row",
+                            "children": [
+                                {
+                                    "config": {},
+                                    "type": "column",
+                                    "children": [
+                                        {
+                                            type: "window",
+                                            appName: "noGlueApp"
+                                        },
+                                    ]
+                                },
+                                {
+                                    "config": {
+                                        maximizationBoundary: true
+                                    },
+                                    "type": "column",
+                                    "children": [
+                                        {
+                                            "config": {},
+                                            "type": "row",
+                                            "children": [
+                                                {
+                                                    "config": {},
+                                                    "type": "group",
+                                                    "children": [
+                                                        {
+                                                            type: "window",
+                                                            appName: "noGlueApp"
+                                                        },
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "config": {},
+                                            "type": "row",
+                                            "children": [
+                                                {
+                                                    "config": {},
+                                                    "type": "group",
+                                                    "children": [
+                                                        {
+                                                            type: "window",
+                                                            appName: "noGlueApp"
+                                                        },
+                                                        {
+                                                            type: "window",
+                                                            appName: "noGlueApp"
+                                                        },
+                                                        {
+                                                            type: "window",
+                                                            appName: "noGlueApp"
+                                                        },
+                                                        {
+                                                            type: "window",
+                                                            appName: "noGlueApp"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        };
+        it("preserve the maximizationBoundary flags when the layout has maximizationBoundaries set", async () => {
+            const complexWorkspace = await glue.workspaces.createWorkspace(complexConfig);
+            await complexWorkspace.saveLayout(layoutName);
+            await complexWorkspace.close();
+
+            const restoredComplexWorkspace = await glue.workspaces.restoreWorkspace(layoutName);
+
+            expect(restoredComplexWorkspace.getAllRows().filter(r => r.maximizationBoundary).length).to.eql(1);
+            expect(restoredComplexWorkspace.getAllColumns().filter(c => c.maximizationBoundary).length).to.eql(1);
+        });
+
+        it("restore the workspace with maximized window in the maximization boundary", async () => {
+            const complexWorkspace = await glue.workspaces.createWorkspace(complexConfig);
+            const targetGroup = complexWorkspace.getAllGroups().find(g => g.children.length === 4);
+
+            await targetGroup.children[0].maximize();
+            await complexWorkspace.saveLayout(layoutName);
+            await complexWorkspace.close();
+
+            const restoredComplexWorkspace = await glue.workspaces.restoreWorkspace(layoutName);
+            const restoredTargetGroup = restoredComplexWorkspace.getAllGroups().find(g => g.children.length === 4);
+
+            expect(restoredTargetGroup.children[0].isMaximized).to.be.true;
+        });
+
+        it("restore the workspace with maximized windows in the maximization boundaries", async () => {
+            const complexWorkspace = await glue.workspaces.createWorkspace(complexConfig);
+            const targetGroup = complexWorkspace.getAllGroups().find(g => g.children.length === 4);
+            const secondWindowToMaximize = complexWorkspace.children[0].children[1].children[0].children[0];
+            await targetGroup.children[0].maximize();
+            await secondWindowToMaximize.maximize();
+
+            await complexWorkspace.saveLayout(layoutName);
+            await complexWorkspace.close();
+
+            const restoredComplexWorkspace = await glue.workspaces.restoreWorkspace(layoutName);
+            const restoredTargetGroup = restoredComplexWorkspace.getAllGroups().find(g => g.children.length === 4);
+            const restoredSecondWindow = restoredComplexWorkspace.children[0].children[1].children[0].children[0];
+
+            expect(restoredTargetGroup.children[0].isMaximized).to.be.true;
+            expect(restoredSecondWindow.isMaximized).to.be.true;
+        });
+
+        it("restore the workspace with maximized windows in the maximization boundaries and a globally maximized window", async () => {
+            const complexWorkspace = await glue.workspaces.createWorkspace(complexConfig);
+            const targetGroup = complexWorkspace.getAllGroups().find(g => g.children.length === 4);
+            const secondWindowToMaximize = complexWorkspace.children[0].children[1].children[0].children[0];
+            const globallyMaximizedWindow = complexWorkspace.children[0].children[0].children[0];
+            await targetGroup.children[0].maximize();
+            await secondWindowToMaximize.maximize();
+            await globallyMaximizedWindow.maximize();
+
+            await complexWorkspace.saveLayout(layoutName);
+            await complexWorkspace.close();
+
+            const restoredComplexWorkspace = await glue.workspaces.restoreWorkspace(layoutName);
+            const restoredTargetGroup = restoredComplexWorkspace.getAllGroups().find(g => g.children.length === 4);
+            const restoredSecondWindow = restoredComplexWorkspace.children[0].children[1].children[0].children[0];
+            const restoredGloballyMaximizedWindow = restoredComplexWorkspace.children[0].children[0].children[0];
+
+            expect(restoredTargetGroup.children[0].isMaximized).to.be.true;
+            expect(restoredSecondWindow.isMaximized).to.be.true;
+            expect(restoredGloballyMaximizedWindow.isMaximized).to.be.true;
+        });
+
+        it("restore the workspace with maximized windows in the maximization boundaries and a globally maximized window, so that when restoring the windows the others are preserved as maximized", async () => {
+            const complexWorkspace = await glue.workspaces.createWorkspace(complexConfig);
+            const targetGroup = complexWorkspace.getAllGroups().find(g => g.children.length === 4);
+            const secondWindowToMaximize = complexWorkspace.children[0].children[1].children[0].children[0];
+            const globallyMaximizedWindow = complexWorkspace.children[0].children[0].children[0];
+            await targetGroup.children[0].maximize();
+            await secondWindowToMaximize.maximize();
+            await globallyMaximizedWindow.maximize();
+
+            await complexWorkspace.saveLayout(layoutName);
+            await complexWorkspace.close();
+
+            const restoredComplexWorkspace = await glue.workspaces.restoreWorkspace(layoutName);
+            const restoredTargetGroup = restoredComplexWorkspace.getAllGroups().find(g => g.children.length === 4);
+            const restoredSecondWindow = restoredComplexWorkspace.children[0].children[1].children[0].children[0];
+            const restoredGloballyMaximizedWindow = restoredComplexWorkspace.children[0].children[0].children[0];
+
+            await restoredGloballyMaximizedWindow.restore();
+            expect(restoredTargetGroup.children[0].isMaximized).to.be.true;
+            expect(restoredSecondWindow.isMaximized).to.be.true;
+
+            await restoredSecondWindow.restore();
+            expect(restoredTargetGroup.children[0].isMaximized).to.be.true;
+        });
+    })
 });

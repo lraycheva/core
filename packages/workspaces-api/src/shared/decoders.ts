@@ -272,7 +272,7 @@ export const openWorkspaceConfigDecoder: Decoder<OpenWorkspaceConfig> = object({
 export const workspaceDefinitionDecoder: Decoder<Glue42Workspaces.WorkspaceDefinition> = object({
     children: optional(array(oneOf<Glue42Workspaces.WorkspaceWindowDefinition | Glue42Workspaces.BoxDefinition>(
         swimlaneWindowDefinitionDecoder,
-        parentDefinitionDecoder
+        strictParentDefinitionDecoder
     ))),
     context: optional(anyJson()),
     config: optional(object({

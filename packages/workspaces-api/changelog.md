@@ -1,3 +1,5 @@
+1.15.1
+fix: improved the typings of the box definitions
 1.15.0
 feat: added support for maximization boundaries
 1.14.0

@@ -1101,6 +1101,13 @@ export class WorkspacesManager {
         });
 
         this._controller.emitter.onContentLayoutInit((layout: Workspace["layout"]) => {
+            const workspace = store.getById(layout.root.config.id);
+            const wrapper = new WorkspaceWrapper(this.stateResolver, workspace, undefined, this.frameId);
+
+            if (wrapper.getMaximizedItemInRoot(layout)) {
+                this._controller.hideWorkspaceRootItem(workspace.id);
+            }
+
             this.reportLayoutStructure(layout);
         });
 
@@ -1157,6 +1164,16 @@ export class WorkspacesManager {
             }, [[], []]);
 
             this._frameController.selectionChanged(toFront, toBack);
+
+            const workspace = store.getById(contentItem.layoutManager.root.config.id);
+            const workspaceContentItem = store.getWorkspaceContentItem(workspace.id);
+            const wrapper = new WorkspaceWrapper(this.stateResolver, workspace, workspaceContentItem, this.frameId);
+
+            if (wrapper.getMaximizedItemInRoot(contentItem.layoutManager)) {
+                this._controller.hideWorkspaceRootItem(workspace.id);
+            }
+
+            this.reportLayoutStructure(contentItem.layoutManager);
         });
 
         this._controller.emitter.onContainerRestored((contentItem: GoldenLayout.ContentItem) => {
@@ -1185,6 +1202,8 @@ export class WorkspacesManager {
             }, [[], []]);
 
             this._frameController.selectionChanged(toFront, toBack);
+            this._controller.showWorkspaceRootItem(idAsString(contentItem.layoutManager.root.config.id));
+            this.reportLayoutStructure(contentItem.layoutManager);
         });
 
         this._controller.emitter.onEjectRequested((item) => {
@@ -1308,7 +1327,6 @@ export class WorkspacesManager {
 
         allWinsInLayout.forEach((w) => {
             const win = layout.root.getItemsById(w.id)[0];
-
             this._frameController.moveFrame(idAsString(win.config.id), getElementBounds(win.element));
         });
     }

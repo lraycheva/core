@@ -80,29 +80,5 @@ describe("maximize() Should", () => {
 
             expect(targetItem.isMaximized).to.eql(true);
         });
-
-        Array.from(["row", "column", "group"]).forEach((secondaryType) => {
-            it(`reject when another ${secondaryType} has been maximized and the item is a ${type}`, (done) => {
-                const firstMaximizedItem = workspace.getAllBoxes().find(b => b.type === secondaryType);
-                const targetItem = workspace.getAllBoxes().find(b => b.type === type && b.id !== firstMaximizedItem.id);
-
-                firstMaximizedItem.maximize().then(() => {
-                    return targetItem.maximize();
-                }).then(() => {
-                    done("Should not resolve");
-                }).catch(() => done());
-            });
-        });
-
-        it(`reject when another window has been maximized and the item is a ${type}`, () => {
-            const targetItem = workspace.getAllBoxes().find(b => b.type === type);
-            const maximizedWindow = workspace.getAllWindows()[0];
-
-            maximizedWindow.maximize().then(() => {
-                return targetItem.maximize();
-            }).then(() => {
-                done("Should not resolve");
-            }).catch(() => done());
-        });
     });
 });

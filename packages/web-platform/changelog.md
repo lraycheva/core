@@ -1,3 +1,5 @@
+1.12.7
+feat: added support for the maximizationBoundary flag in workspaces
 1.12.6
 chore: bump due to dependencies update
 1.12.5

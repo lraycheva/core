@@ -1,5 +1,6 @@
 import GoldenLayout from "@glue42/golden-layout";
 import componentStateMonitor from "./componentStateMonitor";
+import { TabObserver } from "./layout/tabObserver";
 import store from "./state/store";
 import { idAsString } from "./utils";
 
@@ -344,6 +345,29 @@ export class WorkspacesUIExecutor {
 
         allComponentItems.forEach((stackItem) => {
             this.hideAddWindowButton(idAsString(stackItem.config.id));
+        });
+    }
+
+    public hideWorkspaceRootItem(workspaceId: string) {
+        const workspace = store.getById(workspaceId);
+
+        if (!workspace?.layout) {
+            return;
+        }
+
+        $((workspace.layout.root.contentItems[0].element as any)[0]).hide();
+    }
+
+    public showWorkspaceRootItem(workspaceId: string, tabObserver: TabObserver) {
+        const workspace = store.getById(workspaceId);
+
+        if (!workspace?.layout) {
+            return;
+        }
+
+        $((workspace.layout.root.contentItems[0].element as any)[0]).show();
+        workspace.layout.root.getItemsByType("stack").forEach((s: GoldenLayout.Stack) => {
+            tabObserver.refreshTabsMaxWidth(s.header.tabsContainer);
         });
     }
 

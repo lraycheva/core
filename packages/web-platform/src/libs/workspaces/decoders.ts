@@ -164,7 +164,8 @@ export const rowDefinitionConfigDecoder: Decoder<RowDefinitionConfig> = object({
     maxHeight: optional(number()),
     allowDrop: optional(boolean()),
     allowSplitters: optional(boolean()),
-    isPinned: optional(boolean())
+    isPinned: optional(boolean()),
+    maximizationBoundary: optional(boolean())
 });
 
 export const columnDefinitionConfigDecoder: Decoder<ColumnDefinitionConfig> = object({
@@ -172,7 +173,8 @@ export const columnDefinitionConfigDecoder: Decoder<ColumnDefinitionConfig> = ob
     maxWidth: optional(number()),
     allowDrop: optional(boolean()),
     allowSplitters: optional(boolean()),
-    isPinned: optional(boolean())
+    isPinned: optional(boolean()),
+    maximizationBoundary: optional(boolean())
 });
 
 export const strictColumnDefinitionDecoder: Decoder<Glue42Workspaces.BoxDefinition> = object({

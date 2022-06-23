@@ -150,7 +150,6 @@ describe('frame.onWorkspaceOpened ', () => {
 
 
     it('should notify twice with different instances when two workspaces are opened in the same frame (sequential)', (done) => {
-
         const ready = gtf.waitFor(3, done);
         const heardWsps = [];
 

@@ -223,6 +223,10 @@ export class WorkspaceContainerWrapper {
         return this.containerContentItem.config.workspacesConfig.isPinned ?? false;
     }
 
+    public get maximizationBoundary() {
+        return this.containerContentItem.config.workspacesConfig.maximizationBoundary ?? false;
+    }
+
     public get summary(): ContainerSummary {
         const workspaceId = this.workspaceId ?? store.getByContainerId(idAsString(this.containerContentItem.config.id))?.id;
         const userFriendlyType = this.getUserFriendlyType(this.containerContentItem?.type || "workspace");
@@ -239,7 +243,8 @@ export class WorkspaceContainerWrapper {
             widthInPx: this.bounds.width,
             heightInPx: this.bounds.height,
             isPinned: this.isPinned,
-            isMaximized: this.isMaximized
+            isMaximized: this.isMaximized,
+            maximizationBoundary: this.maximizationBoundary
         };
 
         const type = userFriendlyType === "window" ? undefined : userFriendlyType;

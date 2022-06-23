@@ -69,6 +69,7 @@ export class ConfigConverter {
             glConfig.workspacesConfig.isMaximized = config.config?.isMaximized;
             glConfig.width = this.convertSizeToRendererConfigSafely(config.config?.width as any);
             glConfig.height = this.convertSizeToRendererConfigSafely(config.config?.height as any);
+            glConfig.workspacesConfig.maximizationBoundary = config.config?.maximizationBoundary;
 
             return glConfig;
         } else if (config.type === "group") {
@@ -205,7 +206,8 @@ export class ConfigConverter {
                 maxHeight: configAsAny.workspacesConfig?.maxHeight,
                 widthInPx: configAsAny.workspacesConfig?.widthInPx,
                 heightInPx: configAsAny.workspacesConfig?.heightInPx,
-                isMaximized: configAsAny.workspacesConfig?.isMaximized
+                isMaximized: configAsAny.workspacesConfig?.isMaximized,
+                maximizationBoundary: configAsAny.workspacesConfig?.maximizationBoundary
             }
         };
 

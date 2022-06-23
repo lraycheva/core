@@ -366,6 +366,14 @@ export class WorkspaceWrapper {
         return items.length > 0;
     }
 
+    public getMaximizedItemInRoot(layout?: GoldenLayout): GoldenLayout.ContentItem {
+        return (layout as any)?._maximizedItem ?? (this.workspace.layout as any)?._maximizedItem;
+    }
+
+    public get maximizedItemsInContainer(): GoldenLayout.MaximizedData[] {
+        return Object.values(this.workspace?.layout?._maximizedItemsInTargetContainer || {});
+    }
+
     public get icon(): string {
         return this.getPropertyFromConfig<string>("icon");
     }
