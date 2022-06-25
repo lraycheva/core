@@ -1,126 +1,152 @@
-import {
-    Channel,
-    Context,
-    ContextHandler,
-    DisplayMetadata,
-    Listener
-} from "@finos/fdc3";
+import { Channel, Context, Listener,ChannelError } from "@finos/fdc3";
 import { Glue42 } from "@glue42/desktop";
 import { WindowType } from "../types/windowtype";
-import { newContextsSubscribe, newChannelsSubscribe } from "../utils";
+import { newContextsSubscribe, 
+    mapChannelNameToContextName, 
+    parseContextsDataToInitialFDC3Data, 
+    newChannelsSubscribe, 
+    AsyncListener,
+    contextUpdate,
+    channelsUpdate
+} from "../utils";
+import { SystemChannel } from '../types/channel';
 
-export class SystemChannel implements Channel {
-    id: string;
-    readonly type: string = "system";
-    displayMetadata: DisplayMetadata;
+export const createSystemChannel = (glChannel: Glue42.Channels.ChannelContext): SystemChannel => {
+    const channel = {
+        id: glChannel.name,
+        type: "system",
+        displayMetadata: glChannel.meta
+    };
 
-    constructor(glChannel: Glue42.Channels.ChannelContext) {
-        this.id = glChannel.name;
-        this.displayMetadata = glChannel.meta;
+    const broadcast = function(context: Context): Promise<void> {
+        if (!context.type || typeof context.type !== "string") {
+            throw new Error(ChannelError.AccessDenied);
+        }
+
+        return channelsUpdate(channel.id, context);
     }
 
-    broadcast(context: Context): Promise<void> {
-        return (window as WindowType).glue.channels.publish(context, this.id);
-    }
+    const getCurrentContext = async function(contextType?: string): Promise<Context | null> {
+        if (!contextType) {
+            // return the latest broadcasted context
+            const contextName = mapChannelNameToContextName(channel.id);
+            
+            const context = await (window as WindowType).glue.contexts.get(contextName);
 
-    async getCurrentContext(contextType?: string): Promise<Context | null> {
-        const channel = await (window as WindowType).glue.channels.get(this.id);
-
-        const { data } = channel;
-
-        if (contextType) {
-            return data && data.type === contextType
-                ? data
+            return context.latest_fdc3_type
+                ? parseContextsDataToInitialFDC3Data(context)
                 : null;
         }
 
-        return data;
+        const channelData = await (window as WindowType).glue.channels.get(channel.id);
+
+        const { data } = channelData;
+
+        return data && data[`fdc3_${contextType}`] !== undefined
+            ? parseContextsDataToInitialFDC3Data({ data, latest_fdc3_type: contextType })
+            : null;
     }
 
-    addContextListener(handler: ContextHandler): Listener;
-    addContextListener(contextType: string, handler: ContextHandler): Listener;
-    addContextListener(contextTypeInput: any, handlerInput?: any): Listener {
-        const contextType = arguments.length === 2 && contextTypeInput;
+    /* addContextListener(handler: ContextHandler): Listener;
+       addContextListener(contextType: string, handler: ContextHandler): Listener; */
+    const addContextListener = function(contextTypeInput: any, handlerInput?: any): Listener {
+        const contextType: string = arguments.length === 2 && contextTypeInput;
         const handler = arguments.length === 2 ? handlerInput : contextTypeInput;
 
-        const subHandler = (data: any, _: Glue42.ChannelContext, updaterId: string): void => {
-            if (updaterId === (window as WindowType).glue.interop.instance.peerId) {
-                return;
-            }
-
+        const subHandler = (data: any): void => {
+        /*  NB! Data from Channels API come in format: { fdc3_type: data } so it needs to be transformed to the initial fdc3 data { type: string, ...data }
+            Ex: { type: "contact", name: "John Smith", id: { email: "john.smith@company.com" }} is broadcasted from FDC3,  
+            it  will come in the handler as { fdc3_contact: { name: "John Smith", id: { email: "john.smith@company.com" }}} 
+        */
             if (contextType) {
-                if (data?.type === contextType) {
+                if (data.type === contextType) {
                     handler(data);
                 }
-            } else {
-                handler(data);
+                return;
             }
+            handler(data);
         };
 
-        const unsubPromise = (window as WindowType).glue.channels.subscribeFor(this.id, subHandler);
+        const unsubFunc = newChannelsSubscribe(subHandler);
 
-        return {
-            unsubscribe(): void {
-                unsubPromise.then((unsub) => unsub());
-            }
-        };
+        return AsyncListener(unsubFunc);
     }
 
-    join(): Promise<void> {
-        return (window as WindowType).glue.channels.join(this.id);
+    const join = function(): Promise<void> {
+        return (window as WindowType).glue.channels.join(channel.id);
     }
 
-    leave(): Promise<void> {
+    const leave = function(): Promise<void> {
         return (window as WindowType).glue.channels.leave();
     }
-}
 
-export class AppChannel implements Channel {
-    readonly type: string = "app";
+    return {
+        ...channel,
+        broadcast,
+        getCurrentContext,
+        addContextListener,
+        join,
+        leave
+    };
+};
 
-    constructor(public id: string) {
-    }
+export const createAppChannel = (id: string): Channel => {
+    const channel = {
+        id,
+        type: "app"
+    };
 
-    broadcast(context: Context): Promise<void> {
-        return (window as WindowType).glue.contexts.update(this.id, context);
-    }
-
-    async getCurrentContext(contextType?: string): Promise<Context | null> {
-        const context = await (window as WindowType).glue.contexts.get(this.id);
-
-        const { data } = context;
-
-        if (contextType) {
-            return data && data.type === contextType
-                ? data
-                : null;
+    const broadcast = function(context: Context): Promise<void> {
+        if (!context.type || typeof context.type !== "string") {
+            throw new Error(ChannelError.AccessDenied);
         }
 
-        return data;
+        return contextUpdate(channel.id, context);
     }
 
-    addContextListener(handler: ContextHandler): Listener;
-    addContextListener(contextType: string, handler: ContextHandler): Listener;
-    addContextListener(contextTypeInput: any, handlerInput?: any): Listener {
+    const getCurrentContext = async function(contextType?: string): Promise<Context | null> {
+        const context = await (window as WindowType).glue.contexts.get(channel.id);
+        const { data, latest_fdc3_type } = context;
+
+        if (!contextType) {
+            // return the latest broadcasted context
+            return latest_fdc3_type
+            ? parseContextsDataToInitialFDC3Data(context)
+            : null;
+        }
+
+        return data && data[`fdc3_${contextType}`] !== undefined            
+            ? parseContextsDataToInitialFDC3Data(context)
+            : null;
+    }
+
+    const addContextListener = function(contextTypeInput: any, handlerInput?: any): Listener {
         const contextType = arguments.length === 2 && contextTypeInput;
         const handler = arguments.length === 2 ? handlerInput : contextTypeInput;
 
         const subHandler = (data: any): void => {
+        /*  NB! Data from Channels API come in format: { fdc3_type: data } so it needs to be transformed to the initial fdc3 data { type: string, ...data }
+            Ex: { type: "contact", name: "John Smith", id: { email: "john.smith@company.com" }} is broadcasted from FDC3,  
+            it  will come in the handler as { fdc3_contact: { name: "John Smith", id: { email: "john.smith@company.com" }}} 
+        */     
             if (contextType) {
-                if (data?.type === contextType) {
+                if (data.type === contextType) {
                     handler(data);
                 }
-            } else {
-                handler(data);
+                return;
             }
+            handler(data);
         };
+    
+        const unsubFunc = newContextsSubscribe(channel.id, subHandler);
 
-        const unsubPromise = newContextsSubscribe(this.id, subHandler);
-
-        return {
-            unsubscribe: (): void => {
-                unsubPromise.then((unsub) => unsub());
-            }
-        };
+        return AsyncListener(unsubFunc);
     }
-}
+
+    return {
+        ...channel,
+        broadcast,
+        getCurrentContext,
+        addContextListener
+    }
+};

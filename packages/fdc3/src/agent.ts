@@ -12,6 +12,7 @@ import { Glue42 } from "@glue42/desktop";
 import createChannelsAgent from "./channels/channels";
 import { WindowType } from "./types/windowtype";
 import { ImplementationMetadata } from "@finos/fdc3/src/api/ImplementationMetadata";
+import { IntentsAPI } from './types/intentsAPI';
 
 const convertGlue42IntentToFDC3AppIntent = (glueIntent: Glue42.Intents.Intent): AppIntent => {
     const { name, handlers } = glueIntent;
@@ -41,7 +42,7 @@ const convertGlue42IntentToFDC3AppIntent = (glueIntent: Glue42.Intents.Intent): 
     return appIntent;
 };
 
-const createIntentsAgent = (): Partial<DesktopAgent> => {
+const createIntentsAgent = (): IntentsAPI => {
     const open = async (target: TargetApp, context?: Context): Promise<void> => {
         const name = typeof target === "string" ? target : target.name;
         const app = (window as WindowType).glue.appManager.application(name);

@@ -311,4 +311,146 @@ describe('subscribeFor()', () => {
 
         return timeoutPromise;
     });
+
+    it("Should invoke the callback when fdc3 data is published", (done) => {
+        let channel;
+        
+        gtf.getChannelNames()
+            .then(([channelName]) => channel = channelName)
+            .then(() => glue.channels.subscribeFor(channel, (data) => {
+                if (data.fdc3_client) {
+                    done();
+                }
+            }))
+            .then((unsubscribeFn) => {
+                gtf.addWindowHook(unsubscribeFn);
+                return glue.channels.join(channel);
+            })
+            .then(() => glue.channels.publish({ fdc3_client: { name: "John Smith", id:{ email: "john.smith@company.com" }}}))
+            .catch(done);
+    });
+
+    it("Should invoke the callback 3 times when fdc3 data is published 3 times", (done) => {
+        let channel;
+
+        const ready = gtf.waitFor(3, done);
+        const id = Date.now();
+        const fdc3Client = {
+            id,
+            name: "John Smith", 
+            contact: { 
+                email: "john.smith@company.com" 
+            }
+        }
+
+        gtf.getChannelNames()
+            .then(([channelName]) => channel = channelName)
+            .then(() => glue.channels.subscribeFor(channel, (data) => {
+                if (data.fdc3_client && data.fdc3_client.id === id) {
+                    ready();
+                }
+            }))
+            .then((unsubscribeFn) => {
+                gtf.addWindowHook(unsubscribeFn);
+                return glue.channels.join(channel);
+            })
+            .then(() => glue.channels.publish({ fdc3_client: fdc3Client}))
+            .then(() => glue.channels.publish({ fdc3_address: { street: "ABC Str", no: 5 }}))
+            .then(() => glue.channels.publish({ fdc3_portfolio: { ticker: "aapl", ISIN: "US0378331005", CUSIP: "037833100"}}))
+            .catch(done);
+    });
+
+    it("Should invoke the callback with context as a second parameter which has latest_fdc3_type prop when the published data is FDC3", (done) => {
+        let channel;
+
+        gtf.getChannelNames()
+            .then(([channelName]) => channel = channelName)
+            .then(() => glue.channels.subscribeFor(channel, (data, context) => {
+                if (data.fdc3_client) {
+                    try {
+                        expect(context.latest_fdc3_type).to.eql("client");
+                        done();
+                    } catch (error) {
+                        done(error);
+                    }
+                }
+            }))
+            .then((unsubscribeFn) => {
+                gtf.addWindowHook(unsubscribeFn);
+                return glue.channels.join(channel);
+            })
+            .then(() => glue.channels.publish({ fdc3_client: { name: "John Smith", id:{ email: "john.smith@company.com" }}}))
+            .catch(done);
+    });
+
+    it("Should invoke the callback 3 times with updated latest_fdc3_type prop of the context when publishing 3 times different FDC3 data", (done) => {
+        let channel;
+
+        const ready = gtf.waitFor(3, done);
+        let invocationCounter = 0;
+        const id = Date.now();
+
+        gtf.getChannelNames()
+            .then(([channelName]) => channel = channelName)
+            .then(() => glue.channels.subscribeFor(channel, (data, context) => {
+                invocationCounter++;
+
+                if (data.id) {
+                    try {
+                        if (invocationCounter === 2) {
+                            expect(context.latest_fdc3_type).to.eql(undefined);
+                            ready();
+                        }
+    
+                        if (invocationCounter === 3) {
+                            expect(context.latest_fdc3_type).to.eql("portfolio");
+                            ready();
+                        }
+
+                        if (invocationCounter === 4) {
+                            expect(context.latest_fdc3_type).to.eql("client");
+                            ready();
+                        }
+                    } catch (error) {
+                        done(error);
+                    }
+                }
+
+            }))
+            .then((unsubscribeFn) => {
+                gtf.addWindowHook(unsubscribeFn);
+                return glue.channels.join(channel);
+            })
+            .then(() => glue.channels.publish({ id }))
+            .then(() => glue.channels.publish({ fdc3_portfolio: { ticker: "aapl", ISIN: "US0378331005", CUSIP: "037833100"}}))
+            .then(() => glue.channels.publish({ fdc3_client: { name: "John Smith", id:{ email: "john.smith@company.com" }}}))
+            .catch(done);
+    });
+
+    it("Should not add latest_fdc3_type prop to the second parameter of the callback when the published data is not FDC3", (done) => {
+        let channel;
+
+        const id = Date.now();
+        const data = { id, test: 42 };
+
+        gtf.getChannelNames()
+            .then(([channelName]) => channel = channelName)
+            .then(() => glue.channels.subscribeFor(channel, (data, context) => {
+                if (data.id === id) {
+                    try {
+                        expect(context.latest_fdc3_type).to.eql(undefined);
+                        done();
+                    } catch (error) {
+                        done(error);
+                    }
+                }
+
+            }))
+            .then((unsubscribeFn) => {
+                gtf.addWindowHook(unsubscribeFn);
+                return glue.channels.join(channel);
+            })
+            .then(() =>  glue.channels.publish(data))
+            .catch(done);
+    });
 });

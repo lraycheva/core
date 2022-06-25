@@ -9,6 +9,7 @@ import {
     CallbackRegistry,
     UnsubscribeFunction,
 } from "callback-registry";
+import { latestFDC3Type } from "../shared/constants";
 
 export class ChannelsController implements LibController {
     private readonly registry: CallbackRegistry = CallbackRegistryFactory();
@@ -128,6 +129,7 @@ export class ChannelsController implements LibController {
 
     private async updateData(name: string, data: any): Promise<void> {
         const contextName = this.createContextName(name);
+        const fdc3Type = this.getFDC3Type(data);
 
         if (this.contexts.setPathSupported) {
             const pathValues: Glue42Web.Contexts.PathValue[] = Object.keys(data).map((key) => {
@@ -137,11 +139,33 @@ export class ChannelsController implements LibController {
                 };
             });
 
+            if (fdc3Type) {
+                pathValues.push({ path: latestFDC3Type, value: fdc3Type});
+            }
+
             await this.contexts.setPaths(contextName, pathValues);
         } else {
+            if (fdc3Type) {
+                data[latestFDC3Type] = fdc3Type;
+            }
+
             // Pre @glue42/core 5.2.0. Note that we update the data property only.
             await this.contexts.update(contextName, { data });
         }
+    }
+
+    private getFDC3Type(data: any): string | undefined {
+        const fdc3PropsArr = Object.keys(data).filter((key: string) => key.indexOf("fdc3_") === 0);
+
+        if (fdc3PropsArr.length === 0) {
+            return;
+        }
+
+        if (fdc3PropsArr.length > 1) {
+            throw new Error("FDC3 does not support updating of multiple context keys");
+        }
+
+        return fdc3PropsArr[0].split("_").slice(1).join("_");
     }
 
     private subscribe(callback: (data: any, context: Glue42Web.Channels.ChannelContext, updaterId: string) => void): UnsubscribeFunction {
@@ -197,6 +221,12 @@ export class ChannelsController implements LibController {
         const contextName = this.createContextName(name);
 
         const channelContext = await this.contexts.get(contextName);
+
+        if (channelContext.latest_fdc3_type) {
+            const { latest_fdc3_type, ...rest} = channelContext;
+
+            return { ...rest };
+        }
 
         return channelContext;
     }

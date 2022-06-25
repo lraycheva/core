@@ -1,16 +1,19 @@
 import { Glue42 } from "@glue42/desktop";
-import { SystemChannel, AppChannel } from "./channel";
 import { WindowType } from "../types/windowtype";
 import {
     getChannelsList,
     newContextsSubscribe,
     newChannelsSubscribe,
     isEmptyObject,
-    AsyncListener
+    AsyncListener,
+    channelsUpdate,
+    contextUpdate
 } from "../utils";
 import { Channel, ChannelError, Context, Listener } from "@finos/fdc3";
 import { ChannelsAPI } from "../types/channelsAPI";
 import { nanoid } from "nanoid";
+import { createAppChannel, createSystemChannel } from './channel';
+import { SystemChannel } from '../types/channel';
 
 interface PendingSubscription {
     id: string;
@@ -73,11 +76,11 @@ const createChannelsAgent = (): ChannelsAPI => {
     };
 
     const mapToFDC3SystemChannel = (glueChannel: Glue42.Channels.ChannelContext): Channel => {
-        return new SystemChannel(glueChannel);
+        return createSystemChannel(glueChannel);
     };
 
     const mapToFDC3AppChannel = (channelName: string): Channel => {
-        return new AppChannel(channelName);
+        return createAppChannel(channelName);
     };
 
     const handleSwitchChannelUI = async (channelId: string): Promise<void> => {
@@ -206,10 +209,15 @@ const createChannelsAgent = (): ChannelsAPI => {
             return;
         }
 
+        if (!context.type || typeof context.type !== "string") {
+            throw new Error(ChannelError.AccessDenied);
+        }
+
         const { id, type } = currentChannel;
+
         (type === "system")
-            ? (window as WindowType).glue.channels.publish(context)
-            : (window as WindowType).glue.contexts.update(id, context);
+            ? await channelsUpdate(id, context)
+            : await contextUpdate(id, context);
     };
 
     function addContextListener(handler: (context: Context) => void): Listener;

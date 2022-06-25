@@ -13,3 +13,5 @@ export const Glue42CoreMessageTypes: { [key in PlatformMessages]: { name: Platfo
 };
 
 export const webPlatformTransportName = "web-platform";
+
+export const latestFDC3Type = "latest_fdc3_type";

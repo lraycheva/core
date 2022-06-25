@@ -52,4 +52,21 @@ describe('get()', () => {
 
         expect(channelContext).to.eql(context);
     });
+
+    it("Should not return latest_fdc3_type when publishing FDC3 data", async() => {
+        const [firstChannelName] = await gtf.getChannelNames();
+
+        const fdc3data = {
+            fdc3_client: {
+                name: "Peter Smith", id: { email: "peter.smith@company.com" }
+            }
+        };
+
+        await glue.channels.join(firstChannelName);
+        await glue.channels.publish(fdc3data);
+
+        const channelsFullData = await glue.channels.get(firstChannelName);
+
+        expect(Object.keys(channelsFullData).includes("latest_fdc3_type")).to.eql(false);
+    });
 });
