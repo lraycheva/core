@@ -1,3 +1,5 @@
+2.6.7
+feat: the channels api now saves the fdc3 context type
 2.6.6
 chore: bump due to dependencies update
 2.6.5
