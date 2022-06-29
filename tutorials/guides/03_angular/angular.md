@@ -1,16 +1,16 @@
 ## Overview
 
-This tutorial is designed to walk you through every aspect of [**Glue42 Core**](https://glue42.com/core/) - setting up a project, initializing a [Main Application](../../developers/core-concepts/web-platform/overview/index.html), multiple [Web Client](../../developers/core-concepts/web-client/overview/index.html) apps and extending your applications with [Shared Contexts](../../capabilities/data-sharing-between-apps/shared-contexts/index.html), [Interop](../../capabilities/data-sharing-between-apps/interop/index.html), [Window Management](../../capabilities/windows/window-management/index.html), [Channels](../../capabilities/data-sharing-between-apps/channels/index.html), [Application Management](../../capabilities/application-management/index.html) and [Workspaces](../../capabilities/windows/workspaces/overview/index.html) capabilities.
+This tutorial is designed to walk you through every aspect of [**Glue42 Core**](https://glue42.com/core/) - setting up a project, initializing a [Main app](../../developers/core-concepts/web-platform/overview/index.html), multiple [Web Client](../../developers/core-concepts/web-client/overview/index.html) apps and extending your apps with [Shared Contexts](../../capabilities/data-sharing-between-apps/shared-contexts/index.html), [Interop](../../capabilities/data-sharing-between-apps/interop/index.html), [Window Management](../../capabilities/windows/window-management/index.html) and [Channels](../../capabilities/data-sharing-between-apps/channels/index.html).
 
-This guide will show you how to use [**Glue42 Core**](https://glue42.com/core/) in an Angular application using the [`@glue42/ng`](https://www.npmjs.com/package/@glue42/ng) library. If you haven't checked out the [Vanilla JS](../javascript/index.html) tutorial, we recommend going through that one first, as there you will get a better understanding of [**Glue42 Core**](https://glue42.com/core/) without the added complexity level of a web framework. 
+This guide will show you how to use [**Glue42 Core**](https://glue42.com/core/) in an Angular app using the [`@glue42/ng`](https://www.npmjs.com/package/@glue42/ng) library. It is strongly recommended to go through the [JavaScript](../javascript/index.html) tutorial first in order to get a better understanding of [**Glue42 Core**](https://glue42.com/core/) without the added complexity of a web framework.
 
 ## Introduction
 
-You are a part of the IT department of a big multi-national bank and you have been tasked to create an application which will be used by the Asset Management department of the bank. The project will consist of two applications:
+You are a part of the IT department of a big multi-national bank and you have been tasked to create an app which will be used by the Asset Management department of the bank. The project will consist of two apps:
 - **Clients** - displays a full list of clients and details about them;
 - **Stocks** - displays a full list of stocks with prices. When the user clicks on a stock, details about the selected stock should be displayed.
 
-All applications are being developed by different teams within the organizations and therefore are being hosted at different origins. 
+All apps are being developed by different teams within the organizations and therefore are being hosted at different origins.
 
 As an end result, the users want to be able to run two apps as Progressive Web Apps in separate windows in order to take advantage of their multi-monitor setups. Also, they want the apps, even though in separate windows, to be able to communicate with each other. For example, when a client is selected in the **Clients** app, the **Stocks** app should display only the stocks of the selected client.
 
@@ -22,7 +22,7 @@ It is also recommended to have the [Web Platform](../../developers/core-concepts
 
 ## Tutorial Structure
 
-The tutorial code is located in the [**Glue42 Core**](https://glue42.com/core/) [**GitHub repo**](https://github.com/Glue42/core). There you will find a `/tutorials` directory with the following structure:
+The tutorial code is located in the [**Glue42 Core**](https://glue42.com/core/) [GitHub repo](https://github.com/Glue42/core). There you will find a `/tutorials` directory with the following structure:
 
 ```cmd
 /tutorials
@@ -52,7 +52,7 @@ The tutorial code is located in the [**Glue42 Core**](https://glue42.com/core/) 
 
 ## 1. Initial Setup
 
-Clone the [**Glue42 Core**](https://glue42.com/core/) [**GitHub repo**](https://github.com/Glue42/core) to get the tutorial files.
+Clone the [**Glue42 Core**](https://glue42.com/core/) [GitHub repo](https://github.com/Glue42/core) to get the tutorial files.
 
 ### 1.1. Start Files
 
@@ -62,10 +62,10 @@ The `/start` directory contains the following:
 
 | Directory | Description |
 |-----------|-------------|
-| `/clients` | This is the **Clients** app. This is a standalone Angular application and is scaffolded with the Angular CLI without any custom settings. |
-| `/stocks` | the **Stocks** app. Also a standalone Angular application scaffolded with the Angular CLI with one one custom setting - the `port` property in the `angular.json` file is set to 4100, because the two apps cannot run on the same port simultaneously. |
+| `/clients` | This is the **Clients** app. This is a standalone Angular app and is scaffolded with the Angular CLI without any custom settings. |
+| `/stocks` | the **Stocks** app. Also a standalone Angular app scaffolded with the Angular CLI with one one custom setting - the `port` property in the `angular.json` file is set to 4100, because the two apps cannot run on the same port simultaneously. |
 
-Both applications are configured as installable [**Progressive Web Apps**](https://developer.mozilla.org/nl/docs/Web/Progressive_web_apps). Therefore, the `src` directory of both apps contains a `manifest.json` and a `service-worker.js` file.
+Both apps are configured as installable [Progressive Web Apps](https://developer.mozilla.org/nl/docs/Web/Progressive_web_apps). Therefore, the `src` directory of both apps contains a `manifest.json` and a `service-worker.js` file.
 
 Go to the directories of both apps (`start/clients` and `start/stocks`), open a command prompt and run:
 
@@ -86,9 +86,9 @@ This will install all necessary dependencies and will run apps as follows:
 
 Before you continue, take a look at the solution files. You are free to use the solution as you like - you can check after each section to see how it solves the problem, or you can use it as a reference point in case you get stuck.
 
-Go to the `/rest-server` directory and start the REST Server (as described in the [REST Server](#setup-rest_server) chapter).  
+Go to the `/rest-server` directory and start the REST Server (as described in the [REST Server](#setup-rest_server) chapter).
 
-Install all dependencies in `angular/solution/clients` and `angular/solution/stocks` and start both apps by running the following commands: 
+Install all dependencies in `angular/solution/clients` and `angular/solution/stocks` and start both apps by running the following commands:
 
 ```cmd
 npm install
@@ -100,7 +100,7 @@ You can now access the entry point of the project (the **Clients** app) at `http
 
 ### 1.3. REST Server
 
-Before starting with the project, go to the `/tutorials/rest-server` directory and start the REST server that will host the necessary data for the applications:
+Before starting with the project, go to the `/tutorials/rest-server` directory and start the REST server that will host the necessary data for the apps:
 
 ```cmd
 npm install
@@ -112,11 +112,11 @@ This will launch the server at port 8080.
 
 ## 2. Project Setup
 
-### 2.1. Main Application
+### 2.1. Main App
 
-Every [**Glue42 Core**](https://glue42.com/core/) project *must have a single* central application called [Main Application](../../developers/core-concepts/web-platform/overview/index.html) or Web Platform app. In a real-world scenario this would be an application used for discovering and listing available applications, Workspaces, handling notifications and much more. However, your goal now is to learn about all these aspects with as little complexity as possible. That's why the **Clients** app will serve as your Main application. The users will open the **Clients** app and from there they will be able to click on a client and see their stocks and so on.
+Every [**Glue42 Core**](https://glue42.com/core/) project *must have a single* central app called [Main app](../../developers/core-concepts/web-platform/overview/index.html) or Web Platform app. In a real-world scenario this would be an app used for discovering and listing available apps, Workspaces, handling notifications and much more. However, your goal now is to learn about all these aspects with as little complexity as possible. That's why the **Clients** app will serve as your Main app. The users will open the **Clients** app and from there they will be able to click on a client and see their stocks and so on.
 
-Setting up a Main application is just as simple as installing a new npm package and calling a function. Go to the **Clients** app base directory and run:
+Setting up a Main app is just as simple as installing a new `npm` package and calling a function. Go to the **Clients** app base directory and run:
 
 ```cmd
 npm install --save @glue42/ng
@@ -150,13 +150,13 @@ export class AppModule { }
 
 Note that you should import `Glue42Ng` only once in your root `AppModule`.
 
-This is everything you need to do to define your Angular applications as a `Main Glue42 Core` application.
+This is everything you need to do to define your Angular app as a Main app.
 
 ### 2.2. Web Clients
 
-Now that you have a fully functional Main application, you need to initialize the [Glue42 Web](../../reference/core/latest/glue42%20web/index.html) library in the **Stocks** app. This will allow both apps to connect and communicate with each other.
+Now that you have a fully functional Main app, you need to initialize the [Glue42 Web](../../reference/core/latest/glue42%20web/index.html) library in the **Stocks** app. This will allow both apps to connect and communicate with each other.
 
-This process is almost identical to setting up a Main application. The only difference is that you need to import the `GlueWeb` factory function and the config object must have a single property `web`, not `webPlatform`.
+This process is almost identical to setting up a Main app. The only difference is that you need to import the `GlueWeb` factory function and the config object must have a single property `web`, not `webPlatform`.
 
 ```javascript
 ...
@@ -182,13 +182,13 @@ export class AppModule { }
 
 When the apps are accessed, the Glue42 Web library will be initialized on app bootstrap. In order to gain access to the Glue42 API or to any errors during the initialization, you have to use the `Glue42Store` service. You could inject the `Glue42Store` directly in your components, but a better practice is to define a service that will inject the `Glue42Store`, perform all specific operations you need and expose only the functionality needed by your components.
 
-In both apps there is an empty `glue.service.ts` which is already provided in the respective root modules and injected in the components. There you will inject the `Glue42Store` and expose the functionality you need.  
+In both apps there is an empty `glue.service.ts` which is already provided in the respective root modules and injected in the components. There you will inject the `Glue42Store` and expose the functionality you need.
 
 The Glue42 Web library has been initialized, so now you will provide a visual indicator for the state of Glue42 in case of an initialization error. Go to the `glue.service.ts` file of the **Clients** and **Stocks** apps and define a public getter called `glueStatus` that should return either `"available"` or `"unavailable"` depending on whether there have been any initialization errors:
 
 ```javascript
     constructor(private readonly glueStore: Glue42Store) {
-        // setting the glue API to the window object makes it easier to just launch the app, open the console and experiment
+        // Setting the Glue42 API to the window object makes it easier to launch the app, open the console and experiment.
         (window as any).glue = this.glueStore.getGlue();
     }
 
@@ -213,7 +213,7 @@ public async ngOnInit(): Promise<void> {
 
 If everything is correct, when you open the apps, you should see in the top left corner "Glue42 is available".
 
-*Note that when you refresh the Stocks app on it's own, you will see that the Glue42 initialization is unsuccessful. This is because it cannot currently connect to the Glue42 environment provided by the [Main application](../../developers/core-concepts/web-platform/overview/index.html) and therefore cannot discover the Main app. To be able to connect to Glue42, all [Web Client](../../developers/core-concepts/web-client/overview/index.html) apps **must** be opened by the [Web Platform application](../../developers/core-concepts/web-platform/overview/index.html)) or by another [Web Client](../../developers/core-concepts/web-client/overview/index.html) application already connected to the Glue42 environment.*
+*Note that when you refresh the Stocks app on it's own, you will see that the Glue42 initialization is unsuccessful. This is because it cannot currently connect to the Glue42 environment provided by the [Main app](../../developers/core-concepts/web-platform/overview/index.html) and therefore cannot discover the Main app. To be able to connect to Glue42, all [Web Client](../../developers/core-concepts/web-client/overview/index.html) apps **must** be opened by the [Web Platform app](../../developers/core-concepts/web-platform/overview/index.html)) or by another [Web Client](../../developers/core-concepts/web-client/overview/index.html) app already connected to the Glue42 environment.*
 
 To verify that the initializations are correct, open the browser console of the **Clients** app (press `F12`) and execute the following:
 
@@ -346,11 +346,11 @@ public async ngOnInit(): Promise<void> {
 }
 ```
 
-Now, when you click on a stock, the new window will open with the specified position and size and will display the details of the selected stock. 
+Now, when you click on a stock, the new window will open with the specified position and size and will display the details of the selected stock.
 
 ## 4. Interop
 
-In this section you will use some of the functionalities provided by the [**Glue42 Core**](https://glue42.com/core/) [**Interop API**](../../reference/core/latest/interop/index.html).
+In this section you will use some of the functionalities provided by the [Interop API](../../reference/core/latest/interop/index.html).
 
 ### 4.1. Registering Interop Methods and Streams
 
@@ -373,7 +373,7 @@ public async registerClientSelect() {
 }
 ```
 
-*Note that the `next` invocation is wrapped in `NgZone.run`, because the custom event is executed outside the Angular Zone and therefore will not trigger change detection, unless explicitly ran inside the zone.*
+*Note that the `next` invocation is wrapped in `NgZone.run`, because the custom event is executed outside the Angular Zone and therefore won't trigger change detection, unless explicitly ran inside the zone.*
 
 Next, you need to create an Interop stream called `LivePrices`, inject the `DataService`, subscribe to new price updates and push to the stream:
 
@@ -413,7 +413,7 @@ public async ngOnInit(): Promise<void> {
 }
 ```
 
-Note that in a real production application you may need to unregister the Interop method and close the Interop stream in the `ngOnDestroy()` hook. This depends on your business case, but here it is safe to leave it as it is. Also, note that the `registerClientSelect()` and `createPriceStream()` invocations are not awaited, because in this particular case it is not important when they will resolve, but this may be different in a real production application.
+Note that in a real production app you may need to unregister the Interop method and close the Interop stream in the `ngOnDestroy()` hook. This depends on your business case, but here it is safe to leave it as it is. Also, note that the `registerClientSelect()` and `createPriceStream()` invocations aren't awaited, because in this particular case it isn't important when they will resolve, but this may be different in a real production app.
 
 You also don't need to wrap the callback which pushes updates to the stream, because internally the `DataService` uses `setInterval()` that by default triggers a change detection.
 
@@ -426,7 +426,7 @@ public sendSelectedClient(client: Client): void {
     // Finding an Interop method by name.
     const interopMethod = this.glueStore.getGlue().interop.methods().find(method => method.name === "SelectClient");
 }
-``` 
+```
 
 ### 4.3. Method Invocation
 
@@ -502,7 +502,7 @@ public async ngOnInit(): Promise<void> {
 
     if (this.glueStatus === "available") {
         // Subscribing to the stream.
-        this.glueSubscription = await this.glueService.subscribeToLivePrices(this.stock);    
+        this.glueSubscription = await this.glueService.subscribeToLivePrices(this.stock);
     }
 
     this.glueService.onPriceUpdate().subscribe((newPrices) => {
@@ -523,11 +523,11 @@ Now the **Stocks Details** should display live price updates for the selected st
 
 ## 5. Shared Contexts
 
-The next request of the users is to be able to see in the **Stock Details** app whether the selected client has the selected stock in their portfolio. This time, you will use the [**Shared Contexts API**](../../reference/core/latest/shared%20contexts/index.html) to connect the **Clients**, **Stocks** and **Stock Details** apps.
+The next request of the users is to be able to see in the **Stock Details** app whether the selected client has the selected stock in their portfolio. This time, you will use the [Shared Contexts API](../../reference/core/latest/shared%20contexts/index.html) to connect the **Clients**, **Stocks** and **Stock Details** apps.
 
 ### 5.1. Updating a Context
 
-First, go to the **Clients** app and extend the `sendSelectedClient()` method in the `GlueService`. Comment out or delete the existing logic that uses the Interop API, and, instead, update the shared context object called `SelectedClient` (if the context does not exist, it will be created first) with the `client` object:
+First, go to the **Clients** app and extend the `sendSelectedClient()` method in the `GlueService`. Comment out or delete the existing logic that uses the Interop API, and, instead, update the shared context object called `SelectedClient` (if the context doesn't exist, it will be created first) with the `client` object:
 
 ```javascript
 public async sendSelectedClient(client: Client): Promise<void> {
@@ -566,7 +566,7 @@ public async ngOnInit(): Promise<void> {
 }
 ```
 
-Now **Clients** and **Stocks** communicate via Shared Contexts. 
+Now **Clients** and **Stocks** communicate via Shared Contexts.
 
 Finally, go to `stock-details.component.ts`, call the same `subscribeToSharedContext()` function and subscribe to `onClientSelected()`. When a new client has been selected, you need to check if that client has the current stock in their portfolio and set the `this.clientMessage` property to the appropriate value:
 
@@ -598,7 +598,7 @@ The latest requirement from the users is to be able work with multiple clients a
 
 ### 6.1. Channels Configuration
 
-The [Main Application](../../developers/core-concepts/web-platform/overview/index.html) (the **Clients** app in this project) handles the configuration of the Glue42 environment. The `webPlatform` property of the config object in `Glue42Ng` accepts an optional configuration object that allows you to enable, disable and configure various Glue42 features. Here you will use it to define the available Glue42 Channels.
+The [Main app](../../developers/core-concepts/web-platform/overview/index.html) (the **Clients** app in this project) handles the configuration of the Glue42 environment. The `webPlatform` property of the config object in `Glue42Ng` accepts an optional configuration object that allows you to enable, disable and configure various Glue42 features. Here you will use it to define the available Glue42 Channels.
 
 ```javascript
 // in app.module.ts
@@ -689,9 +689,9 @@ export class AppModule { }
 
 ### 6.2. Channel Selector Widget
 
-The next step is to add a dropdown select component to **Clients** and **Stocks** that will allow the users to pick a channel for the applications. The steps below are for the **Clients** app, but the procedure is identical for both apps.
+The next step is to add a dropdown select component to **Clients** and **Stocks** that will allow the users to pick a channel for the apps. The steps below are for the **Clients** app, but the procedure is identical for both apps.
 
-For the purpose of this tutorial, there is a simple and fully functional material select component already prepared. All you have to do, is import it in the `app.module.ts` of the **Clients** app: 
+For the purpose of this tutorial, there is a simple and fully functional material select component already prepared. All you have to do, is import it in the `app.module.ts` of the **Clients** app:
 
 ```javascript
 @NgModule({
@@ -760,7 +760,7 @@ public handleLeaveChannel() {
 }
 ```
 
-Repeat the exact same steps for the **Stocks** app. As a result, both applications should have a selector in the top right corner that allows the user to pick a channel.
+Repeat the exact same steps for the **Stocks** app. As a result, both apps should have a selector in the top right corner that allows the user to pick a channel.
 
 ### 6.3. Publishing and Subscribing
 
@@ -776,7 +776,7 @@ public async sendSelectedClient(client: Client): Promise<void> {
 }
 ```
 
-You have to leave the logic for updating the shared context object, because the **Stocks Details** functionality has to remain the same. 
+You have to leave the logic for updating the shared context object, because the **Stocks Details** functionality has to remain the same.
 
 Next, the **Stocks** app has to subscribe for updates to the current channel. Go to the `glue.service.ts` of the **Stocks** app and define a method for subscribing to the channel context:
 

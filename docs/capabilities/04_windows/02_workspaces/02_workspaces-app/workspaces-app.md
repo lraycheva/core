@@ -42,7 +42,7 @@ There are several prerequisites when creating a custom Workspaces App:
 
 The `<Workspaces />` component has two props - `glue` and `components`. The `glue` prop expects the `glue` object returned by the initialized Glue42 library. The `components` prop is used to define the header area components (see [Header Area Components](#header_area_components)), the system popup components or apps (see [Replacing the System Popups](#custom_popups-replacing_the_system_popups)) and the Workspace content to be rendered (see [Composing Workspace Content](#composing_workspace_content)).
 
-*It is important to note that the `<Workspaces>` component is not meant to be used as a typical React component. Besides its rendering responsibilities, it also contains heavy logic. This component is meant to allow you to create a dedicated Workspaces App which must function as a standalone window - you must never use it as a part of another application, as this will lead to malfunctioning. The Workspaces App should be customized only using the available extensibility points.*
+*It is important to note that the `<Workspaces>` component isn't meant to be used as a typical React component. Besides its rendering responsibilities, it also contains heavy logic. This component is meant to allow you to create a dedicated Workspaces App which must function as a standalone window - you must never use it as a part of another app, as this will lead to malfunctioning. The Workspaces App should be customized only using the available extensibility points.*
 
 The following example shows the `<Workspaces />` component props, their properties and default values:
 
@@ -206,7 +206,7 @@ Adding a custom button in the System Buttons zone:
 
 ## Custom Popups
 
-The library allows you to customize the system popups of the Workspaces App, as well as to create custom popups for your applications participating in the Workspace.
+The library allows you to customize the system popups of the Workspaces App, as well as to create custom popups for your apps participating in the Workspace.
 
 Using a custom button and a custom popup for the Add Workspace component:
 
@@ -216,7 +216,7 @@ Using a custom button and a custom popup for the Add Workspace component:
 
 The `components` prop of the `<Workspaces />` component has a `popups` property that enables you to pass custom components or Glue42 apps that will act as system popups. To specify a custom Glue42 app as a system popup, pass its name as a string.
 
-*Note that if you decide to use the default system popups, you must ensure that they receive their required props. This includes a `glue` object with initialized [Workspaces](../workspaces-api/index.html) library and [Application Management](../../../application-management/index.html) library initialized in `"full"` or `"skipIcons"` mode.*
+*Note that if you decide to use the default system popups, you must ensure that they receive their required props. This includes a `glue` object with initialized [Workspaces](../workspaces-api/index.html) library and [App Management](../../../application-management/index.html) library initialized in `"full"` or `"skipIcons"` mode.*
 
 The following example demonstrates how to pass default popup components and their props correctly and how to pass a custom Glue42 app as a popup:
 
@@ -275,9 +275,9 @@ Add Application component:
 |------|-----------|-------------|
 | `resizePopup` | `(s: Size) => void` | Function for resizing the popup. Accepts a required `Size` object as a parameter with optional `height` and `width` properties. |
 | `hidePopup` | `() => void` | Function for hiding the popup. |
-| `filterApps` | `(app: Glue42.AppManager.Application) => bool` | Property expecting a user-defined predicate for filtering the applications that will be available in the "Add Application" popup menu. |
-| `workspaceId` | `string` | The ID of the Workspace in which the application will be added. |
-| `boxId` | `string` | The ID of the Workspace element in which the application will be added. |
+| `filterApps` | `(app: Glue42.AppManager.Application) => bool` | Property expecting a user-defined predicate for filtering the apps that will be available in the "Add Application" popup menu. |
+| `workspaceId` | `string` | The ID of the Workspace in which the app will be added. |
+| `boxId` | `string` | The ID of the Workspace element in which the app will be added. |
 | `glue` | `any` | *Optional*. The Glue42 JavaScript library object. |
 
 The following example demonstrates a reference implementation of a custom system popup component and how to handle resizing and hiding the popup:
@@ -315,7 +315,7 @@ const SaveWorkspacePopup = ({ resizePopup, hidePopup }) => {
 export default SaveWorkspacePopup;
 ```
 
-The following example demonstrates how to use the default `<AddApplicationPopup />` system popup and filter the applications that will be available in the "Add Application" menu by a custom user-defined property:
+The following example demonstrates how to use the default `<AddApplicationPopup />` system popup and filter the apps that will be available in the "Add Application" menu by a custom user-defined property:
 
 ```javascript
 import React from "react";
@@ -326,7 +326,7 @@ import "@glue42/workspaces-ui-react/dist/styles/glue42-theme.css";
 import "./index.css";
 
 const App = () => {
-    // The custom properties from your application configuration are accessible through
+    // The custom properties from your app configuration are accessible through
     // the `userProperties` property of the `Application` object passed to the predicate function.
     const appFilter = app => app.userProperties.customAppFilterProperty;
 
@@ -388,7 +388,7 @@ const popupRef = React.createRef();
 const [popupResized, popupHidden] = useWorkspacePopup(popupRef);
 ```
 
-- `useWorkspaceWindowClicked()` - accepts a callback that is invoked when a window in the Frame is focused. A generic `onClick` event will not work for handling window clicks, because although the Workspaces App is a web application, it contains different applications from different processes. The hook returns an unsubscribe function, however, this unsubscribe function is called when the component is unmounted so implementing cleanup logic is usually unnecessary;
+- `useWorkspaceWindowClicked()` - accepts a callback that is invoked when a window in the Frame is focused. A generic `onClick` event won't work for handling window clicks, because although the Workspaces App is a web app, it contains different apps from different processes. The hook returns an unsubscribe function, however, this unsubscribe function is called when the component is unmounted so implementing cleanup logic is usually unnecessary;
 
 The following example demonstrates how to create a custom popup using the `useWorkspacePopup()` and `useWorkspaceWindowClicked()` hooks:
 
@@ -454,7 +454,7 @@ const App = () => {
 export default App;
 ```
 
-*Note that it is not advisable to add complex components as additional Workspace content - the `WorkspaceContents` property is meant to allow you to add styling elements or interaction areas (simple toolbars, buttons, etc.) around the usual Workspace content.*
+*Note that it isn't advisable to add complex components as additional Workspace content - the `WorkspaceContents` property is meant to allow you to add styling elements or interaction areas (simple toolbars, buttons, etc.) around the usual Workspace content.*
 
 The `<WorkspaceContents />` component expects a Workspace ID as a prop.
 

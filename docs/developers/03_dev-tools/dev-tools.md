@@ -1,0 +1,5 @@
+## Dev Tools
+
+*Note that this [**Glue42 Core+**](https://glue42.com/core-plus/) feature is still under development. For more information, [contact us](https://glue42.com/contacts/) at `info@glue42.com`.*
+
+In addition to the default browser console accessible through `F12`, a [**Glue42 Core+**](https://glue42.com/core-plus/) project benefits from two other developer tools - the Interop Viewer and the Context Viewer. They enable you to observe and test the Glue42 functionalities in your Glue42 enabled apps in real time, without the need of dummy apps. You can use the Interop Viewer to monitor and test the behavior of all registered [Interop methods and streams](../../capabilities/data-sharing-between-apps/interop/index.html) and the Context Viewer to track and modify all available [shared contexts](../../capabilities/data-sharing-between-apps/shared-contexts/index.html).

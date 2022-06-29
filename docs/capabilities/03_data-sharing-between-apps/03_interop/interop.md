@@ -1,13 +1,13 @@
 ## Overview
 
-The [Interop API](../../../reference/core/latest/interop/index.html) enables applications to:
+The [Interop API](../../../reference/core/latest/interop/index.html) enables apps to:
 
-- offer functionality to other applications in the same [**Glue42 Core**](https://glue42.com/core/) project by registering Interop methods;
-- discover applications in the same [**Glue42 Core**](https://glue42.com/core/) project which offer methods;
+- offer functionality to other apps in the same [**Glue42 Core**](https://glue42.com/core/) project by registering Interop methods;
+- discover apps in the same [**Glue42 Core**](https://glue42.com/core/) project which offer methods;
 - invoke registered Interop methods;
 - stream and subscribe for real-time data using the streaming methods of the Interop API;
 
-Applications which offer methods and streams are called *Interop servers*, and applications which consume them - *Interop clients*, and collectively - *Interop instances*.
+Apps which offer methods and streams are called *Interop servers*, and apps which consume them - *Interop clients*, and collectively - *Interop instances*.
 
 <glue42 name="diagram" image="../../../images/interop/interop.gif">
 
@@ -17,7 +17,7 @@ The [Live Examples](#live_examples) section demonstrates using the Interop API. 
 
 The Interop API is accessible through the [`glue.interop`](../../../reference/core/latest/interop/index.html) object.
 
-To register an Interop method that will be available to all other Glue42 enabled applications, use the [`register()`](../../../reference/core/latest/interop/index.html#API-register) method. Provide a name for the method (or a [`MethodDefinition`](../../../reference/core/latest/interop/index.html#MethodDefinition) object) and a callback that will handle invocations from client applications:
+To register an Interop method that will be available to all other Glue42 enabled apps, use the [`register()`](../../../reference/core/latest/interop/index.html#API-register) method. Provide a name for the method (or a [`MethodDefinition`](../../../reference/core/latest/interop/index.html#MethodDefinition) object) and a callback that will handle invocations from client apps:
 
 ```javascript
 // Required name for the method to register.
@@ -32,13 +32,13 @@ const handler = ({ a, b }) => {
 await glue.interop.register(methodName, handler);
 ```
 
-After registration, the "Addition" Interop method will be available to all other Glue42 enabled applications and any of them will be able to [invoke](#method_invocation) it with custom arguments at any time, as long the server offering it is running or until it unregisters it (with the [`unregister()`](../../../reference/core/latest/interop/index.html#API-unregister) method).
+After registration, the "Addition" Interop method will be available to all other Glue42 enabled apps and any of them will be able to [invoke](#method_invocation) it with custom arguments at any time, as long the server offering it is running or until it unregisters it (with the [`unregister()`](../../../reference/core/latest/interop/index.html#API-unregister) method).
 
 Interop methods with the same name may be registered by different servers. An Interop method is considered the same as another Interop method if their names are the same and if the `accepts` and `returns` properties of their [`MethodDefinition`](../../../reference/core/latest/interop/index.html#MethodDefinition) objects have identical values. The implementation of the handler function, however, may differ for each server.
 
 ### Method Definition
 
-When registering an Interop method, it is required to pass either a string for a method name or a [`MethodDefinition`](../../../reference/core/latest/interop/index.html#MethodDefinition) object. The [`MethodDefinition`](../../../reference/core/latest/interop/index.html#MethodDefinition) object describes the Interop method your application is offering. It has the following properties:
+When registering an Interop method, it is required to pass either a string for a method name or a [`MethodDefinition`](../../../reference/core/latest/interop/index.html#MethodDefinition) object. The [`MethodDefinition`](../../../reference/core/latest/interop/index.html#MethodDefinition) object describes the Interop method your app is offering. It has the following properties:
 
 | Property | Type | Description | Required |
 |----------|------|-------------|----------|
@@ -161,7 +161,7 @@ const result = await glue.interop.invoke(methodName, args, target, options);
 
 ### Targeting
 
-If multiple apps offer the same Interop method, you can choose to invoke it on the "best" application instance (this is the default behavior, if no `target` is passed), on a specific Interop instance, on a set of instances, or on all instances.
+If multiple apps offer the same Interop method, you can choose to invoke it on the "best" app instance (this is the default behavior, if no `target` is passed), on a specific Interop instance, on a set of instances, or on all instances.
 
 <glue42 name="diagram" image="../../../images/interop/interop-targeting.gif">
 
@@ -177,9 +177,9 @@ The following table describes the values accepted by the `target` property of th
 
 *Note that the properties of an Interop [Instance](../../../reference/core/latest/interop/index.html#Instance) can have both a string or a regular expression as a value.*
 
-Application instances are ranked internally. The "best" instance is the first one running on the user's desktop and under the user's name. If there are multiple applications matching these criteria, the first instance is used.
+App instances are ranked internally. The "best" instance is the first one running on the user's desktop and under the user's name. If there are multiple apps matching these criteria, the first instance is used.
 
-To invoke a method on a preferred set of applications, pass a target as a third argument.
+To invoke a method on a preferred set of apps, pass a target as a third argument.
 
 If nothing is passed, `"best"` is default:
 
@@ -244,7 +244,7 @@ invocationResult.all_return_values
 
 ## Object Types
 
-Use the `objectTypes` property of the [`MethodDefinition`](../../../reference/core/latest/interop/index.html#MethodDefinition) when registering an Interop method to specify what predefined data structures the method expects - e.g., `"Instrument"`, `"Client"`, etc. Specifying the object types in a method definition is useful for determining at runtime the methods applicable to the currently handled object. For the object types to function in a generic manner, all applications must follow the same data format and pass the respective objects to the respective Interop methods.
+Use the `objectTypes` property of the [`MethodDefinition`](../../../reference/core/latest/interop/index.html#MethodDefinition) when registering an Interop method to specify what predefined data structures the method expects - e.g., `"Instrument"`, `"Client"`, etc. Specifying the object types in a method definition is useful for determining at runtime the methods applicable to the currently handled object. For the object types to function in a generic manner, all apps must follow the same data format and pass the respective objects to the respective Interop methods.
 
 To register a method with object type specifications:
 
@@ -306,7 +306,7 @@ const methods = glue.interop.methodsForInstance(instance);
 If you have a reference to an Interop instance, use its [`getMethods()`](../../../reference/core/latest/interop/index.html#Instance-getMethods) and [`getStreams()`](../../../reference/core/latest/interop/index.html#Instance-getStreams) methods:
 
 ```javascript
-// Get the current Interop instance of the application.
+// Get the current Interop instance of the app.
 const myInstance = glue.interop.instance;
 // Get the Interop methods registered by the instance.
 const methods = myInstance.getMethods();
@@ -338,9 +338,9 @@ const servers = method.getServers();
 
 ## Interop Events
 
-The Interop API offers means for notifying you when a method has been added/removed or when an application offering methods becomes available/unavailable. All methods for listening for events return an unsubscribe function. Use it to stop receiving event notifications.
+The Interop API offers means for notifying you when a method has been added/removed or when an app offering methods becomes available/unavailable. All methods for listening for events return an unsubscribe function. Use it to stop receiving event notifications.
 
-To get notified when a method has been added for the first time by any application, use [`methodAdded()`](../../../reference/core/latest/interop/index.html#API-methodAdded):
+To get notified when a method has been added for the first time by any app, use [`methodAdded()`](../../../reference/core/latest/interop/index.html#API-methodAdded):
 
 ```javascript
 const handler = (method) => {
@@ -350,7 +350,7 @@ const handler = (method) => {
 glue.interop.methodAdded(handler);
 ```
 
-To get notified when a method has been removed from the last application offering it, use [`methodRemoved()`](../../../reference/core/latest/interop/index.html#API-methodRemoved):
+To get notified when a method has been removed from the last app offering it, use [`methodRemoved()`](../../../reference/core/latest/interop/index.html#API-methodRemoved):
 
 ```javascript
 const handler = (method) => {
@@ -360,7 +360,7 @@ const handler = (method) => {
 glue.interop.methodRemoved(handler);
 ```
 
-To get notified when an application offering methods has been discovered, use [`serverAdded()`](../../../reference/core/latest/interop/index.html#API-serverAdded):
+To get notified when an app offering methods has been discovered, use [`serverAdded()`](../../../reference/core/latest/interop/index.html#API-serverAdded):
 
 ```javascript
 const handler = (instance) => {
@@ -370,7 +370,7 @@ const handler = (instance) => {
 glue.interop.serverAdded(handler);
 ```
 
-To get notified when an application stops offering methods or is closed, use [`serverRemoved()`](../../../reference/core/latest/interop/index.html#API-serverRemoved):
+To get notified when an app stops offering methods or is closed, use [`serverRemoved()`](../../../reference/core/latest/interop/index.html#API-serverRemoved):
 
 ```javascript
 const handler = (instance) => {
@@ -380,7 +380,7 @@ const handler = (instance) => {
 glue.interop.serverRemoved(handler);
 ```
 
-To get notified every time a method is offered by any application, use [`serverMethodAdded()`](../../../reference/core/latest/interop/index.html#API-serverMethodAdded). This event fires every time any application starts offering a method, while [`methodAdded()`](../../../reference/core/latest/interop/index.html#API-methodAdded) fires only for the first application which starts to offer the method:
+To get notified every time a method is offered by any app, use [`serverMethodAdded()`](../../../reference/core/latest/interop/index.html#API-serverMethodAdded). This event fires every time any app starts offering a method, while [`methodAdded()`](../../../reference/core/latest/interop/index.html#API-methodAdded) fires only for the first app which starts to offer the method:
 
 ```javascript
 const handler = (info) => {
@@ -392,7 +392,7 @@ const handler = (info) => {
 glue.interop.serverMethodAdded(handler);
 ```
 
-To get notified every time a method is removed from any application, use [`serverMethodRemoved()`](../../../reference/core/latest/interop/index.html#API-serverMethodRemoved). This event fires every time any application stops offering a method, while [`methodRemoved()`](../../../reference/core/latest/interop/index.html#API-methodRemoved) fires only when the method has been removed from the last application offering it:
+To get notified every time a method is removed from any app, use [`serverMethodRemoved()`](../../../reference/core/latest/interop/index.html#API-serverMethodRemoved). This event fires every time any app stops offering a method, while [`methodRemoved()`](../../../reference/core/latest/interop/index.html#API-methodRemoved) fires only when the method has been removed from the last app offering it:
 
 ```javascript
 const handler = (info) => {
@@ -408,9 +408,9 @@ glue.interop.serverMethodRemoved(handler);
 
 ### Overview
 
-Your application can publish events that can be observed by other applications and can provide real-time data (e.g., market data, news alerts, notifications, etc.) to other applications by publishing an Interop stream. It can also receive and react to these events and data by creating an Interop stream subscription.
+Your app can publish events that can be observed by other apps and can provide real-time data (e.g., market data, news alerts, notifications, etc.) to other apps by publishing an Interop stream. It can also receive and react to these events and data by creating an Interop stream subscription.
 
-Applications that create and publish to Interop streams are called *publishers*, and applications that subscribe to Interop Streams are called *subscribers*. An application can be both.
+Apps that create and publish to Interop streams are called *publishers*, and apps that subscribe to Interop Streams are called *subscribers*. An app can be both.
 
 <glue42 name="diagram" image="../../../images/interop/interop-streaming.gif">
 
@@ -433,7 +433,7 @@ const streamDefinition = { name: "MarketData.LastTrades" };
 const stream = await glue.interop.createStream(streamDefinition);
 ```
 
-The [`StreamOptions`](../../../reference/core/latest/interop/index.html#StreamOptions) object allows you to pass several optional callbacks which let your application handle subscriptions in a more detailed manner:
+The [`StreamOptions`](../../../reference/core/latest/interop/index.html#StreamOptions) object allows you to pass several optional callbacks which let your app handle subscriptions in a more detailed manner:
 
 - to identify individual subscribers/clients;
 - to accept or reject subscriptions based on the subscription arguments;
@@ -481,13 +481,13 @@ initiateStream().catch(console.error);
 
 ### Accepting or Rejecting Subscriptions
 
-Subscriptions are auto accepted by default. You can control this behavior by passing a [`subscriptionRequestHandler`](../../../reference/core/latest/interop/index.html#StreamOptions-subscriptionRequestHandler) in the [`StreamOptions`](../../../reference/core/latest/interop/index.html#StreamOptions) object. Note that this handler is called before the [`subscriptionAddedHandler`](../../../reference/core/latest/interop/index.html#StreamOptions-subscriptionAddedHandler), so if you reject the request, the `subscriptionAddedHandler` will not be called.
+Subscriptions are auto accepted by default. You can control this behavior by passing a [`subscriptionRequestHandler`](../../../reference/core/latest/interop/index.html#StreamOptions-subscriptionRequestHandler) in the [`StreamOptions`](../../../reference/core/latest/interop/index.html#StreamOptions) object. Note that this handler is called before the [`subscriptionAddedHandler`](../../../reference/core/latest/interop/index.html#StreamOptions-subscriptionAddedHandler), so if you reject the request, the `subscriptionAddedHandler` won't be called.
 
 The [`SubscriptionRequest`](../../../reference/core/latest/interop/index.html#SubscriptionRequest) object, passed as an argument to the subscription request handler, has the following properties and methods:
 
 | Name | Description |
 |------|-------------|
-| `instance` | The Interop [`Instance`](../../../reference/core/latest/interop/index.html#Instance) of the subscriber application. |
+| `instance` | The Interop [`Instance`](../../../reference/core/latest/interop/index.html#Instance) of the subscriber app. |
 | `arguments` | An object containing the subscription arguments, e.g. `{ symbol: "GOOG" }`. |
 | `accept()` | Accepts the instance subscription. |
 | `acceptOnBranch()` | Accepts the subscription on a branch with the provided string argument as a name. Pushing data to that branch will multicast it to all subscriptions associated with the branch. |
@@ -612,7 +612,7 @@ The [StreamSubscription](../../../reference/core/latest/interop/index.html#Strea
 
 | Name | Description |
 |------|-------------|
-| `arguments` | The arguments used by the client application to subscribe. |
+| `arguments` | The arguments used by the client app to subscribe. |
 | `stream` | The stream object you have registered, so you don't need to keep track of it. |
 | `branchKey` | The key of the branch (if any) with which the stream publisher has associated the client subscription. |
 | `instance` | The instance of the subscriber. |
@@ -684,7 +684,7 @@ The client side [`Subscription`](../../../reference/core/latest/interop/index.ht
 | Property | Description |
 |----------|-------------|
 | `requestArguments` | Arguments used for the subscription. |
-| `serverInstance` | Instance of the application providing the stream. |
+| `serverInstance` | Instance of the app providing the stream. |
 | `stream` | The stream definition object. |
 
 Once you have a subscription, use its [`onData()`](../../../reference/core/latest/interop/index.html#Subscription-onData) method to handle stream data. The callback you register with the `onData()` method of the `Subscription` object will fire every time new stream data is received:
@@ -739,9 +739,9 @@ const stream = glue.interop.methods().find(method => method.name === "MarketData
 
 ### Registering and Invoking Methods
 
-The applications below demonstrate how to register and invoke Interop methods using the [`register()`](../../../reference/core/latest/interop/index.html#API-register) and [`invoke()`](../../../reference/core/latest/interop/index.html#API-invoke) methods of the Interop API.
+The apps below demonstrate how to register and invoke Interop methods using the [`register()`](../../../reference/core/latest/interop/index.html#API-register) and [`invoke()`](../../../reference/core/latest/interop/index.html#API-invoke) methods of the Interop API.
 
-On load, Application B registers a method called "G42Core.Basic". Click the "Invoke" button in Application A to invoke this method and print the result from the method invocation.
+On load, App B registers a method called "G42Core.Basic". Click the "Invoke" button in App A to invoke this method and print the result from the method invocation.
 
 <a href="https://codesandbox.io/s/github/Glue42/core/tree/master/live-examples/interop/basic-interop" target="_blank" class="btn btn-primary"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 296" preserveAspectRatio="xMidYMid meet" width="24" height="24" version="1.1" style="pointer-events: auto;">
         <path fill="#000000" d="M 115.498 261.088 L 115.498 154.479 L 23.814 101.729 L 23.814 162.502 L 65.8105 186.849 L 65.8105 232.549 L 115.498 261.088 Z M 139.312 261.715 L 189.917 232.564 L 189.917 185.78 L 232.186 161.285 L 232.186 101.274 L 139.312 154.895 L 139.312 261.715 Z M 219.972 80.8277 L 171.155 52.5391 L 128.292 77.4107 L 85.104 52.5141 L 35.8521 81.1812 L 127.766 134.063 L 219.972 80.8277 Z M 0 222.212 L 0 74.4949 L 127.987 0 L 256 74.182 L 256 221.979 L 127.984 295.723 L 0 222.212 Z" style="pointer-events: auto;"></path>
@@ -752,9 +752,9 @@ On load, Application B registers a method called "G42Core.Basic". Click the "Inv
 
 ### Targeting
 
-The applications below demonstrate targeting Interop servers when invoking Interop methods.
+The apps below demonstrate targeting Interop servers when invoking Interop methods.
 
-On load, Applications B and C register a method with the same name. Click one of the buttons in Application A to invoke this method and print the result from the method invocation. There are four buttons - "Invoke Default" (invokes the method by targeting the server that has registered it first), "Invoke All" (invokes the method by targeting all servers offering it), "Invoke App B" (invokes the method by targeting Application B) and "Invoke App C" (invokes the method by targeting Application C).
+On load, Apps B and C register a method with the same name. Click one of the buttons in App A to invoke this method and print the result from the method invocation. There are four buttons - "Invoke Default" (invokes the method by targeting the server that has registered it first), "Invoke All" (invokes the method by targeting all servers offering it), "Invoke App B" (invokes the method by targeting App B) and "Invoke App C" (invokes the method by targeting App C).
 
 <a href="https://codesandbox.io/s/github/Glue42/core/tree/master/live-examples/interop/invocation-target" target="_blank" class="btn btn-primary"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 296" preserveAspectRatio="xMidYMid meet" width="24" height="24" version="1.1" style="pointer-events: auto;">
         <path fill="#000000" d="M 115.498 261.088 L 115.498 154.479 L 23.814 101.729 L 23.814 162.502 L 65.8105 186.849 L 65.8105 232.549 L 115.498 261.088 Z M 139.312 261.715 L 189.917 232.564 L 189.917 185.78 L 232.186 161.285 L 232.186 101.274 L 139.312 154.895 L 139.312 261.715 Z M 219.972 80.8277 L 171.155 52.5391 L 128.292 77.4107 L 85.104 52.5141 L 35.8521 81.1812 L 127.766 134.063 L 219.972 80.8277 Z M 0 222.212 L 0 74.4949 L 127.987 0 L 256 74.182 L 256 221.979 L 127.984 295.723 L 0 222.212 Z" style="pointer-events: auto;"></path>
@@ -767,9 +767,9 @@ On load, Applications B and C register a method with the same name. Click one of
 
 #### Methods
 
-The applications below demonstrate discovering Interop methods by a method name.
+The apps below demonstrate discovering Interop methods by a method name.
 
-Use Application B and Application C to register Interop methods by providing a method name. Input a method name in Application A and click the "Invoke" button to invoke the method and print the result from the method invocation.
+Use App B and App C to register Interop methods by providing a method name. Input a method name in App A and click the "Invoke" button to invoke the method and print the result from the method invocation.
 
 <a href="https://codesandbox.io/s/github/Glue42/core/tree/master/live-examples/interop/method-discovery-by-name" target="_blank" class="btn btn-primary"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 296" preserveAspectRatio="xMidYMid meet" width="24" height="24" version="1.1" style="pointer-events: auto;">
         <path fill="#000000" d="M 115.498 261.088 L 115.498 154.479 L 23.814 101.729 L 23.814 162.502 L 65.8105 186.849 L 65.8105 232.549 L 115.498 261.088 Z M 139.312 261.715 L 189.917 232.564 L 189.917 185.78 L 232.186 161.285 L 232.186 101.274 L 139.312 154.895 L 139.312 261.715 Z M 219.972 80.8277 L 171.155 52.5391 L 128.292 77.4107 L 85.104 52.5141 L 35.8521 81.1812 L 127.766 134.063 L 219.972 80.8277 Z M 0 222.212 L 0 74.4949 L 127.987 0 L 256 74.182 L 256 221.979 L 127.984 295.723 L 0 222.212 Z" style="pointer-events: auto;"></path>
@@ -778,9 +778,9 @@ Use Application B and Application C to register Interop methods by providing a m
     <iframe src="https://whkfw.csb.app" style="border: none;"></iframe>
 </div>
 
-The applications below demonstrate discovering Interop methods by subscribing to the [`serverMethodAdded()`](../../../reference/core/latest/interop/index.html#API-serverMethodAdded) and the [`serverMethodRemoved()`](../../../reference/core/latest/interop/index.html#API-serverMethodRemoved) events of the Interop API.
+The apps below demonstrate discovering Interop methods by subscribing to the [`serverMethodAdded()`](../../../reference/core/latest/interop/index.html#API-serverMethodAdded) and the [`serverMethodRemoved()`](../../../reference/core/latest/interop/index.html#API-serverMethodRemoved) events of the Interop API.
 
-On load, Application A subscribes to the `serverMethodAdded()` and `serverMethodRemoved()` events and will print the names of the newly registered method and the server offering it. Use Application B and Application C to register Interop methods by providing a method name.
+On load, App A subscribes to the `serverMethodAdded()` and `serverMethodRemoved()` events and will print the names of the newly registered method and the server offering it. Use App B and App C to register Interop methods by providing a method name.
 
 <a href="https://codesandbox.io/s/github/Glue42/core/tree/master/live-examples/interop/method-discovery-by-event" target="_blank" class="btn btn-primary"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 296" preserveAspectRatio="xMidYMid meet" width="24" height="24" version="1.1" style="pointer-events: auto;">
         <path fill="#000000" d="M 115.498 261.088 L 115.498 154.479 L 23.814 101.729 L 23.814 162.502 L 65.8105 186.849 L 65.8105 232.549 L 115.498 261.088 Z M 139.312 261.715 L 189.917 232.564 L 189.917 185.78 L 232.186 161.285 L 232.186 101.274 L 139.312 154.895 L 139.312 261.715 Z M 219.972 80.8277 L 171.155 52.5391 L 128.292 77.4107 L 85.104 52.5141 L 35.8521 81.1812 L 127.766 134.063 L 219.972 80.8277 Z M 0 222.212 L 0 74.4949 L 127.987 0 L 256 74.182 L 256 221.979 L 127.984 295.723 L 0 222.212 Z" style="pointer-events: auto;"></path>
@@ -791,9 +791,9 @@ On load, Application A subscribes to the `serverMethodAdded()` and `serverMethod
 
 #### Servers
 
-The applications below demonstrate discovering Interop servers by a method name.
+The apps below demonstrate discovering Interop servers by a method name.
 
-Use Application B and Application C to register Interop methods by providing a method name. Input a method name in Application A and click the "Find Servers" button to print the Interop servers that provide the method.
+Use App B and App C to register Interop methods by providing a method name. Input a method name in App A and click the "Find Servers" button to print the Interop servers that provide the method.
 
 <a href="https://codesandbox.io/s/github/Glue42/core/tree/master/live-examples/interop/server-discovery" target="_blank" class="btn btn-primary"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 296" preserveAspectRatio="xMidYMid meet" width="24" height="24" version="1.1" style="pointer-events: auto;">
         <path fill="#000000" d="M 115.498 261.088 L 115.498 154.479 L 23.814 101.729 L 23.814 162.502 L 65.8105 186.849 L 65.8105 232.549 L 115.498 261.088 Z M 139.312 261.715 L 189.917 232.564 L 189.917 185.78 L 232.186 161.285 L 232.186 101.274 L 139.312 154.895 L 139.312 261.715 Z M 219.972 80.8277 L 171.155 52.5391 L 128.292 77.4107 L 85.104 52.5141 L 35.8521 81.1812 L 127.766 134.063 L 219.972 80.8277 Z M 0 222.212 L 0 74.4949 L 127.987 0 L 256 74.182 L 256 221.979 L 127.984 295.723 L 0 222.212 Z" style="pointer-events: auto;"></path>
@@ -806,9 +806,9 @@ Use Application B and Application C to register Interop methods by providing a m
 
 #### Publishing and Subscribing
 
-The applications below demonstrate publishing and subscribing for Interop streams.
+The apps below demonstrate publishing and subscribing for Interop streams.
 
-On load, Application B registers an Interop stream called "G42Core.Stream.Basic". Click the "Subscribe" button in Application A to subscribe to the registered stream. Each time Application A receives data, it will be printed on the page (time stamp and a message). Click the "Start Publishing" button in Application B to start publishing data to the stream every 3 seconds.
+On load, App B registers an Interop stream called "G42Core.Stream.Basic". Click the "Subscribe" button in App A to subscribe to the registered stream. Each time App A receives data, it will be printed on the page (time stamp and a message). Click the "Start Publishing" button in App B to start publishing data to the stream every 3 seconds.
 
 <a href="https://codesandbox.io/s/github/Glue42/core/tree/master/live-examples/interop/stream-pub-sub" target="_blank" class="btn btn-primary"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 296" preserveAspectRatio="xMidYMid meet" width="24" height="24" version="1.1" style="pointer-events: auto;">
         <path fill="#000000" d="M 115.498 261.088 L 115.498 154.479 L 23.814 101.729 L 23.814 162.502 L 65.8105 186.849 L 65.8105 232.549 L 115.498 261.088 Z M 139.312 261.715 L 189.917 232.564 L 189.917 185.78 L 232.186 161.285 L 232.186 101.274 L 139.312 154.895 L 139.312 261.715 Z M 219.972 80.8277 L 171.155 52.5391 L 128.292 77.4107 L 85.104 52.5141 L 35.8521 81.1812 L 127.766 134.063 L 219.972 80.8277 Z M 0 222.212 L 0 74.4949 L 127.987 0 L 256 74.182 L 256 221.979 L 127.984 295.723 L 0 222.212 Z" style="pointer-events: auto;"></path>
@@ -819,11 +819,11 @@ On load, Application B registers an Interop stream called "G42Core.Stream.Basic"
 
 #### Events
 
-The applications below demonstrate handling streaming events - adding/removing subscribers and closing the stream.
+The apps below demonstrate handling streaming events - adding/removing subscribers and closing the stream.
 
-Click the "Create Stream" button in Application B to register an Interop stream called "G42Core.Stream.Basic". Click the "Subscribe" button in Application A to subscribe to the registered stream - Application B will print to the page when a new subscriber is added. Each time Application A receives data, it will be printed on the page (time stamp and a message).
+Click the "Create Stream" button in App B to register an Interop stream called "G42Core.Stream.Basic". Click the "Subscribe" button in App A to subscribe to the registered stream - App B will print to the page when a new subscriber is added. Each time App A receives data, it will be printed on the page (time stamp and a message).
 
-Click the "Unsubscribe" button in Application A to close the subscription to the stream - Application B will print to the page when a subscriber is removed. Click the "Close Stream" button in Application B to close the stream - Application A will print to the page when the stream is closed.
+Click the "Unsubscribe" button in App A to close the subscription to the stream - App B will print to the page when a subscriber is removed. Click the "Close Stream" button in App B to close the stream - App A will print to the page when the stream is closed.
 
 <a href="https://codesandbox.io/s/github/Glue42/core/tree/master/live-examples/interop/stream-events" target="_blank" class="btn btn-primary"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 296" preserveAspectRatio="xMidYMid meet" width="24" height="24" version="1.1" style="pointer-events: auto;">
         <path fill="#000000" d="M 115.498 261.088 L 115.498 154.479 L 23.814 101.729 L 23.814 162.502 L 65.8105 186.849 L 65.8105 232.549 L 115.498 261.088 Z M 139.312 261.715 L 189.917 232.564 L 189.917 185.78 L 232.186 161.285 L 232.186 101.274 L 139.312 154.895 L 139.312 261.715 Z M 219.972 80.8277 L 171.155 52.5391 L 128.292 77.4107 L 85.104 52.5141 L 35.8521 81.1812 L 127.766 134.063 L 219.972 80.8277 Z M 0 222.212 L 0 74.4949 L 127.987 0 L 256 74.182 L 256 221.979 L 127.984 295.723 L 0 222.212 Z" style="pointer-events: auto;"></path>
@@ -834,11 +834,11 @@ Click the "Unsubscribe" button in Application A to close the subscription to the
 
 #### Managing Subscriptions
 
-The applications below demonstrate handling stream subscriptions - accepting/rejecting subscriptions, grouping subscribers on branches, pushing data to all subscribers or to a specific stream branch.
+The apps below demonstrate handling stream subscriptions - accepting/rejecting subscriptions, grouping subscribers on branches, pushing data to all subscribers or to a specific stream branch.
 
-On load, Application C registers an Interop stream called "G42Core.Stream.Basic". Click the "Subscribe" button in Application A and Application B to subscribe to the registered stream. Application A and Application B will print to the page subscription success or error messages, as well as the received data from the stream (time stamp and a message).
+On load, App C registers an Interop stream called "G42Core.Stream.Basic". Click the "Subscribe" button in App A and App B to subscribe to the registered stream. App A and App B will print to the page subscription success or error messages, as well as the received data from the stream (time stamp and a message).
 
-When Application C receives a new subscription request, it will print the subscription info on the page and show three buttons for the subscription: "Accept", "Accept on Private" and "Reject".
+When App C receives a new subscription request, it will print the subscription info on the page and show three buttons for the subscription: "Accept", "Accept on Private" and "Reject".
 
 - "Accept" - accepts the subscription on the default branch.
 - "Accept on Private" - accepts the subscription on a branch called "Private".

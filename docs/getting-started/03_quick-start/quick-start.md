@@ -1,8 +1,8 @@
 ## Guide
 
-Starting a basic [**Glue42 Core**](https://glue42.com/core/) project is easy and intuitive, as this guide will show you. To quick start your project, you have to set up a [Web Platform](../../developers/core-concepts/web-platform/overview/index.html) application (also called "Main application") and optionally a second application - a [Web Client](../../developers/core-concepts/web-client/overview/index.html).
+Starting a basic [**Glue42 Core**](https://glue42.com/core/) project is easy and intuitive, as this guide will show you. To quick start your project, you have to set up a [Web Platform](../../developers/core-concepts/web-platform/overview/index.html) app (also called "Main app") and optionally a second app - a [Web Client](../../developers/core-concepts/web-client/overview/index.html).
 
-### Main Application
+### Main App
 
 1. Create standard basic `index.html` and `index.js` files for your Main app.
 
@@ -25,7 +25,7 @@ const init = async () => {
 init().catch(console.error);
 ```
 
-Now you have a fully functioning Main application.
+Now you have a fully functioning Main app.
 
 ### Web Client
 
@@ -54,7 +54,7 @@ Now you also have a fully functioning [Web Client](../../developers/core-concept
 
 ## Next Steps
 
-Congratulations, you have created your very first [**Glue42 Core**](https://glue42.com/core/) project! 
+Congratulations, you have created your very first [**Glue42 Core**](https://glue42.com/core/) project!
 
 *For deploying your project, see the [Project Deployment](../project-deployment/index.html) section.*
 
