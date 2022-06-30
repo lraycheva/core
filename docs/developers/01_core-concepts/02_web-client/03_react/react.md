@@ -1,6 +1,6 @@
 ## Overview
 
-The [Glue42 React Hooks](https://www.npmjs.com/package/@glue42/react-hooks) package is a library providing custom React hooks for the Glue42 Javascript libraries - [@glue42/web](https://www.npmjs.com/package/@glue42/web) and [@glue42/web-platform](https://www.npmjs.com/package/@glue42/web-platform), if you are working on a [**Glue42 Core**](https://glue42.com/core/) project, or [@glue42/desktop](https://www.npmjs.com/package/@glue42/desktop), if you are working on a [**Glue42 Enterprise**](https://glue42.com/enterprise/) project. The examples below use the [Glue42 Web](../../../../reference/core/latest/glue42%20web/index.html) library. The Glue42 React Hooks library allows you to start using Glue42 features in your React apps idiomatically in the context of the React framework.
+The [Glue42 React Hooks](https://www.npmjs.com/package/@glue42/react-hooks) package is a library providing custom React hooks for the Glue42 JavaScript libraries - [@glue42/web](https://www.npmjs.com/package/@glue42/web) and [@glue42/web-platform](https://www.npmjs.com/package/@glue42/web-platform), if you are working on a [**Glue42 Core**](https://glue42.com/core/) project, or [@glue42/desktop](https://www.npmjs.com/package/@glue42/desktop), if you are working on a [**Glue42 Enterprise**](https://glue42.com/enterprise/) project. The examples below use the [Glue42 Web](../../../../reference/core/latest/glue42%20web/index.html) library. The Glue42 React Hooks library allows you to start using Glue42 features in your React apps idiomatically in the context of the React framework.
 
 ## Prerequisites
 
@@ -12,7 +12,7 @@ npm install --save @glue42/react-hooks
 
 ## Library Features
 
-The Glue42 React Hooks library offers a way to consume the APIs of the [Glue42 Web](../../../../reference/core/latest/glue42%20web/index.html) library in your web applications via [React Hooks](https://reactjs.org/docs/hooks-intro.html) and [React Context](https://reactjs.org/docs/context.html). The Glue42 React Hooks library features are described in the next sections.
+The Glue42 React Hooks library offers a way to consume the APIs of the [Glue42 Web](../../../../reference/core/latest/glue42%20web/index.html) library in your web apps via [React Hooks](https://reactjs.org/docs/hooks-intro.html) and [React Context](https://reactjs.org/docs/context.html). The Glue42 React Hooks library features are described in the next sections.
 
 ### Context
 
@@ -51,11 +51,11 @@ The table below describes the properties of the `GlueInitSettings` object.
 
 | Property | Description |
 |----------|-------------|
-| `web` | *Optional*. An object with two properties: `config` and `factory`. The `config` property accepts a configuration object for the [Glue42 Web](../../../../reference/core/latest/glue42%20web/index.html) library. The `factory` property accepts the factory function exposed by Glue42 Web. You should define this object if your application is a Web Client. |
-| `webPlatform` | *Optional*. An object with two properties: `config` and `factory`. The `config` property accepts a configuration object for the [Web Platform](https://www.npmjs.com/package/@glue42/web-platform) library. The `factory` property accepts the factory function exposed by Glue42 Web Platform. You should define this object if your application is a [Web Platform](../../web-platform/overview/index.html) application (or "Main application") in the context of [**Glue42 Core**](https://glue42.com/core/). |
-| `desktop` | *Optional*. An object with two properties: `config` and `factory`. The `config` property accepts a configuration object for the [@glue42/desktop](https://www.npmjs.com/package/@glue42/desktop) library used in [**Glue42 Enterprise**](https://glue42.com/enterprise/). The `factory` property accepts the factory function exposed by the library. You should define this object if your application is a [**Glue42 Enterprise**](https://glue42.com/enterprise/) application. |
+| `web` | *Optional*. An object with two properties: `config` and `factory`. The `config` property accepts a configuration object for the [Glue42 Web](../../../../reference/core/latest/glue42%20web/index.html) library. The `factory` property accepts the factory function exposed by Glue42 Web. You should define this object if your app is a Web Client. |
+| `webPlatform` | *Optional*. An object with two properties: `config` and `factory`. The `config` property accepts a configuration object for the [Web Platform](https://www.npmjs.com/package/@glue42/web-platform) library. The `factory` property accepts the factory function exposed by Glue42 Web Platform. You should define this object if your app is a [Web Platform](../../web-platform/overview/index.html) app (or "Main app") in the context of [**Glue42 Core**](https://glue42.com/core/). |
+| `desktop` | *Optional*. An object with two properties: `config` and `factory`. The `config` property accepts a configuration object for the [@glue42/desktop](https://www.npmjs.com/package/@glue42/desktop) library used in [**Glue42 Enterprise**](https://glue42.com/enterprise/). The `factory` property accepts the factory function exposed by the library. You should define this object if your app is a [**Glue42 Enterprise**](https://glue42.com/enterprise/) app. |
 
-*Note that you cannot define a `web` and `webPlatform` property at the same time, but you can define one of them together with `desktop`. This is useful if you want your application to have different initialization characteristics in [**Glue42 Core**](https://glue42.com/core/) and [**Glue42 Enterprise**](https://glue42.com/enterprise/).*
+*Note that you can't define a `web` and `webPlatform` property at the same time, but you can define one of them together with `desktop`. This is useful if you want your app to have different initialization characteristics in [**Glue42 Core**](https://glue42.com/core/) and [**Glue42 Enterprise**](https://glue42.com/enterprise/).*
 
 All properties are optional, but it is recommended that you provide the factory functions explicitly. If no factory functions are provided, the library will try to select an appropriate function attached to the global `window` object.
 
@@ -117,7 +117,7 @@ To access the Glue42 Web APIs, initialize and (optionally) configure the [Glue42
 
 - #### GlueProvider
 
-Add the `<GlueProvider />` component by wrapping your other components inside it (preferably the root one). Pass the settings object to the `<GlueProvider />`. It will initialize the [Glue42 Web](../../../../reference/core/latest/glue42%20web/index.html) library and make the Glue42 Web APIs available in your application by setting the returned `glue` object as the value of `GlueContext`:
+Add the `<GlueProvider />` component by wrapping your other components inside it (preferably the root one). Pass the settings object to the `<GlueProvider />`. It will initialize the [Glue42 Web](../../../../reference/core/latest/glue42%20web/index.html) library and make the Glue42 Web APIs available in your app by setting the returned `glue` object as the value of `GlueContext`:
 
 ```javascript
 //index.js

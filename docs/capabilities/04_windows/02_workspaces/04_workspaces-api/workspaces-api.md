@@ -14,7 +14,7 @@ Get the [`Frame`](../../../../reference/core/latest/workspaces/index.html#Frame)
 
 ```javascript
 // This method will return the Frame of the current window.
-// If an error is thrown, the window is not part of a Workspace.
+// If an error is thrown, the window isn't part of a Workspace.
 const frame = await glue.workspaces.getMyFrame().catch(console.error);
 ```
 
@@ -123,9 +123,9 @@ const isFrameInitialized = myFrame.isInitialized;
 
 ## Workspace
 
-A [`Workspace`](../../../../reference/core/latest/workspaces/index.html#Workspace) contains one or more application windows arranged in columns, rows or groups.
+A [`Workspace`](../../../../reference/core/latest/workspaces/index.html#Workspace) contains one or more app windows arranged in columns, rows or groups.
 
-*A [`Group`](../../../../reference/core/latest/workspaces/index.html#Group) is a Workspace element that holds tabbed windows. If a window is placed directly in a [`Column`](../../../../reference/core/latest/workspaces/index.html#Column) or a [`Row`](../../../../reference/core/latest/workspaces/index.html#Row), it will be static and without a tab - the user will not be able to move it or close it and manipulating it will be possible only through the API.*
+*A [`Group`](../../../../reference/core/latest/workspaces/index.html#Group) is a Workspace element that holds tabbed windows. If a window is placed directly in a [`Column`](../../../../reference/core/latest/workspaces/index.html#Column) or a [`Row`](../../../../reference/core/latest/workspaces/index.html#Row), it will be static and without a tab - the user won't be able to move it or close it and manipulating it will be possible only through the API.*
 
 You can use the [`frame`](../../../../reference/core/latest/workspaces/index.html#Workspace-frame) property of a Workspace to get a reference to the [`Frame`](../../../../reference/core/latest/workspaces/index.html#Frame) containing it.
 
@@ -141,7 +141,7 @@ To get the Workspace of the current window, use the [`getMyWorkspace()`](../../.
 
 ```javascript
 // This method will return the Workspace of the current window.
-// If an error is thrown, the window is not part of a Workspace.
+// If an error is thrown, the window isn't part of a Workspace.
 const workspace = await glue.workspaces.getMyWorkspace().catch(console.error);
 ```
 
@@ -198,7 +198,7 @@ const workspace = await myFrame.restoreWorkspace("myWorkspace");
 
 ### Creating Workspaces
 
-You can create Workspaces runtime by using the [`createWorkspace()`](../../../../reference/core/latest/workspaces/index.html#API-createWorkspace) method available at top level of the API and on a [`Frame`](../../../../reference/core/latest/workspaces/index.html#Frame) instance. Using the `createWorkspace()` method, however, may often be quite inconvenient as every time you want to create a Workspace you will have to pass a JSON object describing a full Workspace Layout. This Layout can quickly become very complex depending on the number and arrangement of applications participating in it. Below is an example of creating a [`Workspace`](../../../../reference/core/latest/workspaces/index.html#Workspace) by passing a [`WorkspaceDefinition`](../../../../reference/core/latest/workspaces/index.html#WorkspaceDefinition) with only two applications arranged in a single column:
+You can create Workspaces runtime by using the [`createWorkspace()`](../../../../reference/core/latest/workspaces/index.html#API-createWorkspace) method available at top level of the API and on a [`Frame`](../../../../reference/core/latest/workspaces/index.html#Frame) instance. Using the `createWorkspace()` method, however, may often be quite inconvenient as every time you want to create a Workspace you will have to pass a JSON object describing a full Workspace Layout. This Layout can quickly become very complex depending on the number and arrangement of apps participating in it. Below is an example of creating a [`Workspace`](../../../../reference/core/latest/workspaces/index.html#Workspace) by passing a [`WorkspaceDefinition`](../../../../reference/core/latest/workspaces/index.html#WorkspaceDefinition) with only two apps arranged in a single column:
 
 ```javascript
 // Workspace definition.
@@ -229,7 +229,7 @@ const definition = {
 const workspace = await glue.workspaces.createWorkspace(definition);
 ```
 
-*If you insert an empty [`Column`](../../../../reference/core/latest/workspaces/index.html#Column), [`Row`](../../../../reference/core/latest/workspaces/index.html#Row) or [`Group`](../../../../reference/core/latest/workspaces/index.html#Group) element in a Workspace (without a window as its content), it will be visually represented in the Workspace as an empty space with a grey background and a button in the middle from which the user will be able to add an application. The user will not be able to move or close this empty element.*
+*If you insert an empty [`Column`](../../../../reference/core/latest/workspaces/index.html#Column), [`Row`](../../../../reference/core/latest/workspaces/index.html#Row) or [`Group`](../../../../reference/core/latest/workspaces/index.html#Group) element in a Workspace (without a window as its content), it will be visually represented in the Workspace as an empty space with a grey background and a button in the middle from which the user will be able to add an app. The user won't be able to move or close this empty element.*
 
 #### Workspaces Builder API
 
@@ -364,7 +364,7 @@ The Workspaces API offers various methods for finding elements in a Workspace - 
 
 #### Box Elements
 
-[`Box`](../../../../reference/core/latest/workspaces/index.html#Box) elements are Workspace elements that can contain other Workspace elements - [`Row`](../../../../reference/core/latest/workspaces/index.html#Row), [`Column`](../../../../reference/core/latest/workspaces/index.html#Column) and [`Group`](../../../../reference/core/latest/workspaces/index.html#Group). These elements are the building blocks of a Workspace Layout, while the actual windows (applications) can be viewed as their content.
+[`Box`](../../../../reference/core/latest/workspaces/index.html#Box) elements are Workspace elements that can contain other Workspace elements - [`Row`](../../../../reference/core/latest/workspaces/index.html#Row), [`Column`](../../../../reference/core/latest/workspaces/index.html#Column) and [`Group`](../../../../reference/core/latest/workspaces/index.html#Group). These elements are the building blocks of a Workspace Layout, while the actual windows (apps) can be viewed as their content.
 
 To get all box elements in a Workspace, use the [`getAllBoxes()`](../../../../reference/core/latest/workspaces/index.html#Workspace-getAllBoxes) method of a Workspace instance:
 
@@ -570,7 +570,7 @@ const myWorkspace = await glue.workspaces.getMyWorkspace();
 await myWorkspace.resume();
 ```
 
-*For more details on how to configure Workspace hibernation, see [Hibernation](../enabling-workspaces/index.html#main_application-hibernation) in the Enabling Workspaces section.*
+*For more details on how to configure Workspace hibernation, see [Hibernation](../enabling-workspaces/index.html#main_app-hibernation) in the Enabling Workspaces section.*
 
 ### Loading Strategies
 
@@ -581,7 +581,7 @@ const options = { loadingStrategy: "lazy" };
 const workspace = await glue.workspaces.restoreWorkspace("My Workspace", options);
 ```
 
-*For more details on how to configure Workspace loading strategies, see [Loading Strategies](../enabling-workspaces/index.html#main_application-loading_strategies) in the Enabling Workspaces section.*
+*For more details on how to configure Workspace loading strategies, see [Loading Strategies](../enabling-workspaces/index.html#main_app-loading_strategies) in the Enabling Workspaces section.*
 
 ### Lockdown
 
@@ -776,7 +776,7 @@ await glue.workspaces.layouts.delete("workspace-one");
 
 ## Workspace Context
 
-Each Workspace instance has a dedicated context (based on [Shared Contexts](../../../data-sharing-between-apps/shared-contexts/index.html)). Use the Workspace context to pass custom data to the Workspace applications when creating or restoring a Workspace.
+Each Workspace instance has a dedicated context (based on [Shared Contexts](../../../data-sharing-between-apps/shared-contexts/index.html)). Use the Workspace context to pass custom data to the Workspace apps when creating or restoring a Workspace.
 
 ### Initial
 
@@ -902,7 +902,7 @@ workspaceWindow.onRemoved((window) => {
 
 ### Restoring and Closing Workspaces
 
-The application below demonstrates how to restore and close programmatically already defined Workspace Layouts. Click the "Open" button of either of the two defined Workspaces to open an instance of it. The application will log the ID of the newly opened instance and provide a "Close" button for closing this particular Workspace instance. You can also define a custom context which the restored Workspace will pass to all applications participating in it. You can manipulate freely the restored Workspaces, as in the previous example.
+The app below demonstrates how to restore and close programmatically already defined Workspace Layouts. Click the "Open" button of either of the two defined Workspaces to open an instance of it. The app will log the ID of the newly opened instance and provide a "Close" button for closing this particular Workspace instance. You can also define a custom context which the restored Workspace will pass to all apps participating in it. You can manipulate freely the restored Workspaces, as in the previous example.
 
 *Keep in mind that if you create and save a new Workspace, you will have to refresh the app to see the newly saved Workspace Layout. If you close a restored Workspace directly from its frame and then try to close it from the "Close" button for its instance, the app will show an error that this Workspace has already been closed.*
 
@@ -915,13 +915,13 @@ The application below demonstrates how to restore and close programmatically alr
 
 ### Manipulating a Workspace
 
-The application above opens a fully functioning Workspace. There are multiple registered apps which you can use to customize the Workspace Layout. You can:
+The app above opens a fully functioning Workspace. There are multiple registered apps which you can use to customize the Workspace Layout. You can:
 
 - drag and drop the already opened apps to form new rows, columns or window groups;
 - maximize and restore a window or window group;
 - eject a window from a Workspace;
 - reorder the window and Workspace tabs;
-- add new application instances to the current Workspace (in the current column, row or group);
+- add new app instances to the current Workspace (in the current column, row or group);
 - resize the windows in the Workspace by dragging their borders;
 - close and restore a Workspace within the same Frame;
 - create a new Workspace, customize its Layout and save it;

@@ -2,7 +2,7 @@
 
 The Notifications API is accessible through the [`glue.notifications`](../../../reference/core/latest/notifications/index.html) object.
 
-To raise a notification from your application, use the [`raise()`](../../../reference/core/latest/notifications/index.html#API-raise) method of the API. The method accepts as an argument a required [`RaiseOptions`](../../../reference/core/latest/notifications/index.html#RaiseOptions) object with settings for the notification you want to raise:
+To raise a notification from your app, use the [`raise()`](../../../reference/core/latest/notifications/index.html#API-raise) method of the API. The method accepts as an argument a required [`RaiseOptions`](../../../reference/core/latest/notifications/index.html#RaiseOptions) object with settings for the notification you want to raise:
 
 ```javascript
 const options = {
@@ -60,7 +60,7 @@ notification.onclick = () => console.log("Notification was clicked.");
 
 ### Interop Click Handler
 
-You can also use the `clickInterop` property of the [`RaiseOptions`](../../../reference/core/latest/notifications/index.html#RaiseOptions) object to specify an Interop method that will be invoked when the user clicks on the notification. For instance, when another application has [registered an Interop method](../../data-sharing-between-apps/interop/index.html#method_registration):
+You can also use the `clickInterop` property of the [`RaiseOptions`](../../../reference/core/latest/notifications/index.html#RaiseOptions) object to specify an Interop method that will be invoked when the user clicks on the notification. For instance, when another app has [registered an Interop method](../../data-sharing-between-apps/interop/index.html#method_registration):
 
 ```javascript
 const methodName = "HandleNotificationClick";
@@ -100,7 +100,7 @@ const notification = await glue.notifications.raise(options);
 
 ## Notification Actions
 
-You can create action buttons for the notification. When the user clicks on an action button, the specified callbacks will be invoked. 
+You can create action buttons for the notification. When the user clicks on an action button, the specified callbacks will be invoked.
 
 ![Actions](../../../images/notifications/actions.png)
 
@@ -131,7 +131,7 @@ See below how to create standard notification actions (actions that don't requir
 
 The [`NotificationAction`](../../../reference/core/latest/notifications/index.html#NotificationAction) object provides an `interop` property which you can use to [invoke Interop methods](../../data-sharing-between-apps/interop/index.html#method_invocation) when the user clicks an action button in the notification.
 
-First, [register an Interop method](../../data-sharing-between-apps/interop/index.html#method_registration) from another application:
+First, [register an Interop method](../../data-sharing-between-apps/interop/index.html#method_registration) from another app:
 
 ```javascript
 const methodName = "HandleNotificationClick";

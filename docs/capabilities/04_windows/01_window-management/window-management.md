@@ -1,6 +1,6 @@
 ## Overview
 
-Using the [Window Management API](../../../reference/core/latest/windows/index.html), your application can easily open and manipulate browser windows. This allows you to transform your traditional single-window web app into a multi-window native-like web application. The Window Management API enables applications to:
+Using the [Window Management API](../../../reference/core/latest/windows/index.html), your app can easily open and manipulate browser windows. This allows you to transform your traditional single-window web app into a multi-window native-like web app. The Window Management API enables apps to:
 
 - open multiple windows;
 - manipulate the position and size of opened windows;
@@ -9,7 +9,7 @@ Using the [Window Management API](../../../reference/core/latest/windows/index.h
 
 ## Configuration
 
-Use the `windows` property of the configuration object when initializing the Glue42 [Web Platform](https://www.npmjs.com/package/@glue42/web-platform) library in the [Main application](../../../developers/core-concepts/web-platform/overview/index.html) to specify custom settings for the Window Management library:
+Use the `windows` property of the configuration object when initializing the Glue42 [Web Platform](https://www.npmjs.com/package/@glue42/web-platform) library in the [Main app](../../../developers/core-concepts/web-platform/overview/index.html) to specify custom settings for the Window Management library:
 
 ```javascript
 import GlueWebPlatform from "@glue42/web-platform";
@@ -33,8 +33,8 @@ const { glue } = await GlueWebPlatform(config);
 
 | Property | Description |
 |----------|-------------|
-| `windowResponseTimeout` | Sets the timeout (in ms) that the Glue42 library will wait for a valid success response from the target window after the Glue42 library has been initialized and a window operation is being executed on the window object (e.g., `myWindow.moveTo(200, 200)`). If no response has been received within this period, the Glue42 library will assume that either the window is not Glue42 enabled, or Glue42 has not been initialized yet. *Note that this timeout is valid only for operations on the window object - it doesn't affect a `glue.windows.open()` call, for example.*  |
-| `defaultWindowOpenBounds` | Default bounds for opening a new window or an application instance. |
+| `windowResponseTimeout` | Sets the timeout in milliseconds that the Glue42 library will wait for a valid success response from the target window after the Glue42 library has been initialized and a window operation is being executed on the window object (e.g., `myWindow.moveTo(200, 200)`). If no response has been received within this period, the Glue42 library will assume that either the window isn't Glue42 enabled, or Glue42 hasn't been initialized yet. *Note that this timeout is valid only for operations on the window object - it doesn't affect a `glue.windows.open()` call, for example.*  |
+| `defaultWindowOpenBounds` | Default bounds for opening a new window or an app instance. |
 
 The [Live Examples](#live_examples) section demonstrates using the Window Management API. To see the code and experiment with it, open the embedded examples directly in [CodeSandbox](https://codesandbox.io).
 
@@ -99,7 +99,7 @@ The following table lists all supported URL parameters for opening PDF files:
 |-----------|-------------|----------|
 | `page` | Specifies which page to display. Accepts an integer as a value. The first page of the document has a value of 1. | To open the PDF file to page 3, use `page=3`. |
 | `toolbar` | Whether to enable or disable the PDF toolbar. Accepts 0 or 1 as values. | To hide the PDF toolbar, use `toolbar=0`. |
-| `zoom` | Specifies the zoom factor and also the vertical and horizontal scroll position of the page in regard to the top left corner of the window. Accepts integer or floating point values. | To set the zoom factor to 150.5%, use `zoom=150.5`. To set the zoom factor to 120% and scroll the page 200px vertically and 100px horizontally, use `zoom=120,200,100`. 
+| `zoom` | Specifies the zoom factor and also the vertical and horizontal scroll position of the page in regard to the top left corner of the window. Accepts integer or floating point values. | To set the zoom factor to 150.5%, use `zoom=150.5`. To set the zoom factor to 120% and scroll the page 200px vertically and 100px horizontally, use `zoom=120,200,100`.
 | `view` | Specifies the view mode of the page using values defined in the PDF language specification. See the possible values in the next table. Use the `page` parameter before `view`. | To fit the page in the window, use `view=Fit`. To fit the page vertically, use `view=FitV`. To fit the page horizontally and scroll it 200px vertically, use `view=FitH,200`. |
 
 The following table lists the possible values for the `view` parameter:
@@ -255,7 +255,7 @@ const bounds = {
 await myWindow.moveResize(bounds);
 ```
 
-*Note that programmatically moving and resizing the window of the [Main application](../../../developers/core-concepts/web-platform/overview/index.html) isn't possible.*
+*Note that programmatically moving and resizing the window of the [Main app](../../../developers/core-concepts/web-platform/overview/index.html) isn't possible.*
 
 ### Focus
 
@@ -265,7 +265,7 @@ To bring a window on focus, use the  [`focus()`](../../../reference/core/latest/
 await myWindow.focus();
 ```
 
-*Note that programmatically focusing the window of the [Main application](../../../developers/core-concepts/web-platform/overview/index.html) isn't possible.*
+*Note that programmatically focusing the window of the [Main app](../../../developers/core-concepts/web-platform/overview/index.html) isn't possible.*
 
 ### Close
 
@@ -275,15 +275,15 @@ To close a Glue42 Window, use the [`close()`](../../../reference/core/latest/win
 await myWindow.close();
 ```
 
-*Note that programmatically closing the window of the [Main application](../../../developers/core-concepts/web-platform/overview/index.html) isn't possible.*
+*Note that programmatically closing the window of the [Main app](../../../developers/core-concepts/web-platform/overview/index.html) isn't possible.*
 
 ## Context
 
-Each Glue42 Window has a dedicated [context](../../data-sharing-between-apps/shared-contexts/index.html). The window context is a JavaScript object which may contain any information regarding the window instance in the form of key/value pairs. 
+Each Glue42 Window has a dedicated [context](../../data-sharing-between-apps/shared-contexts/index.html). The window context is a JavaScript object which may contain any information regarding the window instance in the form of key/value pairs.
 
 Contexts can be set/passed initially on window creation and updated at runtime. Context changes can be tracked by subscribing to an event which fires when the window context has been updated (see [Window Events](#window_events)).
 
-*Note that saving large volumes of custom data as window context (e.g., thousands of lines of table data) can lead to significant delays. A user usually has several (in some cases - many) running applications and/or Workspaces (which can also contain many apps) and if one or more of the apps saves large amounts of context data, this will significantly slow down the saving process (e.g., on shutdown or when saving a layout). Saving custom context works best with smaller amounts of data. If your application needs to save large amounts of data, you have to think about how to design this process better - for instance, you may store IDs, indices, etc., as context data, save the actual data to a database and when you restore the application, fetch the data using the data IDs saved as window context.*
+*Note that saving large volumes of custom data as window context (e.g., thousands of lines of table data) can lead to significant delays. A user usually has several (in some cases - many) running apps and/or Workspaces (which can also contain many apps) and if one or more of the apps saves large amounts of context data, this will significantly slow down the saving process (e.g., on shutdown or when saving a layout). Saving custom context works best with smaller amounts of data. If your app needs to save large amounts of data, you have to think about how to design this process better - for instance, you may store IDs, indices, etc., as context data, save the actual data to a database and when you restore the app, fetch the data using the data IDs saved as window context.*
 
 ### Get
 
@@ -370,9 +370,9 @@ myWindow.onContextUpdated(contextUpdatedHandler);
 
 ### Opening Windows
 
-The application below demonstrates opening a new window with basic configuration (context and size) by using the [`open()`](../../../reference/core/latest/windows/index.html#API-open) method of the Window Management API.
+The app below demonstrates opening a new window with basic configuration (context and size) by using the [`open()`](../../../reference/core/latest/windows/index.html#API-open) method of the Window Management API.
 
-Use the input fields in Application A to assign a name (required) to the new window and set the window context and size. Click the "Open Window" button to open a new window.
+Use the input fields in App A to assign a name (required) to the new window and set the window context and size. Click the "Open Window" button to open a new window.
 
 <a href="https://codesandbox.io/s/github/Glue42/core/tree/master/live-examples/windows/window-opening" target="_blank" class="btn btn-primary"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 296" preserveAspectRatio="xMidYMid meet" width="24" height="24" version="1.1" style="pointer-events: auto;">
         <path fill="#000000" d="M 115.498 261.088 L 115.498 154.479 L 23.814 101.729 L 23.814 162.502 L 65.8105 186.849 L 65.8105 232.549 L 115.498 261.088 Z M 139.312 261.715 L 189.917 232.564 L 189.917 185.78 L 232.186 161.285 L 232.186 101.274 L 139.312 154.895 L 139.312 261.715 Z M 219.972 80.8277 L 171.155 52.5391 L 128.292 77.4107 L 85.104 52.5141 L 35.8521 81.1812 L 127.766 134.063 L 219.972 80.8277 Z M 0 222.212 L 0 74.4949 L 127.987 0 L 256 74.182 L 256 221.979 L 127.984 295.723 L 0 222.212 Z" style="pointer-events: auto;"></path>
@@ -383,7 +383,7 @@ Use the input fields in Application A to assign a name (required) to the new win
 
 <!-- ### Window Discovery
 
-The application below demonstrates discovering a window by name.
+The app below demonstrates discovering a window by name.
 
 Open several new windows by using the input fields in App A to assign a name (required) to the new window and set the window context, size and position. Click the "Open Window" button to open a new window.
 
@@ -393,11 +393,11 @@ example 11 -->
 
 ### Window Events
 
-The applications below demonstrate handling window events - opening and closing windows.
+The apps below demonstrate handling window events - opening and closing windows.
 
-On load, Application A and Application B subscribe for the [`onWindowAdded()`](../../../reference/core/latest/windows/index.html#API-onWindowAdded) and the [`onWindowRemoved()`](../../../reference/core/latest/windows/index.html#API-onWindowRemoved) events of the Window Management API and will print to the page every time a new window is opened or an existing window is closed. 
+On load, App A and App B subscribe for the [`onWindowAdded()`](../../../reference/core/latest/windows/index.html#API-onWindowAdded) and the [`onWindowRemoved()`](../../../reference/core/latest/windows/index.html#API-onWindowRemoved) events of the Window Management API and will print to the page every time a new window is opened or an existing window is closed.
 
-Open several new windows by using the input fields in Application A to assign a name (required) to the new window and set the window context and size. Click the "Open Window" button to open a new window.
+Open several new windows by using the input fields in App A to assign a name (required) to the new window and set the window context and size. Click the "Open Window" button to open a new window.
 
 <a href="https://codesandbox.io/s/github/Glue42/core/tree/master/live-examples/windows/window-events" target="_blank" class="btn btn-primary"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 296" preserveAspectRatio="xMidYMid meet" width="24" height="24" version="1.1" style="pointer-events: auto;">
         <path fill="#000000" d="M 115.498 261.088 L 115.498 154.479 L 23.814 101.729 L 23.814 162.502 L 65.8105 186.849 L 65.8105 232.549 L 115.498 261.088 Z M 139.312 261.715 L 189.917 232.564 L 189.917 185.78 L 232.186 161.285 L 232.186 101.274 L 139.312 154.895 L 139.312 261.715 Z M 219.972 80.8277 L 171.155 52.5391 L 128.292 77.4107 L 85.104 52.5141 L 35.8521 81.1812 L 127.766 134.063 L 219.972 80.8277 Z M 0 222.212 L 0 74.4949 L 127.987 0 L 256 74.182 L 256 221.979 L 127.984 295.723 L 0 222.212 Z" style="pointer-events: auto;"></path>
@@ -408,7 +408,7 @@ Open several new windows by using the input fields in Application A to assign a 
 
 <!-- ### Window Operations
 
-The application below demonstrates manipulating already opened windows.
+The app below demonstrates manipulating already opened windows.
 
 Open several new windows by using the input fields in App A to assign a name (required) to the new window and set the window context, size and position. Click the "Open Window" button to open a new window.
 

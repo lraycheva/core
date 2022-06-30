@@ -1,0 +1,5 @@
+## Layouts
+
+*Note that this [**Glue42 Core+**](https://glue42.com/core-plus/) feature is still under development. For more information, [contact us](https://glue42.com/contacts/) at `info@glue42.com`.*
+
+End-users in large enterprises often have multi-monitor setups on which they arrange the necessary apps in the most convenient way for executing daily tasks. The [**Glue42 Core+**](https://glue42.com/core-plus/) Layouts feature allows them to save and later restore the exact arrangement and context of their apps. Users can save multiple apps and [Workspaces](../workspaces/overview/index.html) in different Layouts, each corresponding to a specific task or workflow. Restoring the saved Layout happens with a single click and saves time and effort for finding, launching and arranging the desired apps.

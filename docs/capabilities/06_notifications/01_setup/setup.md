@@ -6,7 +6,7 @@ The [**Glue42 Core**](https://glue42.com/core/) Notifications API extends the DO
 
 ## Configuration
 
-[Raising notifications](../notifications-api/index.html#raising_notifications) without actions doesn't require any special setup of the [Main app](../../../developers/core-concepts/web-platform/overview/index.html) or the [Web Client](../../../developers/core-concepts/web-client/overview/index.html) applications.
+[Raising notifications](../notifications-api/index.html#raising_notifications) without actions doesn't require any special setup of the [Main app](../../../developers/core-concepts/web-platform/overview/index.html) or the [Web Client](../../../developers/core-concepts/web-client/overview/index.html) apps.
 
 If you want to raise a [notification with actions](../notifications-api/index.html#notification_actions), your [Main app](../../../developers/core-concepts/web-platform/overview/index.html) must register a [Service Worker](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API). There are two ways to register a Service Worker:
 
@@ -38,11 +38,11 @@ const config = {
 await GlueWebPlatform(config)
 ```
 
-Use this option if you need access to the Service Worker in some other application-specific logic as well. 
+Use this option if you need access to the Service Worker in some other app-specific logic as well.
 
 ## Glue42 Web Worker
 
-Defining a Service Worker is specific for each application and is outside the scope of [**Glue42 Core**](https://glue42.com/core/). In order for a [**Glue42 Core**](https://glue42.com/core/) project to be able to correctly process notification actions and their respective click logic, you must include the [`@glue42/web-worker`](https://www.npmjs.com/package/@glue42/web-worker) package in your Service Worker file.
+Defining a Service Worker is specific for each app and is outside the scope of [**Glue42 Core**](https://glue42.com/core/). In order for a [**Glue42 Core**](https://glue42.com/core/) project to be able to correctly process notification actions and their respective click logic, you must include the [`@glue42/web-worker`](https://www.npmjs.com/package/@glue42/web-worker) package in your Service Worker file.
 
 ### Initialization
 
