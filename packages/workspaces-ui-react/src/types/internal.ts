@@ -12,7 +12,6 @@ export interface ElementCreationWrapperState {
   saveWorkspacePopup?: SaveWorkspacePopupComponentProps & CreateElementRequestOptions;
   addApplicationPopup?: AddApplicationPopupComponentProps & CreateElementRequestOptions;
   addWorkspacePopup?: AddWorkspacePopupComponentProps & CreateElementRequestOptions;
-  shouldInit: boolean;
 }
 
 export interface WorkspacesWrapperProps {

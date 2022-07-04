@@ -1,3 +1,5 @@
+1.9.0
+feat: react 18 compatibility
 1.8.6
 chore: bump due to dependencies update
 1.8.5
