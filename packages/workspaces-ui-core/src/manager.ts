@@ -1140,7 +1140,7 @@ export class WorkspacesManager {
         });
 
         this._controller.emitter.onContainerMaximized((contentItem: GoldenLayout.ContentItem) => {
-            if (contentItem.config.type === "component") {
+            if (contentItem.type === "component") {
                 return;
             }
             const components = contentItem.getItemsByFilter((ci) => ci.type === "component");
@@ -1148,6 +1148,12 @@ export class WorkspacesManager {
             components.forEach((c) => {
                 this._frameController.maximizeTab(idAsString(c.config.id));
             });
+
+            contentItem.contentItems
+                .filter((ci) => ci.type === "component")
+                .map((c) => this.stateResolver.getWindowSummarySync(c.config.id)).forEach((ws) => {
+                    this.workspacesEventEmitter.raiseWindowEvent({ action: "maximized", payload: { windowSummary: ws } });
+                });
 
             const stacks = contentItem.getItemsByFilter((ci) => ci.type === "stack");
 
@@ -1169,7 +1175,7 @@ export class WorkspacesManager {
             const workspaceContentItem = store.getWorkspaceContentItem(workspace.id);
             const wrapper = new WorkspaceWrapper(this.stateResolver, workspace, workspaceContentItem, this.frameId);
 
-            if (wrapper.getMaximizedItemInRoot(contentItem.layoutManager)) {
+            if (wrapper.getMaximizedItemInRoot(contentItem.layoutManager) && !contentItem.parent.isRoot) {
                 this._controller.hideWorkspaceRootItem(workspace.id);
             }
 
@@ -1177,7 +1183,7 @@ export class WorkspacesManager {
         });
 
         this._controller.emitter.onContainerRestored((contentItem: GoldenLayout.ContentItem) => {
-            if (contentItem.config.type === "component") {
+            if (contentItem.type === "component") {
                 return;
             }
 
@@ -1186,6 +1192,12 @@ export class WorkspacesManager {
             components.forEach((c) => {
                 this._frameController.restoreTab(idAsString(c.config.id));
             });
+
+            contentItem.contentItems
+                .filter((ci) => ci.type === "component")
+                .map((c) => this.stateResolver.getWindowSummarySync(c.config.id)).forEach((ws) => {
+                    this.workspacesEventEmitter.raiseWindowEvent({ action: "restored", payload: { windowSummary: ws } });
+                });
 
             const stacks = contentItem.getItemsByFilter((ci) => ci.type === "stack");
 
@@ -1202,7 +1214,9 @@ export class WorkspacesManager {
             }, [[], []]);
 
             this._frameController.selectionChanged(toFront, toBack);
-            this._controller.showWorkspaceRootItem(idAsString(contentItem.layoutManager.root.config.id));
+            const workspaceId = idAsString(contentItem.layoutManager.root.config.id);
+            this._controller.showWorkspaceRootItem(workspaceId);
+            this._controller.refreshWorkspaceSize(workspaceId);
             this.reportLayoutStructure(contentItem.layoutManager);
         });
 

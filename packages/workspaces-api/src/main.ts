@@ -4,9 +4,10 @@ import { checkThrowCallback, nonEmptyStringDecoder, workspaceLayoutDecoder, work
 import { FrameStreamData, WorkspaceStreamData, WorkspaceSnapshotResult, WindowStreamData } from "./types/protocol";
 import { FrameCreateConfig, WorkspaceIoCCreateConfig } from "./types/ioc";
 import { Glue42Workspaces } from "./../workspaces";
+import { API } from "./../temp";
 import { WorkspacesController } from "./types/controller";
 
-export const composeAPI = (glue: any, ioc: IoC): Glue42Workspaces.API => {
+export const composeAPI = (glue: any, ioc: IoC): API => {
 
     const controller: WorkspacesController = ioc.controller;
 
@@ -218,7 +219,7 @@ export const composeAPI = (glue: any, ioc: IoC): Glue42Workspaces.API => {
             const workspace = ioc.getModel<"workspace">("workspace", workspaceConfig);
 
             const windowParent = workspace.getBox((parent) => parent.id === payload.windowSummary.parentId);
-            const foundWindow = windowParent.children.find((child) => child.type === "window" && child.positionIndex === payload.windowSummary.config.positionIndex);
+            const foundWindow = windowParent.children.find((child) => child.type === "window" && child.elementId === payload.windowSummary.itemId);
 
             callback(foundWindow as Glue42Workspaces.WorkspaceWindow);
         };
@@ -255,6 +256,52 @@ export const composeAPI = (glue: any, ioc: IoC): Glue42Workspaces.API => {
             callback({ windowId, workspaceId, frameId });
         };
         const unsubscribe = await controller.processGlobalSubscription(wrappedCallback, "window", "removed");
+        return unsubscribe;
+    };
+
+    const onWindowMaximized = async (callback: (swimlaneWindow: Glue42Workspaces.WorkspaceWindow) => void): Promise<Glue42Workspaces.Unsubscribe> => {
+        checkThrowCallback(callback);
+        const wrappedCallback = async (payload: WindowStreamData): Promise<void> => {
+            const snapshot = (await controller.getSnapshot(payload.windowSummary.config.workspaceId, "workspace")) as WorkspaceSnapshotResult;
+
+            const frameConfig: FrameCreateConfig = {
+                summary: snapshot.frameSummary
+            };
+            const frame = ioc.getModel<"frame">("frame", frameConfig);
+
+            const workspaceConfig: WorkspaceIoCCreateConfig = { frame, snapshot };
+
+            const workspace = ioc.getModel<"workspace">("workspace", workspaceConfig);
+
+            const windowParent = workspace.getBox((parent) => parent.id === payload.windowSummary.parentId);
+            const foundWindow = windowParent.children.find((child) => child.type === "window" && child.elementId === payload.windowSummary.itemId);
+
+            callback(foundWindow as Glue42Workspaces.WorkspaceWindow);
+        };
+        const unsubscribe = await controller.processGlobalSubscription(wrappedCallback, "window", "maximized");
+        return unsubscribe;
+    };
+
+    const onWindowRestored = async (callback: (swimlaneWindow: Glue42Workspaces.WorkspaceWindow) => void): Promise<Glue42Workspaces.Unsubscribe> => {
+        checkThrowCallback(callback);
+        const wrappedCallback = async (payload: WindowStreamData): Promise<void> => {
+            const snapshot = (await controller.getSnapshot(payload.windowSummary.config.workspaceId, "workspace")) as WorkspaceSnapshotResult;
+
+            const frameConfig: FrameCreateConfig = {
+                summary: snapshot.frameSummary
+            };
+            const frame = ioc.getModel<"frame">("frame", frameConfig);
+
+            const workspaceConfig: WorkspaceIoCCreateConfig = { frame, snapshot };
+
+            const workspace = ioc.getModel<"workspace">("workspace", workspaceConfig);
+
+            const windowParent = workspace.getBox((parent) => parent.id === payload.windowSummary.parentId);
+            const foundWindow = windowParent.children.find((child) => child.type === "window" && child.elementId === payload.windowSummary.itemId);
+
+            callback(foundWindow as Glue42Workspaces.WorkspaceWindow);
+        };
+        const unsubscribe = await controller.processGlobalSubscription(wrappedCallback, "window", "restored");
         return unsubscribe;
     };
 
@@ -307,5 +354,7 @@ export const composeAPI = (glue: any, ioc: IoC): Glue42Workspaces.API => {
         onWindowAdded,
         onWindowLoaded,
         onWindowRemoved,
+        onWindowMaximized,
+        onWindowRestored
     };
 };

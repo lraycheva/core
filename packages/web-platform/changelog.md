@@ -1,3 +1,5 @@
+1.12.8
+feat: added support for onWindowMaximized and onWindowRestored
 1.12.7
 feat: added support for the maximizationBoundary flag in workspaces
 1.12.6

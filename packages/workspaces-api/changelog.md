@@ -1,3 +1,5 @@
+1.15.2
+feat: added onWindowMaximized and onWindowRestored events
 1.15.1
 fix: improved the typings of the box definitions
 1.15.0

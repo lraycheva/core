@@ -2,7 +2,7 @@
     "extends": "../../tsconfig.json",
     "include": [
         "./src/**/*.ts"
-    ],
+, "temp.ts"    ],
     "exclude": [
         "node_modules",
         "dist"

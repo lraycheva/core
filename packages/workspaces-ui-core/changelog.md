@@ -1,3 +1,5 @@
+1.8.8
+feat: added implementation for onWindowMaximized and onWindowRestored events
 1.8.7
 feat: added support for maximizationBoundary
 1.8.6

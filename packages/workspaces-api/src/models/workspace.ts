@@ -451,7 +451,7 @@ export class Workspace implements Glue42Workspaces.Workspace {
 
             const foundWindow = windowParent.children.find((child) => {
 
-                return child.type === "window" && child.positionIndex === payload.windowSummary.config.positionIndex;
+                return child.type === "window" && child.elementId === payload.windowSummary.itemId;
             });
             callback(foundWindow as Glue42Workspaces.WorkspaceWindow);
         };
@@ -504,6 +504,58 @@ export class Workspace implements Glue42Workspaces.Workspace {
 
         const config: SubscriptionConfig = {
             action: "loaded",
+            eventType: "window",
+            scope: "workspace",
+            scopeId: id,
+            callback: wrappedCallback
+        };
+
+        const unsubscribe = await getData(this).controller.processLocalSubscription(config, id);
+        return unsubscribe;
+    }
+
+    public async onWindowMaximized(callback:(window:Glue42Workspaces.WorkspaceWindow)=>void):Promise<Glue42Workspaces.Unsubscribe>{
+        checkThrowCallback(callback);
+        const id = getData(this).id;
+        const wrappedCallback = async (payload: WindowStreamData): Promise<void> => {
+            await this.refreshReference();
+            const windowParent = this.getBox((parent) => parent.id === payload.windowSummary.parentId);
+
+            const foundWindow = windowParent.children.find((child) => {
+
+                return child.type === "window" && child.elementId === payload.windowSummary.itemId;
+            });
+            callback(foundWindow as Glue42Workspaces.WorkspaceWindow);
+        };
+
+        const config: SubscriptionConfig = {
+            action: "maximized",
+            eventType: "window",
+            scope: "workspace",
+            scopeId: id,
+            callback: wrappedCallback
+        };
+
+        const unsubscribe = await getData(this).controller.processLocalSubscription(config, id);
+        return unsubscribe;
+    }
+
+    public async onWindowRestored(callback:(window:Glue42Workspaces.WorkspaceWindow)=>void):Promise<Glue42Workspaces.Unsubscribe>{
+        checkThrowCallback(callback);
+        const id = getData(this).id;
+        const wrappedCallback = async (payload: WindowStreamData): Promise<void> => {
+            await this.refreshReference();
+            const windowParent = this.getBox((parent) => parent.id === payload.windowSummary.parentId);
+
+            const foundWindow = windowParent.children.find((child) => {
+
+                return child.type === "window" && child.elementId === payload.windowSummary.itemId;
+            });
+            callback(foundWindow as Glue42Workspaces.WorkspaceWindow);
+        };
+
+        const config: SubscriptionConfig = {
+            action: "restored",
             eventType: "window",
             scope: "workspace",
             scopeId: id,
