@@ -10,6 +10,7 @@ import { newContextsSubscribe,
     channelsUpdate
 } from "../utils";
 import { SystemChannel } from '../types/channel';
+import { addAppChannelSubscription } from './appChannelsSubscriptions';
 
 export const createSystemChannel = (glChannel: Glue42.Channels.ChannelContext): SystemChannel => {
     const channel = {
@@ -54,10 +55,6 @@ export const createSystemChannel = (glChannel: Glue42.Channels.ChannelContext): 
         const handler = arguments.length === 2 ? handlerInput : contextTypeInput;
 
         const subHandler = (data: any): void => {
-        /*  NB! Data from Channels API come in format: { fdc3_type: data } so it needs to be transformed to the initial fdc3 data { type: string, ...data }
-            Ex: { type: "contact", name: "John Smith", id: { email: "john.smith@company.com" }} is broadcasted from FDC3,  
-            it  will come in the handler as { fdc3_contact: { name: "John Smith", id: { email: "john.smith@company.com" }}} 
-        */
             if (contextType) {
                 if (data.type === contextType) {
                     handler(data);
@@ -125,10 +122,6 @@ export const createAppChannel = (id: string): Channel => {
         const handler = arguments.length === 2 ? handlerInput : contextTypeInput;
 
         const subHandler = (data: any): void => {
-        /*  NB! Data from Channels API come in format: { fdc3_type: data } so it needs to be transformed to the initial fdc3 data { type: string, ...data }
-            Ex: { type: "contact", name: "John Smith", id: { email: "john.smith@company.com" }} is broadcasted from FDC3,  
-            it  will come in the handler as { fdc3_contact: { name: "John Smith", id: { email: "john.smith@company.com" }}} 
-        */     
             if (contextType) {
                 if (data.type === contextType) {
                     handler(data);
@@ -140,7 +133,9 @@ export const createAppChannel = (id: string): Channel => {
     
         const unsubFunc = newContextsSubscribe(channel.id, subHandler);
 
-        return AsyncListener(unsubFunc);
+        const listener = addAppChannelSubscription(channel.id, subHandler, AsyncListener(unsubFunc));
+
+        return listener;
     }
 
     return {

@@ -14,6 +14,7 @@ import { ChannelsAPI } from "../types/channelsAPI";
 import { nanoid } from "nanoid";
 import { createAppChannel, createSystemChannel } from './channel';
 import { SystemChannel } from '../types/channel';
+import { addAppChannelSubscriptions, addAppChannelSubscription, removeAppChannelsActiveListeners } from './appChannelsSubscriptions';
 
 interface PendingSubscription {
     id: string;
@@ -87,7 +88,7 @@ const createChannelsAgent = (): ChannelsAPI => {
         await initDone;
 
         if (typeof channelId !== "undefined") {
-            setCurrentChannel(channels[channelId]);
+            await setCurrentChannel(channels[channelId]);
         }
     };
 
@@ -183,7 +184,7 @@ const createChannelsAgent = (): ChannelsAPI => {
         } else {
             await tryLeaveSystem();
             // Used only for joining an app channel. For system channels it's invoked by handleSwitchChannelUI()
-            setCurrentChannel(channel);
+            await setCurrentChannel(channel);
         }
     };
 
@@ -197,6 +198,10 @@ const createChannelsAgent = (): ChannelsAPI => {
         await initDone;
 
         await tryLeaveSystem();
+
+        if (currentChannel && currentChannel.type === "app") {
+            removeAppChannelsActiveListeners(currentChannel.id);
+        }
 
         currentChannel = null;
     };
@@ -263,20 +268,41 @@ const createChannelsAgent = (): ChannelsAPI => {
 
         const unsubFunc = subscribe(onNewData);
 
-        return AsyncListener(unsubFunc);
-    }
+        if (type === "app") {
+            const listener = addAppChannelSubscription(id, onNewData, AsyncListener(unsubFunc));
+            return listener;
+        }
 
-    const setCurrentChannel = (newChannel: Channel): void => {
-        removeActiveListeners();
+        return AsyncListener(unsubFunc);
+    };
+
+    const setCurrentChannel = async(newChannel: Channel): Promise<void> => {
+        removeAllActiveListeners();
 
         currentChannel = newChannel;
+
+        await addAllSubscriptionsForChannel(newChannel);
+    };
+
+    const removeAllActiveListeners = () => {
+        removeActiveListenersFromPendingSubs();
+
+        if (currentChannel && currentChannel.type === "app") {
+            removeAppChannelsActiveListeners(currentChannel.id);
+        }
+    };
+
+    const addAllSubscriptionsForChannel = async(channel: Channel) => {
+        if (channel.type === "app") {
+            await addAppChannelSubscriptions(channel.id);
+        }
 
         addPendingSubscriptions();
     };
 
-    const removeActiveListeners = (): void => {
+    const removeActiveListenersFromPendingSubs = (): void => {
         activeListeners = activeListeners.filter(listener => listener.unsubscribe());
-    }
+    };
 
     const addPendingSubscriptions = (): void => {
         pendingSubscriptions.forEach((pendingSubscription) => {
@@ -288,7 +314,7 @@ const createChannelsAgent = (): ChannelsAPI => {
 
             activeListeners.push(listener);
         });
-    }
+    };
 
     return {
         getSystemChannels,

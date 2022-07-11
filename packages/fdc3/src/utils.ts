@@ -18,7 +18,7 @@ export const newContextsSubscribe = (id: string, callback: (data: any, delta: an
             return;
         }
 
-        if (extraData.updaterId === (window as WindowType).glue.interop.instance.peerId) {
+        if (extraData && extraData.updaterId === (window as WindowType).glue.interop.instance.peerId) {
             return;
         }
 
