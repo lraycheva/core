@@ -1,3 +1,5 @@
+1.8.9
+chore: updated @glue42/desktop@5.14.0
 1.8.8
 feat: added implementation for onWindowMaximized and onWindowRestored events
 1.8.7

@@ -1,3 +1,5 @@
+1.12.9
+chore: updated @glue42/desktop@5.14.0
 1.12.8
 feat: added support for onWindowMaximized and onWindowRestored
 1.12.7

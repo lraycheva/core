@@ -1,3 +1,5 @@
+2.6.10
+chore: updated @glue42/desktop@5.14.0
 2.6.9
 chore: bump due to dependencies update
 2.6.7

@@ -1,3 +1,6 @@
+2.5.9:
+chore: updated @glue42/desktop@5.14.0
+fix: leaving app channel should unsubscribe all listeners
 2.5.8
 chore: bump due to dependencies update
 2.5.7
