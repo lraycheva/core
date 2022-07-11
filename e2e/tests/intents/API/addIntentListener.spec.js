@@ -21,8 +21,6 @@ describe('addIntentListener()', () => {
 
             done('addIntentListener() should have thrown an error because intent wasn\'t of type string or object!');
         } catch (error) {
-            expect(error.message).to.equal('expected a value matching one of the decoders, got the errors ["at error: expected a string, got a number", "at error: expected an object, got a number"]');
-
             done();
         }
     });
@@ -33,8 +31,6 @@ describe('addIntentListener()', () => {
 
             done('addIntentListener() should have thrown an error because intent.intent wasn\'t of type string or object!');
         } catch (error) {
-            expect(error.message).to.equal('expected a value matching one of the decoders, got the errors ["at error: expected a string, got an object", "at error.intent: expected a string, got a number"]');
-
             done();
         }
     });
@@ -45,8 +41,6 @@ describe('addIntentListener()', () => {
 
             done('addIntentListener() should have thrown an error because handler wasn\'t of type function!');
         } catch (error) {
-            expect(error.message).to.equal('Cannot add intent listener, because the provided handler is not a function!');
-
             done();
         }
     });
@@ -84,15 +78,7 @@ describe('addIntentListener()', () => {
 
         glue.intents.raise(intentName)
             .then(() => done(`raise() should have thrown an error because an intent with name ${intentName} shouldn't be present!`))
-            .catch((error) => {
-                try {
-                    expect(error.message).to.equal(`Internal Platform Communication Error. Attempted operation: "raiseIntent" with data: {"intent":"${intentName}"}.  -> Inner message: The platform rejected operation raiseIntent for domain: intents with reason: "Intent ${intentName} not found!"`);
-
-                    done()
-                } catch (error) {
-                    done(error);
-                }
-            });
+            .catch((error) => done());
     });
 
     it('Should throw an error when called twice for the same intent.', (done) => {
@@ -106,8 +92,6 @@ describe('addIntentListener()', () => {
 
             done(`addIntentListener() should have thrown an error because a listener for intent with name ${intentName} is already present!`);
         } catch (error) {
-            expect(error.message).to.equal(`Intent listener for intent ${intentName} already registered!`);
-
             done();
         }
     });
@@ -124,5 +108,48 @@ describe('addIntentListener()', () => {
 
         unsubObj = glue.intents.addIntentListener(intentName, () => { });
         unsubObj.intent = intentName;
+    });
+
+    it('Should find interop method with such intent name after adding an intent listener', (done) => {
+        const GlueWebIntentsPrefix = "Tick42.FDC3.Intents.";
+        const intentName = 'test-intent';
+
+        unsubObj = glue.intents.addIntentListener(intentName, () => {
+            try {
+                const methodsWithSuchName = glue.interop.methods({ name: `${GlueWebIntentsPrefix}${intentName}` });
+                expect(methodsWithSuchName.length).to.eql(1);
+                done();
+            } catch (error) {
+                done(error);
+            }
+        });
+
+        unsubObj.intent = intentName;
+        glue.intents.raise(intentName);
+    });
+
+    it('Should first register and then unregister interop method with such intent name when immediately invoking the unsubscribe function', (done) => {
+        const GlueWebIntentsPrefix = "Tick42.FDC3.Intents.";
+        const intentName = 'test-intent';
+        const interopMethodName = `${GlueWebIntentsPrefix}${intentName}`;
+
+        const ready = gtf.waitFor(2, done);
+
+        const unsubMethodAdded = glue.interop.methodAdded((method) => {
+            if (method.name === interopMethodName) {
+                ready();
+                unsubMethodAdded();
+            }
+        });
+
+        const unsubMethodRemoved = glue.interop.methodRemoved((method) => {
+            if (method.name === interopMethodName) {
+                ready();
+                unsubMethodRemoved();
+            }
+        });
+
+        const unsubIntentListener = glue.intents.addIntentListener(intentName, () => { });
+        unsubIntentListener.unsubscribe();
     });
 });

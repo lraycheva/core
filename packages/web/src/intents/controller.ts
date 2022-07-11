@@ -91,13 +91,14 @@ export class IntentsController implements LibController {
             throw new Error("Cannot add intent listener, because the provided handler is not a function!");
         }
 
-        let subscribed = true;
+        let registerPromise: Promise<void>;
 
         // `addIntentListener()` is sync.
         const intentName = typeof intent === "string" ? intent : intent.intent;
         const methodName = `${this.GlueWebIntentsPrefix}${intentName}`;
 
         const alreadyRegistered = this.myIntents.has(intentName);
+        
         if (alreadyRegistered) {
             throw new Error(`Intent listener for intent ${intentName} already registered!`);
         }
@@ -105,13 +106,11 @@ export class IntentsController implements LibController {
 
         const result = {
             unsubscribe: (): void => {
-                subscribed = false;
-                try {
-                    this.interop.unregister(methodName);
-                    this.myIntents.delete(intentName);
-                } catch (error) {
-                    this.logger.trace(`Unsubscribed intent listener, but ${methodName} unregistration failed!`);
-                }
+                this.myIntents.delete(intentName);
+
+                registerPromise
+                    .then(() => this.interop.unregister(methodName))
+                    .catch((err) => this.logger.trace(`Unregistration of a method with name ${methodName} failed with reason: ${err}`));
             }
         };
 
@@ -123,10 +122,16 @@ export class IntentsController implements LibController {
             intentFlag = rest;
         }
 
-        this.interop.register({ name: methodName, flags: { intent: intentFlag } }, (args: Glue42Web.Intents.IntentContext) => {
-            if (subscribed) {
+        registerPromise = this.interop.register({ name: methodName, flags: { intent: intentFlag } }, (args: Glue42Web.Intents.IntentContext) => {
+            if (this.myIntents.has(intentName)) {
                 return handler(args);
             }
+        });
+
+        registerPromise.catch(err => {
+            this.myIntents.delete(intentName);
+
+            this.logger.warn(`Registration of a method with name ${methodName} failed with reason: ${err}`);
         });
 
         return result;
