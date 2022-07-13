@@ -1,3 +1,5 @@
+2.6.11
+fix: the bridge does not use the cloned protocol response anymore
 2.6.10
 chore: bump due to dependencies update
 2.6.9

@@ -1,3 +1,5 @@
+1.8.11
+fix: removed setImmediate in favor of setTimeout, 0
 1.8.10
 chore: bump due to dependencies update
 1.8.9
