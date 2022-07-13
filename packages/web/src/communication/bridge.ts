@@ -64,14 +64,14 @@ export class GlueBridge {
             }
         }
 
-        let operationResult;
-
         try {
-            operationResult = await this.transmitMessage(domain, operation, operationData, options);
+            const operationResult = await this.transmitMessage(domain, operation, operationData, options);
 
             if (operation.resultDecoder) {
-                operationResult = operation.resultDecoder.runWithException(operationResult);
+                operation.resultDecoder.runWithException(operationResult);
             }
+
+            return operationResult;
 
         } catch (error) {
             if (error.kind) {
@@ -79,8 +79,6 @@ export class GlueBridge {
             }
             throw new Error(error.message);
         }
-
-        return operationResult;
     }
 
     private checkWaitMethod(name: string): Promise<void> {

@@ -82,10 +82,10 @@ export class IFrameController {
                     type: "manualUnload"
                 }
             }, "*");
-            setImmediate(() => {
+            setTimeout(() => {
                 frame.remove();
                 this._registry.execute("frame-removed", id);
-            });
+            }, 0);
         }
     }
 
