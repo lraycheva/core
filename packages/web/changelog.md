@@ -1,3 +1,5 @@
+2.6.10
+chore: bump due to dependencies update
 2.6.9
 chore: updated @glue42/desktop@5.14.0
 fix: Fix race condition in add intent listener method

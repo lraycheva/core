@@ -1,3 +1,5 @@
+1.8.10
+chore: bump due to dependencies update
 1.8.9
 chore: updated @glue42/desktop@5.14.0
 1.8.8

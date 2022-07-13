@@ -1,3 +1,5 @@
+1.15.3
+chore: bump due to dependencies update
 1.15.2
 feat: added onWindowMaximized and onWindowRestored events
 1.15.1
