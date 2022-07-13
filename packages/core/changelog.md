@@ -1,3 +1,5 @@
+5.7.4
+fix: improved backwards compatibility in node instances registration
 5.7.3
 feat: allow node instances to be registered using RegisterInstance method
 5.7.2
