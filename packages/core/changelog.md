@@ -1,3 +1,5 @@
+5.7.3
+feat: allow node instances to be registered using RegisterInstance method
 5.7.2
 feat: added support for a provider context in the authentication object, passed along to the custom Enterprise authenticators
 5.7.1
