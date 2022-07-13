@@ -369,11 +369,25 @@ const GlueCore = (userConfig?: Glue42Core.Config, ext?: Glue42Core.Extension): P
         return glue;
     }
 
+    async function registerInstanceIfNeeded() {
+        const RegisterInstanceMethodName = "T42.ACS.RegisterInstance";
+        const UnregisterInstanceMethodName = "T42.ACS.UnregisterInstance";
+        // if we are running in Node, not started from GD3 and the user passes an application, try to register as an instance
+        if (Utils.isNode() && typeof process.env._GD_STARTING_CONTEXT_ === "undefined" && typeof userConfig?.application !== "undefined") {
+            try {
+                await _interop.invoke(RegisterInstanceMethodName, { appName: userConfig?.application, pid: process.pid });
+            } catch (error) {
+                //
+            }
+        }
+    }
+
     return preloadPromise
         .then(setupLogger)
         .then(setupConnection)
         .then(() => Promise.all([setupMetrics(), setupInterop(), setupContexts(), setupBus()]))
         .then(() => _interop.readyPromise)
+        .then(() => registerInstanceIfNeeded())
         .then(() => {
             return setupExternalLibs(internalConfig.libs || []);
         })
