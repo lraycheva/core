@@ -374,10 +374,14 @@ const GlueCore = (userConfig?: Glue42Core.Config, ext?: Glue42Core.Extension): P
         const UnregisterInstanceMethodName = "T42.ACS.UnregisterInstance";
         // if we are running in Node, not started from GD3 and the user passes an application, try to register as an instance
         if (Utils.isNode() && typeof process.env._GD_STARTING_CONTEXT_ === "undefined" && typeof userConfig?.application !== "undefined") {
-            try {
-                await _interop.invoke(RegisterInstanceMethodName, { appName: userConfig?.application, pid: process.pid });
-            } catch (error) {
-                //
+            const isMethodAvailable = _interop.methods({ name: RegisterInstanceMethodName }).length > 0;
+            if (isMethodAvailable) {
+                try {
+                    await _interop.invoke(RegisterInstanceMethodName, { appName: userConfig?.application, pid: process.pid });
+                } catch (error) {
+                    const typedError = error as Error;
+                    _logger.error(`Cannot register as an instance: ${JSON.stringify(typedError.message)}`);
+                }
             }
         }
     }
