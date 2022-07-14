@@ -1,3 +1,5 @@
+1.12.11
+chore: bump due to dependencies update
 1.12.10
 chore: bump due to dependencies update
 1.12.9
