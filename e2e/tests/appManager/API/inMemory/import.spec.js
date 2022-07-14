@@ -155,6 +155,8 @@ describe('import() ', function () {
 
             const current = await glue.appManager.inMemory.export();
 
+            current.forEach((definition) => gtf.clearNullUndefined(definition));
+
             expect([extraDefOne]).to.eql(current);
         });
 
@@ -201,6 +203,8 @@ describe('import() ', function () {
                 await glue.appManager.inMemory.import(definitions, mode);
 
                 const current = await glue.appManager.inMemory.export();
+
+                current.forEach((definition) => gtf.clearNullUndefined(definition));
 
                 expect(definitions).to.eql(current);
             });
@@ -309,7 +313,12 @@ describe('import() ', function () {
 
             const current = await glue.appManager.inMemory.export();
 
-            expect(current).to.eql([...definitionsOnStart, extraDefOne]);
+            current.forEach((definition) => gtf.clearNullUndefined(definition));
+            definitionsOnStart.forEach((definition) => gtf.clearNullUndefined(definition));
+
+            const expected = [...definitionsOnStart, extraDefOne];
+
+            expect(current).to.eql(expected);
         });
 
         it('importing two definitions - one invalid and one valid should resolve, the result object should contain the correct data and the valid definition should be in the system (applications check)', async () => {
@@ -343,6 +352,8 @@ describe('import() ', function () {
 
             const current = await glue.appManager.inMemory.export();
 
+            current.forEach((definition) => gtf.clearNullUndefined(definition));
+
             expect(current).to.eql([...definitionsOnStart, extraDefOne]);
         });
 
@@ -362,6 +373,8 @@ describe('import() ', function () {
             await glue.appManager.inMemory.import([extraDefOne, extraDefTwo], mode);
 
             const current = await glue.appManager.inMemory.export();
+
+            current.forEach((definition) => gtf.clearNullUndefined(definition));
 
             expect(current).to.eql([...definitionsOnStart, extraDefOne, extraDefTwo]);
         });

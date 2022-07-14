@@ -14,6 +14,14 @@ export class GtfCore implements Gtf.Core {
         console.log("GTF CREATED");
     }
 
+    public clearNullUndefined(obj: any): void {
+        Object.keys(obj).forEach(key => {
+            if (obj[key] === null || obj[key] === undefined) {
+                delete obj[key];
+            }
+        });
+    }
+
     public wrapPromise(): { promise: Promise<void>; resolve: () => void, reject: (reason?: any) => void } {
         let wrapperResolve;
         let wrapperReject;

@@ -67,6 +67,8 @@ export namespace Gtf {
     }
 
     export interface Core {
+        clearNullUndefined(obj: any): void;
+
         getName(): string;
 
         simpleWait(milliseconds: number): Promise<void>;
