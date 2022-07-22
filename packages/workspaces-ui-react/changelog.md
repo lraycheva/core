@@ -1,3 +1,5 @@
+1.9.4
+chore: bump due to dependencies update
 1.9.3
 chore: bump due to dependencies update
 1.9.1

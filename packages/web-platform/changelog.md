@@ -1,3 +1,5 @@
+1.12.12
+feat: the platform now exposes it's version and disconnects gw clients when handling unregistration of workspaces apps and windows
 1.12.11
 chore: bump due to dependencies update
 1.12.10
