@@ -20,6 +20,7 @@ export class PortsBridge {
     private readonly registry: CallbackRegistry = CallbackRegistryFactory();
     private readonly transactionsController: TransactionsController;
     private allPorts: { [key: string]: MessagePort | chrome.runtime.Port } = {};
+    private allClients: Array<{ bridgeInstanceId: string, clientId: string, client: GwClient }> = [];
     private unLoadStarted = false;
     private isPreferredActivated = false;
     private activePreferredTransportConfig: Glue42Core.Connection.TransportSwitchSettings | undefined;
@@ -170,6 +171,21 @@ export class PortsBridge {
         }
     }
 
+    public removeGwClient(windowId: string): void {
+        const foundClient = this.allClients.find((client) => client.bridgeInstanceId === windowId);
+
+        if (!foundClient) {
+            return;
+        }
+
+        this.allClients = this.allClients.filter((client) => client.bridgeInstanceId !== windowId);
+        foundClient.client.disconnect();
+
+        if (this.allPorts[foundClient.clientId]) {
+            delete this.allPorts[foundClient.clientId];
+        }
+    }
+
     private setUpUnload(): void {
         window.addEventListener("unload", () => {
 
@@ -218,9 +234,11 @@ export class PortsBridge {
     private async handleRemoteConnectionRequest(source: Window, origin: string, clientId: string, clientType: "child" | "grandChild", bridgeInstanceId: string): Promise<void> {
         const channel = this.ioc.createMessageChannel();
 
-        const gwClient = await this.gateway.connectClient(channel.port1, this.removeClient.bind(this));
+        const client = await this.gateway.connectClient(channel.port1, this.removeClient.bind(this));
 
-        this.setupGwClientPort({ client: gwClient, clientId: clientId, clientPort: channel.port1 });
+        this.setupGwClientPort({ client, clientId, clientPort: channel.port1 });
+
+        this.allClients.push({ client, bridgeInstanceId, clientId });
 
         const foundData = this.sessionStorage.getBridgeInstanceData(bridgeInstanceId);
         const appName = foundData?.appName;
@@ -295,7 +313,10 @@ export class PortsBridge {
 
                 this.removeClient(data.data.clientId, false, data.type === Glue42CoreMessageTypes.gatewayDisconnect.name);
 
-                config.client.disconnect();
+                if (this.allClients.some((client) => client.clientId === data.data.clientId)) {
+                    this.allClients = this.allClients.filter((client) => client.clientId !== data.data.clientId);
+                    config.client.disconnect();
+                }
 
                 return;
             }

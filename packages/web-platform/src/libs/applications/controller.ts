@@ -126,6 +126,7 @@ export class ApplicationsController implements LibController {
     public unregisterWorkspaceApp(config: SimpleWindowCommand): void {
         this.processInstanceClosed(config.windowId);
         this.ioc.windowsController.cleanUpWindow(config.windowId);
+        this.ioc.portsBridge.removeGwClient(config.windowId);
     }
 
     public async handleApplicationStart(config: ApplicationStartConfig, commandId: string): Promise<InstanceData> {

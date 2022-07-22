@@ -2,6 +2,9 @@ import { Bounds } from "./types/internal";
 import callbackRegistry, { UnsubscribeFunction } from "callback-registry";
 import { generate } from "shortid";
 import { Glue42Web } from "@glue42/web";
+const semverLte = require('semver/functions/lte')
+
+declare var window: Window & { glue42core: { platformVersion: string } };
 
 export class IFrameController {
     private readonly _registry = callbackRegistry();
@@ -77,11 +80,13 @@ export class IFrameController {
         const frame = this._idToFrame[id];
         if (frame) {
             delete this._idToFrame[id];
-            frame.contentWindow.postMessage({
-                glue42core: {
-                    type: "manualUnload"
-                }
-            }, "*");
+            if (!window.glue42core.platformVersion || semverLte(window.glue42core.platformVersion, "1.12.11")) {
+                frame.contentWindow.postMessage({
+                    glue42core: {
+                        type: "manualUnload"
+                    }
+                }, "*");
+            }
             setTimeout(() => {
                 frame.remove();
                 this._registry.execute("frame-removed", id);

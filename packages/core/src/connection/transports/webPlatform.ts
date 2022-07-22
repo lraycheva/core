@@ -601,6 +601,7 @@ export default class WebPlatformTransport implements Transport {
     }
 
     private handleManualUnload(): void {
+        // this message handler exists only to soften the phasing our of the manual unload.
         const message = {
             glue42core: {
                 type: this.messages.clientUnload.name,
@@ -610,10 +611,6 @@ export default class WebPlatformTransport implements Transport {
                 }
             }
         };
-
-        if (this.parent) {
-            this.parent.postMessage(message, this.defaultTargetString);
-        }
 
         if (this.extContentConnected) {
             return window.postMessage({ glue42ExtOut: message }, this.defaultTargetString);

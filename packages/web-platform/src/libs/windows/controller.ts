@@ -132,7 +132,8 @@ export class WindowsController implements LibController {
     }
 
     public async handleWorkspaceClientRemoval(client: SimpleWindowCommand): Promise<void> {
-        return this.cleanUpWindow(client.windowId);
+        this.cleanUpWindow(client.windowId);
+        this.ioc.portsBridge.removeGwClient(client.windowId);
     }
 
     public handleClientUnloaded(windowId: string, win: Window): void {
@@ -159,7 +160,6 @@ export class WindowsController implements LibController {
         if (somethingRemoved) {
             this.emitStreamData("windowRemoved", { windowId });
         }
-
     }
 
     public async registerWorkspaceWindow(data: WorkspaceWindowData, commandId: string): Promise<void> {

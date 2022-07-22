@@ -4,6 +4,7 @@ import { BridgeOperation, InternalPlatformConfig, LibController, SystemOperation
 import { anyDecoder, systemOperationTypesDecoder } from "../shared/decoders";
 import logger from "../shared/logger";
 import { SessionStorageController } from "./session";
+import { version } from "../../package.json";
 
 export class SystemController implements LibController {
 
@@ -26,7 +27,8 @@ export class SystemController implements LibController {
         this.environment = config.environment;
         this.base = {
             workspacesFrameCache: config.workspacesFrameCache,
-            communicationId: this.session.getSystemSettings()?.systemInstanceId
+            communicationId: this.session.getSystemSettings()?.systemInstanceId,
+            platformVersion: version
         };
     }
 
