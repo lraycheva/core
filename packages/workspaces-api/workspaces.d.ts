@@ -124,6 +124,9 @@ export namespace Glue42Workspaces {
         /** A string id of an existing frame. If provided, this workspace will be opened in that specific frame */
         frameId?: string;
 
+        /** The application name of the workspace app that should be used for the new frame (available only for Glue42 Enterprise) */
+        applicationName?: string;
+
         /** A setting used to declare that the workspace must be in a new frame and also provide options for that new frame */
         newFrame?: NewFrameConfig | boolean;
 
@@ -168,8 +171,6 @@ export namespace Glue42Workspaces {
     export interface NewFrameConfig {
         /** An object describing the possible settings when defining a new frame. */
         bounds?: FrameBounds;
-        /** The application name of the workspace app that should be used for the new frame (available only for Glue42 Enterprise) */
-        applicationName?: string;
     }
 
     /** An object defining the resize parameters of a frame. */
@@ -513,6 +514,9 @@ export namespace Glue42Workspaces {
         /** A string id of an existing frame. If provided, this workspace will be opened in that specific frame */
         reuseFrameId?: string;
 
+        /** The application name of the workspace app that should be used for the new frame (available only for Glue42 Enterprise) */
+        applicationName?: string;
+
         /** A setting used to declare that the workspace must be in a new frame and also provide options for that new frame */
         newFrame?: NewFrameConfig | boolean;
     }
@@ -615,10 +619,14 @@ export namespace Glue42Workspaces {
     }
 
     export interface EmptyFrameDefinition {
-        /**
+        /** The application name of the workspace app that should be used for the new frame (available only for Glue42 Enterprise) */
+        applicationName?: string;
+        
+        /**      
          * Optional frame related settings
          */
         frameConfig?: Glue42Workspaces.NewFrameConfig;
+        
         /**
          * Optional context which will be passed to the initialization callback
          */

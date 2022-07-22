@@ -233,8 +233,7 @@ export const newFrameConfigDecoder: Decoder<Glue42Workspaces.NewFrameConfig> = o
         top: optional(number()),
         width: optional(nonNegativeNumberDecoder),
         height: optional(nonNegativeNumberDecoder)
-    })),
-    applicationName: optional(nonEmptyStringDecoder),
+    }))
 });
 
 export const loadingStrategyDecoder: Decoder<Glue42Workspaces.LoadingStrategy> = oneOf<"direct" | "delayed" | "lazy">(
@@ -250,6 +249,7 @@ export const restoreWorkspaceConfigDecoder: Decoder<Glue42Workspaces.RestoreWork
     title: optional(nonEmptyStringDecoder),
     reuseWorkspaceId: optional(nonEmptyStringDecoder),
     frameId: optional(nonEmptyStringDecoder),
+    applicationName: optional(nonEmptyStringDecoder),
     lockdown: optional(boolean()),
     activateFrame: optional(boolean()),
     newFrame: optional(oneOf<Glue42Workspaces.NewFrameConfig | boolean>(
@@ -301,6 +301,7 @@ export const workspaceDefinitionDecoder: Decoder<Glue42Workspaces.WorkspaceDefin
     })),
     frame: optional(object({
         reuseFrameId: optional(nonEmptyStringDecoder),
+        applicationName: optional(nonEmptyStringDecoder),
         newFrame: optional(oneOf<boolean | Glue42Workspaces.NewFrameConfig>(
             boolean(),
             newFrameConfigDecoder
@@ -318,6 +319,7 @@ export const restoreWorkspaceDefinitionDecoder: Decoder<Glue42Workspaces.Restore
 });
 
 export const emptyFrameDefinitionDecoder: Decoder<Glue42Workspaces.EmptyFrameDefinition> = optional(object({
+    applicationName: optional(string()),
     frameConfig: optional(newFrameConfigDecoder),
     context: optional(object())
 }));
