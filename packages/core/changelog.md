@@ -1,3 +1,5 @@
+5.7.5
+fix: the manual unload in the web transport no longer sends a message to the parent window
 5.7.4
 fix: improved backwards compatibility in node instances registration
 5.7.3
