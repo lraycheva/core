@@ -2502,7 +2502,7 @@ describe('restoreWorkspace() Should', function () {
 
         it(`restore the layout with a maximized window when the layout contains a maximized window`, async () => {
             const workspace = await glue.workspaces.createWorkspace(threeContainersConfig);
-            const maximizedWindow = workspace.getAllWindows().find(w=>w.parent.type==="group");
+            const maximizedWindow = workspace.getAllWindows().find(w => w.parent.type === "group");
 
             await maximizedWindow.maximize();
 
@@ -2516,7 +2516,7 @@ describe('restoreWorkspace() Should', function () {
 
         it(`restore the layout with a maximized flat window when the layout contains a flat maximized window`, async () => {
             const workspace = await glue.workspaces.createWorkspace(threeContainersConfig);
-            const maximizedWindow = workspace.getAllWindows().find(w=>w.parent.type!=="group");
+            const maximizedWindow = workspace.getAllWindows().find(w => w.parent.type !== "group");
 
             await maximizedWindow.maximize();
 
@@ -2710,5 +2710,140 @@ describe('restoreWorkspace() Should', function () {
             await restoredSecondWindow.restore();
             expect(restoredTargetGroup.children[0].isMaximized).to.be.true;
         });
+    });
+
+    describe("size Should ", () => {
+        it("restore the workspace with elements in the correct proportion when the size hasn't been modified", async () => {
+            const config = { children: [{ type: "row", children: [{ type: "group", children: [{ type: "window", appName: "noGlueApp" }] }, { type: "group", children: [{ type: "window", appName: "noGlueApp" }] }] }] };
+            const workspace = await glue.workspaces.createWorkspace(config);
+            const widthSizes = workspace.getAllGroups().map(g => g.width);
+            await workspace.saveLayout(layoutName);
+            await workspace.close();
+
+            const restoredWorkspace = await glue.workspaces.restoreWorkspace(layoutName);
+
+            const restoredGroupSizes = restoredWorkspace.getAllGroups().map(g => g.width);
+            expect(restoredGroupSizes[0] === widthSizes[0] || restoredGroupSizes[0] === widthSizes[1]).to.be.true;
+            expect(restoredGroupSizes[1] === widthSizes[0] || restoredGroupSizes[1] === widthSizes[1]).to.be.true;
+        });
+
+        it("restore the workspace with elements in the correct proportion when the size hasn't been modified and the windows are flat in a row", async  () => {
+            const config = { children: [{ type: "row", children: [{ type: "window", appName: "noGlueApp" }, { type: "window", appName: "noGlueApp" }] }] };
+            const workspace = await glue.workspaces.createWorkspace(config);
+            const widthSizes = workspace.getAllWindows().map(g => g.width);
+            await workspace.saveLayout(layoutName);
+            await workspace.close();
+
+            const restoredWorkspace = await glue.workspaces.restoreWorkspace(layoutName);
+
+            const restoredWindowSizes = restoredWorkspace.getAllWindows().map(g => g.width);
+            expect(restoredWindowSizes[0] === widthSizes[0] || restoredWindowSizes[0] === widthSizes[1]).to.be.true;
+            expect(restoredWindowSizes[1] === widthSizes[0] || restoredWindowSizes[1] === widthSizes[1]).to.be.true;
+        });
+
+        it("restore the workspace with elements in the correct proportion when the size hasn't been modified and the windows are flat in separate columns", async  () => {
+            const config = { children: [{ type: "row", children: [{ type: "column", children: [{ type: "window", appName: "noGlueApp" }] }, { type: "column", children: [{ type: "window", appName: "noGlueApp" }] }] }] };
+            const workspace = await glue.workspaces.createWorkspace(config);
+            const widthSizes = workspace.getAllWindows().map(g => g.width);
+            await workspace.saveLayout(layoutName);
+            await workspace.close();
+
+            const restoredWorkspace = await glue.workspaces.restoreWorkspace(layoutName);
+
+            const restoredWindowSizes = restoredWorkspace.getAllWindows().map(g => g.width);
+            expect(restoredWindowSizes[0] === widthSizes[0] || restoredWindowSizes[0] === widthSizes[1]).to.be.true;
+            expect(restoredWindowSizes[1] === widthSizes[0] || restoredWindowSizes[1] === widthSizes[1]).to.be.true;
+        });
+        // width
+        it("restore the workspace with elements in the correct proportion when the width has been modified", async  () => {
+            const config = { children: [{ type: "row", children: [{ type: "group", children: [{ type: "window", appName: "noGlueApp" }] }, { type: "group", children: [{ type: "window", appName: "noGlueApp" }] }] }] };
+            const workspace = await glue.workspaces.createWorkspace(config);
+            await workspace.getAllWindows()[0].setSize({ width: 293 });
+            const widthSizes = workspace.getAllGroups().map(g => g.width);
+            await workspace.saveLayout(layoutName);
+            await workspace.close();
+
+            const restoredWorkspace = await glue.workspaces.restoreWorkspace(layoutName);
+
+            const restoredGroupSizes = restoredWorkspace.getAllGroups().map(g => g.width);
+            expect(restoredGroupSizes[0] === widthSizes[0] || restoredGroupSizes[0] === widthSizes[1]).to.be.true;
+            expect(restoredGroupSizes[1] === widthSizes[0] || restoredGroupSizes[1] === widthSizes[1]).to.be.true;
+        });
+
+        it("restore the workspace with elements in the correct proportion when the width has been modified and the windows are flat in a row",async  () => {
+            const config = { children: [{ type: "row", children: [{ type: "window", appName: "noGlueApp" }, { type: "window", appName: "noGlueApp" }] }] };
+            const workspace = await glue.workspaces.createWorkspace(config);
+            await workspace.getAllWindows()[0].setSize({ width: 293 });
+            const widthSizes = workspace.getAllWindows().map(g => g.width);
+            await workspace.saveLayout(layoutName);
+            await workspace.close();
+
+            const restoredWorkspace = await glue.workspaces.restoreWorkspace(layoutName);
+
+            const restoredWindowSizes = restoredWorkspace.getAllWindows().map(g => g.width);
+            expect(restoredWindowSizes[0] === widthSizes[0] || restoredWindowSizes[0] === widthSizes[1]).to.be.true;
+            expect(restoredWindowSizes[1] === widthSizes[0] || restoredWindowSizes[1] === widthSizes[1]).to.be.true;
+        });
+
+        it("restore the workspace with elements in the correct proportion when the width has been modified and the windows are flat in separate columns", async () => {
+            const config = { children: [{ type: "row", children: [{ type: "column", children: [{ type: "window", appName: "noGlueApp" }] }, { type: "column", children: [{ type: "window", appName: "noGlueApp" }] }] }] };
+            const workspace = await glue.workspaces.createWorkspace(config);
+            await workspace.getAllWindows()[0].setSize({ width: 293 });
+            const widthSizes = workspace.getAllWindows().map(g => g.width);
+            await workspace.saveLayout(layoutName);
+            await workspace.close();
+
+            const restoredWorkspace = await glue.workspaces.restoreWorkspace(layoutName);
+
+            const restoredWindowSizes = restoredWorkspace.getAllWindows().map(g => g.width);
+            expect(restoredWindowSizes[0] === widthSizes[0] || restoredWindowSizes[0] === widthSizes[1]).to.be.true;
+            expect(restoredWindowSizes[1] === widthSizes[0] || restoredWindowSizes[1] === widthSizes[1]).to.be.true;
+        });
+        // height
+        it("restore the workspace with elements in the correct proportion when the height has been modified", async  () => {
+            const config = { children: [{ type: "column", children: [{ type: "group", children: [{ type: "window", appName: "noGlueApp" }] }, { type: "group", children: [{ type: "window", appName: "noGlueApp" }] }] }] };
+            const workspace = await glue.workspaces.createWorkspace(config);
+            await workspace.getAllWindows()[0].setSize({ height: 293 });
+            const heightSizes = workspace.getAllGroups().map(g => g.height);
+            await workspace.saveLayout(layoutName);
+            await workspace.close();
+
+            const restoredWorkspace = await glue.workspaces.restoreWorkspace(layoutName);
+
+            const restoredGroupSizes = restoredWorkspace.getAllGroups().map(g => g.height);
+            expect(restoredGroupSizes[0] === heightSizes[0] || restoredGroupSizes[0] === heightSizes[1]).to.be.true;
+            expect(restoredGroupSizes[1] === heightSizes[0] || restoredGroupSizes[1] === heightSizes[1]).to.be.true;
+        });
+
+        it("restore the workspace with elements in the correct proportion when the height has been modified and the windows are flat in a column",async  () => {
+            const config = { children: [{ type: "column", children: [{ type: "window", appName: "noGlueApp" }, { type: "window", appName: "noGlueApp" }] }] };
+            const workspace = await glue.workspaces.createWorkspace(config);
+            await workspace.getAllWindows()[0].setSize({ height: 293 });
+            const heightSizes = workspace.getAllWindows().map(g => g.height);
+            await workspace.saveLayout(layoutName);
+            await workspace.close();
+
+            const restoredWorkspace = await glue.workspaces.restoreWorkspace(layoutName);
+
+            const restoredWindowSizes = restoredWorkspace.getAllWindows().map(g => g.height);
+            expect(restoredWindowSizes[0] === heightSizes[0] || restoredWindowSizes[0] === heightSizes[1]).to.be.true;
+            expect(restoredWindowSizes[1] === heightSizes[0] || restoredWindowSizes[1] === heightSizes[1]).to.be.true;
+        });
+
+        it("restore the workspace with elements in the correct proportion when the height has been modified and the windows are flat in separate rows", async () => {
+            const config = { children: [{ type: "column", children: [{ type: "row", children: [{ type: "window", appName: "noGlueApp" }] }, { type: "row", children: [{ type: "window", appName: "noGlueApp" }] }] }] };
+            const workspace = await glue.workspaces.createWorkspace(config);
+            await workspace.getAllWindows()[0].setSize({ height: 293 });
+            const heightSizes = workspace.getAllWindows().map(g => g.height);
+            await workspace.saveLayout(layoutName);
+            await workspace.close();
+
+            const restoredWorkspace = await glue.workspaces.restoreWorkspace(layoutName);
+
+            const restoredWindowSizes = restoredWorkspace.getAllWindows().map(g => g.height);
+            expect(restoredWindowSizes[0] === heightSizes[0] || restoredWindowSizes[0] === heightSizes[1]).to.be.true;
+            expect(restoredWindowSizes[1] === heightSizes[0] || restoredWindowSizes[1] === heightSizes[1]).to.be.true;
+        });
+
     })
 });

@@ -1,3 +1,5 @@
+1.8.12
+fix: started preserving the size of the flat windows on the window itself
 1.8.11
 fix: removed setImmediate in favor of setTimeout, 0
 1.8.10

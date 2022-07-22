@@ -130,7 +130,10 @@ export class ConfigConverter {
 
             if (parent.type !== "group") {
                 resultWindow.componentState.header = false;
-                return this.wrap([resultWindow], "stack");
+                const group =  this.wrap([resultWindow], "stack");
+                group.width = config?.config?.width ?? (config as any).width;
+                group.height = config?.config?.height ?? (config as any).height;
+                return group;
             }
             return resultWindow;
         }
@@ -150,7 +153,13 @@ export class ConfigConverter {
         if (config.type === "component" && config.componentName === EmptyVisibleWindowName) {
             return [];
         } else if (config.type !== "component" && config.workspacesConfig && config.workspacesConfig.wrapper) {
-            return this.flat(config.content.map((c) => this.convertToApiConfigCore(c)));
+            const items =  this.flat(config.content.map((c) => this.convertToApiConfigCore(c)));
+            items.forEach((i: any) => {
+                i.config.width = (config as GoldenLayout.ItemConfig).width;
+                i.config.height = (config as GoldenLayout.ItemConfig).height;
+            });
+
+            return items;
         } else if (config.type === "component") {
             const wspsConfig = config.workspacesConfig as APIWIndowSettings;
             const resultWindow = this._configFactory.createApiWindow({
@@ -230,7 +239,10 @@ export class ConfigConverter {
 
     private flat = <T>(arr: T[]) => arr.reduce((acc, i) => [...acc, ...(Array.isArray(i) ? i : [i])], []);
 
-    private wrap(content: GoldenLayout.ComponentConfig[], wrapper: "stack" | "row" | "column") {
+    private wrap(content: GoldenLayout.ComponentConfig[], wrapper: "column"): GoldenLayout.ColumnConfig
+    private wrap(content: GoldenLayout.ComponentConfig[], wrapper: "row"): GoldenLayout.RowConfig
+    private wrap(content: GoldenLayout.ComponentConfig[], wrapper: "stack"): GoldenLayout.StackConfig
+    private wrap(content: GoldenLayout.ComponentConfig[], wrapper: "stack" | "row" | "column"): any {
         return {
             workspacesConfig: {
                 wrapper: true,

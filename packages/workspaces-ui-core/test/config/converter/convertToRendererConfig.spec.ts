@@ -79,7 +79,7 @@ describe("convertToRendererConfig() Should", () => {
                                 type: "component",
                                 workspacesConfig: {}
                             }
-                        ]
+                        ],
                     }
                 ] as object[],
                 type,
@@ -156,7 +156,9 @@ describe("convertToRendererConfig() Should", () => {
                                     isMaximized: false
                                 }
                             }
-                        ]
+                        ],
+                        width: undefined,
+                        height: undefined
                     },
                     {
                         type: "stack",
@@ -190,7 +192,9 @@ describe("convertToRendererConfig() Should", () => {
                                     isMaximized: false
                                 }
                             }
-                        ]
+                        ],
+                        width: undefined,
+                        height: undefined
                     },
                     {
                         type: "stack",
@@ -224,7 +228,9 @@ describe("convertToRendererConfig() Should", () => {
                                     isMaximized: false
                                 }
                             }
-                        ]
+                        ],
+                        width: undefined,
+                        height: undefined
                     }
                 ] as object[],
                 workspacesConfig: {
@@ -284,7 +290,7 @@ describe("convertToRendererConfig() Should", () => {
                         type: "component",
                         workspacesConfig: {}
                     }
-                ]
+                ],
             };
             const expectedResult = {
                 type,
@@ -651,7 +657,7 @@ describe("convertToRendererConfig() Should", () => {
                     type: "component",
                     workspacesConfig: {}
                 }
-            ]
+            ],
         };
 
         const expectedResult = {
@@ -679,7 +685,7 @@ describe("convertToRendererConfig() Should", () => {
                         isMaximized: undefined
                     }
                 }
-            ]
+            ],
         };
 
         const actualResult = configConverter.convertToRendererConfig(workspace);
@@ -741,7 +747,7 @@ describe("convertToRendererConfig() Should", () => {
                         isMaximized: undefined
                     },
                 }
-            ]
+            ],
         };
 
         const actualResult = configConverter.convertToRendererConfig(workspace);

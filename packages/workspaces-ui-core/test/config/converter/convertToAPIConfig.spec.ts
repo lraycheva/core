@@ -34,6 +34,15 @@ describe("convertToAPIConfig() Should", () => {
         }
     };
 
+    const flatMockAppConfig: any = {
+        ...mockAppConfig,
+        config: {
+            ...mockAppConfig.config,
+            width: undefined,
+            height: undefined
+        }
+    }
+
     const workspaceSettings = {
         settings: {
             showCloseIcon: false,
@@ -114,9 +123,9 @@ describe("convertToAPIConfig() Should", () => {
             const expectedResult: ColumnItem | RowItem = {
                 children:
                     [
-                        mockAppConfig,
-                        mockAppConfig,
-                        mockAppConfig
+                        flatMockAppConfig,
+                        flatMockAppConfig,
+                        flatMockAppConfig
                     ],
                 type,
                 config: {

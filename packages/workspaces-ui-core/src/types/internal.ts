@@ -67,6 +67,8 @@ export interface WindowItem {
         maxWidth?: number;
         minHeight?: number;
         maxHeight?: number;
+        width?:number;
+        height?:number;
     };
 }
 
