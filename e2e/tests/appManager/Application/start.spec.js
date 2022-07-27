@@ -1,82 +1,150 @@
-// describe('start()', () => {
-//     before(() => {
-//         return coreReady;
-//     });
+describe("start() ", function() {
+    const appName = "dummyApp";
+    let app;
 
-//     afterEach(() => {
-//         return gtf.appManager.stopAllOtherInstances();
-//     });
+    before(() => coreReady);
 
-//     it('Should throw an error when context isn\'t of type object.', async () => {
-//         const app = glue.appManager.application('coreSupport');
+    beforeEach(() => {
+        app = glue.appManager.application(appName);
+    })
 
-//         try {
-//             await app.start(42);
-//             throw new Error('app.start() should have thrown an error because context wasn\'t of type object!');
-//         } catch (error) {
-//             expect(error.message).to.equal('Please provide the context as an object!');
-//         }
-//     });
+    afterEach(() => {
+        gtf.clearWindowActiveHooks();
 
-//     it('Should throw an error when options isn\'t of type object.', async () => {
-//         const app = glue.appManager.application('coreSupport');
+        return Promise.all(glue.appManager.instances().map((inst) => inst.stop()));
+    }
+    );
 
-//         try {
-//             await app.start({}, 42);
-//             throw new Error('app.start() should have thrown an error because options wasn\'t of type object!');
-//         } catch (error) {
-//             expect(error.message).to.equal('Please provide the options as an object!');
-//         }
-//     });
+    it("Should resolve when invoked with no arguments", async() => {
+        await app.start();
+    });
 
-//     it('Should start the application.', async () => {
-//         const app = glue.appManager.application('coreSupport');
+    it("Should resolve when invoked with one valid argument", async() => {
+        await app.start({ test: 42 });
+    });
 
-//         expect(app.instances).to.be.of.length(0);
+    it("Should resolve when invoked with two valid arguments", async() => {
+        await app.start({ test: 42 }, { height: 400, width: 400 });
+    });
 
-//         await app.start();
+    [42, "test", () => {}, Symbol()]
+        .forEach(invalidContext => {
+            it(`Should reject when invoked with invalid context: ${JSON.stringify(invalidContext)}`, (done) => {
+                app.start(invalidContext)
+                    .then(() => done("Should not resolve"))
+                    .catch(() => done());
+            });
+        });
+    
+    it("Should raise app onAppAdded event", (done) => {
+        const ready = gtf.waitFor(2, done);
 
-//         expect(app.instances).to.be.of.length(1);
-//     });
+        const un = glue.appManager.onAppAdded(app => {
+            if (app.name === appName) {
+                ready();
+            }
+        });
 
-//     it.skip('Should start the application with the provided context.', async () => {
-//         const context = {
-//             test: 42
-//         };
+        gtf.addWindowHook(un);
 
-//         const instance = await glue.appManager.application('coreSupport').start(context);
+        app.start()
+            .then(ready)
+            .catch(done);
+    });
 
-//         expect(instance.context).to.eql(context);
-//     });
+    it("App should not be present in the instances collection when the promise is rejected due to invalid context", (done) => {
+        const invalidContext = 42;
 
-//     it.skip('Should start the application with the provided start options.', async () => {
-//         const bounds = {
-//             top: 200,
-//             left: 300,
-//             width: 400,
-//             height: 500
-//         };
-//         const options = {
-//             ...bounds
-//         };
+        app.start(invalidContext)
+            .then(() => done("Should have not resolved"))
+            .catch(() => {
+                try {
+                    expect(app.instances.length).to.equal(0);
+                    done();
+                } catch (error) {
+                    done(error);
+                }
+            });
+    });
 
-//         const instance = await glue.appManager.application('coreSupport').start({}, options);
-//         const window = glue.windows.findById(instance.agm.windowId);
+    it("Should add the new instance to the array of app.instances", async() => {
+        const initInstLength = app.instances.length;
 
-//         const windowBounds = await window.getBounds();
+        await app.start();
 
-//         expect(windowBounds).to.eql(bounds);
-//     });
+        const newInstLength = app.instances.length;
 
-//     it('Should assign different ids to two instances of the same application started at the same time.', async () => {
-//         const app = glue.appManager.application('coreSupport');
+        expect(initInstLength + 1).to.eql(newInstLength);
+    });
 
+    it("Should add the application to the array returned from instances()", async() => {
+        const instBeforeLength = glue.appManager.instances().length;
 
-//         expect(app.instances).to.be.of.length(0);
+        await app.start();
 
-//         const [instanceA, instanceB] = await Promise.all([app.start(), app.start()]);
+        const instAfterLength = glue.appManager.instances().length;
 
-//         expect(app.instances).to.be.of.length(2);
-//         expect(instanceA.id).to.not.be.equal(instanceB.id);
-//     });
-// });
+        expect(instBeforeLength + 1).to.eql(instAfterLength);
+    });
+
+    it("Should start the app instance with the passed context", async() => {
+        const context = { test: 42 };
+
+        const inst = await app.start(context);
+        const instContext = await inst.getContext();
+
+        expect(instContext).to.eql(context);
+    });
+
+    it('Should assign different ids to two instances of the same application started at the same time.', async () => {
+        const [instanceA, instanceB] = await Promise.all([app.start(), app.start()]);
+
+        expect(app.instances).to.be.of.length(2);
+        expect(instanceA.id).to.not.eql(instanceB.id);
+    });
+
+    describe("when invoked with startOptions", function() {
+        const context = { test: 42 };
+
+        ["height", "width"]
+            .forEach(prop => {
+                it(`Should start the app the passed property: ${prop}`, async() => {
+                    const options = { [prop]: 200 };
+        
+                    const instId = (await app.start(context, options)).id;
+        
+                    const win = glue.windows.findById(instId);
+                    const bounds = await win.getBounds();
+        
+                    expect(bounds[prop]).to.eql(options[prop]);
+                });
+            });
+
+        ["top", "left"]
+            .forEach(distance => {
+                it(`Should start the app with passed distance from ${distance}`, async() => {
+                    const options = { [distance]: 200, height: 200, width: 200 };
+    
+                    const instId = (await app.start(context, options)).id;
+        
+                    const win = glue.windows.findById(instId);
+                    const bounds = await win.getBounds();
+
+                    expect(bounds[distance]).to.eql(options[distance]);
+                    expect(bounds.height).to.eql(200);
+                    expect(bounds.width).to.eql(200);
+                })
+            });
+
+        it("Should start the application with passed bounds", async() => {
+            const bounds = { top: 100, left: 100, width: 400, height: 400 };
+
+            const instId = (await app.start(context, { ...bounds } )).id;
+
+            const win = glue.windows.findById(instId);
+            const winBounds = await win.getBounds();
+
+            expect(winBounds).to.eql(bounds);
+        });
+    });
+});

@@ -1,39 +1,84 @@
-// describe('properties', () => {
-//     before(() => {
-//         return coreReady;
-//     });
+describe("properties", () => {
+    const extraDefOne = {
+        name: "ExtraOne",
+        title: "ExtraOne title",
+        type: "window",
+        icon: "test-icon",
+        caption: "#test",
+        details: {
+            url: "http://localhost:4242/dummyApp/index.html"
+        }
+    };
 
-//     afterEach(() => {
-//         return gtf.appManager.stopAllOtherInstances();
-//     });
+    let definitionsOnStart;
+    let app;
+    const appName = "coreSupport";
 
-//     describe('id', () => {
-//         it('Should be set correctly.', async () => {
-//             const instance = await glue.appManager.application('coreSupport').start();
-//             const instanceId = instance.id;
+    before(async() => {
+        await coreReady;
 
-//             expect(instanceId).to.not.be.empty;
-//             expect(instanceId).to.be.a('string');
-//         });
-//     });
+        definitionsOnStart = await glue.appManager.inMemory.export();
+    });
 
-//     describe('application', () => {
-//         it('Should be set correctly.', async () => {
-//             const appName = 'coreSupport';
-//             const app = glue.appManager.application(appName);
-//             const instance = await app.start();
+    beforeEach(() => {
+        app = glue.appManager.application(appName);
+    })
 
-//             expect(instance.application).to.eql(app);
-//         });
-//     });
+    afterEach(async() => {
+        await Promise.all(glue.appManager.instances().map(inst => inst.stop()));
 
-//     describe('agm', () => {
-//         it('Should be set correctly.', async () => {
-//             const appName = 'coreSupport';
-//             const instance = await glue.appManager.application(appName).start();
+        await glue.appManager.inMemory.import(definitionsOnStart, "replace");
+    });
 
-//             expect(instance.agm.application).to.equal(appName);
-//             expect(instance.agm.applicationName).to.equal(appName);
-//         });
-//     });
-// });
+    describe("id", () => {
+        it("should be defined", async() => {
+            const appInst = await app.start();
+
+            expect(appInst.id).to.not.be.undefined;
+            expect(appInst.id).to.be.a("string");
+        });
+
+        it("should be a correct string", async() => {
+            const appInst = await app.start();
+
+            const inst = glue.appManager.instances().find(inst => inst.application.name === appName);
+
+            expect(appInst.id).to.eql(inst.id);
+        })
+    });
+
+    describe("application", () => {
+        it("should be defined", async() => {
+            const appInst = await app.start();
+
+            expect(appInst.application).to.not.be.undefined;
+        });
+
+        it("should be the correct application", async() => {
+            await glue.appManager.inMemory.import([extraDefOne], "replace");
+
+            const appInst = await glue.appManager.application(extraDefOne.name).start();
+
+            expect(appInst.application.name).to.eql(extraDefOne.name);
+            expect(appInst.application.title).to.eql(extraDefOne.title);
+            expect(appInst.application.caption).to.eql(extraDefOne.caption);
+            expect(appInst.application.icon).to.eql(extraDefOne.icon);
+            expect(appInst.application.userProperties.details.url).to.eql(extraDefOne.details.url);
+        });
+    });
+
+    describe("agm", () => {
+        it("should be defined", async() => {
+            const appInst = await app.start();
+
+            expect(appInst.agm).to.not.be.undefined;
+        });
+
+        it('Should be set correctly.', async () => {
+            const instance = await app.start();
+
+            expect(instance.agm.application).to.eql(appName);
+            expect(instance.agm.applicationName).to.eql(appName);
+        });
+    });
+});

@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { UnsubscribeFunction } from 'callback-registry';
 import { Glue42Web } from "../../web";
 import { AppManagerController } from "./controller";
 import { BaseApplicationData } from "./protocol";
@@ -31,25 +32,25 @@ export class ApplicationModel {
         return this.me;
     }
 
-    private onInstanceStarted(callback: (instance: Glue42Web.AppManager.Instance) => any): void {
+    private onInstanceStarted(callback: (instance: Glue42Web.AppManager.Instance) => any): UnsubscribeFunction {
 
         if (typeof callback !== "function") {
             throw new Error("OnInstanceStarted requires a single argument of type function");
         }
 
-        this.controller.onInstanceStarted((instance) => {
+        return this.controller.onInstanceStarted((instance) => {
             if (instance.application.name === this.data.name) {
                 callback(instance);
             }
         });
     }
 
-    private onInstanceStopped(callback: (instance: Glue42Web.AppManager.Instance) => any): void {
+    private onInstanceStopped(callback: (instance: Glue42Web.AppManager.Instance) => any): UnsubscribeFunction {
         if (typeof callback !== "function") {
             throw new Error("OnInstanceStarted requires a single argument of type function");
         }
 
-        this.controller.onInstanceStopped((instance) => {
+        return this.controller.onInstanceStopped((instance) => {
             if (instance.application.name === this.data.name) {
                 callback(instance);
             }

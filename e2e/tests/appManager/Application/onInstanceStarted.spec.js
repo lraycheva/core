@@ -1,127 +1,156 @@
-// describe('onInstanceStarted()', () => {
-//     before(() => {
-//         return coreReady;
-//     });
+describe('onInstanceStarted()', () => {
+    const appName = "dummyApp";
+    let app;
 
-//     afterEach(() => {
-//         return gtf.appManager.stopAllOtherInstances();
-//     });
+    const supportAppName = "coreSupport";
+    let supportApp;
 
-//     it('Should throw an error when callback isn\'t of type function.', () => {
-//         const app = glue.appManager.application('coreSupport');
+    before(() => coreReady);
 
-//         try {
-//             app.onInstanceStarted(42);
-//             throw new Error('app.onInstanceStarted() should have thrown an error because callback wasn\'t of type function!');
-//         } catch (error) {
-//             expect(error.message).to.equal('Please provide the callback as a function!');
-//         }
-//     });
+    beforeEach(() => {
+        app = glue.appManager.application(appName);
 
-//     it.skip('Should invoke the callback with the newly started application instance. | https://github.com/Glue42/core/issues/148', async () => {
-//         const appNameToStart = 'coreSupport';
-//         const app = glue.appManager.application(appNameToStart);
+        supportApp = glue.appManager.application(supportAppName);
+    });
 
-//         const instanceStartedPromise = new Promise((resolve) => {
-//             const unsubscribeFunc = app.onInstanceStarted((instance) => {
-//                 if (instance.application.name === appNameToStart) {
-//                     unsubscribeFunc();
+    afterEach(() => {
+        gtf.clearWindowActiveHooks();
 
-//                     return resolve();
-//                 }
-//             });
-//         });
+        return gtf.appManager.stopAllOtherInstances();
+    });
 
-//         await app.start();
+    [undefined, null, "", false, 42, "test"].forEach(invalidArg => {
+        it(`Should throw an error when the passed argument (${JSON.stringify(invalidArg)}) isn\'t of type function`, (done) => {
+            try {
+                const un = app.onInstanceStarted(invalidArg);
+                gtf.addWindowHook(un);
+                done("Should have thrown");
+            } catch (error) {
+                done();
+            }
+        });
+    });
 
-//         return instanceStartedPromise;
-//     });
+    it("Should invoke the callback", async() => {
+        const eventHeard = gtf.wrapPromise();
 
-//     it.skip('Should not call the callback when an instance of another application is started. | https://github.com/Glue42/core/issues/148', async () => {
-//         const currentAppName = RUNNER;
-//         const currentApp = glue.appManager.application(currentAppName);
+        const un = app.onInstanceStarted((inst) => {
+                eventHeard.resolve();
+        });
 
-//         const appNameToStart = 'coreSupport';
-//         const appToStart = glue.appManager.application(appNameToStart);
+        gtf.addWindowHook(un);
 
-//         let instanceStarted = false;
-//         let doneReplaying = false;
+        await app.start();
 
-//         const unsubscribeFunc = currentApp.onInstanceStarted(() => {
-//             if (doneReplaying) {
-//                 instanceStarted = true;
-//             } else {
-//                 doneReplaying = true;
-//             }
-//         });
+        await eventHeard.promise;
+    })
 
-//         const timeoutPromise = new Promise((resolve, reject) => {
-//             setTimeout(() => {
-//                 unsubscribeFunc();
-//                 if (instanceStarted) {
-//                     return reject(new Error('An instance was started.'));
-//                 }
+    it('Should invoke the callback with the newly started application instance', async() => {
+        const eventHeard = gtf.wrapPromise();
 
-//                 return resolve();
-//             }, 3000);
-//         });
+        const un = app.onInstanceStarted((instance) => {
+            if (instance.application.name === appName) {
+                eventHeard.resolve();
+            }
+        });
 
-//         await appToStart.start();
+        gtf.addWindowHook(un);
 
-//         return timeoutPromise;
-//     });
+        await app.start();
 
-//     it.skip('Should return a working unsubscribe function. | https://github.com/Glue42/core/issues/148', async () => {
-//         const app = glue.appManager.application('coreSupport');
+        await eventHeard.promise;
+    });
 
-//         let instanceStarted = false;
+    it('Should not call the callback when an instance of another application is started', (done) => {
+        const ready = gtf.waitFor(2, done);
 
-//         const unsubscribeFunc = app.onInstanceStarted(() => {
-//             instanceStarted = true;
-//         });
-//         unsubscribeFunc();
+        const un = app.onInstanceStarted(() => {
+            done("Should not be invoked");
+        });
 
-//         const timeoutPromise = new Promise((resolve, reject) => {
-//             setTimeout(() => {
-//                 if (instanceStarted) {
-//                     return reject(new Error('An instance was started.'));
-//                 }
+        gtf.addWindowHook(un);
 
-//                 return resolve();
-//             }, 3000);
-//         });
+        supportApp.start().then(ready).catch(done);
+        
+        gtf.wait(3000, ready);
+    });
 
-//         await app.start();
+    it('Should return a function', async () => {
+        const returned = app.onInstanceStarted(() => {});
 
-//         return timeoutPromise;
-//     });
+        gtf.addWindowHook(returned);
 
-//     it.skip('Should not invoke the callback when the setup is there but no instance is started (3k ms). | https://github.com/Glue42/core/issues/148', () => {
-//         const app = glue.appManager.application('coreSupport');
+        expect(returned).to.be.a("function");
+    });
 
-//         let instanceStarted = false;
+    it('Should return a working unsubscribe function', async() => {
+        const onInstanceStartedHeard = gtf.wrapPromise();
+        const onInstanceStartedHeardSecondEvent = gtf.wrapPromise();
+     
+        const un = app.onInstanceStarted((inst) => {
+            if (inst.application.instances.length === 1 && inst.application.instances.find((appInst) => appInst.id === inst.id)) {
+                onInstanceStartedHeard.resolve();
+            }
 
-//         let doneReplaying = false;
+            if (inst.application.instances.length > 1) {
+                onInstanceStartedHeardSecondEvent.reject("Should not have fired the event");
+            }
+        });
 
-//         const unsubscribeFunc = app.onInstanceStarted(() => {
-//             if (doneReplaying) {
-//                 instanceStarted = true;
-//             } else {
-//                 doneReplaying = true;
-//             }
-//         });
+        gtf.addWindowHook(un);
 
-//         const timeoutPromise = new Promise((resolve, reject) => {
-//             setTimeout(() => {
-//                 unsubscribeFunc();
-//                 if (instanceStarted) {
-//                     return reject(new Error('An instance was started.'));
-//                 }
+        await app.start();
 
-//                 return resolve();
-//             }, 3000);
-//         });
+        await onInstanceStartedHeard.promise;
 
-//         return timeoutPromise;
-//     });
-// });
+        un();
+
+        await app.start();
+
+        gtf.wait(3000, () => onInstanceStartedHeardSecondEvent.resolve());
+
+        await onInstanceStartedHeardSecondEvent.promise;
+    });
+
+    it('Should not invoke the callback when the setup is there but no instance is started', (done) => {
+        const un = app.onInstanceStarted(() => {
+            done("Should not be invoked");
+        });
+
+        gtf.addWindowHook(un);
+
+        gtf.wait(3000, done);
+    });
+
+    it("Should invoke the callback with the same instance returned from application.start()", (done) => {
+        let instance;
+
+        const un = app.onInstanceStarted((inst) => {
+            instance = inst;
+        });
+
+        gtf.addWindowHook(un);
+
+        app.start()
+            .then((returnedInst) => {
+                expect(returnedInst.id).to.eql(instance.id);
+                expect(returnedInst.application.name).to.eql(instance.application.name);
+                done();
+            })
+            .catch(done);
+    });
+
+    it("Should invoke the callback 3 times when 3 instances are opened", (done) => {
+        const ready = gtf.waitFor(4, done);
+
+        const un = app.onInstanceStarted((inst) => {
+            if (inst.application.name === appName) {
+                ready();
+            }
+        });
+
+        gtf.addWindowHook(un);
+
+        Promise.all([app.start(), app.start(), app.start()]).then(ready).catch(done);
+    });
+});

@@ -1,106 +1,175 @@
-// describe('onAppChanged()', () => {
-//     before(() => {
-//         return coreReady;
-//     });
+describe("onAppChanged() ", () => {
+    const extraDefOne = {
+        name: "Imported-At-Runtime",
+        type: "window",
+        details: {
+            url: "https://github.com"
+        }
+    };
 
-//     afterEach(async () => {
-//         await gtf.appManager.resetRemoteSourceApplications();
+    let definitionsOnStart;
 
-//         // Wait for the reset application definitions from the remoteSource to be fetched.
-//         return gtf.waitForFetch();
-//     });
+    before(async () => {
+        await coreReady;
 
-//     it('Should throw an error when callback isn\'t of type function.', () => {
-//         try {
-//             glue.appManager.onAppChanged(42);
-//             throw new Error('onAppChanged() should have thrown an error because callback wasn\'t of type function!');
-//         } catch (error) {
-//             expect(error.message).to.equal('Please provide the callback as a function!');
-//         }
-//     });
+        definitionsOnStart = await glue.appManager.inMemory.export();
+    });
 
-//     it('Should invoke the callback with the changed application provided by a remote source.', async () => {
-//         const apps = await gtf.appManager.getRemoteSourceApplications();
+    beforeEach(() => glue.appManager.inMemory.import([extraDefOne], "merge"));
 
-//         const nameOfAppToChange = 'AppWithDetails-remote';
-//         const newURLOfAppToChange = 'https://tick42.com/';
-//         const appToChange = apps.find((app) => app.name === nameOfAppToChange);
-//         appToChange.details.url = newURLOfAppToChange;
-//         const appsBesidesAppToChange = apps.filter((app) => app.name !== nameOfAppToChange);
-//         const newApps = [
-//             ...appsBesidesAppToChange,
-//             appToChange
-//         ];
+    afterEach(async () => {
+        gtf.clearWindowActiveHooks();
 
-//         const appChangedPromise = new Promise((resolve) => {
-//             const unsubscribeFunc = glue.appManager.onAppChanged((app) => {
-//                 if (app.name === nameOfAppToChange) {
-//                     unsubscribeFunc();
+        await gtf.appManager.stopAllOtherInstances();
 
-//                     return resolve();
-//                 }
-//             });
-//         });
+        await glue.appManager.inMemory.import(definitionsOnStart, "replace");
+    });
 
-//         await gtf.appManager.setRemoteSourceApplications(newApps);
+    [undefined, null, '', false, 42, 'test'].forEach((invalidArg) => {
+        it(`Should throw an error when the passed argument (${JSON.stringify(invalidArg)}) isn\'t of type function`, (done) => {
+            try {
+                const un = glue.appManager.onAppChanged(invalidArg);
+                gtf.addWindowHook(un);
+                done('Should have thrown');
+            } catch (error) {
+                done();
+            }
+        });
+    });
 
-//         return appChangedPromise;
-//     });
+    it("Should invoke the callback when app definition is changed", async() => {
+        const newAppDef = { ...extraDefOne, ...{ caption: "new-caption", icon: "new-icon" }};
 
-//     it('Should return a working unsubscribe function.', async () => {
-//         const apps = await gtf.appManager.getRemoteSourceApplications();
+        const onAppChangedHeard = gtf.wrapPromise();
 
-//         const nameOfAppToChange = 'AppWithDetails-remote';
-//         const newURLOfAppToChange = 'https://tick42.com/';
-//         const appToChange = apps.find((app) => app.name === nameOfAppToChange);
-//         appToChange.details.url = newURLOfAppToChange;
-//         const appsBesidesAppToChange = apps.filter((app) => app.name !== nameOfAppToChange);
-//         const newApps = [
-//             ...appsBesidesAppToChange,
-//             appToChange
-//         ];
+        const un = glue.appManager.onAppChanged((app) => {
+            if (app.name === extraDefOne.name) {
+                onAppChangedHeard.resolve();
+            }
+        });
 
-//         let appChanged = false;
+        gtf.addWindowHook(un);
 
-//         const unsubscribeFunc = glue.appManager.onAppChanged(() => {
-//             appChanged = true;
-//         });
-//         unsubscribeFunc();
+        await glue.appManager.inMemory.import([newAppDef], "merge");
 
-//         const timeoutPromise = new Promise((resolve, reject) => {
-//             setTimeout(() => {
-//                 if (appChanged) {
-//                     return reject(new Error('An app was changed.'));
-//                 }
+        await onAppChangedHeard.promise;
+    });
 
-//                 return resolve();
-//             }, 3000);
-//         });
+    it("Should invoke the callback with the updated application", async() => {
+        const newAppDef = { ...extraDefOne, ...{ caption: "new-caption", icon: "new-icon", details: { url: "new-url.com"} }};
 
-//         await gtf.appManager.setRemoteSourceApplications(newApps);
+        const onAppChangedHeard = gtf.wrapPromise();
 
-//         return timeoutPromise;
-//     });
+        const un = glue.appManager.onAppChanged((app) => {
+            if (app.name === extraDefOne.name) {
+                try {
+                    expect(app.userProperties.details.url).to.eql(newAppDef.details.url);
+                    expect(app.caption).to.eql(newAppDef.caption);
+                    expect(app.icon).to.eql(newAppDef.icon);
+                    expect(app.instances).to.eql([]);
+                    onAppChangedHeard.resolve();
+                } catch (error) {
+                    onAppChangedHeard.reject(error);
+                }
+            }
+        });
 
-//     it('Should not invoke the callback when the setup is there but no app is changed (3k ms).', () => {
-//         let appChanged = false;
+        gtf.addWindowHook(un);
 
-//         const unsubscribeFunc = glue.appManager.onAppChanged(() => {
-//             appChanged = true;
-//         });
+        await glue.appManager.inMemory.import([newAppDef], "merge");
 
-//         const timeoutPromise = new Promise((resolve, reject) => {
-//             setTimeout(() => {
-//                 unsubscribeFunc();
+        await onAppChangedHeard.promise;
+    });
 
-//                 if (appChanged) {
-//                     return reject(new Error('An app was changed.'));
-//                 }
+    it("Should return a function", () => {
+        const un = glue.appManager.onAppChanged(() => {});
 
-//                 return resolve();
-//             }, 3000);
-//         });
+        gtf.addWindowHook(un);
 
-//         return timeoutPromise;
-//     });
-// });
+        expect(un).to.be.a("function");
+    });
+
+    it("Should return a working unsubscribe function", async() => {
+        const newAppDef = { ...extraDefOne, ...{ details: { url: "https://abv.bg"} }};
+        const newAppDef2 = { ...extraDefOne, ...{ details: { url: "new-url.com"} }};
+
+        const onAppChangedHeard = gtf.wrapPromise();
+        const onAppChangedHeardSecondEvent = gtf.wrapPromise();
+
+        const un = glue.appManager.onAppChanged((app) => {
+            if (app.userProperties.details.url === newAppDef.details.url) {
+                onAppChangedHeard.resolve();
+            }
+
+            if (app.userProperties.details.url === newAppDef2.details.url) {
+                onAppChangedHeardSecondEvent.reject("Should not have fired the event");
+            }
+        });
+
+        gtf.addWindowHook(un);
+        
+        await glue.appManager.inMemory.import([newAppDef], "merge");
+
+        await onAppChangedHeard.promise;
+
+        un();
+
+        gtf.wait(3000, () => onAppChangedHeardSecondEvent.resolve());
+
+        await onAppChangedHeardSecondEvent.promise;
+    });
+
+    it("Should not invoke the callback when the setup is there but no app is changed", (done) => {
+        const un = glue.appManager.onAppChanged(() => done("Should have not been invoked"));
+
+        gtf.addWindowHook(un);
+
+        gtf.wait(3000, done);
+    });
+
+    it("Should invoke the callback 3 times when application is changed 3 times sequentially", (done) => {
+        const ready = gtf.waitFor(4, done);
+
+        const newAppDef1 = Object.assign({}, extraDefOne, { details: { url: "https://abv.bg" }});
+        const newAppDef2 = Object.assign({}, extraDefOne, { details: { url: "https://glue42.com" }});
+        const newAppDef3 = Object.assign({}, extraDefOne, { details: { url: "https://github.com" }});
+
+        const un = glue.appManager.onAppChanged((app) => {
+            if (app.name === extraDefOne.name) {
+                ready();
+            }
+        });
+
+        gtf.addWindowHook(un);
+
+        glue.appManager.inMemory.import([newAppDef1], "merge")
+            .then(() => glue.appManager.inMemory.import([newAppDef2], "merge"))
+            .then(() => glue.appManager.inMemory.import([newAppDef3], "merge"))
+            .then(ready)
+            .catch(done);
+    });
+
+    it("Should invoke the callback 3 times when application is changed 3 times in parallel", (done) => {
+        const ready = gtf.waitFor(4, done);
+
+        const newAppDef1 = Object.assign({}, extraDefOne, { details: { url: "https://abv.bg" }});
+        const newAppDef2 = Object.assign({}, extraDefOne, { details: { url: "https://glue42.com" }});
+        const newAppDef3 = Object.assign({}, extraDefOne, { details: { url: "https://github.com" }});
+
+        const un = glue.appManager.onAppChanged((app) => {
+            if (app.name === extraDefOne.name) {
+                ready();
+            }
+        });
+
+        gtf.addWindowHook(un);
+
+        Promise.all([
+            glue.appManager.inMemory.import([newAppDef1], "merge"),
+            glue.appManager.inMemory.import([newAppDef2], "merge"),
+            glue.appManager.inMemory.import([newAppDef3], "merge")
+        ])
+            .then(ready)
+            .catch(done);
+    });
+});

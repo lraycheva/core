@@ -1,138 +1,186 @@
-// describe('onAppAdded()', () => {
-//     before(() => {
-//         return coreReady;
-//     });
+describe("onAppAdded() ", () => {
+    let alreadyImportedAppNames;
 
-//     afterEach(async () => {
-//         await gtf.appManager.resetRemoteSourceApplications();
+    const extraDefOne = {
+        name: "ExtraOne",
+        type: "window",
+        details: {
+            url: "http://localhost:4242/dummyApp/index.html"
+        },
+        customProperties: {
+            includeInWorkspaces: true
+        }
+    };
 
-//         // Wait for the reset application definitions from the remoteSource to be fetched.
-//         return gtf.waitForFetch();
-//     });
+    let definitionsOnStart;
 
-//     it('Should throw an error when callback isn\'t of type function.', () => {
-//         try {
-//             glue.appManager.onAppAdded(42);
-//             throw new Error('onAppAdded() should have thrown an error because callback wasn\'t of type function!');
-//         } catch (error) {
-//             expect(error.message).to.equal('Please provide the callback as a function!');
-//         }
-//     });
+    before(async () => {
+        await coreReady;
 
-//     it('Should invoke the callback with the newly added application provided by a remote source.', async () => {
-//         const newApplicationToAdd = {
-//             name: 'new-application',
-//             details: {
-//                 url: 'https://glue42.com/'
-//             }
-//         };
+        definitionsOnStart = await glue.appManager.inMemory.export();
 
-//         const appAddedPromise = new Promise((resolve) => {
-//             const unsubscribeFunc = glue.appManager.onAppAdded((app) => {
-//                 // The method replays all previously added applications.
-//                 if (app.name === newApplicationToAdd.name) {
-//                     unsubscribeFunc();
+        alreadyImportedAppNames = gtf.appManager.getLocalApplications().map(app => app.name);
+    });
 
-//                     return resolve();
-//                 }
-//             });
-//         });
+    afterEach(async () => {
+        gtf.clearWindowActiveHooks();
 
-//         await gtf.appManager.addRemoteSourceApplication(newApplicationToAdd);
+        await gtf.appManager.stopAllOtherInstances();
 
-//         return appAddedPromise;
-//     });
+        await glue.appManager.inMemory.import(definitionsOnStart, "replace");
+    });
 
-//     it('Should replay existing applications by invoking the callback with all previously added applications provided inside of localApplications and by a remoteSource.', async () => {
-//         const localAppNames = gtf.appManager.getLocalApplications().map((localApp) => localApp.name);
-//         const validRemoteAppNames = (await gtf.appManager.getRemoteSourceApplications()).map((remoteApp) => remoteApp.name).filter((remoteAppName) => remoteAppName !== 'invalid-application');
-//         const allValidAppNames = [
-//             ...localAppNames,
-//             ...validRemoteAppNames
-//         ];
+    [undefined, null, '', false, 42, 'test'].forEach((invalidArg) => {
+        it(`Should throw an error when the passed argument (${JSON.stringify(invalidArg)}) isn\'t of type function`, (done) => {
+            try {
+                const un = glue.appManager.onAppAdded(invalidArg);
+                gtf.addWindowHook(un);
+                done("Should have thrown")
+            } catch (error) {
+                done();
+            }
+        });
+    });
 
-//         const appNamesCallbackCalledWith = [];
+    it("Should invoke the callback when new application is added", async() => {
+        const onAppAddedHeard = gtf.wrapPromise();
 
-//         const allAppsAddedPromise = new Promise((resolve) => {
-//             const unsubscribeFunc = glue.appManager.onAppAdded((app) => {
-//                 appNamesCallbackCalledWith.push(app.name);
+        const un = glue.appManager.onAppAdded((app) => {
+            if (app.name === extraDefOne.name) {
+                onAppAddedHeard.resolve();
+            }
+        });
 
-//                 if (appNamesCallbackCalledWith.every((appNameCallbackCalledWith) => allValidAppNames.includes(appNameCallbackCalledWith)) &&
-//                     allValidAppNames.every((appName) => appNamesCallbackCalledWith.includes(appName))) {
-//                     unsubscribeFunc();
+        gtf.addWindowHook(un);
 
-//                     return resolve();
-//                 }
-//             });
-//         });
+        await glue.appManager.inMemory.import([extraDefOne], "replace");
 
-//         return allAppsAddedPromise;
-//     });
+        await onAppAddedHeard.promise;
+    });
+    
+    it("Should invoke the callback with the newly added application", async() => {
+        const onAppAddedHeard = gtf.wrapPromise();
 
-//     it('Should return a working unsubscribe function.', async () => {
-//         const newApplicationToAdd = {
-//             name: 'new-application',
-//             details: {
-//                 url: 'https://glue42.com/'
-//             }
-//         };
+        const un = glue.appManager.onAppAdded((app) => {
+            if (app.name === extraDefOne.name) {
+                try {
+                    expect(app.userProperties.details.url).to.eql(extraDefOne.details.url);
+                    expect(app.instances).to.eql([]);
+                    onAppAddedHeard.resolve();
+                } catch (error) {
+                    onAppAddedHeard.reject(error);
+                }
+            }
+        });
 
-//         let appAdded = false;
+        gtf.addWindowHook(un);
 
-//         const unsubscribeFunc = glue.appManager.onAppAdded(() => {
-//             appAdded = true;
-//         });
-//         unsubscribeFunc();
+        await glue.appManager.inMemory.import([extraDefOne], "replace");
+    });
 
-//         const timeoutPromise = new Promise((resolve, reject) => {
-//             setTimeout(() => {
-//                 if (appAdded) {
-//                     return reject(new Error('An app was added.'));
-//                 }
+    it("Should return a function", () => {
+        const un = glue.appManager.onAppAdded(() => {});
 
-//                 return resolve();
-//             }, 3000);
-//         });
+        gtf.addWindowHook(un);
 
-//         await gtf.appManager.addRemoteSourceApplication(newApplicationToAdd);
+        expect(un).to.be.a("function");
+    });
 
-//         return timeoutPromise;
-//     });
+    it("Should return a working unsubscribe function", async() => {
+        const newAppDef = Object.assign({}, extraDefOne, { name: Date.now().toString() });
 
-//     it('Should not invoke the callback when the setup is there but no app is changed (3k ms).', async () => {
-//         const localAppNames = gtf.appManager.getLocalApplications().map((localApp) => localApp.name);
-//         const validRemoteAppNames = (await gtf.appManager.getRemoteSourceApplications()).map((remoteApp) => remoteApp.name).filter((remoteAppName) => remoteAppName !== 'invalid-application');
-//         const allValidAppNames = [
-//             ...localAppNames,
-//             ...validRemoteAppNames
-//         ];
+        const onAppAddedHeard = gtf.wrapPromise();
+        const onAppAddedHeardSecondEvent = gtf.wrapPromise();
+        
+        const un = glue.appManager.onAppAdded((app) => {
+            if (app.name === extraDefOne.name) {
+                onAppAddedHeard.resolve();
+            };
 
-//         const appsAddedNames = [];
-//         let doneReplaying = false;
-//         let appAdded = false;
+           if (app.name === newAppDef.name) {
+            onAppAddedHeardSecondEvent.reject("Should not have fired the event");
+           }
+        });
 
-//         const unsubscribeFunc = glue.appManager.onAppAdded((app) => {
-//             if (doneReplaying) {
-//                 appAdded = true;
-//             } else {
-//                 appsAddedNames.push(app.name);
+        gtf.addWindowHook(un);
+        
+        await glue.appManager.inMemory.import([extraDefOne], "replace");
 
-//                 doneReplaying = allValidAppNames.every((validAppName) => appsAddedNames.includes(validAppName));
-//             }
-//         });
+        await onAppAddedHeard.promise;
 
-//         const timeoutPromise = new Promise((resolve, reject) => {
-//             setTimeout(() => {
-//                 unsubscribeFunc();
+        un();
 
-//                 if (appAdded) {
-//                     return reject(new Error('An app was added.'));
-//                 }
+        await glue.appManager.inMemory.import([newAppDef], "replace");
+        
+        gtf.wait(3000, () => onAppAddedHeardSecondEvent.resolve());
 
-//                 return resolve();
-//             }, 3000);
-//         });
+        await onAppAddedHeardSecondEvent.promise;
+    });
 
-//         return timeoutPromise;
-//     });
-// });
+    it("Should replay existing applications by invoking the callback with all previously added applications", (done) => {
+        const ready = gtf.waitFor(alreadyImportedAppNames.length, done);
+
+        const un = glue.appManager.onAppAdded(app => {
+            if (alreadyImportedAppNames.indexOf(app.name) > -1) {
+                ready();
+            }
+        });
+
+        gtf.addWindowHook(un);
+    });
+
+    it("Should invoke the callback 3 times when new applications are added 3 times", (done) => {
+        const ready = gtf.waitFor(4, done);
+
+        const newAppName1 = Date.now().toString();
+        const newAppName2 = (Date.now() + 2).toString();
+        
+        const appNamesToBeAdded = [extraDefOne.name, newAppName1, newAppName2 ];
+
+        const newAppDef1 = Object.assign({}, extraDefOne, { name: newAppName1 });
+        const newAppDef2 = Object.assign({}, extraDefOne, { name: newAppName2 });
+
+        const un = glue.appManager.onAppAdded((app) => {
+            if (appNamesToBeAdded.indexOf(app.name) > -1) {
+                ready();
+            }
+        });
+
+        gtf.addWindowHook(un);
+
+        glue.appManager.inMemory.import([extraDefOne], "merge")
+            .then(() => glue.appManager.inMemory.import([newAppDef1], "merge"))
+            .then(() => glue.appManager.inMemory.import([newAppDef2], "merge"))
+            .then(ready)
+            .catch(done);
+    });
+
+    it("Should invoke the callback 3 times when adding 3 new applications in parallel", (done) => {
+        const ready = gtf.waitFor(4, done);
+
+        const newAppName1 = Date.now().toString();
+        const newAppName2 = (Date.now() + 2).toString();
+        
+        const appNamesToBeAdded = [extraDefOne.name, newAppName1, newAppName2 ];
+
+        const newAppDef1 = Object.assign({}, extraDefOne, { name: newAppName1 });
+        const newAppDef2 = Object.assign({}, extraDefOne, { name: newAppName2 });
+
+        const un = glue.appManager.onAppAdded((app) => {
+            if (appNamesToBeAdded.indexOf(app.name) > -1) {
+                ready();
+            }
+        });
+
+        gtf.addWindowHook(un);
+
+        Promise.all([
+            glue.appManager.inMemory.import([extraDefOne], "merge"),
+            glue.appManager.inMemory.import([newAppDef1], "merge"),
+            glue.appManager.inMemory.import([newAppDef2], "merge")
+        ])
+            .then(ready)
+            .catch(done);
+    });
+});
+

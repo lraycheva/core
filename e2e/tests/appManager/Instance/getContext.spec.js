@@ -1,21 +1,29 @@
-// describe('getContext()', () => {
-//     before(() => {
-//         return coreReady;
-//     });
+describe("getContext() ", () => {
+    const appName = "coreSupport";
+    let app;
 
-//     afterEach(() => {
-//         return gtf.appManager.stopAllOtherInstances();
-//     });
+    before(() => coreReady);
 
-//     it('Should return a promise that resolves with the starting context.', async () => {
-//         const startingContext = {
-//             test: 42
-//         };
+    beforeEach(() => {
+        app = glue.appManager.application(appName);
+    });
 
-//         const instance = await glue.appManager.application('coreSupport').start(startingContext);
+    afterEach(() => Promise.all(glue.appManager.instances().map(inst => inst.stop())));
 
-//         const context = await instance.getContext();
+    it("should be async method", async() => {
+        const appInst = await app.start();
+        const context = appInst.getContext();
 
-//         expect(context).to.eql(startingContext);
-//     });
-// });
+        expect(context.then).to.be.a("function");
+        expect(context.catch).to.be.a("function");
+    });
+
+    it("should return the correct context", async() => {
+        const startContext = { test: 42 };
+        const appInst = await app.start(startContext);
+
+        const context = await appInst.getContext();
+
+        expect(context).to.eql(startContext);
+    });
+});

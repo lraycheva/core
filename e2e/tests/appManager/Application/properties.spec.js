@@ -1,160 +1,194 @@
-// describe('properties', () => {
-//     before(() => {
-//         return coreReady;
-//     });
+describe('properties', () => {
+    const appConfig = {
+        name: "coreSupport",
+        type: "window",
+        details: {
+            url: "http://localhost:4242/coreSupport/index.html"
+        },
+        intents: [
+            {
+                name: "core-intent",
+                displayName: "core-intent-displayName",
+                contexts: [
+                    "test-context"
+                ]
+            }
+        ]
+    };
 
-//     afterEach(() => {
-//         return gtf.appManager.stopAllOtherInstances();
-//     });
+    let app;
 
-//     describe('_url', () => {
-//         it('Should be set correctly in the case of a Glue42 Core application.', () => {
-//             const appName = 'coreSupport';
-//             const expectedUrl = gtf.appManager.getLocalApplications().find((localApp) => localApp.name === appName).details.url;
-//             const url = glue.appManager.application(appName)._url;
+    before(() => coreReady);
 
-//             expect(url).to.eql(expectedUrl);
-//         });
+    beforeEach(() => {
+        app = glue.appManager.application(appConfig.name);
+    });
 
-//         it('Should be set correctly in the case of a FDC3 application with a top level url property inside the manifest.', () => {
-//             const appName = 'FDC3App-top-level-url';
-//             const expectedUrl = JSON.parse(gtf.appManager.getLocalApplications().find((localApp) => localApp.name === appName).manifest).url;
-//             const url = glue.appManager.application(appName)._url;
+    afterEach(() => Promise.all(glue.appManager.instances().map((inst) => inst.stop())));
 
-//             expect(url).to.eql(expectedUrl);
-//         });
+    describe('name', () => {
+        it("Should return a string", () => {
+            expect(app.name).to.be.a("string");
+        });
 
-//         it('Should be set correctly in the case of a FDC3 application with a url property inside a top level details property inside the manifest.', () => {
-//             const appName = 'FDC3App-url-inside-of-top-level-details';
-//             const expectedUrl = JSON.parse(gtf.appManager.getLocalApplications().find((localApp) => localApp.name === appName).manifest).details.url;
-//             const url = glue.appManager.application(appName)._url;
+        it("Should return the correct application name", () => {
+            expect(app.name).to.eql(appConfig.name);
+        });
 
-//             expect(url).to.eql(expectedUrl);
-//         });
-//     });
+        it("Should be set correctly regarding the app configuration", () => {
+            const localApps = gtf.appManager.getLocalApplications();
 
-//     describe('name', () => {
-//         it('Should be set correctly.', async () => {
-//             const localAppNames = gtf.appManager.getLocalApplications().map((localApp) => localApp.name);
-//             const validRemoteAppNames = (await gtf.appManager.getRemoteSourceApplications()).map((remoteApp) => remoteApp.name).filter((remoteAppName) => remoteAppName !== 'invalid-application');
-//             const allValidAppNames = [
-//                 ...localAppNames,
-//                 ...validRemoteAppNames
-//             ];
+            localApps.forEach(localAppConfig => {
+                const app = glue.appManager.application(localAppConfig.name);
+                expect(app.name).to.eql(localAppConfig.name);
+            })
+        });
+    });
 
-//             for (const validAppName of allValidAppNames) {
-//                 const app = glue.appManager.application(validAppName);
-//                 expect(app.name).to.equal(validAppName);
-//             }
-//         });
-//     });
+    describe("title", () => {
+        it("Should be set correctly regarding the app configuration", () => {
+            const localApps = gtf.appManager.getLocalApplications().filter(app => app.title);
 
-//     describe('title', () => {
-//         it('Should be set correctly.', async () => {
-//             const localApps = gtf.appManager.getLocalApplications();
-//             const validRemoteApps = (await gtf.appManager.getRemoteSourceApplications()).filter((remoteApp) => remoteApp.name !== 'invalid-application');
-//             const allValidApps = [
-//                 ...localApps,
-//                 ...validRemoteApps
-//             ];
+            localApps.forEach(localAppConfig => {
+                const app = glue.appManager.application(localAppConfig.name);
 
-//             for (const validApp of allValidApps) {
-//                 const app = glue.appManager.application(validApp.name);
-//                 expect(app.title).to.equal(validApp.title || '');
-//             }
-//         });
-//     });
+                expect(app.title).to.be.a("string");
+                expect(app.title).to.eql(localAppConfig.title);
+            })
+        });
+    });
 
-//     describe('version', () => {
-//         it('Should be set correctly.', async () => {
-//             const localApps = gtf.appManager.getLocalApplications();
-//             const validRemoteApps = (await gtf.appManager.getRemoteSourceApplications()).filter((remoteApp) => remoteApp.name !== 'invalid-application');
-//             const allValidApps = [
-//                 ...localApps,
-//                 ...validRemoteApps
-//             ];
+    describe("version", () => {
+        it("Should be set correctly regarding the app configuration", () => {
+            const localApps = gtf.appManager.getLocalApplications().filter(app => app.version);
 
-//             for (const validApp of allValidApps) {
-//                 const app = glue.appManager.application(validApp.name);
-//                 expect(app.version).to.equal(validApp.version || '');
-//             }
-//         });
-//     });
+            localApps.forEach(localAppConfig => {
+                const app = glue.appManager.application(localAppConfig.name);
+                
+                expect(app.version).to.be.a("string");
+                expect(app.version).to.eql(localAppConfig.version);
+            })
+        });
+    });
 
-//     describe('icon', () => {
-//         it('Should be set correctly.', async () => {
-//             const localApps = gtf.appManager.getLocalApplications();
-//             const validRemoteApps = (await gtf.appManager.getRemoteSourceApplications()).filter((remoteApp) => remoteApp.name !== 'invalid-application');
-//             const allValidApps = [
-//                 ...localApps,
-//                 ...validRemoteApps
-//             ];
+    describe("icon", () => {
+        it("Should be set correctly regarding the app configuration", () => {
+            const localApps = gtf.appManager.getLocalApplications().filter(app => app.icon);
 
-//             for (const validApp of allValidApps) {
-//                 const app = glue.appManager.application(validApp.name);
-//                 expect(app.icon).to.equal(validApp.icon || '');
-//             }
-//         });
-//     });
+            localApps.forEach(localAppConfig => {
+                const app = glue.appManager.application(localAppConfig.name);
 
-//     describe('caption', () => {
-//         it('Should be set correctly.', async () => {
-//             const localApps = gtf.appManager.getLocalApplications();
-//             const validRemoteApps = (await gtf.appManager.getRemoteSourceApplications()).filter((remoteApp) => remoteApp.name !== 'invalid-application');
-//             const allValidApps = [
-//                 ...localApps,
-//                 ...validRemoteApps
-//             ];
+                expect(app.icon).to.be.a("string");
+                expect(app.icon).to.eql(localAppConfig.icon);
+            })
+        });
+    });
 
-//             for (const validApp of allValidApps) {
-//                 const app = glue.appManager.application(validApp.name);
-//                 expect(app.caption).to.equal(validApp.caption || '');
-//             }
-//         });
-//     });
+    describe("caption", () => {
+        it("Should be set correctly regarding the app configuration", () => {
+            const localApps = gtf.appManager.getLocalApplications().filter(app => app.caption);
 
-//     describe('userProperties', () => {
-//         it('Should be set correctly.', async () => {
-//             const localApps = gtf.appManager.getLocalApplications();
-//             const validRemoteApps = (await gtf.appManager.getRemoteSourceApplications()).filter((remoteApp) => remoteApp.name !== 'invalid-application');
-//             const allValidApps = [
-//                 ...localApps,
-//                 ...validRemoteApps
-//             ];
+            localApps.forEach(localAppConfig => {
+                const app = glue.appManager.application(localAppConfig.name);
 
-//             for (const validApp of allValidApps) {
-//                 const app = glue.appManager.application(validApp.name);
-//                 const glue42CoreAppProps = ["name", "title", "version", "customProperties", "icon", "caption"];
-//                 const expectedUserProperties = {
-//                     ...Object.fromEntries(Object.entries(validApp).filter(([key]) => !glue42CoreAppProps.includes(key))),
-//                     ...validApp.customProperties
-//                 };
+                expect(app.caption).to.be.a("string");
+                expect(app.caption).to.eql(localAppConfig.caption);
+            })
+        });
+    });
 
-//                 expect(app.userProperties).to.eql(expectedUserProperties);
-//             }
-//         });
-//     });
+    describe('instances', () => {
+        it('Should be an array', () => {
+            expect(app.instances).to.be.an('array');            
+        });
 
-//     describe('instances', () => {
-//         it('Should be set correctly.', async () => {
-//             const appName = 'coreSupport';
-//             const app = glue.appManager.application(appName);
+        it('Should be an empty array when no app instances are started', () => {
+            expect(app.instances.length).to.eql(0);
+        });
 
-//             expect(app.instances).to.be.empty;
+        it('Should be an array with one correct instance when app.start() is invoked', (done) => {
+            app.start()
+                .then((inst) => {
+                    expect(app.instances.length).to.eql(1);
+                    expect(inst.id).to.eql(app.instances[0].id);
+                    done();
+                })
+                .catch(done);
+        });
 
-//             const appInstance = await app.start();
+        it('Should add 3 correct instances when app.start() is invoked 3 times', (done) => {
+            Promise.all([app.start(), app.start(), app.start()])
+                .then(appInstArr => {
+                    expect(app.instances.length).to.eql(appInstArr.length);
+                    expect(app.instances.filter(inst => appInstArr.some(returnedInst => returnedInst.id === inst.id)).length).to.eql(3);
+                    done();
+                })
+                .catch(done);
+        });
 
-//             const appInstances = app.instances;
+        it('Should remove one element when an application instance is stopped', (done) => {
+            let removedInstId;
+    
+            Promise.all([app.start(), app.start(), app.start()])
+                .then(([inst1]) => {
+                    removedInstId = inst1.id;
+                    return inst1.stop();
+                })
+                .then(() => {
+                    expect(app.instances.length).to.eql(2);
+                    expect(app.instances.some(inst => inst.id === removedInstId)).to.eql(false);
+                    done();
+                })
+                .catch(done);
+        });
 
-//             expect(appInstances).to.be.of.length(1);
+        it('Should be set correctly.', async () => {
+            const appName = 'coreSupport';
+            const app = glue.appManager.application(appName);
 
-//             const onlyInstance = appInstances[0];
-//             expect(onlyInstance.id).to.equal(appInstance.id);
-//             expect(onlyInstance.application.name).to.equal(appName);
+            expect(app.instances).to.be.empty;
 
-//             await appInstance.stop();
+            const appInstance = await app.start();
 
-//             expect(app.instances).to.be.empty;
-//         });
-//     });
-// });
+            const appInstances = app.instances;
+
+            expect(appInstances).to.be.of.length(1);
+
+            const onlyInstance = appInstances[0];
+            expect(onlyInstance.id).to.equal(appInstance.id);
+            expect(onlyInstance.application.name).to.equal(appName);
+
+            await appInstance.stop();
+
+            expect(app.instances).to.be.empty;
+        });
+    });
+
+    describe("userProperties", () => {
+        it("Should have details property", () => {
+            expect(Object.keys(app.userProperties).includes("details")).to.eql(true);
+        });
+
+        it("Should have details object with url property", () => {
+            expect(Object.keys(app.userProperties.details).includes("url")).to.eql(true);
+        });
+
+        it("Should have details object with url property which is a string", () => {
+            expect(app.userProperties.details.url).to.be.a("string");
+        });
+
+        it("Should have details object with the correct url", () => {
+            expect(app.userProperties.details.url).to.eql(appConfig.details.url);
+        });
+
+        it('Should set the correct url regarding the app configuration', () => {
+            // removing FDC3 apps because they don't have details prop
+            const localApps = gtf.appManager.getLocalApplications().filter(app => !app.name.includes("FDC3"));
+
+            localApps.forEach(localAppConfig => {
+                const app = glue.appManager.application(localAppConfig.name);
+                expect(localAppConfig.details.url).to.eql(app.userProperties.details.url);
+            });
+        });
+    });
+});

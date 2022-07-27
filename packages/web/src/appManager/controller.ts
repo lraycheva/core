@@ -73,10 +73,18 @@ export class AppManagerController implements LibController {
     }
 
     public onInstanceStarted(callback: (instance: Glue42Web.AppManager.Instance) => any): UnsubscribeFunction {
+        if (typeof callback !== "function") {
+            throw new Error("onInstanceStarted requires a single argument of type function");
+        }
+
         return this.registry.add("instance-started", callback, this.instances);
     }
 
     public onInstanceStopped(callback: (instance: Glue42Web.AppManager.Instance) => any): UnsubscribeFunction {
+        if (typeof callback !== "function") {
+            throw new Error("onInstanceStopped requires a single argument of type function");
+        }
+
         return this.registry.add("instance-stopped", callback);
     }
 
@@ -139,14 +147,26 @@ export class AppManagerController implements LibController {
     }
 
     private onAppAdded(callback: (app: Glue42Web.AppManager.Application) => any): UnsubscribeFunction {
+        if (typeof callback !== "function") {
+            throw new Error("onAppAdded requires a single argument of type function");
+        }
+
         return this.registry.add("application-added", callback, this.applications);
     }
 
     private onAppRemoved(callback: (app: Glue42Web.AppManager.Application) => any): UnsubscribeFunction {
+        if (typeof callback !== "function") {
+            throw new Error("onAppRemoved requires a single argument of type function");
+        }
+
         return this.registry.add("application-removed", callback);
     }
 
     private onAppChanged(callback: (app: Glue42Web.AppManager.Application) => any): UnsubscribeFunction {
+        if (typeof callback !== "function") {
+            throw new Error("onAppChanged requires a single argument of type function");
+        }
+
         return this.registry.add("application-changed", callback);
     }
 

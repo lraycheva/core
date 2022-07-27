@@ -1,94 +1,168 @@
-// describe('onInstanceStopped()', () => {
-//     before(() => {
-//         return coreReady;
-//     });
+describe("onInstanceStopped() ", () => {
+    const appName = "dummyApp";
+    let app;
+    let appInst;
 
-//     afterEach(() => {
-//         return gtf.appManager.stopAllOtherInstances();
-//     });
+    before(() => coreReady);
 
-//     it('Should throw an error when callback isn\'t of type function.', () => {
-//         const app = glue.appManager.application('coreSupport');
+    beforeEach(async () => {
+        app = glue.appManager.application(appName);
 
-//         try {
-//             app.onInstanceStopped(42);
-//             throw new Error('app.onInstanceStopped() should have thrown an error because callback wasn\'t of type function!');
-//         } catch (error) {
-//             expect(error.message).to.equal('Please provide the callback as a function!');
-//         }
-//     });
+        appInst = await app.start();
+    })
 
-//     it.skip('Should invoke the callback with the stopped application instance. | https://github.com/Glue42/core/issues/148', async () => {
-//         const appNameToStartAndStop = 'coreSupport';
-//         const app = glue.appManager.application(appNameToStartAndStop);
+    afterEach(() => {
+        gtf.clearWindowActiveHooks();
 
-//         const instanceToStop = await app.start();
+        return gtf.appManager.stopAllOtherInstances();
+    });
 
-//         const instanceStoppedPromise = new Promise((resolve) => {
-//             const unsubscribeFunc = app.onInstanceStopped((instance) => {
-//                 if (instance.application.name === appNameToStartAndStop) {
-//                     unsubscribeFunc();
+    [undefined, null, "", false, 42, "test"].forEach(invalidArg => {
+        it(`Should throw an error when the passed argument (${JSON.stringify(invalidArg)}) isn\'t of type function`, (done) => {
+            try {
+                const un = app.onInstanceStopped(invalidArg);
+                gtf.addWindowHook(un);
+                done("Should have thrown");
+            } catch (error) {
+                done();
+            }
+        });
+    });
 
-//                     return resolve(instance);
-//                 }
-//             });
-//         });
+    it("Should invoke the callback", async() => {
+        const onInstanceStoppedHeard = gtf.wrapPromise();
+        
+        const un = app.onInstanceStopped(() => onInstanceStoppedHeard.resolve());
 
-//         expect(app.instances).to.be.of.length(1);
+        gtf.addWindowHook(un);
 
-//         await instanceToStop.stop();
+        await appInst.stop();
 
-//         return instanceStoppedPromise;
-//     });
+        await onInstanceStoppedHeard.promise;
+    });
 
-//     it.skip('Should return a working unsubscribe function. | https://github.com/Glue42/core/issues/148', async () => {
-//         const app = glue.appManager.application('coreSupport');
-//         const instanceToStop = await app.start();
+    it("Should invoke the callback with the correct application instance", async() => {
+        const onInstanceStoppedHeard = gtf.wrapPromise();
 
-//         let instanceStopped = false;
+        const un = app.onInstanceStopped((instance) => {
+            if (instance.id === appInst.id) {
+                onInstanceStoppedHeard.resolve();
+            }
+        });
 
-//         const unsubscribeFunc = app.onInstanceStopped(() => {
-//             instanceStopped = true;
-//         });
-//         unsubscribeFunc();
+        gtf.addWindowHook(un);
 
-//         const timeoutPromise = new Promise((resolve, reject) => {
-//             setTimeout(() => {
-//                 if (instanceStopped) {
-//                     return reject(new Error('An instance was stopped.'));
-//                 }
+        await appInst.stop();
 
-//                 return resolve();
-//             }, 3000);
-//         });
+        await onInstanceStoppedHeard.promise;
+    });
 
-//         await instanceToStop.stop();
+    it('Should not call the callback when an instance of another application is stopped', (done) => {
+        const ready = gtf.waitFor(2, done);
 
-//         return timeoutPromise;
-//     });
+        const un = app.onInstanceStopped(() => {
+            done("Should not be invoked");
+        });
 
-//     it.skip('Should not invoke the callback when the setup is there but no instance is stopped (3k ms). | https://github.com/Glue42/core/issues/148', async () => {
-//         const app = glue.appManager.application('coreSupport');
+        gtf.addWindowHook(un);
+        
+        const supportApp = glue.appManager.application("coreSupport");
 
-//         await app.start();
+        supportApp.start()
+            .then(inst => inst.stop())
+            .then(ready)
+            .catch(done);
+        
+        gtf.wait(3000, ready);
+    });
 
-//         let instanceStopped = false;
+    it('Should return a function', async () => {
+        const returned = app.onInstanceStopped(() => {});
 
-//         const unsubscribeFunc = app.onInstanceStopped(() => {
-//             instanceStopped = true;
-//         });
+        gtf.addWindowHook(returned);
 
-//         const timeoutPromise = new Promise((resolve, reject) => {
-//             setTimeout(() => {
-//                 unsubscribeFunc();
-//                 if (instanceStopped) {
-//                     return reject(new Error('An instance was stopped.'));
-//                 }
+        expect(returned).to.be.a("function");
+    });
 
-//                 return resolve();
-//             }, 3000);
-//         });
+    it("Should return a working unsubscribe function", async() => {
+        const onInstanceStoppedHeard = gtf.wrapPromise();
+        const onInstanceStoppedHeardSecondEvent = gtf.wrapPromise();
 
-//         return timeoutPromise;
-//     });
-// });
+        let secondCbInvocationCount = 0;
+
+        const un = app.onInstanceStopped(() => {
+            secondCbInvocationCount++;
+
+            onInstanceStoppedHeard.resolve();
+        });
+
+        gtf.addWindowHook(un);
+
+        await appInst.stop();
+
+        await onInstanceStoppedHeard.promise;
+
+        un();
+
+        const appInst2 = await app.start();
+
+        await appInst2.stop();
+        
+        gtf.wait(3000, () => {
+            if (secondCbInvocationCount > 1) {
+                onInstanceStoppedHeardSecondEvent.reject("Should not have fired the event");
+            }
+
+            onInstanceStoppedHeardSecondEvent.resolve()
+        });
+
+        await onInstanceStoppedHeardSecondEvent.promise;
+    });
+
+    it('Should not invoke the callback when the setup is there but no instance is stopped', (done) => {
+        const un = app.onInstanceStopped(() => {
+            done("Should not be invoked");
+        });
+
+        gtf.addWindowHook(un);
+
+        gtf.wait(3000, done);
+    });
+
+    it("Should invoke the callback with the same instance returned from application.start()", async() => {
+        const onInstanceStoppedHeard = gtf.wrapPromise();
+
+        let instFromCallback;
+
+        const un = app.onInstanceStopped((inst) => {
+            instFromCallback = inst;
+            onInstanceStoppedHeard.resolve();
+        });
+
+        gtf.addWindowHook(un);
+        
+        await appInst.stop();
+
+        await onInstanceStoppedHeard.promise;
+
+        expect(appInst.id).to.eql(instFromCallback.id);
+        expect(appInst.application.name).to.eql(instFromCallback.application.name);
+    });
+
+    it("Should invoke the callback 3 times when 3 instances are stopped", (done) => {
+        const ready = gtf.waitFor(4, done);
+
+        const un = app.onInstanceStopped((inst) => {
+            if (inst.application.name === appName) {
+                ready();
+            }
+        });
+
+        gtf.addWindowHook(un);
+
+        Promise.all([app.start(), app.start(), app.start()])
+            .then(appInstArr => Promise.all(appInstArr.map(inst => inst.stop())))
+            .then(ready)
+            .catch(done);
+    });
+});

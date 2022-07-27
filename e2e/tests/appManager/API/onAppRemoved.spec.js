@@ -1,91 +1,197 @@
-// describe('onAppRemoved()', () => {
-//     before(() => {
-//         return coreReady;
-//     });
+describe("onAppRemoved() ", () => {
+    let alreadyImportedAppNames;
 
-//     afterEach(async () => {
-//         await gtf.appManager.resetRemoteSourceApplications();
+    const extraDefOne = {
+        name: "ExtraOne",
+        type: "window",
+        details: {
+            url: "http://localhost:4242/dummyApp/index.html"
+        }
+    };
 
-//         // Wait for the reset application definitions from the remoteSource to be fetched.
-//         return gtf.waitForFetch();
-//     });
+    let definitionsOnStart;
 
-//     it('Should throw an error when callback isn\'t of type function.', () => {
-//         try {
-//             glue.appManager.onAppRemoved(42);
-//             throw new Error('onAppRemoved() should have thrown an error because callback wasn\'t of type function!');
-//         } catch (error) {
-//             expect(error.message).to.equal('Please provide the callback as a function!');
-//         }
-//     });
+    before(async () => {
+        await coreReady;
 
-//     it('Should invoke the callback with the removed application provided by a remote source.', async () => {
-//         const apps = await gtf.appManager.getRemoteSourceApplications();
-//         const nameOfAppToRemove = 'AppWithDetails-remote';
+        definitionsOnStart = await glue.appManager.inMemory.export();
 
-//         const newApps = apps.filter((app) => app.name !== nameOfAppToRemove);
+        alreadyImportedAppNames = gtf.appManager.getLocalApplications().map(app => app.name);
+    });
 
-//         const appRemovedPromise = new Promise((resolve) => {
-//             const unsubscribeFunc = glue.appManager.onAppRemoved((app) => {
-//                 if (app.name === nameOfAppToRemove) {
-//                     unsubscribeFunc();
+    afterEach(async () => {
+        gtf.clearWindowActiveHooks();
 
-//                     return resolve();
-//                 }
-//             });
-//         });
+        await gtf.appManager.stopAllOtherInstances();
 
-//         await gtf.appManager.setRemoteSourceApplications(newApps);
+        await glue.appManager.inMemory.import(definitionsOnStart, "replace");
+    });
 
-//         return appRemovedPromise;
-//     });
+    [undefined, null, '', false, 42, 'test'].forEach((invalidArg) => {
+        it(`Should throw an error when the passed argument (${JSON.stringify(invalidArg)}) isn\'t of type function`, (done) => {
+            try {
+                const un = glue.appManager.onAppRemoved(invalidArg);
+                gtf.addWindowHook(un);
+                done('Should have thrown');
+            } catch (error) {
+                done();
+            }
+        });
+    });
 
-//     it('Should return a working unsubscribe function.', async () => {
-//         const apps = await gtf.appManager.getRemoteSourceApplications();
-//         const nameOfAppToRemove = 'AppWithDetails-remote';
+    it("Should invoke the callback when an application is removed", async() => {
+        const onAppRemovedHeard = gtf.wrapPromise();
 
-//         const newApps = apps.filter((app) => app.name !== nameOfAppToRemove);
+        const un = glue.appManager.onAppRemoved((app) => {
+            if (app.name === extraDefOne.name) {
+                onAppRemovedHeard.resolve();
+            }
+        });
 
-//         let appRemoved = false;
+        gtf.addWindowHook(un);
 
-//         const unsubscribeFunc = glue.appManager.onAppRemoved(() => {
-//             appRemoved = true;
-//         });
-//         unsubscribeFunc();
+        await glue.appManager.inMemory.import([extraDefOne], "replace");
 
-//         const timeoutPromise = new Promise((resolve, reject) => {
-//             setTimeout(() => {
-//                 if (appRemoved) {
-//                     return reject(new Error('An app was removed.'));
-//                 }
+        await glue.appManager.inMemory.remove(extraDefOne.name);
 
-//                 return resolve();
-//             }, 3000);
-//         });
+        await onAppRemovedHeard.promise;
+    });
 
-//         await gtf.appManager.setRemoteSourceApplications(newApps);
+    it("Should invoke the callback with the removed application", async() => {
+        const onAppRemovedHeard = gtf.wrapPromise();
 
-//         return timeoutPromise;
-//     });
+        const un = glue.appManager.onAppRemoved((app) => {
+            if (app.name === extraDefOne.name) {
+                try {
+                    expect(app.userProperties.details.url).to.eql(extraDefOne.details.url);
+                    expect(app.instances).to.eql([]);
+                    onAppRemovedHeard.resolve();
+                } catch (error) {
+                    onAppRemovedHeard.reject(error);
+                }
+            }
+        });
 
-//     it('Should not invoke the callback when the setup is there but no app is removed (3k ms).', () => {
-//         let appRemoved = false;
+        gtf.addWindowHook(un);
 
-//         const unsubscribeFunc = glue.appManager.onAppRemoved(() => {
-//             appRemoved = true;
-//         });
+        await glue.appManager.inMemory.import([extraDefOne], "replace");
 
-//         const timeoutPromise = new Promise((resolve, reject) => {
-//             setTimeout(() => {
-//                 unsubscribeFunc();
-//                 if (appRemoved) {
-//                     return reject(new Error('An app was removed.'));
-//                 }
+        await glue.appManager.inMemory.remove(extraDefOne.name);
 
-//                 return resolve();
-//             }, 3000);
-//         });
+        await onAppRemovedHeard.promise;
+    });
 
-//         return timeoutPromise;
-//     });
-// });
+    it("Should return a function", () => {
+        const un = glue.appManager.onAppRemoved(() => {});
+
+        gtf.addWindowHook(un);
+
+        expect(un).to.be.a("function");
+    });
+
+    it("Should return a working unsubscribe function", async() => {
+        const newAppDef = Object.assign({}, extraDefOne, { name: Date.now().toString() });
+
+        const onAppRemovedHeard = gtf.wrapPromise();
+        const onAppRemovedHeardSecondEvent = gtf.wrapPromise();
+
+        const un = glue.appManager.onAppRemoved((app) => {
+            if (app.name === extraDefOne.name) {
+                onAppRemovedHeard.resolve();
+            }
+
+            if (app.name === newAppDef.name){
+                onAppRemovedHeardSecondEvent.reject("Should not have fired the event");
+            }
+        });
+
+        gtf.addWindowHook(un);
+        
+        await glue.appManager.inMemory.import([extraDefOne, newAppDef], "replace");
+
+        await glue.appManager.inMemory.remove(extraDefOne.name);
+
+        await onAppRemovedHeard.promise;
+
+        un();
+
+        await glue.appManager.inMemory.remove(newAppDef.name, "replace");
+
+        gtf.wait(3000, () => onAppRemovedHeardSecondEvent.resolve());
+
+        await onAppRemovedHeardSecondEvent.promise;
+
+    });
+
+    it("Should invoke the callback with all removed applications", (done) => {
+        const ready = gtf.waitFor(alreadyImportedAppNames.length, done);
+
+        const un = glue.appManager.onAppRemoved(app => {
+            if (alreadyImportedAppNames.indexOf(app.name) > -1) {
+                ready();
+            }
+        });
+
+        gtf.addWindowHook(un);
+
+        Promise.all(alreadyImportedAppNames.map(name => glue.appManager.inMemory.remove(name)))
+            .then(ready)
+            .catch(done);
+    });
+
+    it("Should invoke the callback 3 times when 3 applications are removed sequentially", (done) => {
+        const ready = gtf.waitFor(4, done);
+
+        const newAppName1 = Date.now().toString();
+        const newAppName2 = (Date.now() + 2).toString();
+        
+        const appNamesToBeRemoved = [extraDefOne.name, newAppName1, newAppName2 ];
+
+        const newAppDef1 = Object.assign({}, extraDefOne, { name: newAppName1 });
+        const newAppDef2 = Object.assign({}, extraDefOne, { name: newAppName2 });
+
+        const un = glue.appManager.onAppRemoved((app) => {
+            if (appNamesToBeRemoved.indexOf(app.name) > -1) {
+                ready();
+            }
+        });
+
+        gtf.addWindowHook(un);
+
+        glue.appManager.inMemory.import([extraDefOne, newAppDef1, newAppDef2], "merge")
+            .then(() => glue.appManager.inMemory.remove(extraDefOne.name))
+            .then(() => glue.appManager.inMemory.remove(newAppName1))
+            .then(() => glue.appManager.inMemory.remove(newAppName2))
+            .then(ready)
+            .catch(done);
+    });
+
+    it("Should invoke the callback 3 times when 3 applications are removed in parallel", (done) => {
+        const ready = gtf.waitFor(4, done);
+
+        const newAppName1 = Date.now().toString();
+        const newAppName2 = (Date.now() + 2).toString();
+        
+        const appNamesToBeRemoved = [extraDefOne.name, newAppName1, newAppName2 ];
+
+        const newAppDef1 = Object.assign({}, extraDefOne, { name: newAppName1 });
+        const newAppDef2 = Object.assign({}, extraDefOne, { name: newAppName2 });
+
+        const un = glue.appManager.onAppRemoved((app) => {
+            if (appNamesToBeRemoved.indexOf(app.name) > -1) {
+                ready();
+            }
+        });
+
+        gtf.addWindowHook(un);
+
+        glue.appManager.inMemory.import([extraDefOne, newAppDef1, newAppDef2], "merge")
+            .then(() => Promise.all([
+                glue.appManager.inMemory.remove(extraDefOne.name),
+                glue.appManager.inMemory.remove(newAppName1),
+                glue.appManager.inMemory.remove(newAppName2)
+            ]))
+            .then(ready)
+            .catch(done);
+    });
+});

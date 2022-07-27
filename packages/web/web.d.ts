@@ -970,14 +970,14 @@ export namespace Glue42Web {
              * @param callback Callback function to handle the newly started instance.
              * @returns Unsubscribe function.
              */
-            onInstanceStarted(callback: (instance: Instance) => any): void;
+            onInstanceStarted(callback: (instance: Instance) => any): UnsubscribeFunction;
 
             /**
              * Subscribes for the event which fires when an application instance is stopped.
              * @param callback Callback function to handle the newly started instance.
              * @returns Unsubscribe function.
              */
-            onInstanceStopped(callback: (instance: Instance) => any): void;
+            onInstanceStopped(callback: (instance: Instance) => any): UnsubscribeFunction;
         }
 
         /**
