@@ -267,6 +267,9 @@ export namespace Glue42Workspaces {
         /** Controls the visibility of the save workspace button located in the workspace tab */
         showSaveButton?: boolean;
 
+        /** Controls whether a workspace tab can be extracted from the frame (available only for Glue42 Enterprise) */
+        allowWorkspaceTabExtract?: boolean;
+
         /** Controls the visibility of the close button located in the workspaces tab */
         showCloseButton?: boolean;
 
@@ -331,6 +334,9 @@ export namespace Glue42Workspaces {
 
         /** Controls the visibility of the save workspace button located in the workspace tab */
         showSaveButton?: boolean;
+
+        /** Controls the visibility of the close button located in the workspaces tab (available only for Glue42 Enterprise) */
+        allowWorkspaceTabExtract?: boolean;
 
         /** Controls the visibility of all the add window buttons (the ones with the plus icon) located in the group headers */
         showAddWindowButtons?: boolean;
@@ -621,12 +627,12 @@ export namespace Glue42Workspaces {
     export interface EmptyFrameDefinition {
         /** The application name of the workspace app that should be used for the new frame (available only for Glue42 Enterprise) */
         applicationName?: string;
-        
+
         /**      
          * Optional frame related settings
          */
         frameConfig?: Glue42Workspaces.NewFrameConfig;
-        
+
         /**
          * Optional context which will be passed to the initialization callback
          */
@@ -868,6 +874,9 @@ export namespace Glue42Workspaces {
 
         /** Indicates if the save button for this workspace is visible to the user */
         showSaveButton?: boolean;
+
+        /** Controls the visibility of the close button located in the workspaces tab (available only for Glue42 Enterprise) */
+        allowWorkspaceTabExtract?: boolean;
 
         /** Returns the minimum width of the workspace, calculated by the constraints of all elements inside it */
         minWidth?: number;

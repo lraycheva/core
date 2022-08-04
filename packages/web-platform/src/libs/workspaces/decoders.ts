@@ -283,6 +283,7 @@ export const workspaceDefinitionDecoder: Decoder<Glue42Workspaces.WorkspaceDefin
         allowDropBottom: optional(boolean()),
         allowExtract: optional(boolean()),
         showSaveButton: optional(boolean()),
+        allowWorkspaceTabExtract: optional(boolean()),
         showCloseButton: optional(boolean()),
         allowSplitters: optional(boolean()),
         positionIndex: optional(nonNegativeNumberDecoder)

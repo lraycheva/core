@@ -34,6 +34,7 @@ export interface WorkspaceConfigResult {
     allowExtract?: boolean;
     showCloseButton?: boolean;
     showSaveButton?: boolean;
+    allowWorkspaceTabExtract?: boolean;
     minWidth?: number;
     maxWidth?: number;
     minHeight?: number;
@@ -375,6 +376,7 @@ export interface LockWorkspaceConfig {
         allowSplitters?: boolean;
         showCloseButton?: boolean;
         showSaveButton?: boolean;
+        allowWorkspaceTabExtract?: boolean;
     };
 }
 

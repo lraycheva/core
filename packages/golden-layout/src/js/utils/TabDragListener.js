@@ -75,6 +75,7 @@ lm.utils.copy(lm.utils.TabDragListener.prototype, {
                     Math.abs(this._nY) > this._nDistance
                 ) {
                     clearTimeout(this._timeout);
+                    this._timeout = null;
                     this._startDrag(oEvent);
                 }
             }
@@ -102,6 +103,7 @@ lm.utils.copy(lm.utils.TabDragListener.prototype, {
         // if (this._timeout != null) {
         this._stopReorder(oEvent);
         clearTimeout(this._timeout);
+        this._timeout = null;
         this._eBody.removeClass('lm_dragging');
         this._eElement.removeClass('lm_dragging');
         this._oDocument.find('iframe').css('pointer-events', '');

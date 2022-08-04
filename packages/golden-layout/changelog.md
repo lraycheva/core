@@ -1,3 +1,5 @@
+2.3.2
+fix: reorder improvements
 2.3.1
 fix: added safety checks for minimizing items which are not maximized
 fix: improved the performance of the destroy function

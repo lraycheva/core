@@ -440,6 +440,10 @@ declare module '@glue42/golden-layout' {
           */
             showSaveButton?: boolean;
             /**
+             * Controls whether the workspace tab can be dragged out or not
+             */
+            allowWorkspaceTabExtract?:boolean;
+            /**
           * Controls the visibility of the close buttons located in the window tabs
           */
             showWindowCloseButtons?: boolean;
@@ -644,6 +648,10 @@ declare module '@glue42/golden-layout' {
           * Controls the visibility of the save button located in the workspace tab
           */
             showSaveButton?: boolean;
+            /**
+             * Controls whether the workspace tab can be dragged out or not
+             */
+             allowWorkspaceTabExtract?:boolean;
             /**
           * Controls the visibility of the close buttons located in the window tabs
           */

@@ -1,3 +1,5 @@
+1.15.6
+feat: added support for allowWorkspaceTabExtract
 1.15.5
 chore: moved the workspace application property
 1.15.4

@@ -1,3 +1,5 @@
+1.12.13
+chore: updated the decoders with allowWorkspaceTabExtract
 1.12.12
 feat: the platform now exposes it's version and disconnects gw clients when handling unregistration of workspaces apps and windows
 1.12.11
