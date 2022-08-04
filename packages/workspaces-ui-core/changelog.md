@@ -1,3 +1,5 @@
+1.9.0
+feat: added support for Global Layouts
 1.8.12
 fix: started preserving the size of the flat windows on the window itself
 1.8.11

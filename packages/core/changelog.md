@@ -1,3 +1,5 @@
+5.7.6
+chore: refactored the logger level type and added improvements to make the instance and windowId of Web clients the same
 5.7.5
 fix: the manual unload in the web transport no longer sends a message to the parent window
 5.7.4
