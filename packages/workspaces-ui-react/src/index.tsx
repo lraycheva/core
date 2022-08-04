@@ -14,7 +14,6 @@ import useWorkspaceWindowClicked from './useWorkspaceWindowClicked';
 import WorkspacePopup from './WorkspacePopup';
 import {
     Bounds,
-    WorkspacesManager,
     WorkspacesProps,
     AddWorkspaceButtonProps,
     MaximizeFrameButtonProps,
@@ -35,6 +34,10 @@ import {
 import WorkspacesElementCreationWrapper from './WorkspacesElementCreationWrapper'
 import workspacesManager from './workspacesManager';
 import WorkspaceTab from "./defaultComponents/workspace/WorkspaceTab";
+import WorkspaceTitle from './defaultComponents/workspace/WorkspaceTitle';
+import WorkspaceSaveButton from './defaultComponents/workspace/WorkspaceSaveButton';
+import WorkspaceIconButton from './defaultComponents/workspace/WorkspaceIconButton';
+import WorkspaceTabCloseButton from './defaultComponents/workspace/WorkspaceTabCloseButton';
 
 export {
     SaveWorkspacePopup,
@@ -50,7 +53,11 @@ export {
     useWorkspaceWindowClicked,
     WorkspaceContents,
     MoveArea,
-    WorkspaceTab
+    WorkspaceTab,
+    WorkspaceTitle,
+    WorkspaceSaveButton,
+    WorkspaceIconButton,
+    WorkspaceTabCloseButton
 };
 export const notifyMoveAreaChanged: () => void = () => workspacesManager?.notifyMoveAreaChanged();
 export const getComponentBounds: () => Bounds = () => workspacesManager?.getComponentBounds();

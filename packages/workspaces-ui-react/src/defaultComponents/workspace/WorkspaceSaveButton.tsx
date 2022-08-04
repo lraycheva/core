@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { SaveButtonProps } from "../../types/internal";
 
-const SaveButton: React.FC<SaveButtonProps> = ({ showSavePopup }) => {
+const WorkspaceSaveButton: React.FC<SaveButtonProps> = ({ showSavePopup }) => {
     const saveButton = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -26,4 +26,4 @@ const SaveButton: React.FC<SaveButtonProps> = ({ showSavePopup }) => {
     )
 };
 
-export default SaveButton;
+export default WorkspaceSaveButton;
