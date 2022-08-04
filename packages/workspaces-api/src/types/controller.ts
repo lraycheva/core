@@ -52,7 +52,8 @@ export interface WorkspacesController {
     forceLoadWindow(itemId: string): Promise<string>;
     ejectWindow(itemId: string): Promise<string>;
     moveWindowTo(itemId: string, newParentId: string): Promise<void>;
-    getSnapshot(itemId: string, type: "workspace" | "frame"): Promise<WorkspaceSnapshotResult | FrameSnapshotResult>;
+    getSnapshot(itemId: string, type: "frame"): Promise<FrameSnapshotResult>;
+    getSnapshot(itemId: string, type: "workspace"): Promise<WorkspaceSnapshotResult>;
     setItemTitle(itemId: string, title: string): Promise<void>;
     flatChildren(children: Child[]): Child[];
     refreshChildren(config: RefreshChildrenConfig): Child[];

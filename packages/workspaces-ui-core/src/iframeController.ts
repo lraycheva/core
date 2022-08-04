@@ -2,7 +2,7 @@ import { Bounds } from "./types/internal";
 import callbackRegistry, { UnsubscribeFunction } from "callback-registry";
 import { generate } from "shortid";
 import { Glue42Web } from "@glue42/web";
-const semverLte = require('semver/functions/lte')
+const semverLte = require('semver/functions/lte');
 
 declare var window: Window & { glue42core: { platformVersion: string } };
 

@@ -2,7 +2,7 @@
 import GlueCore, { Glue42Core } from "@glue42/core";
 import GlueWeb, { Glue42Web, Glue42WebFactoryFunction } from "@glue42/web";
 import { GlueClientControlName, GlueWebPlatformControlName, GlueWebPlatformStreamName, GlueWebPlatformWorkspacesStreamName, GlueWorkspaceFrameClientControlName, GlueWorkspacesEventsReceiverName } from "../common/constants";
-import { BridgeOperation, ControlMessage, InternalPlatformConfig, LibDomains, SessionSystemSettings } from "../common/types";
+import { BridgeOperation, InternalPlatformConfig, LibDomains, SessionSystemSettings } from "../common/types";
 import { PortsBridge } from "../connection/portsBridge";
 import { generate } from "shortid";
 import { SessionStorageController } from "./session";
@@ -11,6 +11,7 @@ import { PromisePlus } from "../shared/promisePlus";
 import { waitFor } from "../shared/utils";
 import { UnsubscribeFunction } from "callback-registry";
 import { FrameSessionData } from "../libs/workspaces/types";
+import { Glue42WebPlatform } from "../../platform";
 
 export class GlueController {
     private _config!: InternalPlatformConfig;
@@ -78,7 +79,7 @@ export class GlueController {
         return this._clientGlue;
     }
 
-    public async createPlatformSystemMethod(handler: (args: ControlMessage, caller: Glue42Web.Interop.Instance, success: (args?: ControlMessage) => void, error: (error?: string | object) => void) => void): Promise<void> {
+    public async createPlatformSystemMethod(handler: (args: Glue42WebPlatform.ControlMessage, caller: Glue42Web.Interop.Instance, success: (args?: Glue42WebPlatform.ControlMessage) => void, error: (error?: string | object) => void) => void): Promise<void> {
         await this.createMethodAsync(GlueWebPlatformControlName, handler);
     }
 
@@ -138,13 +139,13 @@ export class GlueController {
         return result;
     }
 
-    public async callWindow<OutBound extends object, InBound>(operationDefinition: BridgeOperation, data: OutBound, windowId: string): Promise<InBound> {
+    public async callWindow<OutBound extends object, InBound>(domain: LibDomains, operationDefinition: BridgeOperation, data: OutBound, windowId: string): Promise<InBound> {
 
         const operation = operationDefinition.name;
 
-        const messageData = { domain: "windows", operation, data };
+        const messageData = { domain, operation, data };
 
-        const baseErrorMessage = `Internal Platform->Window Communication Error. Attempted calling client window: ${windowId} for operation ${operation}. `;
+        const baseErrorMessage = `Internal Platform-> ${domain} Domain Communication Error. Attempted calling client window: ${windowId} for operation ${operation}. `;
 
         if (operationDefinition.dataDecoder) {
             const decodeResult = operationDefinition.dataDecoder.run(messageData.data);
@@ -160,7 +161,7 @@ export class GlueController {
             const decodeResult = operationDefinition.resultDecoder.run(result);
 
             if (!decodeResult.ok) {
-                throw new Error(`${baseErrorMessage} Result validation failed: ${JSON.stringify(decodeResult.error)}`);
+                throw new Error(`${baseErrorMessage} Result validation failed when calling window: ${windowId} for operation ${operation}: ${JSON.stringify(decodeResult.error)}`);
             }
         }
 
@@ -277,27 +278,32 @@ export class GlueController {
     }
 
     private registerClientWindow(isWorkspaceFrame?: boolean): void {
-
         if (isWorkspaceFrame) {
             const platformFrame = this.sessionStorage.getPlatformFrame();
 
-            this._platformClientWindowId = platformFrame ? platformFrame.windowId : generate();
+            this._platformClientWindowId = platformFrame ? platformFrame.windowId : 
+                window.name ? window.name : generate();
 
             if (!platformFrame) {
-                const platformFrameData: FrameSessionData = { windowId: this._platformClientWindowId, active: true, isPlatform: true };
+                const platformFrameData: FrameSessionData = { windowId: this.platformWindowId, active: true, isPlatform: true };
                 this.sessionStorage.saveFrameData(platformFrameData);
             }
+
+            window.name = this.platformWindowId;
 
             return;
         }
 
         const platformWindowData = this.sessionStorage.getWindowDataByName("Platform");
 
-        this._platformClientWindowId = platformWindowData ? platformWindowData.windowId : generate();
+        this._platformClientWindowId = platformWindowData ? platformWindowData.windowId :
+            window.name ? window.name : generate();
 
         if (!platformWindowData) {
             this.sessionStorage.saveWindowData({ name: "Platform", windowId: this.platformWindowId });
         }
+
+        window.name = this.platformWindowId;
     }
 
     private async createMethodAsync(name: string, handler: (args: any, caller: Glue42Web.Interop.Instance, success: (args?: any) => void, error: (error?: string | object) => void) => void): Promise<void> {

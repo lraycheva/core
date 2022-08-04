@@ -27,6 +27,7 @@ import { Glue42CoreDB } from "../common/types";
 import { IDBPDatabase, openDB } from "idb";
 import { dbName, dbVersion } from "../common/constants";
 import { TransactionsController } from "../controllers/transactions";
+import { InterceptionController } from "../controllers/interception";
 
 export class IoC {
     private _gatewayInstance!: Gateway;
@@ -54,6 +55,7 @@ export class IoC {
     private _preferredConnectionController!: PreferredConnectionController;
     private _database!: IDBPDatabase<Glue42CoreDB> | undefined;
     private _transactionsController!: TransactionsController;
+    private _interceptionController!: InterceptionController;
 
     constructor(private readonly config?: Glue42WebPlatform.Config) { }
 
@@ -89,7 +91,8 @@ export class IoC {
                 this.stateController,
                 this.serviceWorkerController,
                 this.extensionController,
-                this.preferredConnectionController
+                this.preferredConnectionController,
+                this.interceptionController
             );
         }
 
@@ -175,7 +178,8 @@ export class IoC {
             this._layoutsController = new LayoutsController(
                 this.glueController,
                 this.idbStore,
-                this.sessionController
+                this.sessionController,
+                this.windowsController
             );
         }
 
@@ -288,6 +292,14 @@ export class IoC {
         }
 
         return this._transactionsController;
+    }
+
+    public get interceptionController(): InterceptionController {
+        if (!this._interceptionController) {
+            this._interceptionController = new InterceptionController();
+        }
+
+        return this._interceptionController;
     }
 
     public getDatabase(): Promise<IDBPDatabase<Glue42CoreDB>> {

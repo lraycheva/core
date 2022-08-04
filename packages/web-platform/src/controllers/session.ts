@@ -1,4 +1,5 @@
 import { Glue42Core } from "@glue42/core";
+import { Glue42Web } from "@glue42/web";
 import { SessionNonGlueData, SessionSystemSettings, SessionWindowData, WorkspaceWindowSession } from "../common/types";
 import { BaseApplicationData, BridgeInstanceData, InstanceData } from "../libs/applications/types";
 import { LayoutsSnapshot } from "../libs/layouts/types";
@@ -15,7 +16,8 @@ export class SessionStorageController {
     private readonly workspaceWindowsNamespace = "g42_core_workspace_clients";
     private readonly workspaceFramesNamespace = "g42_core_workspace_frames";
     private readonly workspaceHibernationNamespace = "g42_core_workspace_hibernation";
-    private readonly layoutNamespace = "g42_core_layouts";
+    private readonly globalLayoutsNamespace = "g42_core_layouts_global";
+    private readonly workspaceLayoutsNamespace = "g42_core_layouts_workspace";
     private readonly appDefsNamespace = "g42_core_app_definitions";
     private readonly appDefsInmemoryNamespace = "g42_core_app_definitions_inmemory";
     private readonly extNotificationsNamespace = "g42_ext_notifications";
@@ -31,7 +33,8 @@ export class SessionStorageController {
             this.nonGlueNamespace,
             this.workspaceWindowsNamespace,
             this.workspaceFramesNamespace,
-            this.layoutNamespace,
+            this.globalLayoutsNamespace,
+            this.workspaceLayoutsNamespace,
             this.appDefsNamespace,
             this.workspaceHibernationNamespace,
             this.appDefsInmemoryNamespace,
@@ -128,14 +131,18 @@ export class SessionStorageController {
         return app;
     }
 
-    public getLayoutSnapshot(): LayoutsSnapshot {
-        const snapsString = JSON.parse(this.sessionStorage.getItem(this.layoutNamespace) as string);
+    public getLayoutSnapshot(type: Glue42Web.Layouts.LayoutType): LayoutsSnapshot {
+        const namespace = type === "Global" ? this.globalLayoutsNamespace : this.workspaceLayoutsNamespace;
+
+        const snapsString = JSON.parse(this.sessionStorage.getItem(namespace) as string);
 
         return { layouts: snapsString };
     }
 
-    public saveLayoutSnapshot(snapshot: LayoutsSnapshot): void {
-        this.sessionStorage.setItem(this.layoutNamespace, JSON.stringify(snapshot.layouts));
+    public saveLayoutSnapshot(snapshot: LayoutsSnapshot, type: Glue42Web.Layouts.LayoutType): void {
+        const namespace = type === "Global" ? this.globalLayoutsNamespace : this.workspaceLayoutsNamespace;
+
+        this.sessionStorage.setItem(namespace, JSON.stringify(snapshot.layouts));
     }
 
     public saveFrameData(frameData: FrameSessionData): void {
@@ -351,7 +358,7 @@ export class SessionStorageController {
             return;
         }
 
-        this.logger?.trace(`saving window with id: ${data.windowId} and name: ${window.name}`);
+        this.logger?.trace(`saving window with id: ${data.windowId} and name: ${data.name}`);
 
         allData.push(data);
 

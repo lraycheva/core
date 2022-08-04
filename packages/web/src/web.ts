@@ -21,7 +21,7 @@ export const createFactoryFunction = (coreFactoryFunction: GlueCoreFactoryFuncti
 
         const ioc = new IoC();
 
-        const config = parseConfig(ioc.sessionController, userConfig);
+        const config = parseConfig(userConfig);
 
         checkSingleton();
 

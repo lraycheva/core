@@ -1,4 +1,5 @@
 import GoldenLayout, { Container } from "@glue42/golden-layout";
+import { ColumnItem, GroupItem, RowItem, WindowItem, WorkspaceItem } from "../types/internal";
 
 export const idAsString = (id: string | string[]) => Array.isArray(id) ? id[0] : id;
 
@@ -18,6 +19,23 @@ export const getAllWindowsFromConfig = (contents: GoldenLayout.ItemConfig[] = []
         return [...acc, ...recursiveElementTraversal(ci)];
     }, []);
 };
+
+export const getAllWindowsFromItem = (item: WorkspaceItem | RowItem | ColumnItem | GroupItem): WindowItem[] => {
+    const result: WindowItem[] = [];
+
+    const recursiveTraversal = (item: WorkspaceItem | RowItem | ColumnItem | GroupItem | WindowItem) => {
+        if (item.type === "window") {
+            result.push(item);
+            return;
+        }
+
+        item.children.forEach((c) => recursiveTraversal(c));
+    }
+
+    recursiveTraversal(item);
+
+    return result;
+}
 
 export const getAllItemsFromConfig = (contents: GoldenLayout.ItemConfig[]): GoldenLayout.ItemConfig[] => {
     const recursiveElementTraversal = (currItem: GoldenLayout.ItemConfig) => {

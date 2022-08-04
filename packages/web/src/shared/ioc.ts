@@ -19,7 +19,6 @@ import { Notification } from "../notifications/notification";
 import { ExtController } from "../extension/controller";
 import { EventsDispatcher } from "./dispatcher";
 import { PreferredConnectionController } from "../communication/preferred";
-import { SessionStorageController } from "./session";
 
 export class IoC {
     private _coreGlue!: Glue42Core.GlueCore;
@@ -38,7 +37,6 @@ export class IoC {
     private _bridgeInstance!: GlueBridge;
     private _eventsDispatcher!: EventsDispatcher;
     private _preferredConnectionController!: PreferredConnectionController;
-    private _sessionStorage!: SessionStorageController;
 
     public controllers: { [key in LibDomains]: LibController } = {
         windows: this.windowsController,
@@ -155,14 +153,6 @@ export class IoC {
         }
 
         return this._preferredConnectionController;
-    }
-
-    public get sessionController(): SessionStorageController {
-        if (!this._sessionStorage) {
-            this._sessionStorage = new SessionStorageController();
-        }
-
-        return this._sessionStorage;
     }
 
     public get config(): ParsedConfig {

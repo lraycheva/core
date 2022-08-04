@@ -17,6 +17,7 @@ import { simpleWindowDecoder } from "../windows/decoders";
 import { WorkspaceWindowData } from "../workspaces/types";
 import { SimpleWindowCommand, WindowTitleConfig } from "../windows/types";
 import { AppDirectory } from "./appStore/directory";
+import { defaultNoAppWindowComponentAppName } from "../../common/constants";
 
 export class ApplicationsController implements LibController {
     private config!: InternalApplicationsConfig;
@@ -123,7 +124,7 @@ export class ApplicationsController implements LibController {
         this.logger?.trace(`${windowId} detected as not closed, skipping instance closed procedure`);
     }
 
-    public unregisterWorkspaceApp(config: SimpleWindowCommand): void {
+    public async unregisterWorkspaceApp(config: SimpleWindowCommand): Promise<void> {
         this.processInstanceClosed(config.windowId);
         this.ioc.windowsController.cleanUpWindow(config.windowId);
         this.ioc.portsBridge.removeGwClient(config.windowId);
@@ -160,6 +161,13 @@ export class ApplicationsController implements LibController {
 
         this.sessionStorage.saveBridgeInstanceData({ windowId: instance.id, appName: instance.applicationName });
 
+        const processConfig: InstanceProcessInfo = {
+            data: instance,
+            context: config.context
+        };
+
+        await this.processNewInstance(processConfig);
+
         this.logger?.trace(`[${commandId}] the new window has been opened successfully with id: ${instance.id}, checking for AGM ready and notifying windows`);
 
         if (config.waitForAGMReady) {
@@ -167,25 +175,18 @@ export class ApplicationsController implements LibController {
             this.setLock(instance.id);
         }
 
-        await this.notifyWindows(instance, config.context, childWindow);
+        await this.notifyWindows(appDefinition.createOptions.url, instance, openBounds, config.context, childWindow);
 
         if (this.locks[instance.id]) {
             try {
                 await PromiseWrap(() => this.locks[instance.id]?.keyOne, this.applicationStartTimeoutMs);
             } catch (error) {
+                delete this.locks[instance.id];
                 throw new Error(`Application start for ${config.name} timed out waiting for client to initialize Glue`);
             }
         }
 
         this.logger?.trace(`[${commandId}] the windows controller has been successfully notified`);
-
-        const processConfig: InstanceProcessInfo = {
-            data: instance,
-            monitorState: config.waitForAGMReady ? undefined : { child: childWindow },
-            context: config.context
-        };
-
-        await this.processNewInstance(processConfig);
 
         this.logger?.trace(`[${commandId}] the new instance with id ${instance.id} has been saved, announced and context set, lifting key two and responding to caller`);
 
@@ -198,19 +199,23 @@ export class ApplicationsController implements LibController {
         if (!selfWindowId) {
             return;
         }
-
+        
         const instanceData = this.sessionStorage.getInstanceData(selfWindowId);
-
+        
         if (instanceData) {
+            delete this.locks[instanceData.id];
             this.sessionStorage.removeInstance(instanceData.id);
             this.emitStreamData("instanceStopped", instanceData);
         }
     }
 
-    private async notifyWindows(instance: InstanceData, context?: any, child?: Window): Promise<void> {
+    private async notifyWindows(url: string, instance: InstanceData, initialBounds: Glue42Web.Windows.Bounds, context?: any, child?: Window): Promise<void> {
         const windowData: SessionWindowData = {
             windowId: instance.id,
-            name: `${instance.applicationName}_${instance.id}`
+            name: `${instance.applicationName}_${instance.id}`,
+            initialUrl: url,
+            initialContext: context,
+            initialBounds
         };
 
         await this.ioc.windowsController.processNewWindow(windowData, context, child);
@@ -251,7 +256,7 @@ export class ApplicationsController implements LibController {
                 const windowId: string = helloMsg.windowId;
                 const title: string = foundApp.title;
 
-                PromiseWrap<void>(() => this.glueController.callWindow<WindowTitleConfig, void>(this.ioc.windowsController.setTitleOperation, { windowId, title }, windowId), 20000)
+                PromiseWrap<void>(() => this.glueController.callWindow<WindowTitleConfig, void>("windows", this.ioc.windowsController.setTitleOperation, { windowId, title }, windowId), 20000)
                     .catch((err) => this.logger?.trace(`[${commandId}] error while setting the application instance title: ${err.message}`));
             }
         }
@@ -263,7 +268,7 @@ export class ApplicationsController implements LibController {
         return helloSuccessMessage;
     }
 
-    private async handleInstanceStop(inst: BasicInstanceData, commandId: string): Promise<void> {
+    public async handleInstanceStop(inst: BasicInstanceData, commandId: string): Promise<void> {
         this.logger?.trace(`[${commandId}] handling stop command for instance: ${inst.id}`);
 
         const workspaceClient = this.sessionStorage.getWorkspaceClientById(inst.id);
@@ -286,10 +291,6 @@ export class ApplicationsController implements LibController {
 
         if (!windowData) {
             throw new Error(`Cannot close instance: ${inst.id}, because it's window is not known by the platform`);
-        }
-
-        if (windowData.name === "Platform") {
-            throw new Error("Closing the main application is not allowed");
         }
 
         window.open(undefined, windowData.windowId)?.close();
@@ -377,6 +378,10 @@ export class ApplicationsController implements LibController {
 
         const allAppDefinitions = await this.appDirectory.getAll();
 
+        if (data.appName === defaultNoAppWindowComponentAppName) {
+            return await this.ioc.windowsController.registerWorkspaceWindow(data, commandId);
+        }
+
         if (!allAppDefinitions.some((app) => app.name === data.appName)) {
             throw new Error(`Cannot register application with config: ${JSON.stringify(data)}, because no app with this name name was found`);
         }
@@ -406,10 +411,6 @@ export class ApplicationsController implements LibController {
         }
 
         this.sessionStorage.saveInstanceData(config.data);
-
-        if (config.monitorState) {
-            this.stateController.add(config.monitorState.child, config.data.id);
-        }
 
         this.emitStreamData("instanceStarted", config.data);
     }

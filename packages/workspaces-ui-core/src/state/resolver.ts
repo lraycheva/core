@@ -1,4 +1,4 @@
-import { WindowSummary, WorkspaceSummary, ContainerSummary, Bounds, Constraints } from "../types/internal";
+import { WindowSummary, WorkspaceSummary, ContainerSummary, Bounds, Constraints, WorkspaceSnapshot, WorkspaceItem, LayoutRequestConfig } from "../types/internal";
 import store from "./store";
 import GoldenLayout from "@glue42/golden-layout";
 import { LayoutEventEmitter } from "../layout/eventEmitter";
@@ -47,15 +47,42 @@ export class LayoutStateResolver {
         return wrapper.config;
     }
 
-    public getWorkspaceSnapshot(workspaceId: string, manager: WorkspacesManager) {
-        const workspaceConfig = this.getWorkspaceConfig(workspaceId);
-        const workspaceItem = this.converter.convertToAPIConfig(workspaceConfig);
+    public async getWorkspaceSnapshot(workspaceId: string, manager: WorkspacesManager, excludeIds?: boolean) {
+        const workspaceSnapshotWithoutContext = this.getWorkspaceSnapshotSync(workspaceId, manager);
+
+        await manager.layoutsManager.applyWindowLayoutState(workspaceSnapshotWithoutContext);
+        if (excludeIds) {
+            manager.layoutsManager.removeWorkspaceItemIds(workspaceSnapshotWithoutContext);
+            manager.layoutsManager.removeWorkspaceWindowWindowIds(workspaceSnapshotWithoutContext);
+        }
+
         return {
-            id: workspaceItem.id,
-            children: workspaceItem.children,
-            config: workspaceItem.config,
-            frameSummary: manager.getFrameSummary(this._frameId)
+            id: workspaceId,
+            children: workspaceSnapshotWithoutContext.children,
+            config: workspaceSnapshotWithoutContext.config,
+            frameSummary: manager.getFrameSummary(this._frameId),
+            context: await manager.getWorkspaceContext(workspaceSnapshotWithoutContext.id)
         };
+    }
+
+    public getAllWorkspacesLayouts(manager: WorkspacesManager, layoutRequestConfig: LayoutRequestConfig) {
+        const workspaces = store.workspaceIds.map((wid) => this.getWorkspaceSnapshotSync(wid, manager));
+
+        return Promise.all(workspaces.map(async (workspace) => {
+            const workspaceId = workspace.id;
+            await manager.layoutsManager.applyWindowLayoutState(workspace);
+            await manager.layoutsManager.applySavedContexts(workspace, layoutRequestConfig);
+            manager.layoutsManager.removeWorkspaceItemIds(workspace);
+            manager.layoutsManager.removeWorkspaceWindowWindowIds(workspace);
+
+            return {
+                id: workspaceId,
+                children: workspace.children,
+                config: workspace.config,
+                frameSummary: manager.getFrameSummary(this._frameId),
+                context: await manager.getWorkspaceContext(workspaceId)
+            };
+        }));
     }
 
     public getWorkspaceSummary(workspaceId: string): WorkspaceSummary {
@@ -150,8 +177,8 @@ export class LayoutStateResolver {
         return !!store.getWindowContentItem(windowId);
     }
 
-    public getFrameSnapshot(manager: WorkspacesManager) {
-        const allWorkspaceSnapshots = store.workspaceIds.map(wid => this.getWorkspaceSnapshot(wid, manager));
+    public async getFrameSnapshot(manager: WorkspacesManager, excludeIds?: boolean) {
+        const allWorkspaceSnapshots = await Promise.all(store.workspaceIds.map(wid => this.getWorkspaceSnapshot(wid, manager, excludeIds)));
         const constraints = this.getFrameConstraints();
         return {
             id: this._frameId,
@@ -162,12 +189,24 @@ export class LayoutStateResolver {
         };
     }
 
-    public getSnapshot(itemId: string, manager: WorkspacesManager) {
+    public async getSnapshot(itemId: string, manager: WorkspacesManager) {
         try {
             return this.getWorkspaceConfig(itemId);
         } catch (error) {
             return this.getFrameSnapshot(manager);
         }
+    }
+
+    public getWorkspaceSnapshotSync(itemId: string, manager: WorkspacesManager): Omit<WorkspaceSnapshot, "context"> {
+        const workspaceConfig = this.getWorkspaceConfig(itemId);
+        const workspaceItem = this.converter.convertToAPIConfig(workspaceConfig) as WorkspaceItem;
+
+        return {
+            id: workspaceItem.id,
+            children: workspaceItem.children,
+            config: workspaceItem.config,
+            frameSummary: manager.getFrameSummary(this._frameId),
+        };
     }
 
     public extractWindowSummariesFromSnapshot(snapshot: GoldenLayout.Config): WindowSummary[] {

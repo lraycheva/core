@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Glue42Core } from "@glue42/core";
 import { Glue42Web } from "@glue42/web";
-import { Glue42API } from "./src/common/types";
+import { Glue42API, LibDomains } from "./src/common/types";
 
 export namespace Glue42WebPlatform {
 
@@ -203,21 +203,35 @@ export namespace Glue42WebPlatform {
 
     export namespace Plugins {
 
-        export interface ControlMessage {
-            domain: "system" | "windows" | "appManager" | "layouts" | "workspaces" | "intents" | "channels";
+        export interface InterceptorRegistrationRequest {
+            callInterceptor: (config: ControlMessage) => Promise<any>;
+            interceptions: Array<{ domain: LibDomains, operation: string }>;
+        }
+
+        export interface BaseControlMessage {
+            domain: LibDomains;
             operation: string;
             data: any;
-            commandId?: string;
+            settings?: ControlSettings;
+        }
+
+        export interface ControlSettings {
+            skipInterception?: boolean;
+        }
+
+        export interface PluginInterception {
+            register: (request: InterceptorRegistrationRequest) => Promise<void>
         }
 
         export interface PlatformControls {
-            control: (args: ControlMessage) => Promise<any>;
+            control: (args: BaseControlMessage) => Promise<any>;
+            interception: PluginInterception;
             logger?: Glue42Web.Logger.API;
         }
 
         export interface PluginDefinition {
             name: string;
-            start: (glue: Glue42Web.API, config: any, platform: PlatformControls) => void;
+            start: (glue: Glue42Web.API, config: any, platform: PlatformControls) => Promise<void> | void;
             config?: any;
             critical?: boolean;
         }
@@ -318,6 +332,12 @@ export namespace Glue42WebPlatform {
             windowResponseTimeoutMs?: number;
             defaultWindowOpenBounds?: Glue42Web.Windows.Bounds;
         }
+    }
+
+    export interface ControlMessage extends Plugins.BaseControlMessage {
+        callerType: "plugin" | "client";
+        callerId: string;
+        commandId: string;
     }
 
     export interface Config {

@@ -187,7 +187,7 @@ export class Workspace implements Glue42Workspaces.Workspace {
     }
 
     public snapshot(): Promise<Glue42Workspaces.WorkspaceSnapshot> {
-        return getData(this).controller.getSnapshot(this.id, "workspace");
+        return getData(this).controller.getSnapshot(this.id, "workspace") as Promise<Glue42Workspaces.WorkspaceSnapshot>;
     }
 
     public async saveLayout(name: string, config?: SaveLayoutConfig): Promise<void> {

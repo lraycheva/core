@@ -31,10 +31,14 @@ import {
     SetWorkspaceIconArguments,
     InitFrameArguments,
     CreateFrameArguments,
+    InitFrameFromSnapshotArguments,
+    FrameSnapshotArguments,
+    GetWorkspacesLayoutsArguments,
+    GetWorkspacesLayoutsResult,
 } from "./types";
 import manager from "../manager";
 import store from "../state/store";
-import { WorkspaceSummary, ColumnItem, RowItem, WorkspaceLayout, WorkspaceItem, FrameSummary } from "../types/internal";
+import { WorkspaceSummary, ColumnItem, RowItem, WorkspaceLayout, WorkspaceItem, FrameSummary, WorkspaceSnapshot } from "../types/internal";
 import GoldenLayout, { RowConfig, ColumnConfig } from "@glue42/golden-layout";
 import { idAsString } from "../utils";
 import { Glue42Web } from "@glue42/web";
@@ -119,7 +123,7 @@ export class GlueFacade {
                     successCallback(await this.handleAddContainer(args.operationArguments));
                     break;
                 case "getWorkspaceSnapshot":
-                    successCallback(this.handleGetWorkspaceSnapshot(args.operationArguments));
+                    successCallback(await this.handleGetWorkspaceSnapshot(args.operationArguments));
                     break;
                 case "openWorkspace":
                     successCallback(await this.handleOpenWorkspace(args.operationArguments));
@@ -182,7 +186,7 @@ export class GlueFacade {
                     successCallback(undefined);
                     break;
                 case "getFrameSnapshot":
-                    successCallback(await this.handleGetFrameSnapshot());
+                    successCallback(await this.handleGetFrameSnapshot(args.operationArguments));
                     break;
                 case "getSnapshot":
                     successCallback(await this.handleGetSnapshot(args.operationArguments));
@@ -243,6 +247,13 @@ export class GlueFacade {
                 case "createFrame":
                     successCallback(this.handleCreateFrame(args.operationArguments));
                     break;
+                case "initFrameFromSnapshot":
+                    await this.handleInitFrameFromSnapshot(args.operationArguments);
+                    successCallback(undefined);
+                    break;
+                case "getWorkspacesLayouts":
+                    successCallback(await this.handleGetWorkspaceLayouts(args.operationArguments));
+                    break;
                 default:
                     errorCallback(`Invalid operation - ${((args as unknown) as { operation: string }).operation}`);
             }
@@ -261,15 +272,8 @@ export class GlueFacade {
 
     private async handleOpenWorkspace(operationArguments: OpenWorkspaceArguments): Promise<OpenWorkspaceResult> {
         const id = await manager.openWorkspace(operationArguments.name, operationArguments.restoreOptions);
-        const workspaceConfig = manager.stateResolver.getWorkspaceConfig(id);
-        const workspaceItem = this._converter.convertToAPIConfig(workspaceConfig) as WorkspaceItem;
 
-        return {
-            id: workspaceItem.id,
-            children: workspaceItem.children,
-            config: workspaceItem.config,
-            frameSummary: manager.getFrameSummary(this._frameId)
-        };
+        return manager.stateResolver.getWorkspaceSnapshot(id, manager);
     }
 
     private async handleExportAllLayouts() {
@@ -291,16 +295,8 @@ export class GlueFacade {
         manager.deleteLayout(operationArguments.name);
     }
 
-    private handleGetWorkspaceSnapshot(operationArguments: ItemSelector): GetWorkspaceSnapshotResult {
-        const workspace = store.getById(operationArguments.itemId);
-        const workspaceConfig = manager.stateResolver.getWorkspaceConfig(workspace.id);
-        const workspaceItem = this._converter.convertToAPIConfig(workspaceConfig);
-        return {
-            id: workspaceItem.id,
-            children: workspaceItem.children,
-            config: workspaceItem.config,
-            frameSummary: manager.getFrameSummary(this._frameId)
-        };
+    private async handleGetWorkspaceSnapshot(operationArguments: ItemSelector): Promise<GetWorkspaceSnapshotResult> {
+        return manager.stateResolver.getWorkspaceSnapshot(operationArguments.itemId, manager);
     }
 
     private handleGetAllWorkspaceSummaries() {
@@ -316,7 +312,7 @@ export class GlueFacade {
     }
 
     private handleCloseItem(operationArguments: ItemSelector): CloseItemResult {
-        manager.closeItem(operationArguments.itemId);
+        return manager.closeItem(operationArguments.itemId);
     }
     private handleRestoreItem(operationArguments: ItemSelector): RestoreItemResult {
         manager.restoreItem(operationArguments.itemId);
@@ -441,12 +437,7 @@ export class GlueFacade {
 
         this._locker.applyLockConfiguration(workspaceItem, apiConfig);
 
-        return {
-            id: apiConfig.id,
-            children: apiConfig.children,
-            config: apiConfig.config,
-            frameSummary: manager.getFrameSummary(this._frameId)
-        };
+        return manager.stateResolver.getWorkspaceSnapshot(workspaceId, manager);
     }
 
     private async handleForceLoadWindow(operationArguments: ItemSelector): Promise<{ windowId: string }> {
@@ -475,13 +466,16 @@ export class GlueFacade {
         await manager.move(operationArguments.location);
     }
 
-    private handleGetFrameSnapshot() {
-        return manager.stateResolver.getFrameSnapshot(manager);
+    private handleGetFrameSnapshot(operationArguments: FrameSnapshotArguments) {
+        return manager.stateResolver.getFrameSnapshot(manager, operationArguments.excludeIds);
     }
 
     private async handleGetSnapshot(operationArguments: ItemSelector) {
-        const snapshot = manager.stateResolver.getSnapshot(operationArguments.itemId, manager);
-        return snapshot;
+        if (this._frameId === operationArguments.itemId) {
+            return manager.stateResolver.getFrameSnapshot(manager);
+        } else if (store.getById(operationArguments.itemId)) {
+            return manager.stateResolver.getWorkspaceSnapshot(operationArguments.itemId, manager);
+        }
     }
 
     private async handleMoveWindowTo(operationArguments: MoveWindowToArguments) {
@@ -564,6 +558,29 @@ export class GlueFacade {
             this._locker.applyLockConfiguration(workspaceItem, apiConfig);
         });
 
+    }
+
+    private async handleInitFrameFromSnapshot(operationArguments: InitFrameFromSnapshotArguments): Promise<void> {
+        const contentConfigs = operationArguments.workspaces.map((def) => {
+            return this._converter.convertToRendererConfig(this.convertCreateWorkspaceArgumentsToWorkspaceItem(def)) as GoldenLayout.Config;
+        });
+        const workspaceIds = await manager.initFrameLayout(contentConfigs);
+
+        workspaceIds.forEach((workspaceId, i) => {
+            const workspaceItem = operationArguments.workspaces[i] as WorkspaceItem;
+            if (!workspaceItem.children) {
+                return;
+            }
+            const apiConfig = this._converter.convertToAPIConfig(manager.stateResolver.getWorkspaceConfig(workspaceId)) as WorkspaceItem;
+
+            this._locker.applyLockConfiguration(workspaceItem, apiConfig);
+        });
+    }
+
+    private async handleGetWorkspaceLayouts(operationArguments: GetWorkspacesLayoutsArguments): Promise<GetWorkspacesLayoutsResult> {
+        return {
+            workspaces: await manager.stateResolver.getAllWorkspacesLayouts(manager, operationArguments)
+        }
     }
 
     private handleCreateFrame(operationArguments: CreateFrameArguments): FrameSummary {

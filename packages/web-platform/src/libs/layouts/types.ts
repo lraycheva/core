@@ -4,7 +4,8 @@ import { InternalLayoutsConfig } from "../../common/types";
 
 export type LayoutEvent = "layoutAdded" | "layoutChanged" | "layoutRemoved";
 
-export type LayoutsOperationTypes = "get" | "getAll" | "export" | "import" | "remove";
+export type LayoutsOperationTypes = "get" | "getAll" | "export" | "import" | "remove" | "save" | "restore" | "getRawWindowsLayoutData" | "clientSaveRequest" |
+    "getGlobalPermissionState" | "requestGlobalPermission" | "checkGlobalActivated";
 
 export interface LayoutModeExecutor {
     setup(config: InternalLayoutsConfig): Promise<void>;
@@ -47,3 +48,50 @@ export interface OptionalSimpleLayoutResult {
 export interface LayoutsSnapshot {
     layouts: Glue42Web.Layouts.Layout[];
 }
+
+export interface SaveLayoutConfig {
+    layout: Glue42Web.Layouts.NewLayoutOptions
+}
+
+export interface RestoreLayoutConfig {
+    layout: Glue42Web.Layouts.RestoreOptions
+}
+
+export interface RawWindowsLayoutDataRequestConfig {
+    layoutType: "Global" | "Workspace";
+    layoutName: string;
+    context?: any;
+    instances?: string[];
+    ignoreInstances?: string[];
+}
+
+export interface SaveRequestClientResponse {
+    windowContext?: any;
+}
+
+export interface WindowRawLayoutData extends SaveRequestClientResponse {
+    bounds: Glue42Web.Windows.Bounds;
+    url: string;
+    name: string;
+    application: string;
+    windowId: string;
+    initialContext?: any;
+}
+
+export interface WorkspaceWindowRawLayoutData extends SaveRequestClientResponse {
+    windowId: string;
+    frameId: string;
+}
+
+export interface WindowsRawLayoutData {
+    windows: WindowRawLayoutData[];
+}
+
+export interface PermissionStateResult {
+    state: "prompt" | "granted" | "denied";
+}
+
+export interface SimpleAvailabilityResult {
+    isAvailable: boolean;
+}
+

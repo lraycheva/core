@@ -96,10 +96,14 @@ export namespace Glue42Workspaces {
     export interface WindowLayoutItemConfig {
         /** The name of the application as defined in Glue Desktop */
         appName: string;
+        /** The id of the window */
+        windowId?: string;
         /** The url of the window, in case it is not a defined as an application. */
         url?: string;
         /** The title of the window */
         title?: string;
+        /** The context of the window used when restoring the window */
+        context?: any;
     }
 
     /** An object describing a window definition in a workspace layout. */
@@ -161,16 +165,23 @@ export namespace Glue42Workspaces {
 
     /** An object containing the bounds of a frame */
     export interface FrameBounds {
-        top?: number;
-        left?: number;
-        width?: number;
-        height?: number;
+        top: number;
+        left: number;
+        width: number;
+        height: number;
     }
 
     /** An object describing the possible settings when defining a new frame. */
     export interface NewFrameConfig {
         /** An object describing the possible settings when defining a new frame. */
-        bounds?: FrameBounds;
+        bounds?: {
+            top?: number;
+            left?: number;
+            width?: number;
+            height?: number;
+        };
+        /** A string which will be used as an id of the new frame. The call will reject if a frame with id already exists */
+        frameId?: string;
     }
 
     /** An object defining the resize parameters of a frame. */
@@ -1577,10 +1588,14 @@ export namespace Glue42Workspaces {
          * A string identifier unique to each frame
          */
         id: string;
+
+        workspaces: WorkspaceSnapshot[];
+
+        config: any;
     }
 
     /** An object describing the complete state of a workspace at the time when the object was created */
-    export interface WorkspaceSnapshot {
+    export interface WorkspaceSnapshot extends WorkspaceLayoutComponentState {
         /**
          * A string identifier unique to each workspace
          */

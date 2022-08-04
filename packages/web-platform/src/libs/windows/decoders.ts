@@ -1,5 +1,5 @@
 import { boolean, constant, Decoder, number, object, oneOf, optional, string } from "decoder-validate";
-import { nonEmptyStringDecoder, nonNegativeNumberDecoder, windowOpenSettingsDecoder } from "../../shared/decoders";
+import { nonEmptyStringDecoder, nonNegativeNumberDecoder, windowBoundsDecoder, windowOpenSettingsDecoder } from "../../shared/decoders";
 import { FrameWindowBoundsResult, OpenWindowConfig, OpenWindowSuccess, SimpleWindowCommand, WindowBoundsResult, WindowMoveResizeConfig, WindowOperationsTypes, WindowTitleConfig, WindowUrlResult } from "./types";
 
 export const windowOperationDecoder: Decoder<WindowOperationsTypes> = oneOf<"openWindow" | "windowHello" | "getUrl" | "getTitle" | "setTitle" | "moveResize" | "focus" | "close" | "getBounds" | "getFrameBounds" | "registerWorkspaceWindow" | "unregisterWorkspaceWindow">(
@@ -34,21 +34,11 @@ export const simpleWindowDecoder: Decoder<SimpleWindowCommand> = object({
 
 export const windowBoundsResultDecoder: Decoder<WindowBoundsResult> = object({
     windowId: nonEmptyStringDecoder,
-    bounds: object({
-        top: number(),
-        left: number(),
-        width: nonNegativeNumberDecoder,
-        height: nonNegativeNumberDecoder
-    })
+    bounds: windowBoundsDecoder
 });
 
 export const frameWindowBoundsResultDecoder: Decoder<FrameWindowBoundsResult> = object({
-    bounds: object({
-        top: number(),
-        left: number(),
-        width: nonNegativeNumberDecoder,
-        height: nonNegativeNumberDecoder
-    })
+    bounds: windowBoundsDecoder
 });
 
 export const windowUrlResultDecoder: Decoder<WindowUrlResult> = object({

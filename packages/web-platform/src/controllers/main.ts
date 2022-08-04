@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Glue42Web } from "@glue42/web";
 import { UnsubscribeFunction } from "callback-registry";
-import { ControlMessage, CoreClientData, InternalPlatformConfig, LibController, LibDomains } from "../common/types";
+import { CoreClientData, InternalPlatformConfig, LibController, LibDomains } from "../common/types";
 import { libDomainDecoder } from "../shared/decoders";
 import { GlueController } from "./glue";
 import { WindowsController } from "../libs/windows/controller";
@@ -21,6 +21,7 @@ import { NotificationsController } from "../libs/notifications/controller";
 import { ExtensionController } from "../libs/extension/controller";
 import { PreferredConnectionController } from "../connection/preferred";
 import { Glue42Core } from "@glue42/core";
+import { InterceptionController } from "./interception";
 
 export class PlatformController {
 
@@ -50,7 +51,8 @@ export class PlatformController {
         private readonly stateController: WindowsStateController,
         private readonly serviceWorkerController: ServiceWorkerController,
         private readonly extensionController: ExtensionController,
-        private readonly preferredConnectionController: PreferredConnectionController
+        private readonly preferredConnectionController: PreferredConnectionController,
+        private readonly interceptionController: InterceptionController
     ) { }
 
     private get logger(): Glue42Web.Logger.API | undefined {
@@ -74,7 +76,7 @@ export class PlatformController {
         await this.glueController.start(config);
 
         await Promise.all([
-            this.glueController.createPlatformSystemMethod(this.handleControlMessage.bind(this)),
+            this.glueController.createPlatformSystemMethod(this.handleClientMessage.bind(this)),
             this.glueController.createPlatformSystemStream()
         ]);
 
@@ -116,8 +118,11 @@ export class PlatformController {
     private async startPlugin(definition: Glue42WebPlatform.Plugins.PluginDefinition): Promise<void> {
         try {
             const platformControls: Glue42WebPlatform.Plugins.PlatformControls = {
-                control: (args: Glue42WebPlatform.Plugins.ControlMessage): Promise<any> => this.handlePluginMessage(args, definition.name),
-                logger: logger.get(definition.name)
+                control: (args: Glue42WebPlatform.Plugins.BaseControlMessage): Promise<any> => this.handlePluginMessage(args, definition.name),
+                logger: logger.get(definition.name),
+                interception: {
+                    register: (request: Glue42WebPlatform.Plugins.InterceptorRegistrationRequest) => this.interceptionController.registerInterceptor(request, definition.name)
+                }
             };
 
             await definition.start(this.glueController.clientGlue, definition.config, platformControls);
@@ -134,58 +139,49 @@ export class PlatformController {
         }
     }
 
-    private handleControlMessage(args: ControlMessage, caller: Glue42Web.Interop.Instance, success: (args?: ControlMessage) => void, error: (error?: string | object) => void): void {
-        const decodeResult = libDomainDecoder.run(args.domain);
-
-        if (!decodeResult.ok) {
-            const errString = JSON.stringify(decodeResult.error);
-
-            this.logger?.trace(`rejecting execution of a command, because of a domain validation error: ${errString}`);
-
-            return error(`Cannot execute this platform control, because of domain validation error: ${errString}`);
-        }
-
-        const domain = decodeResult.result;
-
-        args.commandId = generate();
-
-        this.logger?.trace(`[${args.commandId}] received a command for a valid domain: ${domain} from window ${caller.windowId} and interop id ${caller.instance}, forwarding to the appropriate controller`);
-
-        this.controllers[domain]
-            .handleControl(args)
-            .then((result) => {
-                success(result);
-                this.logger?.trace(`[${args.commandId}] this command was executed successfully, sending the result to the caller.`);
-            })
-            .catch((err) => {
-                const stringError = typeof err === "string" ? err : JSON.stringify(err.message);
-                this.logger?.trace(`[${args.commandId}] this command's execution was rejected, reason: ${stringError}`);
-                error(`The platform rejected operation ${args.operation} for domain: ${domain} with reason: ${stringError}`);
-            });
+    private handleClientMessage(args: Glue42WebPlatform.ControlMessage, caller: Glue42Web.Interop.Instance, success: (args?: Glue42WebPlatform.ControlMessage) => void, error: (error?: string | object) => void): void {
+        this.processControllerCommand(args, "client", caller.instance as string)
+            .then((result) => success(result))
+            .catch((err) => error(err));
     }
 
-    private async handlePluginMessage(args: ControlMessage, pluginName: string): Promise<any> {
+    private async handlePluginMessage(args: Glue42WebPlatform.Plugins.BaseControlMessage, pluginName: string): Promise<any> {
+        return this.processControllerCommand(args, "plugin", pluginName);
+    }
+
+    private async processControllerCommand(args: Glue42WebPlatform.Plugins.BaseControlMessage, callerType: "plugin" | "client", callerId: string): Promise<any> {
         const decodeResult = libDomainDecoder.run(args.domain);
 
         if (!decodeResult.ok) {
             const errString = JSON.stringify(decodeResult.error);
 
-            this.logger?.trace(`rejecting execution of a command issued by plugin: ${pluginName}, because of a domain validation error: ${errString}`);
+            this.logger?.trace(`rejecting execution of a command issued by a ${callerType}: ${callerId}, because of a domain validation error: ${errString}`);
 
             throw new Error(`Cannot execute this platform control, because of domain validation error: ${errString}`);
         }
 
         const domain = decodeResult.result;
 
-        args.commandId = generate();
+        const controlMessage: Glue42WebPlatform.ControlMessage = Object.assign({}, args, {
+            commandId: generate(),
+            callerId, callerType
+        })
 
-        this.logger?.trace(`[${args.commandId}] received a command issued by plugin: ${pluginName} for a valid domain: ${domain}, forwarding to the appropriate controller`);
+        this.logger?.trace(`[${controlMessage.commandId}] received a command for a valid domain: ${domain} from ${callerType}: ${callerId}, forwarding to the appropriate controller`);
 
-        const result = await this.controllers[domain].handleControl(args);
+        try {
+            const result = await this.executeCommand(controlMessage);
 
-        this.logger?.trace(`[${args.commandId}] this command was executed successfully, sending the result to the caller.`);
+            this.logger?.trace(`[${controlMessage.commandId}] this command was executed successfully, sending the result to the caller.`);
 
-        return result;
+            return result;
+        } catch (error: any) {
+            const stringError = typeof error === "string" ? error : JSON.stringify(error.message);
+
+            this.logger?.trace(`[${controlMessage.commandId}] this command's execution was rejected, reason: ${stringError}`);
+
+            throw new Error(`The platform rejected operation ${controlMessage.operation} for domain: ${domain} with reason: ${stringError}`);
+        }
     }
 
     private handleClientUnloaded(client: CoreClientData): void {
@@ -200,5 +196,17 @@ export class PlatformController {
                 this.logger?.error(`${controllerName} controller threw when handling unloaded client ${client.windowId} with error message: ${stringError}`);
             }
         });
+    }
+
+    private executeCommand(controlMessage: Glue42WebPlatform.ControlMessage): Promise<any> {
+        const interceptor = this.interceptionController.getOperationInterceptor({ domain: controlMessage.domain, operation: controlMessage.operation });
+
+        if (interceptor && !controlMessage.settings?.skipInterception) {
+            this.logger?.trace(`[${controlMessage.commandId}] The operation is being intercepted and executed by: ${interceptor.name}`);
+
+            return interceptor.intercept(controlMessage);
+        }
+
+        return this.controllers[controlMessage.domain].handleControl(controlMessage);
     }
 }

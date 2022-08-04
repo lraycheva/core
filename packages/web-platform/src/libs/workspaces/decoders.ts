@@ -3,7 +3,7 @@
 import { Glue42Workspaces } from "@glue42/workspaces-api";
 import { anyJson, array, boolean, constant, Decoder, intersection, lazy, number, object, oneOf, optional, string } from "decoder-validate";
 import { nonEmptyStringDecoder, nonNegativeNumberDecoder, windowLayoutItemDecoder } from "../../shared/decoders";
-import { AddContainerConfig, AddItemResult, AddWindowConfig, BaseChildSnapshotConfig, BundleConfig, ChildSnapshotResult, ColumnDefinitionConfig, ContainerStreamData, ContainerSummaryResult, DeleteLayoutConfig, ExportedLayoutsResult, FrameBoundsResult, FrameHello, FrameInitializationConfigProtocol, FrameSnapshotResult, FrameStateConfig, FrameStateResult, FrameStreamData, FrameSummariesResult, FrameSummaryResult, GetFrameSummaryConfig, GroupDefinitionConfig, IsWindowInSwimlaneResult, LayoutSummariesResult, LayoutSummary, LockColumnConfig, LockContainerConfig, LockGroupConfig, LockRowConfig, LockWindowConfig, LockWorkspaceConfig, MoveFrameConfig, MoveWindowConfig, OpenWorkspaceConfig, ParentSnapshotConfig, PingResult, PinWorkspaceConfig, ResizeItemConfig, RowDefinitionConfig, SetItemTitleConfig, SetWorkspaceIconConfig, SimpleItemConfig, SimpleWindowOperationSuccessResult, SwimlaneWindowSnapshotConfig, WindowStreamData, WorkspaceConfigResult, WorkspaceCreateConfigProtocol, WorkspaceEventAction, WorkspaceEventType, WorkspaceIconResult, WorkspaceSelector, WorkspacesLayoutImportConfig, WorkspaceSnapshotResult, WorkspacesOperationsTypes, WorkspaceStreamData, WorkspaceSummariesResult, WorkspaceSummaryResult, WorkspaceWindowData } from "./types";
+import { AddContainerConfig, AddItemResult, AddWindowConfig, BaseChildSnapshotConfig, BundleConfig, ChildSnapshotResult, ColumnDefinitionConfig, ContainerStreamData, ContainerSummaryResult, DeleteLayoutConfig, ExportedLayoutsResult, FrameBoundsResult, FrameHello, FrameInitializationConfigProtocol, FrameSnapshotConfig, FrameSnapshotResult, FrameStateConfig, FrameStateResult, FrameStreamData, FrameSummariesResult, FrameSummaryResult, GetFrameSummaryConfig, GetWorkspacesLayoutsConfig, GetWorkspacesLayoutsResponse, GetWorkspaceWindowsOnLayoutSaveContextConfig, GetWorkspaceWindowsOnLayoutSaveContextResult, GroupDefinitionConfig, IsWindowInSwimlaneResult, LayoutSummariesResult, LayoutSummary, LockColumnConfig, LockContainerConfig, LockGroupConfig, LockRowConfig, LockWindowConfig, LockWorkspaceConfig, MoveFrameConfig, MoveWindowConfig, OpenWorkspaceConfig, ParentSnapshotConfig, PingResult, PinWorkspaceConfig, ResizeItemConfig, RowDefinitionConfig, SetItemTitleConfig, SetWorkspaceIconConfig, SimpleItemConfig, SimpleWindowOperationSuccessResult, SwimlaneWindowSnapshotConfig, WindowStreamData, WorkspaceConfigResult, WorkspaceCreateConfigProtocol, WorkspaceEventAction, WorkspaceEventType, WorkspaceIconResult, WorkspaceSelector, WorkspacesLayoutImportConfig, WorkspaceSnapshotResult, WorkspacesOperationsTypes, WorkspaceStreamData, WorkspaceSummariesResult, WorkspaceSummaryResult, WorkspaceWindowData, WorkspaceWindowOnSaveData } from "./types";
 
 export const workspacesOperationDecoder: Decoder<WorkspacesOperationsTypes> = oneOf<
     "isWindowInWorkspace" | "createWorkspace" | "getAllFramesSummaries" | "getFrameSummary" |
@@ -12,7 +12,8 @@ export const workspacesOperationDecoder: Decoder<WorkspacesOperationsTypes> = on
     "focusItem" | "closeItem" | "resizeItem" | "moveFrame" | "getFrameSnapshot" | "forceLoadWindow" |
     "ejectWindow" | "setItemTitle" | "moveWindowTo" | "addWindow" | "addContainer" |
     "bundleWorkspace" | "changeFrameState" | "getFrameState" | "getFrameBounds" | "frameHello" | "hibernateWorkspace" | "resumeWorkspace" | "getWorkspacesConfig" |
-    "lockWorkspace" | "lockContainer" | "lockWindow" | "pinWorkspace" | "unpinWorkspace" | "getWorkspaceIcon" | "setWorkspaceIcon" | "createFrame" | "initFrame"
+    "lockWorkspace" | "lockContainer" | "lockWindow" | "pinWorkspace" | "unpinWorkspace" | "getWorkspaceIcon" | "setWorkspaceIcon" | "createFrame" | "initFrame" | "checkStarted" | "getPlatformFrameId" |
+    "getWorkspaceWindowsOnLayoutSaveContext" | "getWorkspacesLayouts"
 >(
     constant("isWindowInWorkspace"),
     constant("createWorkspace"),
@@ -56,6 +57,10 @@ export const workspacesOperationDecoder: Decoder<WorkspacesOperationsTypes> = on
     constant("unpinWorkspace"),
     constant("getWorkspaceIcon"),
     constant("setWorkspaceIcon"),
+    constant("checkStarted"),
+    constant("getPlatformFrameId"),
+    constant("getWorkspaceWindowsOnLayoutSaveContext"),
+    constant("getWorkspacesLayouts")
 );
 
 export const frameHelloDecoder: Decoder<FrameHello> = object({
@@ -229,7 +234,8 @@ export const newFrameConfigDecoder: Decoder<Glue42Workspaces.NewFrameConfig> = o
         top: optional(number()),
         width: optional(nonNegativeNumberDecoder),
         height: optional(nonNegativeNumberDecoder)
-    }))
+    })),
+    frameId: optional(nonEmptyStringDecoder)
 });
 
 export const loadStrategyDecoder: Decoder<Glue42Workspaces.LoadingStrategy> = oneOf<"direct" | "delayed" | "lazy">(
@@ -407,17 +413,6 @@ export const baseChildSnapshotConfigDecoder: Decoder<BaseChildSnapshotConfig> = 
 
 export const parentSnapshotConfigDecoder: Decoder<ParentSnapshotConfig> = anyJson();
 
-// export const swimlaneWindowSnapshotConfigDecoder: Decoder<SwimlaneWindowSnapshotConfig> = intersection(
-//     baseChildSnapshotConfigDecoder,
-//     object({
-//         windowId: optional(nonEmptyStringDecoder),
-//         isMaximized: boolean(),
-//         isFocused: boolean(),
-//         title: optional(string()),
-//         appName: optional(nonEmptyStringDecoder)
-//     })
-// );
-
 // todo: remove this after isMaximized is fixed
 export const swimlaneWindowSnapshotConfigDecoder: Decoder<SwimlaneWindowSnapshotConfig> = intersection(
     baseChildSnapshotConfigDecoder,
@@ -426,12 +421,13 @@ export const swimlaneWindowSnapshotConfigDecoder: Decoder<SwimlaneWindowSnapshot
         isMaximized: optional(boolean()),
         isFocused: boolean(),
         title: optional(string()),
-        appName: optional(nonEmptyStringDecoder)
+        appName: optional(nonEmptyStringDecoder),
+        context: optional(anyJson())
     })
 ) as any;
 
 export const childSnapshotResultDecoder: Decoder<ChildSnapshotResult> = object({
-    id: nonEmptyStringDecoder,
+    id: optional(nonEmptyStringDecoder),
     config: oneOf<ParentSnapshotConfig | SwimlaneWindowSnapshotConfig>(
         parentSnapshotConfigDecoder,
         swimlaneWindowSnapshotConfigDecoder
@@ -449,7 +445,8 @@ export const workspaceSnapshotResultDecoder: Decoder<WorkspaceSnapshotResult> = 
     id: nonEmptyStringDecoder,
     config: workspaceConfigResultDecoder,
     children: array(childSnapshotResultDecoder),
-    frameSummary: frameSummaryDecoder
+    frameSummary: frameSummaryDecoder,
+    context: optional(anyJson())
 });
 
 export const customWorkspaceChildSnapshotDecoder: Decoder<ChildSnapshotResult> = object({
@@ -503,6 +500,7 @@ export const workspaceLayoutDecoder: Decoder<Glue42Workspaces.WorkspaceLayout> =
     metadata: optional(anyJson()),
     components: array(object({
         type: constant("Workspace"),
+        application: optional(nonEmptyStringDecoder),
         state: object({
             config: anyJson(),
             context: anyJson(),
@@ -571,8 +569,8 @@ export const frameStateResultDecoder: Decoder<FrameStateResult> = object({
 
 export const frameBoundsResultDecoder: Decoder<FrameBoundsResult> = object({
     bounds: object({
-        top: nonNegativeNumberDecoder,
-        left: nonNegativeNumberDecoder,
+        top: number(),
+        left: number(),
         width: nonNegativeNumberDecoder,
         height: nonNegativeNumberDecoder
     })
@@ -592,6 +590,11 @@ export const moveConfigDecoder: Decoder<Glue42Workspaces.MoveConfig> = object({
 
 export const simpleItemConfigDecoder: Decoder<SimpleItemConfig> = object({
     itemId: nonEmptyStringDecoder
+});
+
+export const frameSnapshotConfigDecoder: Decoder<FrameSnapshotConfig> = object({
+    itemId: nonEmptyStringDecoder,
+    excludeIds: optional(boolean())
 });
 
 export const frameStateConfigDecoder: Decoder<FrameStateConfig> = object({
@@ -783,4 +786,39 @@ export const frameInitProtocolConfigDecoder: Decoder<FrameInitializationConfigPr
         workspaceDefinitionDecoder,
         restoreWorkspaceDefinitionDecoder
     ))
+});
+
+export const getWorkspaceWindowsOnLayoutSaveContextConfigDecoder: Decoder<GetWorkspaceWindowsOnLayoutSaveContextConfig> = object({
+    layoutType: oneOf<"Global" | "Workspace">(
+        constant("Global"),
+        constant("Workspace")
+    ),
+    layoutName: nonEmptyStringDecoder,
+    windowIds: array(nonEmptyStringDecoder),
+    context: optional(anyJson()),
+    instances: optional(array(nonEmptyStringDecoder)),
+    ignoreInstances: optional(array(nonEmptyStringDecoder))
+});
+
+export const workspaceWindowOnSaveDataDecoder: Decoder<WorkspaceWindowOnSaveData> = object({
+    windowId: nonEmptyStringDecoder,
+    windowContext: optional(anyJson())
+})
+
+export const getWorkspaceWindowsOnLayoutSaveContextResult: Decoder<GetWorkspaceWindowsOnLayoutSaveContextResult> = object({
+    windowsOnSaveData: array(workspaceWindowOnSaveDataDecoder)
+});
+
+export const getWorkspacesLayoutsConfigDecoder: Decoder<GetWorkspacesLayoutsConfig> = object({
+    frameId: nonEmptyStringDecoder,
+    layoutName: nonEmptyStringDecoder,
+    layoutType: oneOf<"Global" | "Workspace">(
+        constant("Global"),
+        constant("Workspace")
+    ),
+    context: optional(anyJson())
+});
+
+export const getWorkspacesLayoutsResponseDecoder: Decoder<GetWorkspacesLayoutsResponse> = object({
+    workspaces: array(workspaceSnapshotResultDecoder)
 });

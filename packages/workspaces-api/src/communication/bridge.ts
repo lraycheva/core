@@ -66,19 +66,18 @@ export class Bridge {
             }
         }
 
-        let operationResult;
-
         try {
-            const operationResultRaw = await this.transport.transmitControl(operationDefinition.name, operationArgs);
-            operationResult = operationDefinition.resultDecoder.runWithException(operationResultRaw);
+            const operationResult = await this.transport.transmitControl(operationDefinition.name, operationArgs);
+
+            operationDefinition.resultDecoder.runWithException(operationResult);
+
+            return operationResult;
         } catch (error) {
             if (error.kind) {
                 throw new Error(`Unexpected internal incoming validation error: ${error.message}, for input: ${JSON.stringify(error.input)}, for operation ${operationName}`);
             }
             throw new Error(error.message);
         }
-
-        return operationResult;
     }
 
     public async subscribe(config: SubscriptionConfig): Promise<Glue42Workspaces.Unsubscribe> {

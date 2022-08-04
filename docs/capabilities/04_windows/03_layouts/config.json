@@ -2,5 +2,6 @@
     "menuItem": "Layouts",
     "title": "Layouts",
     "displayTitle": true,
+    "expanded": true,
     "class": "core-plus-logo"
 }

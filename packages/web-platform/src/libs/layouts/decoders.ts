@@ -1,32 +1,38 @@
 import { Glue42Web } from "@glue42/web";
-import { Glue42Workspaces } from "@glue42/workspaces-api";
-import { Decoder, oneOf, constant, anyJson, array, object, optional } from "decoder-validate";
-import { layoutSummaryDecoder, nonEmptyStringDecoder, windowLayoutComponentDecoder, workspaceLayoutComponentDecoder } from "../../shared/decoders";
-import { GetAllLayoutsConfig, AllLayoutsSummariesResult, AllLayoutsFullConfig, LayoutsOperationTypes, SimpleLayoutConfig, SimpleLayoutResult, OptionalSimpleLayoutResult, LayoutsImportConfig } from "./types";
+import { Decoder, oneOf, constant, anyJson, array, object, optional, boolean } from "decoder-validate";
+import { glueLayoutDecoder, layoutSummaryDecoder, nonEmptyStringDecoder, nonNegativeNumberDecoder, windowBoundsDecoder, layoutTypeDecoder } from "../../shared/decoders";
+import { GetAllLayoutsConfig, AllLayoutsSummariesResult, AllLayoutsFullConfig, LayoutsOperationTypes, SimpleLayoutConfig, SimpleLayoutResult, OptionalSimpleLayoutResult, LayoutsImportConfig, SaveLayoutConfig, RestoreLayoutConfig, RawWindowsLayoutDataRequestConfig, SaveRequestClientResponse, WindowRawLayoutData, PermissionStateResult, SimpleAvailabilityResult, WindowsRawLayoutData, WorkspaceWindowRawLayoutData } from "./types";
 
-export const layoutTypeDecoder: Decoder<Glue42Web.Layouts.LayoutType> = oneOf<Glue42Web.Layouts.LayoutType>(
-    constant("Global"),
-    constant("Workspace"),
-);
-
-export const layoutDecoder: Decoder<Glue42Web.Layouts.Layout> = object({
-    name: nonEmptyStringDecoder,
-    type: layoutTypeDecoder,
-    context: optional(anyJson()),
-    metadata: optional(anyJson()),
-    components: array(oneOf<Glue42Workspaces.WorkspaceComponent | Glue42Web.Layouts.WindowComponent>(
-        workspaceLayoutComponentDecoder,
-        windowLayoutComponentDecoder
-    ))
-});
-
-export const layoutsOperationTypesDecoder: Decoder<LayoutsOperationTypes> = oneOf<"get" | "getAll" | "export" | "import" | "remove">(
+export const layoutsOperationTypesDecoder: Decoder<LayoutsOperationTypes> = oneOf<"get" | "getAll" | "export" | "import" | "remove" | "save" | "restore" | "getRawWindowsLayoutData" | "clientSaveRequest" | "getGlobalPermissionState" | "requestGlobalPermission" | "checkGlobalActivated">(
     constant("get"),
     constant("getAll"),
     constant("export"),
     constant("import"),
-    constant("remove")
+    constant("remove"),
+    constant("save"),
+    constant("restore"),
+    constant("getRawWindowsLayoutData"),
+    constant("clientSaveRequest"),
+    constant("getGlobalPermissionState"),
+    constant("checkGlobalActivated"),
+    constant("requestGlobalPermission")
 );
+
+export const newLayoutOptionsDecoder: Decoder<Glue42Web.Layouts.NewLayoutOptions> = object({
+    name: nonEmptyStringDecoder,
+    context: optional(anyJson()),
+    metadata: optional(anyJson()),
+    instances: optional(array(nonEmptyStringDecoder)),
+    ignoreInstances: optional(array(nonEmptyStringDecoder))
+});
+
+export const restoreOptionsDecoder: Decoder<Glue42Web.Layouts.RestoreOptions> = object({
+    name: nonEmptyStringDecoder,
+    context: optional(anyJson()),
+    closeRunningInstance: optional(boolean()),
+    closeMe: optional(boolean()),
+    timeout: optional(nonNegativeNumberDecoder)
+});
 
 export const simpleLayoutConfigDecoder: Decoder<SimpleLayoutConfig> = object({
     name: nonEmptyStringDecoder,
@@ -37,8 +43,16 @@ export const getAllLayoutsConfigDecoder: Decoder<GetAllLayoutsConfig> = object({
     type: layoutTypeDecoder
 });
 
+export const saveLayoutConfigDecoder: Decoder<SaveLayoutConfig> = object({
+    layout: newLayoutOptionsDecoder
+});
+
+export const restoreLayoutConfigDecoder: Decoder<RestoreLayoutConfig> = object({
+    layout: restoreOptionsDecoder
+});
+
 export const allLayoutsFullConfigDecoder: Decoder<AllLayoutsFullConfig> = object({
-    layouts: array(layoutDecoder)
+    layouts: array(glueLayoutDecoder)
 });
 
 export const importModeDecoder: Decoder<"replace" | "merge"> = oneOf<"replace" | "merge">(
@@ -47,7 +61,7 @@ export const importModeDecoder: Decoder<"replace" | "merge"> = oneOf<"replace" |
 );
 
 export const layoutsImportConfigDecoder: Decoder<LayoutsImportConfig> = object({
-    layouts: array(layoutDecoder),
+    layouts: array(glueLayoutDecoder),
     mode: importModeDecoder
 });
 
@@ -56,9 +70,56 @@ export const allLayoutsSummariesResultDecoder: Decoder<AllLayoutsSummariesResult
 });
 
 export const simpleLayoutResult: Decoder<SimpleLayoutResult> = object({
-    layout: layoutDecoder
+    layout: glueLayoutDecoder
 });
 
 export const optionalSimpleLayoutResult: Decoder<OptionalSimpleLayoutResult> = object({
-    layout: optional(layoutDecoder)
+    layout: optional(glueLayoutDecoder)
+});
+
+export const rawWindowsLayoutDataRequestConfigDecoder: Decoder<RawWindowsLayoutDataRequestConfig> = object({
+    layoutType: oneOf<"Global" | "Workspace">(
+        constant("Global"),
+        constant("Workspace")
+    ),
+    layoutName: nonEmptyStringDecoder,
+    context: optional(anyJson()),
+    instances: optional(array(nonEmptyStringDecoder)),
+    ignoreInstances: optional(array(nonEmptyStringDecoder))
+});
+
+export const saveRequestClientResponseDecoder: Decoder<SaveRequestClientResponse> = object({
+    windowContext: optional(anyJson()),
+});
+
+export const fullSaveRequestResponseDecoder: Decoder<WindowRawLayoutData> = object({
+    bounds: windowBoundsDecoder,
+    windowContext: optional(anyJson()),
+    url: nonEmptyStringDecoder,
+    name: nonEmptyStringDecoder,
+    application: nonEmptyStringDecoder,
+    windowId: nonEmptyStringDecoder,
+    initialContext: optional(anyJson())
+});
+
+export const workspaceWindowRawLayoutDataDecoder: Decoder<WorkspaceWindowRawLayoutData> = object({
+    windowContext: optional(anyJson()),
+    windowId: nonEmptyStringDecoder,
+    frameId: nonEmptyStringDecoder
+})
+
+export const windowsRawLayoutDataDecoder: Decoder<WindowsRawLayoutData> = object({
+    windows: array(fullSaveRequestResponseDecoder)
+});
+
+export const permissionStateResultDecoder: Decoder<PermissionStateResult> = object({
+    state: oneOf<"prompt" | "granted" | "denied">(
+        constant("prompt"),
+        constant("denied"),
+        constant("granted")
+    )
+});
+
+export const simpleAvailabilityResultDecoder: Decoder<SimpleAvailabilityResult> = object({
+    isAvailable: boolean()
 });

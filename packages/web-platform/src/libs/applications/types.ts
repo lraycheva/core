@@ -33,9 +33,6 @@ export interface BaseApplicationData {
 
 export interface InstanceProcessInfo {
     data: InstanceData;
-    monitorState?: {
-        child: Window;
-    };
     context?: any;
 }
 

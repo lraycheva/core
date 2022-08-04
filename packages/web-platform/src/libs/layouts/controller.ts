@@ -2,32 +2,44 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Glue42Core } from "@glue42/core";
 import { Glue42Web } from "@glue42/web";
-import { BridgeOperation, InternalLayoutsConfig, InternalPlatformConfig, LibController } from "../../common/types";
+import { defaultNoAppWindowComponentAppName } from "../../common/constants";
+import { defaultPlatformConfig } from "../../common/defaultConfig";
+import { BridgeOperation, InternalLayoutsConfig, InternalPlatformConfig, LibController, SessionWindowData } from "../../common/types";
 import { GlueController } from "../../controllers/glue";
 import { SessionStorageController } from "../../controllers/session";
 import logger from "../../shared/logger";
+import { PromiseWrap } from "../../shared/promisePlus";
 import { objEqual } from "../../shared/utils";
-import { allLayoutsFullConfigDecoder, allLayoutsSummariesResultDecoder, getAllLayoutsConfigDecoder, layoutsImportConfigDecoder, layoutsOperationTypesDecoder, optionalSimpleLayoutResult, simpleLayoutConfigDecoder } from "./decoders";
+import { WindowsController } from "../windows/controller";
+import { allLayoutsFullConfigDecoder, allLayoutsSummariesResultDecoder, getAllLayoutsConfigDecoder, layoutsImportConfigDecoder, layoutsOperationTypesDecoder, optionalSimpleLayoutResult, permissionStateResultDecoder, restoreLayoutConfigDecoder, restoreOptionsDecoder, saveLayoutConfigDecoder, saveRequestClientResponseDecoder, rawWindowsLayoutDataRequestConfigDecoder, windowsRawLayoutDataDecoder, simpleAvailabilityResultDecoder, simpleLayoutConfigDecoder } from "./decoders";
 import { IdbLayoutsStore } from "./idbStore";
-import { AllLayoutsFullConfig, AllLayoutsSummariesResult, GetAllLayoutsConfig, LayoutsImportConfig, LayoutsOperationTypes, OptionalSimpleLayoutResult, SimpleLayoutConfig } from "./types";
+import { AllLayoutsFullConfig, AllLayoutsSummariesResult, GetAllLayoutsConfig, LayoutsImportConfig, LayoutsOperationTypes, OptionalSimpleLayoutResult, RestoreLayoutConfig, SaveLayoutConfig, RawWindowsLayoutDataRequestConfig, SaveRequestClientResponse, SimpleLayoutConfig, SimpleLayoutResult, WindowRawLayoutData, PermissionStateResult, SimpleAvailabilityResult, WindowsRawLayoutData, WorkspaceWindowRawLayoutData } from "./types";
 
 export class LayoutsController implements LibController {
 
     private started = false;
     private config!: InternalLayoutsConfig;
 
-    private operations: { [key in LayoutsOperationTypes]: BridgeOperation } = {
+    public operations: { [key in LayoutsOperationTypes]: BridgeOperation } = {
         get: { name: "get", dataDecoder: simpleLayoutConfigDecoder, resultDecoder: optionalSimpleLayoutResult, execute: this.handleGetLayout.bind(this) },
         getAll: { name: "getAll", dataDecoder: getAllLayoutsConfigDecoder, resultDecoder: allLayoutsSummariesResultDecoder, execute: this.handleGetAll.bind(this) },
         export: { name: "export", dataDecoder: getAllLayoutsConfigDecoder, resultDecoder: allLayoutsFullConfigDecoder, execute: this.handleExport.bind(this) },
         import: { name: "import", dataDecoder: layoutsImportConfigDecoder, execute: this.handleImport.bind(this) },
-        remove: { name: "remove", dataDecoder: simpleLayoutConfigDecoder, execute: this.handleRemove.bind(this) }
+        remove: { name: "remove", dataDecoder: simpleLayoutConfigDecoder, execute: this.handleRemove.bind(this) },
+        save: { name: "save", dataDecoder: saveLayoutConfigDecoder, execute: this.handleSave.bind(this) },
+        restore: { name: "restore", dataDecoder: restoreLayoutConfigDecoder, execute: this.handleRestore.bind(this) },
+        getRawWindowsLayoutData: { name: "getRawWindowsLayoutData", dataDecoder: rawWindowsLayoutDataRequestConfigDecoder, resultDecoder: windowsRawLayoutDataDecoder, execute: this.handleGetRawWindowsLayoutData.bind(this) },
+        clientSaveRequest: { name: "clientSaveRequest", dataDecoder: rawWindowsLayoutDataRequestConfigDecoder, resultDecoder: saveRequestClientResponseDecoder, execute: async () => { } },
+        getGlobalPermissionState: { name: "getGlobalPermissionState", resultDecoder: permissionStateResultDecoder, execute: this.handleGetGlobalPermissionState.bind(this) },
+        requestGlobalPermission: { name: "requestGlobalPermission", resultDecoder: simpleAvailabilityResultDecoder, execute: this.handleRequestGlobalPermission.bind(this) },
+        checkGlobalActivated: { name: "checkGlobalActivated", resultDecoder: simpleAvailabilityResultDecoder, execute: this.handleCheckGlobalActivated.bind(this) }
     }
 
     constructor(
         private readonly glueController: GlueController,
         private readonly idbStore: IdbLayoutsStore,
-        private readonly sessionStore: SessionStorageController
+        private readonly sessionStore: SessionStorageController,
+        private readonly windowsController: WindowsController
     ) { }
 
     private get logger(): Glue42Core.Logger.API | undefined {
@@ -40,7 +52,11 @@ export class LayoutsController implements LibController {
         this.logger?.trace(`initializing with mode: ${this.config.mode}`);
 
         if (this.config.local && this.config.local.length) {
-            await this.mergeImport(this.config.local);
+
+            await Promise.all([
+                this.mergeImport(this.config.local.filter((layout) => layout.type === "Global"), "Global"),
+                this.mergeImport(this.config.local.filter((layout) => layout.type === "Workspace"), "Workspace")
+            ]);
         }
 
         this.started = true;
@@ -81,10 +97,21 @@ export class LayoutsController implements LibController {
             throw new Error(`Layouts request for ${operationName} could not be completed, because the operation result did not pass the validation: ${JSON.stringify(resultValidation.error)}`);
         }
 
-
         this.logger?.trace(`[${commandId}] ${operationName} command was executed successfully`);
 
         return result;
+    }
+
+    public async handleSave(config: SaveLayoutConfig, commandId: string): Promise<SimpleLayoutResult> {
+        this.logger?.trace(`[${commandId}] handling save layout with config: ${JSON.stringify(config)}`);
+
+        throw new Error("This Web Platform cannot save Global Layouts.");
+    }
+
+    public async handleRestore(config: RestoreLayoutConfig, commandId: string): Promise<void> {
+        this.logger?.trace(`[${commandId}] handling restore layout with config: ${JSON.stringify(config)}`);
+
+        throw new Error(`This Web Platform cannot restore Global Layouts.`);
     }
 
     public async handleGetAll(config: GetAllLayoutsConfig, commandId: string): Promise<AllLayoutsSummariesResult> {
@@ -119,13 +146,14 @@ export class LayoutsController implements LibController {
     public async handleImport(config: LayoutsImportConfig, commandId: string): Promise<void> {
         this.logger?.trace(`[${commandId}] handling mass import request for layout names: ${config.layouts.map((l) => l.name).join(", ")}`);
 
-        if (config.mode === "merge") {
-            this.logger?.trace(`[${commandId}] importing the layouts in merge mode`);
-            await this.mergeImport(config.layouts);
-        } else {
-            this.logger?.trace(`[${commandId}] importing the layouts in replace mode`);
-            await this.replaceImport(config.layouts);
-        }
+        const importExecution = config.mode === "merge" ? this.mergeImport.bind(this) : this.replaceImport.bind(this);
+
+        this.logger?.trace(`[${commandId}] importing the layouts in ${config.mode} mode`);
+
+        await Promise.all([
+            importExecution(config.layouts.filter((layout) => layout.type === "Global"), "Global"),
+            importExecution(config.layouts.filter((layout) => layout.type === "Workspace"), "Workspace")
+        ]);
 
         this.logger?.trace(`[${commandId}] mass import completed, responding to caller`);
     }
@@ -157,14 +185,132 @@ export class LayoutsController implements LibController {
         return { layout };
     }
 
+    public async handleGetRawWindowsLayoutData(config: RawWindowsLayoutDataRequestConfig, commandId: string): Promise<WindowsRawLayoutData> {
+        this.logger?.trace(`[${commandId}] handling send save requests for layout: ${config.layoutName} to instances: ${config.instances?.join(", ")}`);
+
+        const glueWindowsRawData = await Promise.all(
+            this.getEligibleGlueWindows(config.instances, config.ignoreInstances).map((glueWindow) => this.buildRawGlueWindowData(glueWindow, config, commandId))
+        );
+
+        const nonGlueWindowsRawData = await Promise.all(
+            this.getEligibleNonGlueWindows(config.instances, config.ignoreInstances).map((glueWindow) => this.buildRawNonGlueWindowData(glueWindow, config, commandId))
+        );
+
+        const result: WindowsRawLayoutData = {
+            windows: [...glueWindowsRawData, ...nonGlueWindowsRawData]
+        };
+
+        this.logger?.trace(`[${commandId}] request completed, responding to the caller`);
+
+        return result;
+    }
+
+    private async buildRawGlueWindowData(windowData: SessionWindowData, requestConfig: RawWindowsLayoutDataRequestConfig, commandId: string): Promise<WindowRawLayoutData> {
+        const timeoutMessage = `Cannot fetch the layout save data from: ${windowData.name} with id: ${windowData.windowId}`;
+
+        if (!windowData.initialUrl) {
+            throw new Error(`Missing URL for client: ${windowData.name}`);
+        }
+
+        // the response will throw when communicating with an older Glue Web client which cannot service this message 
+        const saveRequestResponse = await PromiseWrap<SaveRequestClientResponse>(async () => {
+            try {
+                const clientResponse = await this.glueController.callWindow<RawWindowsLayoutDataRequestConfig, SaveRequestClientResponse>("layouts", this.operations.clientSaveRequest, requestConfig, windowData.windowId)
+                return clientResponse;
+            } catch (error) {
+                return {};
+            }
+
+        }, 15000, timeoutMessage);
+
+        const instanceData = this.sessionStore.getAllInstancesData().find((instance) => instance.id === windowData.windowId);
+
+        const windowBounds = await this.windowsController.getWindowBounds(windowData.windowId, commandId);
+
+        const clientProvidedContext = saveRequestResponse.windowContext ?? {};
+
+        return {
+            bounds: windowBounds,
+            windowContext: clientProvidedContext,
+            url: windowData.initialUrl,
+            name: windowData.name,
+            application: instanceData ? instanceData.applicationName : defaultNoAppWindowComponentAppName,
+            initialContext: windowData.initialContext,
+            windowId: windowData.windowId
+        }
+    }
+
+    private async buildRawNonGlueWindowData(windowData: SessionWindowData, requestConfig: RawWindowsLayoutDataRequestConfig, commandId: string): Promise<WindowRawLayoutData> {
+        if (!windowData.initialUrl) {
+            throw new Error(`Missing URL for client: ${windowData.name}`);
+        }
+
+        const instanceData = this.sessionStore.getAllInstancesData().find((instance) => instance.id === windowData.windowId);
+
+        return {
+            bounds: windowData.initialBounds ?? defaultPlatformConfig.windows.defaultWindowOpenBounds,
+            windowContext: {},
+            url: windowData.initialUrl,
+            name: windowData.name,
+            application: instanceData ? instanceData.applicationName : defaultNoAppWindowComponentAppName,
+            initialContext: windowData.initialContext,
+            windowId: windowData.windowId
+        }
+    }
+
+    public async handleGetGlobalPermissionState(args: unknown, commandId: string): Promise<PermissionStateResult> {
+        this.logger?.trace(`[${commandId}] handling Get Global Permission State request`);
+
+        const { state }: { state: "granted" | "prompt" | "denied" } = await (navigator as any).permissions.query({ name: "window-placement" });
+
+        this.logger?.trace(`[${commandId}] request completed with state: ${state}, responding to the caller`);
+
+        return { state };
+    }
+
+    public async handleRequestGlobalPermission(args: unknown, commandId: string): Promise<SimpleAvailabilityResult> {
+        this.logger?.trace(`[${commandId}] handling Request Global Permission command`);
+
+        const { state }: { state: "granted" | "prompt" | "denied" } = await (navigator as any).permissions.query({ name: "window-placement" });
+
+        if (state === "granted") {
+            return { isAvailable: true };
+        }
+
+        if (state === "denied") {
+            return { isAvailable: false };
+        }
+
+        try {
+            await (window as any).getScreenDetails();
+
+            this.logger?.trace(`[${commandId}] request completed, responding to the caller`);
+
+            return { isAvailable: true };
+        } catch (error) {
+            this.logger?.trace(`[${commandId}] request completed, responding to the caller`);
+
+            return { isAvailable: false };
+        }
+    }
+
+    public async handleCheckGlobalActivated(args: unknown, commandId: string): Promise<SimpleAvailabilityResult> {
+        this.logger?.trace(`[${commandId}] handling Check Global Activated request`);
+
+        this.logger?.trace(`[${commandId}] request completed, responding to the caller`);
+
+        // if this request is not intercepted, then the Global Layouts are not activated
+        return { isAvailable: false };
+    }
+
     private emitStreamData(operation: "layoutChanged" | "layoutAdded" | "layoutRemoved", data: any): void {
         this.logger?.trace(`sending notification of event: ${operation} with data: ${JSON.stringify(data)}`);
 
         this.glueController.pushSystemMessage("layouts", operation, data);
     }
 
-    public async mergeImport(layouts: Glue42Web.Layouts.Layout[]): Promise<void> {
-        const currentLayouts = await this.getAll("Workspace");
+    private async mergeImport(layouts: Glue42Web.Layouts.Layout[], type: Glue42Web.Layouts.LayoutType): Promise<void> {
+        const currentLayouts = await this.getAll(type);
         const pendingEvents: Array<{ operation: "layoutChanged" | "layoutAdded" | "layoutRemoved"; layout: Glue42Web.Layouts.Layout }> = [];
 
         for (const layout of layouts) {
@@ -186,12 +332,12 @@ export class LayoutsController implements LibController {
             }
         }
 
-        await this.cleanSave(currentLayouts);
+        await this.cleanSave(currentLayouts, type);
         pendingEvents.forEach((pending) => this.emitStreamData(pending.operation, pending.layout));
     }
 
-    public async replaceImport(layouts: Glue42Web.Layouts.Layout[]): Promise<void> {
-        const currentLayouts = await this.getAll("Workspace");
+    private async replaceImport(layouts: Glue42Web.Layouts.Layout[], type: Glue42Web.Layouts.LayoutType): Promise<void> {
+        const currentLayouts = await this.getAll(type);
         const pendingEvents: Array<{ operation: "layoutChanged" | "layoutAdded" | "layoutRemoved"; layout: Glue42Web.Layouts.Layout }> = [];
 
         for (const layout of layouts) {
@@ -217,7 +363,7 @@ export class LayoutsController implements LibController {
             pendingEvents.push({ operation: "layoutRemoved", layout });
         });
 
-        await this.cleanSave(layouts);
+        await this.cleanSave(layouts, type);
         pendingEvents.forEach((pending) => this.emitStreamData(pending.operation, pending.layout));
     }
 
@@ -227,15 +373,15 @@ export class LayoutsController implements LibController {
         if (this.config.mode === "idb") {
             all = await this.idbStore.getAll(type);
         } else {
-            all = this.sessionStore.getLayoutSnapshot().layouts;
+            all = this.sessionStore.getLayoutSnapshot(type).layouts;
         }
 
         return all;
     }
 
-    private async cleanSave(layouts: Glue42Web.Layouts.Layout[]): Promise<void> {
+    private async cleanSave(layouts: Glue42Web.Layouts.Layout[], type: Glue42Web.Layouts.LayoutType): Promise<void> {
         if (this.config.mode === "idb") {
-            await this.idbStore.clear("Workspace");
+            await this.idbStore.clear(type);
 
             for (const layout of layouts) {
                 await this.idbStore.store(layout, layout.type);
@@ -243,7 +389,7 @@ export class LayoutsController implements LibController {
             return;
         }
 
-        this.sessionStore.saveLayoutSnapshot({ layouts });
+        this.sessionStore.saveLayoutSnapshot({ layouts }, type);
     }
 
     private async delete(name: string, type: Glue42Web.Layouts.LayoutType): Promise<void> {
@@ -252,7 +398,7 @@ export class LayoutsController implements LibController {
             return;
         }
 
-        const all = this.sessionStore.getLayoutSnapshot().layouts;
+        const all = this.sessionStore.getLayoutSnapshot(type).layouts;
 
         const idxToRemove = all.findIndex((l) => l.name === name && l.type);
 
@@ -260,6 +406,77 @@ export class LayoutsController implements LibController {
             all.splice(idxToRemove, 1);
         }
 
-        this.sessionStore.saveLayoutSnapshot({ layouts: all });
+        this.sessionStore.saveLayoutSnapshot({ layouts: all }, type);
+    }
+
+    private getEligibleNonGlueWindows(requestedInstances?: string[], ignoreInstances?: string[]): SessionWindowData[] {
+        const allEligibleWindows = this.getAllEligibleWindows(requestedInstances, ignoreInstances);
+
+        const allNonGlueWindows = this.sessionStore.getAllNonGlue();
+
+        const allWorkspaceClients = this.sessionStore.pickWorkspaceClients(() => true);
+
+        return allEligibleWindows
+            .filter((eligibleWindow) =>
+                allNonGlueWindows.some((nonGlueWebWindow) => nonGlueWebWindow.windowId === eligibleWindow.windowId) &&
+                allWorkspaceClients.every((workspaceClient) => workspaceClient.windowId !== eligibleWindow.windowId)
+            )
+    }
+
+    private getEligibleGlueWorkspaceWindows(requestedInstances?: string[], ignoreInstances?: string[]): SessionWindowData[] {
+        let allEligibleWindows = this.getAllEligibleWindows(requestedInstances, ignoreInstances);
+
+        const allNonGlueWindows = this.sessionStore.getAllNonGlue();
+
+        allEligibleWindows = allEligibleWindows.filter((eligibleWindow) => allNonGlueWindows.every((nonGlueWebWindow) => nonGlueWebWindow.windowId !== eligibleWindow.windowId));
+
+        const allWorkspaceClients = this.sessionStore.pickWorkspaceClients(() => true);
+
+        const allFrames = this.sessionStore.getAllFrames();
+
+        const platformFrame = allFrames.find((frame) => frame.isPlatform);
+
+        return allEligibleWindows
+            .filter((eligibleWindow) => {
+                const correspondingWorkspaceWindow = allWorkspaceClients.find((wspClient) => wspClient.windowId === eligibleWindow.windowId);
+
+                if (platformFrame) {
+                    return !(correspondingWorkspaceWindow && correspondingWorkspaceWindow.frameId === platformFrame.windowId);
+                }
+
+                return !!correspondingWorkspaceWindow;
+            });
+    }
+
+    private getEligibleGlueWindows(requestedInstances?: string[], ignoreInstances?: string[]): SessionWindowData[] {
+        const allEligibleWindows = this.getAllEligibleWindows(requestedInstances, ignoreInstances);
+
+        const allNonGlueWindows = this.sessionStore.getAllNonGlue();
+
+        const allWorkspaceClients = this.sessionStore.pickWorkspaceClients(() => true);
+
+        return allEligibleWindows
+            .filter((eligibleWindow) =>
+                allWorkspaceClients.every((workspaceClient) => workspaceClient.windowId !== eligibleWindow.windowId) &&
+                allNonGlueWindows.every((nonGlueWebWindow) => nonGlueWebWindow.windowId !== eligibleWindow.windowId)
+            );
+    }
+
+    private getAllEligibleWindows(requestedInstances?: string[], ignoreInstances?: string[]): SessionWindowData[] {
+        let allNonPlatformWindows = this.sessionStore.getAllWindowsData().filter((webWindow) => webWindow.name !== "Platform");
+
+        if (requestedInstances && requestedInstances.length) {
+            const requestedServers = this.glueController.getServers().filter((server) => requestedInstances.some((instanceId) => server.instance === instanceId));
+
+            allNonPlatformWindows = allNonPlatformWindows.filter((eligibleWindow) => requestedServers.some((server) => server.windowId === eligibleWindow.windowId));
+        }
+
+        if (ignoreInstances && ignoreInstances.length) {
+            const ignoredServers = this.glueController.getServers().filter((server) => ignoreInstances.some((instanceId) => server.instance === instanceId));
+
+            allNonPlatformWindows = allNonPlatformWindows.filter((eligibleWindow) => ignoredServers.every((server) => server.windowId !== eligibleWindow.windowId));
+        }
+
+        return allNonPlatformWindows;
     }
 }

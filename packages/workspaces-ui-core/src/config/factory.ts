@@ -48,7 +48,8 @@ export class WorkspacesConfigurationFactory {
             maxWidth: args.maxWidth,
             maxHeight: args.maxHeight,
             positionIndex: args.positionIndex,
-            isMaximized: args.isMaximized
+            isMaximized: args.isMaximized,
+            noAppWindowState: args.noAppWindowState
         } as GoldenLayout.BaseItemConfig["workspacesConfig"];
         return {
             ...baseConfiguration,
@@ -154,7 +155,7 @@ export class WorkspacesConfigurationFactory {
     }
 
     public generateInitialConfig(workspaceContentConfigs: GoldenLayout.Config[]): FrameLayoutConfig {
-        const selectedWorkspace = workspaceContentConfigs.find((wcc) => wcc.workspacesOptions?.selected);
+        const selectedWorkspace = workspaceContentConfigs.find((wcc) => wcc?.workspacesOptions?.selected);
         const workspacesConfig: GoldenLayout.Config = {
             settings: this._defaultWorkspaceLayoutSettings,
             content: [

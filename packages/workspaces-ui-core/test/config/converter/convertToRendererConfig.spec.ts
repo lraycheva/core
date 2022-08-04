@@ -148,6 +148,7 @@ describe("convertToRendererConfig() Should", () => {
                                 workspacesConfig: {
                                     allowExtract: undefined,
                                     showCloseButton: undefined,
+                                    noAppWindowState: undefined,
                                     minWidth: undefined,
                                     maxWidth: undefined,
                                     minHeight: undefined,
@@ -184,6 +185,7 @@ describe("convertToRendererConfig() Should", () => {
                                 workspacesConfig: {
                                     allowExtract: undefined,
                                     showCloseButton: undefined,
+                                    noAppWindowState: undefined,
                                     minWidth: undefined,
                                     maxWidth: undefined,
                                     minHeight: undefined,
@@ -220,6 +222,7 @@ describe("convertToRendererConfig() Should", () => {
                                 workspacesConfig: {
                                     allowExtract: undefined,
                                     showCloseButton: undefined,
+                                    noAppWindowState: undefined,
                                     minWidth: undefined,
                                     maxWidth: undefined,
                                     minHeight: undefined,
@@ -549,6 +552,7 @@ describe("convertToRendererConfig() Should", () => {
                     workspacesConfig: {
                         allowExtract: undefined,
                         showCloseButton: undefined,
+                        noAppWindowState: undefined,
                         minWidth: undefined,
                         maxWidth: undefined,
                         minHeight: undefined,
@@ -573,6 +577,7 @@ describe("convertToRendererConfig() Should", () => {
                     workspacesConfig: {
                         allowExtract: undefined,
                         showCloseButton: undefined,
+                        noAppWindowState: undefined,
                         minWidth: undefined,
                         maxWidth: undefined,
                         minHeight: undefined,
@@ -597,6 +602,7 @@ describe("convertToRendererConfig() Should", () => {
                     workspacesConfig: {
                         allowExtract: undefined,
                         showCloseButton: undefined,
+                        noAppWindowState: undefined,
                         minWidth: undefined,
                         maxWidth: undefined,
                         minHeight: undefined,
@@ -881,6 +887,7 @@ describe("convertToRendererConfig() Should", () => {
                                         workspacesConfig: {
                                             allowExtract: undefined,
                                             showCloseButton: undefined,
+                                            noAppWindowState: undefined,
                                             minWidth: undefined,
                                             maxWidth: undefined,
                                             minHeight: undefined,
@@ -954,6 +961,7 @@ describe("convertToRendererConfig() Should", () => {
                                             workspacesConfig: {
                                                 allowExtract: undefined,
                                                 showCloseButton: undefined,
+                                                noAppWindowState: undefined,
                                                 minWidth: undefined,
                                                 maxWidth: undefined,
                                                 minHeight: undefined,

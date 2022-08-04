@@ -1420,7 +1420,7 @@ export class LayoutController {
                 });
 
                 if (item.config.componentName === this._emptyVisibleWindowName || item.parent?.config.workspacesConfig.wrapper) {
-                    item.tab.header.position(false);
+                    item.tab?.header.position(false);
                 }
             }
 

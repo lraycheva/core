@@ -1,5 +1,27 @@
 import { WorkspaceItem, WorkspaceSnapshot, RowItem, ColumnItem, GroupItem, WindowDefinition, LoadingStrategy, WindowItem } from "../types/internal";
 
+//#region Platform
+export interface RawWindowsLayoutDataRequestConfig {
+    layoutType: "Global" | "Workspace";
+    layoutName: string;
+    context?: any;
+    instances?: string[];
+    ignoreInstances?: string[];
+}
+
+export interface GetWorkspaceWindowsOnLayoutSaveContextConfig extends RawWindowsLayoutDataRequestConfig {
+    windowIds: string[];
+}
+
+export interface WorkspaceWindowOnSaveData {
+    windowId: string;
+    windowContext?: any;
+}
+
+export interface GetWorkspaceWindowOnLayoutSaveContextResult {
+    windowsOnSaveData: WorkspaceWindowOnSaveData[];
+}
+//#endregion
 //#region Requests
 
 export interface IsWindowInWorkspaceRequest {
@@ -109,7 +131,7 @@ export interface MoveFrameRequest {
 
 export interface GetFrameSnapshotRequest {
     operation: "getFrameSnapshot";
-    operationArguments: ItemSelector;
+    operationArguments: FrameSnapshotArguments;
 }
 
 export interface GetSnapshotRequest {
@@ -192,6 +214,16 @@ export interface CreateFrameRequest {
     operationArguments: CreateFrameArguments;
 }
 
+export interface InitFrameFromSnapshotRequest {
+    operation: "initFrameFromSnapshot";
+    operationArguments: InitFrameFromSnapshotArguments;
+}
+
+export interface GetWorkspacesLayoutsRequest {
+    operation: "getWorkspacesLayouts";
+    operationArguments: GetWorkspacesLayoutsArguments;
+}
+
 //#endregion
 
 //#region Arguments
@@ -223,6 +255,10 @@ export interface SaveLayoutArguments {
     workspaceId?: string;
     saveContext?: boolean;
     metadata?: object;
+}
+
+export interface FrameSnapshotArguments extends ItemSelector {
+    excludeIds?: boolean;
 }
 
 export interface RestoreWorkspaceConfig {
@@ -378,8 +414,18 @@ export interface InitFrameArguments {
     workspaces: Array<OpenWorkspaceArguments | CreateWorkspaceArguments>;
 }
 
+export interface InitFrameFromSnapshotArguments {
+    workspaces: Array<CreateWorkspaceArguments>;
+}
+
 export interface CreateFrameArguments {
     context?: object;
+}
+
+export interface GetWorkspacesLayoutsArguments {
+    layoutName: string;
+    layoutType: "Global" | "Workspace";
+    context?: any;
 }
 
 //#endregion
@@ -434,6 +480,10 @@ export interface WorkspaceSelector {
     workspaceId: string;
 }
 
+export interface GetWorkspacesLayoutsResult {
+    workspaces: WorkspaceSnapshot[];
+}
+
 //#endregion
 
 export type ControlArguments = SaveLayoutRequest | DeleteLayoutRequest |
@@ -443,4 +493,4 @@ export type ControlArguments = SaveLayoutRequest | DeleteLayoutRequest |
     BundleWorkspaceRequest | IsWindowInWorkspaceRequest | GetFrameSummaryRequest | MoveFrameRequest | GetFrameSnapshotRequest |
     GetSnapshotRequest | MoveWindowToRequest | GenerateLayoutRequest | PingRequest | HibernateWorkspaceRequest | ResumeWorkspaceRequest |
     LockWorkspaceRequest | LockContainerRequest | LockWindowRequest | ResizeItemRequest | PinWorkspaceRequest | UnpinWorkspaceRequest |
-    GetWorkspaceIconRequest | SetWorkspaceIconRequest | InitFrameRequest | CreateFrameRequest;
+    GetWorkspaceIconRequest | SetWorkspaceIconRequest | InitFrameRequest | CreateFrameRequest | InitFrameFromSnapshotRequest | GetWorkspacesLayoutsRequest;

@@ -10,12 +10,16 @@ import {
 import { Glue42Web } from "../../web";
 import { GlueBridge } from "../communication/bridge";
 import { glueLayoutDecoder, importModeDecoder, layoutsOperationTypesDecoder, layoutTypeDecoder, newLayoutOptionsDecoder, nonEmptyStringDecoder, restoreOptionsDecoder } from "../shared/decoders";
-import { AllLayoutsFullConfig, AllLayoutsSummariesResult, GetAllLayoutsConfig, LayoutParseResult, LayoutsImportConfig, operations, OptionalSimpleLayoutResult, SimpleLayoutConfig } from "./protocol";
+import { AllLayoutsFullConfig, AllLayoutsSummariesResult, GetAllLayoutsConfig, LayoutParseResult, LayoutsImportConfig, operations, OptionalSimpleLayoutResult, RestoreLayoutConfig, SaveLayoutConfig, SaveRequestClientResponse, PlatformSaveRequestConfig, SimpleLayoutConfig, SimpleLayoutResult, PermissionStateResult, SimpleAvailabilityResult } from "./protocol";
+import { WindowsController } from "../windows/controller";
 
 export class LayoutsController implements LibController {
+    private readonly defaultLayoutRestoreTimeoutMS = 120000;
     private readonly registry: CallbackRegistry = CallbackRegistryFactory();
     private bridge!: GlueBridge;
     private logger!: Glue42Web.Logger.API;
+    private windowsController!: WindowsController;
+    private saveRequestSubscription?: (info?: Glue42Web.Layouts.SaveRequestContext) => Glue42Web.Layouts.SaveRequestResponse;
 
     public async start(coreGlue: Glue42Core.GlueCore, ioc: IoC): Promise<void> {
         this.logger = coreGlue.logger.subLogger("layouts.controller.web");
@@ -23,6 +27,8 @@ export class LayoutsController implements LibController {
         this.logger.trace("starting the web layouts controller");
 
         this.bridge = ioc.bridge;
+
+        this.windowsController = ioc.windowsController;
 
         this.addOperationsExecutors();
 
@@ -62,7 +68,11 @@ export class LayoutsController implements LibController {
             remove: this.remove.bind(this),
             onAdded: this.onAdded.bind(this),
             onChanged: this.onChanged.bind(this),
-            onRemoved: this.onRemoved.bind(this)
+            onRemoved: this.onRemoved.bind(this),
+            onSaveRequested: this.subscribeOnSaveRequested.bind(this),
+            getMultiScreenPermissionState: this.getGlobalPermissionState.bind(this),
+            requestMultiScreenPermission: this.requestGlobalPermission.bind(this),
+            getGlobalTypeState: this.checkGlobalActivated.bind(this)
         };
 
         return Object.freeze(api);
@@ -72,6 +82,7 @@ export class LayoutsController implements LibController {
         operations.layoutAdded.execute = this.handleOnAdded.bind(this);
         operations.layoutChanged.execute = this.handleOnChanged.bind(this);
         operations.layoutRemoved.execute = this.handleOnRemoved.bind(this);
+        operations.clientSaveRequest.execute = this.handleSaveRequest.bind(this);
     }
 
     private async get(name: string, type: Glue42Web.Layouts.LayoutType): Promise<Glue42Web.Layouts.Layout | undefined> {
@@ -91,13 +102,10 @@ export class LayoutsController implements LibController {
         return result.summaries;
     }
 
-    private async export(type?: Glue42Web.Layouts.LayoutType): Promise<Glue42Web.Layouts.Layout[]> {
-        if (type) {
-            layoutTypeDecoder.runWithException(type);
-        }
+    private async export(type: Glue42Web.Layouts.LayoutType): Promise<Glue42Web.Layouts.Layout[]> {
+        layoutTypeDecoder.runWithException(type);
 
-        // supports only workspaces for the moment
-        const result = await this.bridge.send<GetAllLayoutsConfig, AllLayoutsFullConfig>("layouts", operations.export, { type: "Workspace" });
+        const result = await this.bridge.send<GetAllLayoutsConfig, AllLayoutsFullConfig>("layouts", operations.export, { type });
 
         return result.layouts;
     }
@@ -123,19 +131,26 @@ export class LayoutsController implements LibController {
 
         }, { valid: [] });
 
-        await this.bridge.send<LayoutsImportConfig, void>("layouts", operations.import, { layouts: parseResult.valid, mode });
+        const layoutsToImport = layouts.filter((layout) => parseResult.valid.some((validLayout) => validLayout.name === layout.name));
+
+        await this.bridge.send<LayoutsImportConfig, void>("layouts", operations.import, { layouts: layoutsToImport, mode });
     }
 
     private async save(layout: Glue42Web.Layouts.NewLayoutOptions): Promise<Glue42Web.Layouts.Layout> {
         newLayoutOptionsDecoder.runWithException(layout);
 
-        throw new Error("Save is not supported in Core at the moment");
+        const saveResult = await this.bridge.send<SaveLayoutConfig, SimpleLayoutResult>("layouts", operations.save, { layout });
+
+        return saveResult.layout;
     }
 
     private async restore(options: Glue42Web.Layouts.RestoreOptions): Promise<void> {
         restoreOptionsDecoder.runWithException(options);
 
-        throw new Error("Restore is not supported in Core at the moment");
+        // the user-provided timeout needs to be doubled for the invocation in order to allow time for the Global Layouts plugin to correctly honor the user timeout.
+        const invocationTimeout = options.timeout ? options.timeout * 2 : this.defaultLayoutRestoreTimeoutMS;
+
+        await this.bridge.send<RestoreLayoutConfig, void>("layouts", operations.restore, { layout: options }, { methodResponseTimeoutMs: invocationTimeout });
     }
 
     private async remove(type: Glue42Web.Layouts.LayoutType, name: string): Promise<void> {
@@ -145,9 +160,62 @@ export class LayoutsController implements LibController {
         await this.bridge.send<SimpleLayoutConfig, void>("layouts", operations.remove, { type, name });
     }
 
+    private async handleSaveRequest(config: PlatformSaveRequestConfig): Promise<SaveRequestClientResponse> {
+        const response: SaveRequestClientResponse = {};
+
+        if (this.saveRequestSubscription) {
+            try {
+                const onSaveRequestResponse = this.saveRequestSubscription(config);
+
+                response.windowContext = onSaveRequestResponse?.windowContext;
+            } catch (error) {
+                this.logger.warn(`An error was thrown by the onSaveRequested callback, ignoring the callback: ${JSON.stringify(error)}`);
+            }
+        }
+
+        return response;
+    }
+
+    private async getGlobalPermissionState(): Promise<{ state: "prompt" | "granted" | "denied" }> {
+        const requestResult = await this.bridge.send<void, PermissionStateResult>("layouts", operations.getGlobalPermissionState, undefined);
+
+        return requestResult;
+    }
+
+    private async requestGlobalPermission(): Promise<{ permissionGranted: boolean }> {
+
+        const currentState = (await this.getGlobalPermissionState()).state;
+
+        if (currentState === "denied") {
+            return { permissionGranted: false };
+        }
+
+        if (currentState === "granted") {
+            return { permissionGranted: true };
+        }
+
+        const myWindow = this.windowsController.my();
+
+        if (myWindow.name !== "Platform") {
+            throw new Error("Cannot request permission for multi-window placement from any app other than the Platform.");
+        }
+
+        const requestResult = await this.bridge.send<void, SimpleAvailabilityResult>("layouts", operations.requestGlobalPermission, undefined, { methodResponseTimeoutMs: 180000 });
+
+        return { permissionGranted: requestResult.isAvailable };
+    }
+
+    private async checkGlobalActivated(): Promise<{ activated: boolean }> {
+        const requestResult = await this.bridge.send<void, SimpleAvailabilityResult>("layouts", operations.checkGlobalActivated, undefined);
+
+        return { activated: requestResult.isAvailable };
+    }
+
     private onAdded(callback: (layout: Glue42Web.Layouts.Layout) => void): UnsubscribeFunction {
         // eslint-disable-next-line @typescript-eslint/no-empty-function
-        this.export().then((layouts) => layouts.forEach((layout) => callback(layout))).catch(() => { });
+        this.export("Global").then((layouts) => layouts.forEach((layout) => callback(layout))).catch(() => { });
+        this.export("Workspace").then((layouts) => layouts.forEach((layout) => callback(layout))).catch(() => { });
+
         return this.registry.add(operations.layoutAdded.name, callback);
     }
 
@@ -157,6 +225,22 @@ export class LayoutsController implements LibController {
 
     private onRemoved(callback: (layout: Glue42Web.Layouts.Layout) => void): UnsubscribeFunction {
         return this.registry.add(operations.layoutRemoved.name, callback);
+    }
+
+    private subscribeOnSaveRequested(callback: (info?: Glue42Web.Layouts.SaveRequestContext) => Glue42Web.Layouts.SaveRequestResponse): () => void {
+        if (typeof callback !== "function") {
+            throw new Error("Cannot subscribe to onSaveRequested, because the provided argument is not a valid callback function.");
+        }
+
+        if (this.saveRequestSubscription) {
+            throw new Error("Cannot subscribe to onSaveRequested, because this client has already subscribed and only one subscription is supported. Consider unsubscribing from the initial one.");
+        }
+
+        this.saveRequestSubscription = callback;
+
+        return () => {
+            delete this.saveRequestSubscription;
+        }
     }
 
     private async handleOnAdded(layout: Glue42Web.Layouts.Layout): Promise<void> {

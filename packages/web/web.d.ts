@@ -111,9 +111,6 @@ export namespace Glue42Web {
      */
     export interface API extends Glue42Core.GlueCore {
         windows: Glue42Web.Windows.API;
-        /**
-         * @ignore
-         */
         layouts: Glue42Web.Layouts.API;
         notifications: Glue42Web.Notifications.API;
         channels: Glue42Web.Channels.API;
@@ -357,13 +354,14 @@ export namespace Glue42Web {
              * Returns all layouts from the provided type.
              * @param type Type of the layouts to export.
              */
-            export(layoutType?: LayoutType): Promise<Layout[]>;
+            export(layoutType: LayoutType): Promise<Layout[]>;
 
             /**
              * Stores a full layout.
-             * @param layout The layout object to be stored.
+             * @param layouts An array of `Layout` objects to be imported.
+             * @param mode If `"replace"` (default), all existing Layouts will be removed. If `"merge"`, the Layouts will be added to the existing ones.
              */
-            import(layouts: Layout[], mode?: "replace" | "merge"): Promise<void>;
+            import(layouts: Layout[], mode?: ImportMode): Promise<void>;
 
             /**
              * Saves a new layout.
@@ -401,6 +399,30 @@ export namespace Glue42Web {
              * @param callback Callback function to handle the event. Receives the layout as a parameter and returns an unsubscribe function.
              */
             onRemoved(callback: (layout: Layout) => void): () => void;
+
+            /**
+             * Subscribes for layout save requests.
+             * @param callback The callback passed as an argument will be invoked when a layout save is requested.
+             * You have the option to save data (context) which will be restored when the layout is restored.
+             * Returns an unsubscribe function.
+             */
+            onSaveRequested(callback: (info?: SaveRequestContext) => SaveRequestResponse): () => void;
+
+            /**
+             * Retrieves the browser's Multi-Screen Window Placement state for this Glue42 Core environment
+             */
+            getMultiScreenPermissionState(): Promise<{ state: "prompt" | "granted" | "denied" }>;
+
+            /**
+             * Opens the browser permission prompt requesting Multi-Screen Window Placement permission from the user for this Glue42 Core environment.
+             * This can only be requested from the Platform due to transient activation restrictions of the browsers
+             */
+            requestMultiScreenPermission(): Promise<{ permissionGranted: boolean }>;
+
+            /**
+             * Checks whether or not this Glue42 Core environment has Global Layouts activated.
+             */
+            getGlobalTypeState(): Promise<{ activated: boolean }>;
         }
 
         /**
@@ -417,7 +439,7 @@ export namespace Glue42Web {
             type: LayoutType;
 
             /** Array of component objects describing the applications that are saved in the layout. */
-            components: Array<WindowComponent | Glue42Workspaces.WorkspaceComponent>;
+            components: Array<WindowComponent | WorkspaceFrameComponent | Glue42Workspaces.WorkspaceComponent>;
 
             /** Context object passed when the layout was saved. */
             context?: any;
@@ -431,24 +453,60 @@ export namespace Glue42Web {
 
         export type ComponentType = "application" | "activity";
 
-        export interface WindowComponent {
-            type: string;
+        export interface WorkspaceFrameComponent {
+            type: "workspaceFrame";
+
+            /** The name of the workspace application. This is supported only in Enterprise */
+            application: string;
 
             /** Type of the component - can be application or activity. */
             componentType?: ComponentType;
 
             /** Object describing the application bounds, name, context, etc. */
-            state: LayoutComponentState;
+            state: WorkspaceFrameComponentState;
         }
 
-        export interface LayoutComponentState {
-            name: any;
-            context: any;
-            url: string;
-            bounds: any;
-            id: string;
-            parentId?: string;
-            main: boolean;
+        export interface WorkspaceFrameComponentState {
+            bounds: Glue42Web.Windows.Bounds;
+            instanceId: string;
+            selectedWorkspace: number;
+            workspaces: Glue42Workspaces.WorkspaceLayoutComponentState[];
+            windowState?: string;
+            restoreState?: string;
+        }
+
+        export interface WindowComponent {
+            type: "window";
+
+            /** Type of the component - can be application or activity. */
+            componentType?: ComponentType;
+
+            /** The name of the originating application for the instance or "no-app-window" if it was not started as an application instance */
+            application: string;
+
+            /** Object describing the application bounds, name, context, etc. */
+            state: WindowComponentState;
+        }
+
+        export interface WindowComponentState {
+            context?: any;
+            bounds: Glue42Web.Windows.Bounds;
+            createArgs: WindowComponentCreateArgs;
+            windowState?: string,
+            restoreState?: string,
+            restoreSettings?: {
+                groupId?: string,
+                groupZOrder?: number
+            },
+            instanceId: string,
+            isSticky?: boolean,
+            isCollapsed?: boolean
+        }
+
+        export interface WindowComponentCreateArgs {
+            name?: string;
+            url?: string;
+            context?: any;
         }
 
         export interface LayoutSummary {
@@ -482,6 +540,16 @@ export namespace Glue42Web {
              * Metadata to be saved with the layout.
              */
             metadata?: any;
+
+            /**
+             * Will save those instances.
+             */
+            instances?: string[];
+
+            /**
+             * Will ignore those instances.
+             */
+            ignoreInstances?: string[];
         }
 
         /**
@@ -495,25 +563,41 @@ export namespace Glue42Web {
             name: string;
 
             /**
-             * If `true`, will close all visible running instances before restoring the layout.
-             * Exceptions are the current application and the Application Manager application.
-             * The default is `true` for `Global` layouts and `false` for `Activity` layouts.
-             */
-            closeRunningInstance?: boolean;
-
-            /**
              * Context object that will be passed to the restored apps. It will be merged with the saved context object.
              */
             context?: object;
+
+            /**
+             * If false, will not close all visible running instances before restoring the layout. The only exception is the Platform app - it will never be closed when restoring a layout. The default is true.
+             */
+            closeRunningInstances?: boolean;
+
+            /**
+             * If true, will close the current application. If closeRunningInstances is set to false, closeMes default will change to false too.
+             */
+            closeMe?: boolean;
+
+            /**
+             * Restore timeout option. If the timeout is hit, all opened applications to this point will be closed and the restore call will reject. The default is 60 000 MS.
+             */
+            timeout?: number;
         }
 
         /**
-         * Object returned as a result to a save layout request.
+         * Object returned as a response to a save layout request.
          */
         export interface SaveRequestResponse {
-
             /** Context object specific to the application. */
             windowContext: object;
+        }
+
+        /**
+         * Object sent with a save layout request.
+         */
+        export interface SaveRequestContext {
+            context?: unknown;
+            layoutName: string;
+            layoutType: LayoutType;
         }
     }
 

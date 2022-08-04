@@ -1,3 +1,5 @@
+2.7.0
+feat: enabled layouts API messages
 2.6.12
 chore: bump due to dependencies update
 2.6.11

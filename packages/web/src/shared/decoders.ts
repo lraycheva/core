@@ -2,7 +2,7 @@ import { Glue42Workspaces } from "@glue42/workspaces-api";
 import { Decoder, string, number, object, constant, oneOf, optional, array, boolean, anyJson, lazy } from "decoder-validate";
 import { Glue42Web } from "../../web";
 import { AppsImportOperation, AppHelloSuccess, ApplicationData, ApplicationStartConfig, AppManagerOperationTypes, AppRemoveConfig, BaseApplicationData, BasicInstanceData, InstanceData, AppsExportOperation, FDC3Definition, AppDirectoryStateChange } from "../appManager/protocol";
-import { AllLayoutsFullConfig, AllLayoutsSummariesResult, GetAllLayoutsConfig, LayoutsImportConfig, LayoutsOperationTypes, OptionalSimpleLayoutResult, SimpleLayoutConfig, SimpleLayoutResult } from "../layouts/protocol";
+import { AllLayoutsFullConfig, AllLayoutsSummariesResult, GetAllLayoutsConfig, LayoutsImportConfig, LayoutsOperationTypes, OptionalSimpleLayoutResult, RestoreLayoutConfig, SaveLayoutConfig, SaveRequestClientResponse, PlatformSaveRequestConfig, SimpleLayoutConfig, SimpleLayoutResult, PermissionStateResult, SimpleAvailabilityResult } from "../layouts/protocol";
 import { HelloSuccess, OpenWindowConfig, CoreWindowData, WindowHello, WindowOperationTypes, SimpleWindowCommand, WindowTitleConfig, WindowBoundsResult, WindowMoveResizeConfig, WindowUrlResult, FrameWindowBoundsResult } from "../windows/protocol";
 import { IntentsOperationTypes, WrappedIntentFilter, WrappedIntents } from "../intents/protocol";
 import { LibDomains } from "./types";
@@ -47,7 +47,7 @@ export const appManagerOperationTypesDecoder: Decoder<AppManagerOperationTypes> 
     constant("clear")
 );
 
-export const layoutsOperationTypesDecoder: Decoder<LayoutsOperationTypes> = oneOf<"layoutAdded" | "layoutChanged" | "layoutRemoved" | "get" | "getAll" | "export" | "import" | "remove">(
+export const layoutsOperationTypesDecoder: Decoder<LayoutsOperationTypes> = oneOf<"layoutAdded" | "layoutChanged" | "layoutRemoved" | "get" | "getAll" | "export" | "import" | "remove" | "clientSaveRequest" | "getGlobalPermissionState" | "requestGlobalPermission" | "checkGlobalActivated">(
     constant("layoutAdded"),
     constant("layoutChanged"),
     constant("layoutRemoved"),
@@ -55,7 +55,11 @@ export const layoutsOperationTypesDecoder: Decoder<LayoutsOperationTypes> = oneO
     constant("getAll"),
     constant("export"),
     constant("import"),
-    constant("remove")
+    constant("remove"),
+    constant("clientSaveRequest"),
+    constant("getGlobalPermissionState"),
+    constant("checkGlobalActivated"),
+    constant("requestGlobalPermission")
 );
 
 export const notificationsOperationTypesDecoder: Decoder<NotificationsOperationTypes> = oneOf<"raiseNotification" | "requestPermission" | "notificationShow" | "notificationClick" | "getPermission">(
@@ -72,6 +76,13 @@ export const windowRelativeDirectionDecoder: Decoder<Glue42Web.Windows.RelativeD
     constant("right"),
     constant("bottom")
 );
+
+export const windowBoundsDecoder: Decoder<Glue42Web.Windows.Bounds> = object({
+    top: number(),
+    left: number(),
+    width: nonNegativeNumberDecoder,
+    height: nonNegativeNumberDecoder
+});
 
 export const windowOpenSettingsDecoder: Decoder<Glue42Web.Windows.Settings | undefined> = optional(object({
     top: optional(number()),
@@ -296,18 +307,30 @@ export const componentTypeDecoder: Decoder<Glue42Web.Layouts.ComponentType> = on
     constant("activity")
 );
 
-export const windowLayoutComponentDecoder: Decoder<Glue42Web.Layouts.WindowComponent> = object({
-    type: nonEmptyStringDecoder.where((s) => s === "window", "Expected a value of window"),
-    componentType: optional(componentTypeDecoder),
-    state: object({
-        name: anyJson(),
-        context: anyJson(),
-        url: nonEmptyStringDecoder,
-        bounds: anyJson(),
-        id: nonEmptyStringDecoder,
-        parentId: optional(nonEmptyStringDecoder),
-        main: boolean()
+export const windowComponentStateDecoder: Decoder<Glue42Web.Layouts.WindowComponentState> = object({
+    context: optional(anyJson()),
+    bounds: windowBoundsDecoder,
+    createArgs: object({
+        name: optional(nonEmptyStringDecoder),
+        url: optional(nonEmptyStringDecoder),
+        context: optional(anyJson())
+    }),
+    windowState: optional(nonEmptyStringDecoder),
+    restoreState: optional(nonEmptyStringDecoder),
+    instanceId: nonEmptyStringDecoder,
+    isCollapsed: optional(boolean()),
+    isSticky: optional(boolean()),
+    restoreSettings: object({
+        groupId: optional(nonEmptyStringDecoder),
+        groupZOrder: optional(number())
     })
+});
+
+export const windowLayoutComponentDecoder: Decoder<Glue42Web.Layouts.WindowComponent> = object({
+    type: constant("window"),
+    componentType: optional(componentTypeDecoder),
+    application: nonEmptyStringDecoder,
+    state: windowComponentStateDecoder
 });
 
 export const windowLayoutItemDecoder: Decoder<Glue42Workspaces.WindowLayoutItem> = object({
@@ -353,28 +376,47 @@ export const rowLayoutItemDecoder: Decoder<Glue42Workspaces.RowLayoutItem> = obj
     ))
 });
 
+export const workspaceLayoutComponentStateDecoder: Decoder<Glue42Workspaces.WorkspaceLayoutComponentState> = object({
+    config: anyJson(),
+    context: anyJson(),
+    children: array(oneOf<Glue42Workspaces.RowLayoutItem | Glue42Workspaces.ColumnLayoutItem | Glue42Workspaces.GroupLayoutItem | Glue42Workspaces.WindowLayoutItem>(
+        rowLayoutItemDecoder,
+        columnLayoutItemDecoder,
+        groupLayoutItemDecoder,
+        windowLayoutItemDecoder
+    ))
+});
+
 export const workspaceLayoutComponentDecoder: Decoder<Glue42Workspaces.WorkspaceComponent> = object({
     type: constant("Workspace"),
-    state: object({
-        config: anyJson(),
-        context: anyJson(),
-        children: array(oneOf<Glue42Workspaces.RowLayoutItem | Glue42Workspaces.ColumnLayoutItem | Glue42Workspaces.GroupLayoutItem | Glue42Workspaces.WindowLayoutItem>(
-            rowLayoutItemDecoder,
-            columnLayoutItemDecoder,
-            groupLayoutItemDecoder,
-            windowLayoutItemDecoder
-        ))
-    })
+    application: optional(nonEmptyStringDecoder),
+    state: workspaceLayoutComponentStateDecoder
+});
+
+export const workspaceFrameComponentStateDecoder: Decoder<Glue42Web.Layouts.WorkspaceFrameComponentState> = object({
+    bounds: windowBoundsDecoder,
+    instanceId: nonEmptyStringDecoder,
+    selectedWorkspace: nonNegativeNumberDecoder,
+    workspaces: array(workspaceLayoutComponentStateDecoder),
+    windowState: optional(nonEmptyStringDecoder),
+    restoreState: optional(nonEmptyStringDecoder)
+});
+
+export const workspaceFrameComponentDecoder: Decoder<Glue42Web.Layouts.WorkspaceFrameComponent> = object({
+    type: constant<"workspaceFrame">("workspaceFrame"),
+    application: nonEmptyStringDecoder,
+    componentType: optional(componentTypeDecoder),
+    state: workspaceFrameComponentStateDecoder
 });
 
 export const glueLayoutDecoder: Decoder<Glue42Web.Layouts.Layout> = object({
     name: nonEmptyStringDecoder,
     type: layoutTypeDecoder,
-    components: array(oneOf<Glue42Web.Layouts.WindowComponent | Glue42Workspaces.WorkspaceComponent>(
+    components: array(oneOf<Glue42Web.Layouts.WindowComponent | Glue42Web.Layouts.WorkspaceFrameComponent | Glue42Workspaces.WorkspaceComponent>(
         windowLayoutComponentDecoder,
-        workspaceLayoutComponentDecoder
+        workspaceLayoutComponentDecoder,
+        workspaceFrameComponentDecoder
     )),
-    version: optional(nonEmptyStringDecoder),
     context: optional(anyJson()),
     metadata: optional(anyJson())
 });
@@ -382,13 +424,17 @@ export const glueLayoutDecoder: Decoder<Glue42Web.Layouts.Layout> = object({
 export const newLayoutOptionsDecoder: Decoder<Glue42Web.Layouts.NewLayoutOptions> = object({
     name: nonEmptyStringDecoder,
     context: optional(anyJson()),
-    metadata: optional(anyJson())
+    metadata: optional(anyJson()),
+    instances: optional(array(nonEmptyStringDecoder)),
+    ignoreInstances: optional(array(nonEmptyStringDecoder))
 });
 
 export const restoreOptionsDecoder: Decoder<Glue42Web.Layouts.RestoreOptions> = object({
     name: nonEmptyStringDecoder,
     context: optional(anyJson()),
-    closeRunningInstance: optional(boolean())
+    closeRunningInstance: optional(boolean()),
+    closeMe: optional(boolean()),
+    timeout: optional(nonNegativeNumberDecoder)
 });
 
 export const layoutSummaryDecoder: Decoder<Glue42Web.Layouts.LayoutSummary> = object({
@@ -401,6 +447,14 @@ export const layoutSummaryDecoder: Decoder<Glue42Web.Layouts.LayoutSummary> = ob
 export const simpleLayoutConfigDecoder: Decoder<SimpleLayoutConfig> = object({
     name: nonEmptyStringDecoder,
     type: layoutTypeDecoder
+});
+
+export const saveLayoutConfigDecoder: Decoder<SaveLayoutConfig> = object({
+    layout: newLayoutOptionsDecoder
+});
+
+export const restoreLayoutConfigDecoder: Decoder<RestoreLayoutConfig> = object({
+    layout: restoreOptionsDecoder
 });
 
 export const getAllLayoutsConfigDecoder: Decoder<GetAllLayoutsConfig> = object({
@@ -425,7 +479,7 @@ export const allLayoutsSummariesResultDecoder: Decoder<AllLayoutsSummariesResult
     summaries: array(layoutSummaryDecoder)
 });
 
-export const simpleLayoutResult: Decoder<SimpleLayoutResult> = object({
+export const simpleLayoutResultDecoder: Decoder<SimpleLayoutResult> = object({
     layout: glueLayoutDecoder
 });
 
@@ -606,4 +660,29 @@ export const notificationEventPayloadDecoder: Decoder<NotificationEventPayload> 
     definition: notificationDefinitionDecoder,
     action: optional(string()),
     id: optional(nonEmptyStringDecoder)
+});
+
+export const platformSaveRequestConfigDecoder: Decoder<PlatformSaveRequestConfig> = object({
+    layoutType: oneOf<"Global" | "Workspace">(
+        constant("Global"),
+        constant("Workspace")
+    ),
+    layoutName: nonEmptyStringDecoder,
+    context: optional(anyJson())
+});
+
+export const saveRequestClientResponseDecoder: Decoder<SaveRequestClientResponse> = object({
+    windowContext: optional(anyJson()),
+});
+
+export const permissionStateResultDecoder: Decoder<PermissionStateResult> = object({
+    state: oneOf<"prompt" | "granted" | "denied">(
+        constant("prompt"),
+        constant("denied"),
+        constant("granted")
+    )
+});
+
+export const simpleAvailabilityResultDecoder: Decoder<SimpleAvailabilityResult> = object({
+    isAvailable: boolean()
 });

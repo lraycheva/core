@@ -9,6 +9,13 @@ export const nonNegativeNumberDecoder: Decoder<number> = number().where((num) =>
 export const nonEmptyStringDecoder: Decoder<string> = string().where((s) => s.length > 0, "Expected a non-empty string");
 export const anyDecoder: Decoder<unknown> = anyJson();
 
+export const windowBoundsDecoder: Decoder<Glue42Web.Windows.Bounds> = object({
+    top: number(),
+    left: number(),
+    width: nonNegativeNumberDecoder,
+    height: nonNegativeNumberDecoder
+});
+
 export const windowRelativeDirectionDecoder: Decoder<Glue42Web.Windows.RelativeDirection> = oneOf<"top" | "left" | "right" | "bottom">(
     constant("top"),
     constant("left"),
@@ -29,7 +36,7 @@ const channelMetaDecoder: Decoder<Glue42WebPlatform.Channels.ChannelMeta> = anyJ
     "Expected color to be a non-empty string"
 );
 
-const layoutTypeDecoder: Decoder<Glue42Web.Layouts.LayoutType> = oneOf<"Global" | "Activity" | "ApplicationDefault" | "Swimlane" | "Workspace">(
+export const layoutTypeDecoder: Decoder<Glue42Web.Layouts.LayoutType> = oneOf<"Global" | "Activity" | "ApplicationDefault" | "Swimlane" | "Workspace">(
     constant("Global"),
     constant("Activity"),
     constant("ApplicationDefault"),
@@ -57,18 +64,30 @@ export const layoutSummaryDecoder: Decoder<Glue42Web.Layouts.LayoutSummary> = ob
     metadata: optional(anyJson())
 });
 
+export const windowComponentStateDecoder: Decoder<Glue42Web.Layouts.WindowComponentState> = object({
+    context: optional(anyJson()),
+    bounds: windowBoundsDecoder,
+    createArgs: object({
+        name: optional(nonEmptyStringDecoder),
+        url: optional(nonEmptyStringDecoder),
+        context: optional(anyJson())
+    }),
+    windowState: optional(nonEmptyStringDecoder),
+    restoreState: optional(nonEmptyStringDecoder),
+    instanceId: nonEmptyStringDecoder,
+    isCollapsed: optional(boolean()),
+    isSticky: optional(boolean()),
+    restoreSettings: object({
+        groupId: optional(nonEmptyStringDecoder),
+        groupZOrder: optional(number())
+    })
+});
+
 export const windowLayoutComponentDecoder: Decoder<Glue42Web.Layouts.WindowComponent> = object({
     type: constant("window"),
-    componentType: componentTypeDecoder,
-    state: object({
-        name: anyJson(),
-        context: anyJson(),
-        url: nonEmptyStringDecoder,
-        bounds: anyJson(),
-        id: nonEmptyStringDecoder,
-        parentId: optional(nonEmptyStringDecoder),
-        main: boolean()
-    })
+    componentType: optional(componentTypeDecoder),
+    application: nonEmptyStringDecoder,
+    state: windowComponentStateDecoder
 });
 
 export const libDomainDecoder: Decoder<LibDomains> = oneOf<"system" | "windows" | "appManager" | "layouts" | "workspaces" | "intents" | "notifications" | "extension">(
@@ -91,6 +110,8 @@ export const windowLayoutItemDecoder: Decoder<Glue42Workspaces.WindowLayoutItem>
     type: constant("window"),
     config: object({
         appName: nonEmptyStringDecoder,
+        windowId: optional(nonEmptyStringDecoder),
+        context: optional(anyJson()),
         url: optional(nonEmptyStringDecoder),
         title: optional(string()),
         showCloseButton: optional(boolean()),
@@ -130,27 +151,46 @@ export const rowLayoutItemDecoder: Decoder<Glue42Workspaces.RowLayoutItem> = obj
     ))
 });
 
+export const workspaceLayoutComponentStateDecoder: Decoder<Glue42Workspaces.WorkspaceLayoutComponentState> = object({
+    config: anyJson(),
+    context: anyJson(),
+    children: array(oneOf<Glue42Workspaces.RowLayoutItem | Glue42Workspaces.ColumnLayoutItem | Glue42Workspaces.GroupLayoutItem | Glue42Workspaces.WindowLayoutItem>(
+        rowLayoutItemDecoder,
+        columnLayoutItemDecoder,
+        groupLayoutItemDecoder,
+        windowLayoutItemDecoder
+    ))
+});
+
 export const workspaceLayoutComponentDecoder: Decoder<Glue42Workspaces.WorkspaceComponent> = object({
     type: constant("Workspace"),
     application: optional(string()),
-    state: object({
-        config: anyJson(),
-        context: anyJson(),
-        children: array(oneOf<Glue42Workspaces.RowLayoutItem | Glue42Workspaces.ColumnLayoutItem | Glue42Workspaces.GroupLayoutItem | Glue42Workspaces.WindowLayoutItem>(
-            rowLayoutItemDecoder,
-            columnLayoutItemDecoder,
-            groupLayoutItemDecoder,
-            windowLayoutItemDecoder
-        ))
-    })
+    state: workspaceLayoutComponentStateDecoder
+});
+
+export const workspaceFrameComponentStateDecoder: Decoder<Glue42Web.Layouts.WorkspaceFrameComponentState> = object({
+    bounds: windowBoundsDecoder,
+    instanceId: nonEmptyStringDecoder,
+    selectedWorkspace: nonNegativeNumberDecoder,
+    workspaces: array(workspaceLayoutComponentStateDecoder),
+    windowState: optional(nonEmptyStringDecoder),
+    restoreState: optional(nonEmptyStringDecoder)
+});
+
+export const workspaceFrameComponentDecoder: Decoder<Glue42Web.Layouts.WorkspaceFrameComponent> = object({
+    type: constant<"workspaceFrame">("workspaceFrame"),
+    application: nonEmptyStringDecoder,
+    componentType: optional(componentTypeDecoder),
+    state: workspaceFrameComponentStateDecoder
 });
 
 export const glueLayoutDecoder: Decoder<Glue42Web.Layouts.Layout> = object({
     name: nonEmptyStringDecoder,
     type: layoutTypeDecoder,
-    components: array(oneOf<Glue42Web.Layouts.WindowComponent | Glue42Workspaces.WorkspaceComponent>(
+    components: array(oneOf<Glue42Web.Layouts.WindowComponent | Glue42Web.Layouts.WorkspaceFrameComponent | Glue42Workspaces.WorkspaceComponent>(
         windowLayoutComponentDecoder,
-        workspaceLayoutComponentDecoder
+        workspaceLayoutComponentDecoder,
+        workspaceFrameComponentDecoder
     )),
     context: optional(anyJson()),
     metadata: optional(anyJson())
@@ -323,12 +363,7 @@ export const connectionConfigDecoder: Decoder<Glue42WebPlatform.Connection.Confi
 
 export const windowsConfigDecoder: Decoder<Glue42WebPlatform.Windows.Config> = object({
     windowResponseTimeoutMs: optional(nonNegativeNumberDecoder),
-    defaultWindowOpenBounds: optional(object({
-        top: number(),
-        left: number(),
-        width: nonNegativeNumberDecoder,
-        height: nonNegativeNumberDecoder
-    }))
+    defaultWindowOpenBounds: optional(windowBoundsDecoder)
 });
 
 export const serviceWorkerConfigDecoder: Decoder<Glue42WebPlatform.ServiceWorker.Config> = object({
@@ -359,4 +394,12 @@ export const windowOpenSettingsDecoder: Decoder<Glue42Web.Windows.Settings> = ob
     context: optional(anyJson()),
     relativeTo: optional(nonEmptyStringDecoder),
     relativeDirection: optional(windowRelativeDirectionDecoder)
+});
+
+export const interceptorRegistrationRequestDecoder: Decoder<Glue42WebPlatform.Plugins.InterceptorRegistrationRequest> = object({
+    callInterceptor: anyJson().andThen((result) => functionCheck(result, "callInterceptor")),
+    interceptions: array(object({
+        domain: libDomainDecoder,
+        operation: nonEmptyStringDecoder
+    }))
 });

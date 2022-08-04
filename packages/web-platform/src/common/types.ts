@@ -75,7 +75,7 @@ export interface CoreClientData {
 
 export interface LibController {
     start(config: InternalPlatformConfig): Promise<void>;
-    handleControl(args: any): Promise<any>;
+    handleControl(args: Glue42WebPlatform.ControlMessage): Promise<any>;
     handleClientUnloaded?(windowId: string, win: Window): void;
 }
 
@@ -86,6 +86,9 @@ export interface SessionNonGlueData {
 export interface SessionWindowData {
     windowId: string;
     name: string;
+    initialBounds?: Glue42Web.Windows.Bounds;
+    initialUrl?: string;
+    initialContext?: any;
 }
 
 export interface WorkspaceWindowSession {
@@ -96,7 +99,7 @@ export interface WorkspaceWindowSession {
 
 export interface BridgeOperation {
     name: string;
-    execute: (args: any, commandId: string) => Promise<any> | void;
+    execute: (args: any, commandId: string) => Promise<any>;
     dataDecoder?: Decoder<any>;
     resultDecoder?: Decoder<any>;
 }
@@ -120,10 +123,6 @@ export interface ApplicationStartConfig {
 }
 
 export type SystemOperationTypes = "getEnvironment" | "getBase";
-
-export interface ControlMessage extends Glue42WebPlatform.Plugins.ControlMessage {
-    commandId?: string;
-}
 
 export interface ClientTransportSwitchLock {
     promise: Promise<void>;
@@ -152,4 +151,21 @@ export interface ClientPortRequest {
 export interface SessionSystemSettings {
     systemInstanceId: string;
     ctxTrackInstanceId: string;
+}
+
+export interface InterceptorInquiry {
+    domain: LibDomains;
+    operation: string;
+}
+
+export interface InterceptorInquiryResult {
+    name: string;
+    intercept: (config: Glue42WebPlatform.ControlMessage) => Promise<any>;
+}
+
+export interface InterceptorEntry {
+    registrantName: string;
+    domain: LibDomains;
+    operation: string;
+    callInterceptor: (config: Glue42WebPlatform.ControlMessage) => Promise<any>;
 }

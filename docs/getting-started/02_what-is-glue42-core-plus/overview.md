@@ -12,7 +12,7 @@ Besides the free open-source features of [**Glue42 Core**](https://glue42.com/co
 
 In a licensed [**Glue42 Core+**](https://glue42.com/core-plus/) project, you can use:
 
-- Layouts to save and restore multi-monitor app arrangements;
+- [Layouts](../../capabilities/windows/layouts/setup/index.html) to save and restore multi-monitor app arrangements;
 - Metrics to track performance;
 - Connectors to integrate your web apps with Bloomberg, Fidessa, Excel, Outlook and more;
 - an installable Browser Extension which replaces the need for a [Main app](../../developers/core-concepts/web-platform/overview/index.html) and provides many other handy features for your web project;
@@ -27,7 +27,7 @@ In a licensed [**Glue42 Core+**](https://glue42.com/core-plus/) project, you can
 
 ### Layouts
 
-End-users in large enterprises often have multi-monitor setups on which they arrange the necessary apps in the most convenient way for executing daily tasks. The [**Glue42 Core+**](https://glue42.com/core-plus/) Layouts feature allows them to save and later restore the exact arrangement and context of their apps. Users can save multiple apps and [Workspaces](../../capabilities/windows/workspaces/overview/index.html) in different Layouts, each corresponding to a specific task or workflow. Restoring the saved Layout happens with a single click and saves time and effort for finding, launching and arranging the desired apps.
+End users in large enterprises often have multi-monitor setups on which they arrange the necessary apps in the most convenient way for executing daily tasks. The [Layouts](../../capabilities/windows/layouts/setup/index.html) feature of [**Glue42 Core+**](https://glue42.com/core-plus/) allows them to save and later restore the exact arrangement and context of their environment - windows, apps, [Workspaces](../../capabilities/windows/workspaces/overview/index.html), and their bounds and context. Users can save multiple apps and Workspaces in different Layouts, each corresponding to a specific task or workflow. Restoring the saved Layout happens with a single click and saves time and effort for finding, launching and arranging the desired apps.
 
 ### Metrics
 
