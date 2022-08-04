@@ -102,7 +102,7 @@ export namespace Glue42Web {
      * @docmenuorder 3
      */
     export interface SystemLogger {
-        level?: Glue42Core.LogLevel;
+        level?: Glue42Core.Logger.LogLevel;
         callback?: (logInfo: any) => void;
     }
 

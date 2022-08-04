@@ -9,12 +9,12 @@ import { UserSubscription } from "./protocols/gw3/subscription";
 export interface InteropSettings {
     connection: Connection;
     logger: Logger;
-    /** Default for how much to wait for method to appear when invoking. If not set 10000
-     * @default 10000
+    /** Default for how much to wait for method to appear when invoking. If not set 30000
+     * @default 30000
      */
     waitTimeoutMs?: number;
-    /** Default for how much to wait of the method to respond when invoking. If not set 10000
-     * @default 10000
+    /** Default for how much to wait of the method to respond when invoking. If not set 30000
+     * @default 30000
      */
     methodResponseTimeout?: number;
 }

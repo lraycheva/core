@@ -10,8 +10,6 @@ export default GlueCoreFactory;
 // tslint:disable-next-line:no-namespace
 export namespace Glue42Core {
 
-    export type LogLevel = "off" | "trace" | "debug" | "info" | "warn" | "error";
-
     /** Optional configuration object when initializing the Glue42 library. */
     export interface Config {
         /**
@@ -34,7 +32,7 @@ export namespace Glue42Core {
         bus?: boolean;
 
         /** Defines logging levels per output target. */
-        logger?: LogLevel | LoggerConfig;
+        logger?: Glue42Core.Logger.LogLevel | LoggerConfig;
 
         /** Pass this to override the build-in logger and handle logging on your own */
         customLogger?: Glue42Core.CustomLogger;
@@ -281,6 +279,9 @@ export namespace Glue42Core {
      * The Logger API is accessible through the `glue.logger` object.
      */
     export namespace Logger {
+
+        export type LogLevel = "off" | "trace" | "debug" | "info" | "warn" | "error";
+
         export interface API {
 
             /** Name of the logger. */
@@ -909,13 +910,13 @@ export namespace Glue42Core {
 
             /**
              * Timeout to discover the method, if not immediately available.
-             * @default 10000
+             * @default 30000
              */
             waitTimeoutMs?: number;
 
             /**
              * Timeout to wait for a method reply.
-             * @default 10000
+             * @default 30000
              */
             methodResponseTimeoutMs?: number;
         }
@@ -1702,7 +1703,7 @@ export namespace Glue42Core {
                 publishInterval: number;
             }
         };
-        consoleLogLevel: Glue42Core.LogLevel | undefined;
+        consoleLogLevel: Glue42Core.Logger.LogLevel | undefined;
         updatePerfData: (perf: object) => void;
         getMetricsPublishingEnabled: () => boolean;
         getGWToken: () => Promise<string>;
@@ -1715,9 +1716,9 @@ export namespace Glue42Core {
 
     export interface LoggerConfig {
         /** Console logging level. */
-        console?: LogLevel;
+        console?: Glue42Core.Logger.LogLevel;
         /** File logging level. */
-        publish?: LogLevel;
+        publish?: Glue42Core.Logger.LogLevel;
     }
 }
 
