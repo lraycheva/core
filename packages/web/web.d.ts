@@ -15,7 +15,6 @@ declare const GlueWebFactory: Glue42WebFactoryFunction;
 export default GlueWebFactory;
 
 /**
- * @docmenuorder 1
  * @docname Glue42 Web
  * @intro
  * Glue42 Web allows JavasScript applications to integrate with other applications that are part of the same **Glue42 Core** project via a set of APIs. With Glue42 Web you can share data with other applications, expose functionality, manage windows and notifications.
@@ -68,9 +67,6 @@ export namespace Glue42Web {
     export import Contexts = Glue42Core.Contexts;
     export import Logger = Glue42Core.Logger;
 
-    /**
-     * @docmenuorder 2
-     */
     export interface Config {
         /**
          * Configure the system logger. Used mostly for during development.
@@ -98,17 +94,11 @@ export namespace Glue42Web {
         libraries?: Array<(glue: Glue42Web.API, config?: Glue42Web.Config | Glue42.Config) => Promise<void>>;
     }
 
-    /**
-     * @docmenuorder 3
-     */
     export interface SystemLogger {
         level?: Glue42Core.Logger.LogLevel;
         callback?: (logInfo: any) => void;
     }
 
-    /**
-     * @docmenuorder 4
-     */
     export interface API extends Glue42Core.GlueCore {
         windows: Glue42Web.Windows.API;
         layouts: Glue42Web.Layouts.API;
@@ -120,7 +110,6 @@ export namespace Glue42Web {
     }
 
     /**
-     * @docmenuorder 5
      * @intro
      *
      * Using the Window Management API, your application can easily open and manipulate browser windows.
@@ -304,155 +293,155 @@ export namespace Glue42Web {
     }
 
     /**
-     * @docmenuorder 6
-     * @ignore
+     * @intro
+     * The Layouts library has the following capabilities:
+     *
+     * - importing, exporting, removing and getting Layouts;
+     * - saving and restoring Layouts (exclusive to [**Glue42 Core+**](https://glue42.com/core-plus/));
+     * - events related to adding, removing, changing or saving Layouts;
+     * - requesting browser permission for the Multi-Screen Window Placement API;
+     *
+     * The Layouts API is accessible through the `glue.layouts` object.
      */
     namespace Layouts {
 
         /**
-         * Supported layout types are Global and Activity.
-         * Global Layout saves all running applications and their state. By default, ignores hidden windows.
-         * Activity Layout saves applications running in an activity, the activity state and the individual windows states.
-         * By default, saves the activity of the current application but can be configured to save any activity.
-         * Activity layouts can be restored as new activity instances or joined to any running activity.
          *
-         * @docmenuorder 11
+         * Type of the Layout. Supported Layouts are `"Global"` and `"Workspace"`.
          *
          */
         export type LayoutType = "Global" | "Activity" | "ApplicationDefault" | "Swimlane" | "Workspace";
 
         /**
-         * Controls the import behavior. If `replace` (default), all existing layouts will be removed.
-         * If `merge`, the layouts will be added to the existing ones.
-         *
-         * @docmenuorder 12
-         *
+         * Controls the import behavior. If `"replace"` (default), all existing Layouts will be removed.
+         * If `"merge"`, the Layouts will be added to the existing ones.
          */
         export type ImportMode = "replace" | "merge";
 
         /**
          * Layouts API.
-         *
-         * @docmenuorder 1
          */
         export interface API {
 
             /**
-             * Fetches a saved layout or returns undefined if a layout with the provided name and type does not exist.
-             * @param type Type of the layout to fetch.
-             * @param name Name of the layout to fetch.
+             * Fetches a saved Layout or returns `undefined` if a Layout with the provided name and type doesn't exist.
+             * @param type Type of the Layout to fetch.
+             * @param name Name of the Layout to fetch.
              */
             get(name: string, type: LayoutType): Promise<Layout | undefined>;
 
             /**
-             * Returns a lightweight, summarized version of all layouts of the provided type.
-             * @param type Type of the layouts to fetch.
+             * Returns a lightweight description of all Layouts of the provided type, without the extensive objects describing the Layout components.
+             * @param type Type of the Layouts to fetch.
              */
             getAll(type: LayoutType): Promise<LayoutSummary[]>;
 
             /**
-             * Returns all layouts from the provided type.
-             * @param type Type of the layouts to export.
+             * Returns a collection of all available `Layout` objects of the provided type.
+             * @param type Type of the Layouts to export.
              */
             export(layoutType: LayoutType): Promise<Layout[]>;
 
             /**
-             * Stores a full layout.
+             * Imports a collection of `Layout` objects.
              * @param layouts An array of `Layout` objects to be imported.
              * @param mode If `"replace"` (default), all existing Layouts will be removed. If `"merge"`, the Layouts will be added to the existing ones.
              */
             import(layouts: Layout[], mode?: ImportMode): Promise<void>;
 
             /**
-             * Saves a new layout.
-             * @param layout Options for saving a layout.
+             * Saves a new Layout.
+             * @param layout Options for saving a Layout.
              */
             save(layout: NewLayoutOptions): Promise<Layout>;
 
             /**
-             * Restores a layout.
-             * @param options Options for restoring a layout.
+             * Restores a Layout.
+             * @param options Options for restoring a Layout.
              */
             restore(options: RestoreOptions): Promise<void>;
 
             /**
-             * Removes a layout
-             * @param type Type of the layout to remove.
-             * @param name Name of the layout to remove.
+             * Removes a Layout.
+             * @param type Type of the Layout to remove.
+             * @param name Name of the Layout to remove.
              */
             remove(type: LayoutType, name: string): Promise<void>;
 
             /**
-             * Notifies when a layout is added.
-             * @param callback Callback function to handle the event. Receives the layout as a parameter and returns an unsubscribe function.
+             * Notifies when a new Layout is added.
+             * @param callback Callback function to handle the event. Receives the `Layout` object as an argument and returns an unsubscribe function.
              */
             onAdded(callback: (layout: Layout) => void): () => void;
 
             /**
-             * Notifies when a layout is changed.
-             * @param callback Callback function to handle the event. Receives the layout as a parameter and returns an unsubscribe function.
+             * Notifies when a Layout is modified.
+             * @param callback Callback function to handle the event. Receives the `Layout` object as an argument and returns an unsubscribe function.
              */
             onChanged(callback: (layout: Layout) => void): () => void;
 
             /**
-             * Notifies when a layout is removed.
-             * @param callback Callback function to handle the event. Receives the layout as a parameter and returns an unsubscribe function.
+             * Notifies when a Layout is removed.
+             * @param callback Callback function to handle the event. Receives the `Layout` object as an argument and returns an unsubscribe function.
              */
             onRemoved(callback: (layout: Layout) => void): () => void;
 
             /**
-             * Subscribes for layout save requests.
-             * @param callback The callback passed as an argument will be invoked when a layout save is requested.
-             * You have the option to save data (context) which will be restored when the layout is restored.
+             * Subscribes for Layout save requests.
+             * @param callback The callback passed as an argument will be invoked when a Layout save operation is requested.
+             * You have the option to save data (context) which will be restored when the Layout is restored.
              * Returns an unsubscribe function.
              */
             onSaveRequested(callback: (info?: SaveRequestContext) => SaveRequestResponse): () => void;
 
             /**
-             * Retrieves the browser's Multi-Screen Window Placement state for this Glue42 Core environment
+             * Retrieves the browser Multi-Screen Window Placement permission state for the Glue42 Core+ environment.
              */
             getMultiScreenPermissionState(): Promise<{ state: "prompt" | "granted" | "denied" }>;
 
             /**
-             * Opens the browser permission prompt requesting Multi-Screen Window Placement permission from the user for this Glue42 Core environment.
-             * This can only be requested from the Platform due to transient activation restrictions of the browsers
+             * Opens the browser permission prompt requesting Multi-Screen Window Placement permission from the user for the Glue42 Core+ environment.
+             * This can only be requested from the Main app (Web Platform) due to the transient activation restrictions of the browsers.
              */
             requestMultiScreenPermission(): Promise<{ permissionGranted: boolean }>;
 
             /**
-             * Checks whether or not this Glue42 Core environment has Global Layouts activated.
+             * Checks whether Global Layouts are activated in the Glue42 Core+ environment.
              */
             getGlobalTypeState(): Promise<{ activated: boolean }>;
         }
 
         /**
-         * Describes a layout and its state.
-         *
-         * @docmenuorder 2
-         *
+         * Describes a Layout and its components.
          */
         export interface Layout {
-            /** Name of the layout. The name is unique per layout type. */
+            /** Name of the Layout. The name is unique per Layout type. */
             name: string;
 
-            /** Type of the layout. */
+            /** Type of the Layout. */
             type: LayoutType;
 
-            /** Array of component objects describing the applications that are saved in the layout. */
+            /** Array of component objects describing the apps and Workspaces saved in the Layout. */
             components: Array<WindowComponent | WorkspaceFrameComponent | Glue42Workspaces.WorkspaceComponent>;
 
-            /** Context object passed when the layout was saved. */
+            /** Context object passed when the Layout was saved. */
             context?: any;
 
-            /** Metadata passed when the layout was saved. */
+            /** Metadata passed when the Layout was saved. */
             metadata?: any;
 
-            /** Version of the layout */
+            /** Version of the Layout. */
             version?: string;
         }
 
+        /**
+         * @ignore
+         */
         export type ComponentType = "application" | "activity";
 
+        /**
+         * @ignore
+         */
         export interface WorkspaceFrameComponent {
             type: "workspaceFrame";
 
@@ -466,6 +455,9 @@ export namespace Glue42Web {
             state: WorkspaceFrameComponentState;
         }
 
+        /**
+         * @ignore
+         */
         export interface WorkspaceFrameComponentState {
             bounds: Glue42Web.Windows.Bounds;
             instanceId: string;
@@ -475,6 +467,9 @@ export namespace Glue42Web {
             restoreState?: string;
         }
 
+        /**
+         * @ignore
+         */
         export interface WindowComponent {
             type: "window";
 
@@ -488,6 +483,9 @@ export namespace Glue42Web {
             state: WindowComponentState;
         }
 
+        /**
+         * @ignore
+         */
         export interface WindowComponentState {
             context?: any;
             bounds: Glue42Web.Windows.Bounds;
@@ -503,62 +501,67 @@ export namespace Glue42Web {
             isCollapsed?: boolean
         }
 
+        /**
+         * @ignore
+         */
         export interface WindowComponentCreateArgs {
             name?: string;
             url?: string;
             context?: any;
         }
 
+        /**
+         * A lightweight description of a Layout, without the extensive objects describing its components.
+         */
         export interface LayoutSummary {
-            /** Name of the layout. The name is unique per layout type. */
+            /** Name of the Layout. The name is unique per Layout type. */
             name: string;
 
-            /** Type of the layout. */
+            /** Type of the Layout. */
             type: LayoutType;
 
-            /** Context object passed when the layout was saved. */
+            /** Context object passed when the Layout was saved. */
             context?: any;
 
-            /** Metadata passed when the layout was saved. */
+            /** Metadata passed when the Layout was saved. */
             metadata?: any;
         }
 
         /**
-         * Object describing the layout that you want to save.
+         * Options for saving a Layout.
          */
         export interface NewLayoutOptions {
-            /** Name of the layout. */
+            /** Name for the Layout. */
             name: string;
 
             /**
-             * Context (application specific data) to be saved with the layout.
-             * Used to transfer data to the applications when restoring a layout.
+             * Context to be saved with the Layout. Used for transferring data to the apps when restoring a Layout.
              */
             context?: any;
 
             /**
-             * Metadata to be saved with the layout.
+             * Metadata to be saved with the Layout.
              */
             metadata?: any;
 
             /**
-             * Will save those instances.
+             * Window or app instance IDs of the instances to be saved in the Layout.
              */
             instances?: string[];
 
             /**
-             * Will ignore those instances.
+             * Window or app instance IDs of the instances to be ignored when saving the Layout.
              */
             ignoreInstances?: string[];
         }
 
         /**
-         * Options object for restoring layouts.
+         * Options for restoring a Layout.
          */
         export interface RestoreOptions {
 
             /**
-             * Name of the layout to restore.
+             * Name of the Layout to restore.
              */
             name: string;
 
@@ -568,41 +571,47 @@ export namespace Glue42Web {
             context?: object;
 
             /**
-             * If false, will not close all visible running instances before restoring the layout. The only exception is the Platform app - it will never be closed when restoring a layout. The default is true.
+             * If `true`, will close all visible running instances before restoring the Layout.
+             * The only exception is the Main app (Web Platform) - it will never be closed when restoring a Layout.
+             * @default true
              */
             closeRunningInstances?: boolean;
 
             /**
-             * If true, will close the current application. If closeRunningInstances is set to false, closeMes default will change to false too.
+             * If `true`, will close the current app before restoring a Layout. If `closeRunningInstances` is set to `false`, this will default to `false` too.
+             * @default true
              */
             closeMe?: boolean;
 
             /**
-             * Restore timeout option. If the timeout is hit, all opened applications to this point will be closed and the restore call will reject. The default is 60 000 MS.
+             * Timeout in milliseconds for restoring the Layout. If the time limit is hit, all apps opened up to this point will be closed and an error will be thrown.
+             * @default 60000
              */
             timeout?: number;
         }
 
         /**
-         * Object returned as a response to a save layout request.
+         * Object returned by the handler for a save Layout request.
          */
         export interface SaveRequestResponse {
-            /** Context object specific to the application. */
+            /** Context to be saved for the specific app in the Layout. */
             windowContext: object;
         }
 
         /**
-         * Object sent with a save layout request.
+         * Object passed as an argument to the handler for a save Layout request.
          */
         export interface SaveRequestContext {
+            /** Context for the Layout. */
             context?: unknown;
+            /** Name of the Layout. */
             layoutName: string;
+            /** Type of the Layout. */
             layoutType: LayoutType;
         }
     }
 
     /**
-     * @docmenuorder 7
      * @intro
      * The Notifications API provides a way to display native notifications with actions and to handle notification and action clicks.
      * **Glue42 Core** supports all available `Notification` settings as defined in the [DOM Notifications API](https://developer.mozilla.org/en-US/docs/Web/API/Notifications_API).
@@ -683,7 +692,6 @@ export namespace Glue42Web {
     }
 
     /**
-     * @docmenuorder 8
      * @intro
      * The Glue42 Channels are globally accessed named contexts that allow users to dynamically group applications, instructing them to work over the same shared data object.
      * The Channels API enables you to:
@@ -806,7 +814,6 @@ export namespace Glue42Web {
     }
 
     /**
-     * @docmenuorder 9
      * @intro
      * The Application Management API provides a way to manage **Glue42 Core** applications. It offers abstractions for:
      *
@@ -1012,7 +1019,7 @@ export namespace Glue42Web {
             intents?: Intent[];
 
             /**
-             * If set to true, the application will not be listed in the Glue42 Core Extension UI. Defaults to false. 
+             * If set to true, the application will not be listed in the Glue42 Core Extension UI. Defaults to false.
              */
             hidden?: boolean;
         }
@@ -1134,7 +1141,6 @@ export namespace Glue42Web {
     }
 
     /**
-     * @docmenuorder 10
      * @intro
      * In certain workflow scenarios, your application may need to start (or activate) a specific application.
      * For instance, you may have an application showing client portfolios with financial instruments.

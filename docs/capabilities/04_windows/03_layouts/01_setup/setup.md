@@ -83,6 +83,8 @@ The [Multi-Screen Window Placement API](https://www.w3.org/TR/window-placement/)
 
 Projects containing a [Main app](../../../../developers/core-concepts/web-platform/overview/index.html) with [Web Platform](https://www.npmjs.com/package/@glue42/web-platform) library version older than 1.13.0 and [Web Clients](../../../../developers/core-concepts/web-client/overview/index.html) with [Glue42 Web](https://www.npmjs.com/package/@glue42/web) library version older than 2.7.0 will be able to use and participate in Global Layouts, but the Web Clients won't be able to pass context to be saved with the [`onSaveRequested()`](../../../../reference/core/latest/layouts/index.html#API-onSaveRequested) method, because this functionality isn't available in the older library versions.
 
+[Workspaces Apps](../../workspaces/workspaces-app/index.html) using a [`@glue42/workspaces-ui-react`](https://www.npmjs.com/package/@glue42/workspaces-ui-react) library version older that 1.10.0 won't be able to participate in Global Layouts.
+
 ### Non-Glue42 Windows and Apps
 
 Not all of your windows and apps will use one of the Glue42 libraries and be Glue42 enabled. In such a situation, [**Glue42 Core+**](https://glue42.com/core-plus/) has limited options - programmatically moving, resizing and getting the current position of such windows isn't possible. In this case, all windows and apps that aren't Glue42 enabled will be saved in a Global Layout, but they will be restored with their initial bounds, no matter how the user has moved or resized them after loading the Layout.

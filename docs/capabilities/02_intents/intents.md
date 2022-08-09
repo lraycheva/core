@@ -29,6 +29,8 @@ It is possible for different apps to register an Intent with the same name, whic
 Use the `intents` top-level key in the app configuration to define an Intent:
 
 ```javascript
+import GlueWebPlatform from "@glue42/web-platform";
+
 const config = {
     applications: {
         local: [

@@ -13,6 +13,8 @@ If you want to raise a [notification with actions](../notifications-api/index.ht
 1. Use the `serviceWorker` property of the configuration object for the [Web Platform](https://www.npmjs.com/package/@glue42/web-platform) library to provide the URL to the Service Worker file. The library will check the browser compatibility and register the Service Worker:
 
 ```javascript
+import GlueWebPlatform from "@glue42/web-platform";
+
 const config = {
     serviceWorker: {
         url: "/service-worker.js"
@@ -27,6 +29,8 @@ Use this option if you don't need the Service Worker in your project for anythin
 2. Use the `serviceWorker` property of the configuration object for the [Web Platform](https://www.npmjs.com/package/@glue42/web-platform) library to provide the [ServiceWorkerRegistration](https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerRegistration) `Promise` returned from the registration of the Service Worker:
 
 ```javascript
+import GlueWebPlatform from "@glue42/web-platform";
+
 const swPromise = navigator.serviceWorker.register("/service-worker.js");
 
 const config = {

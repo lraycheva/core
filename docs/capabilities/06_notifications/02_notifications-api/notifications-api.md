@@ -176,6 +176,8 @@ In each [**Glue42 Core**](https://glue42.com/core/) [Web Client](../../../develo
 Web Client apps:
 
 ```javascript
+import GlueWeb from "@glue42/web";
+
 const config = {
     notifications: {
         defaultClick: (glue, notificationDefinition) => console.log("The notification was clicked."),
@@ -194,6 +196,8 @@ const glue = await GlueWeb(config);
 Main app:
 
 ```javascript
+import GlueWebPlatform from "@glue42/web-platform";
+
 const config = {
     glue: {
         notifications: {

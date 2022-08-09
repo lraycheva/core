@@ -18,7 +18,7 @@ With [**Glue42 Core**](https://glue42.com/core/) you can enable your web apps to
 
 - #### What technologies does Glue42 Core support?
 
-[**Glue42 Core**](https://glue42.com/core/) exposes [JavaScript APIs](../../reference/core/latest/glue42%20web/index.html), but also offers light-weight [React](../../developers/core-concepts/web-client/react/index.html) and [Angular](../../developers/core-concepts/web-client/angular/index.html) wrappers that allow developers to use [**Glue42 Core**](https://glue42.com/core/) features idiomatically in the context of their preferred web framework.
+[**Glue42 Core**](https://glue42.com/core/) exposes [JavaScript APIs](../../reference/core/latest/glue42%20web/index.html), but also offers lightweight [React](../../developers/core-concepts/web-client/react/index.html) and [Angular](../../developers/core-concepts/web-client/angular/index.html) wrappers that allow developers to use [**Glue42 Core**](https://glue42.com/core/) features idiomatically in the context of their preferred web framework.
 
 - #### How do I use Glue42 Core in my project?
 

@@ -37,6 +37,8 @@ Initialize the Glue42 Web library by invoking the exposed `GlueWeb()` factory fu
 Below is an example of initializing the Glue42 Web library with the default settings:
 
 ```javascript
+import GlueWeb from "@glue42/web";
+
 // Use the object returned from the factory function
 // to access the Glue42 APIs.
 const glue = await GlueWeb();
@@ -45,6 +47,9 @@ const glue = await GlueWeb();
 Initializing the Glue42 Web library with custom settings:
 
 ```javascript
+import GlueWorkspaces from "@glue42/workspaces-api";
+import GlueWeb from "@glue42/web";
+
 const initializeGlue42 = async () => {
 
     // Initializing the Workspaces library.

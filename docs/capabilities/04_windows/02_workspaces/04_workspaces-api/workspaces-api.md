@@ -264,6 +264,56 @@ builder.addColumn()
 const workspace = await builder.create();
 ```
 
+### Targeting
+
+When [creating](#workspace-creating_workspaces) or [restoring](#workspace-restoring_workspaces) a Workspace, you can target existing [`Frame`](../../../../reference/core/latest/workspaces/index.html#Frame) instances, or create new ones in which to load the Workspace.
+
+#### Existing Frame
+
+To reuse an existing [`Frame`](../../../../reference/core/latest/workspaces/index.html#Frame) instance when creating or restoring a Workspace, specify the ID of the Frame in the [`WorkspaceDefinition`](../../../../reference/core/latest/workspaces/index.html#WorkspaceDefinition) or the [`RestoreWorkspaceConfig`](../../../../reference/core/latest/workspaces/index.html#RestoreWorkspaceConfig) object respectively:
+
+```javascript
+const frameID = "frame-id";
+
+// Create a Workspace in an existing Frame.
+const definition = { children: [], frame: { reuseFrameId: frameID } };
+
+await glue.workspaces.createWorkspace(definition);
+
+// Restore a Workspace in an existing Frame.
+const restoreOptions = { frameId: frameID };
+
+await glue.workspaces.restoreWorkspace("myWorkspace", restoreOptions);
+```
+
+#### New Frame
+
+To open a new [`Frame`](../../../../reference/core/latest/workspaces/index.html#Frame) when creating or restoring a Workspace, use the `newFrame` property of the [`WorkspaceDefinition`](../../../../reference/core/latest/workspaces/index.html#WorkspaceDefinition) or the [`RestoreWorkspaceConfig`](../../../../reference/core/latest/workspaces/index.html#RestoreWorkspaceConfig) object respectively. Set the `newFrame` property to `true` or pass a [`NewFrameConfig`](../../../../reference/core/latest/workspaces/index.html#NewFrameConfig) object to it describing the options for the new Frame:
+
+```javascript
+// Create a Workspace in a new Frame.
+const definition = {
+    children: [],
+    frame: {
+        newFrame: {
+            bounds: {
+                top: 10,
+                left: 10,
+                height: 1000,
+                width: 1500
+            }
+        }
+    }
+};
+
+await glue.workspaces.createWorkspace(definition);
+
+// Restore a Workspace in a new Frame.
+const restoreOptions = { newFrame: true };
+
+await glue.workspaces.restoreWorkspace("myWorkspace", restoreOptions);
+```
+
 ### Focusing a Workspace
 
 To specify whether a [`Workspace`](../../../../reference/core/latest/workspaces/index.html#Workspace) should be on focus when creating or restoring it, use the `isSelected` property of the [`WorkspaceConfig`](../../../../reference/core/latest/workspaces/index.html#WorkspaceConfig) or [`RestoreWorkspaceConfig`](../../../../reference/core/latest/workspaces/index.html#RestoreWorkspaceConfig) objects respectively:
@@ -744,7 +794,7 @@ Workspace Layouts are JSON objects that describe the content and arrangement of 
 
 #### Workspace Layout Summaries
 
-You can get the summaries of all Workspace Layouts without the extensive JSON objects describing their structure. For example, you may need only the names of the available Layouts to list them in the UI:
+You can get the summaries of all Workspace Layouts without the extensive objects describing their structure. For example, you may need only the names of the available Layouts to list them in the UI:
 
 ```javascript
 const layoutSummaries = await glue.workspaces.layouts.getSummaries();

@@ -42,7 +42,7 @@ Now you have a fully functioning Main app.
 
 ```javascript
 const init = async () => {
-    const glue = await window.GlueWeb();
+    const glue = await GlueWeb();
 
     console.log(`Glue42 initialized successfully! Glue42 version: ${glue.version}`);
 };
