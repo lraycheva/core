@@ -1,3 +1,5 @@
+1.9.1
+chore: bump due to dependencies update
 1.9.0
 feat: added support for Global Layouts
 1.8.12

@@ -1,3 +1,5 @@
+1.13.1
+chore: bump due to dependencies update
 1.13.0
 feat: added interception and enabled the layouts messaging
 chore: updated the decoders with allowWorkspaceTabExtract
