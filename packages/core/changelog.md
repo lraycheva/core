@@ -1,3 +1,5 @@
+5.7.7
+fix: Improved the message flushing when re-announcing the contexts
 5.7.6
 chore: refactored the logger level type and added improvements to make the instance and windowId of Web clients the same
 5.7.5
