@@ -1083,6 +1083,26 @@ myWindow.onContextUpdated((context) => {
 });
 ```
 
+## 9. Notifications
+One of our users has noted that, whenever they click on different clients in the Clients app, currently there is no indication
+ that multiple workspaces are being loaded. For this reason the development team has decided to 
+add notifications that will display each time the user opens a new workspace window.
+For additional convenience, when clicked, this notification will bring to focus the frame and 
+newly opened client workspace. 
+With Notifications API we can ask the browser to raise() a new notification by passing it a RaiseOptions object. 
+The Notifications API is accessible through the glue.notifications object.
+
+*Note that if you haven't done that by now, you'd need to allow pop-ups in your browser.*
+
+*Note that for actionable notifications a service worker setup is required. As that is beyond the scope of this tutorial, we will currently focus on simple notifications that don't have actionable buttons.*
+
+### 9.1 Notifications Configuration
+Go to the main Clients app, and paste the following code:
+
+```javascript
+
+```
+
 ## Congratulations!
 
 You have successfully completed the [**Glue42 Core**](https://glue42.com/core/) JavaScript tutorial! If you are a React or an Angular developer, try also the [React](../react/index.html) and [Angular](../angular/index.html) tutorials for [**Glue42 Core**](https://glue42.com/core/).
