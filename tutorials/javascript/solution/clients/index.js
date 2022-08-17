@@ -39,7 +39,7 @@ const toggleGlueAvailable = () => {
     span.textContent = "Glue42 is available";
 };
 
-const clientClickedHandler = async (client) => {
+const clientClickedHandler = (client) => {
     // const selectClientStocks = window.glue.interop.methods().find((method) => method.name === "SelectClient");
 
     // if (selectClientStocks) {
@@ -60,27 +60,8 @@ const clientClickedHandler = async (client) => {
     // if (!isStocksRunning) {
     //     window.glue.appManager.application("Stocks").start({ channel: myChannel }).catch(console.error);
     // }
-    try {
-        const workspace = await glue.workspaces.restoreWorkspace("Client Space", { context: { client } });
-/// 8.2 Notifications 
-        await raiseNotificationOnWorkspaceOpen(workspace);
-    } catch(error) {
-        console.error(error.message);
-    }
-};
 
-/// 8.1 Notifications
-const raiseNotificationOnWorkspaceOpen = async (workspace) => {
-    try {
-        const options = {
-            title: "New Workspace Window",
-            body: `A new Workspace with id ${workspace.id} was opened!`,
-        };
-        const notification = await glue.notifications.raise(options);
-        notification.onclick = () => workspace.frame.focus().catch(console.error);
-    } catch(error) {
-        console.error(error.message);
-    }
+    glue.workspaces.restoreWorkspace("Client Space", { context: { client } }).catch(console.error);
 };
 
 // let counter = 1;
@@ -316,7 +297,7 @@ const start = async () => {
     const { glue } = await GlueWebPlatform(config);
     window.glue = glue;
 
-    toggleGlueAvailable();    
+    toggleGlueAvailable();
 
     // // The value that will be displayed inside the channel selector widget to leave the current channel.
     // const NO_CHANNEL_VALUE = "No channel";
