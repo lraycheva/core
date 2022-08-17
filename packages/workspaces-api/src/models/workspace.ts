@@ -102,6 +102,10 @@ export class Workspace implements Glue42Workspaces.Workspace {
         return getData(this).config.showSaveButton;
     }
 
+    public get allowWorkspaceTabExtract(): boolean {
+        return getData(this).config.allowWorkspaceTabExtract;
+    }
+
     public get minWidth(): number {
         return getData(this).config.minWidth;
     }
@@ -183,7 +187,7 @@ export class Workspace implements Glue42Workspaces.Workspace {
     }
 
     public snapshot(): Promise<Glue42Workspaces.WorkspaceSnapshot> {
-        return getData(this).controller.getSnapshot(this.id, "workspace");
+        return getData(this).controller.getSnapshot(this.id, "workspace") as Promise<Glue42Workspaces.WorkspaceSnapshot>;
     }
 
     public async saveLayout(name: string, config?: SaveLayoutConfig): Promise<void> {
@@ -395,6 +399,7 @@ export class Workspace implements Glue42Workspaces.Workspace {
                 allowSplitters: this.allowSplitters,
                 showCloseButton: this.showCloseButton,
                 showSaveButton: this.showSaveButton,
+                allowWorkspaceTabExtract: this.allowWorkspaceTabExtract,
                 showAddWindowButtons: this.showAddWindowButtons,
                 showEjectButtons: this.showEjectButtons,
                 showWindowCloseButtons: this.showWindowCloseButtons
@@ -514,7 +519,7 @@ export class Workspace implements Glue42Workspaces.Workspace {
         return unsubscribe;
     }
 
-    public async onWindowMaximized(callback:(window:Glue42Workspaces.WorkspaceWindow)=>void):Promise<Glue42Workspaces.Unsubscribe>{
+    public async onWindowMaximized(callback: (window: Glue42Workspaces.WorkspaceWindow) => void): Promise<Glue42Workspaces.Unsubscribe> {
         checkThrowCallback(callback);
         const id = getData(this).id;
         const wrappedCallback = async (payload: WindowStreamData): Promise<void> => {
@@ -540,7 +545,7 @@ export class Workspace implements Glue42Workspaces.Workspace {
         return unsubscribe;
     }
 
-    public async onWindowRestored(callback:(window:Glue42Workspaces.WorkspaceWindow)=>void):Promise<Glue42Workspaces.Unsubscribe>{
+    public async onWindowRestored(callback: (window: Glue42Workspaces.WorkspaceWindow) => void): Promise<Glue42Workspaces.Unsubscribe> {
         checkThrowCallback(callback);
         const id = getData(this).id;
         const wrappedCallback = async (payload: WindowStreamData): Promise<void> => {

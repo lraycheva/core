@@ -117,7 +117,7 @@ export class WindowsController implements LibController {
         operations.setTitle.execute = this.handleSetTitle.bind(this);
     }
 
-    private my(): Glue42Web.Windows.WebWindow {
+    public my(): Glue42Web.Windows.WebWindow {
         return Object.assign({}, this.me);
     }
 

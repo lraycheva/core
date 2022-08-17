@@ -54,7 +54,8 @@ import {
     FrameInitializationConfigProtocol,
     WorkspaceSelector,
     ShortcutClickedData,
-    ShortcutConfig
+    ShortcutConfig,
+    FrameSnapshotConfig
 } from "../types/protocol";
 import { WorkspaceEventType, WorkspaceEventAction } from "../types/subscription";
 import { Glue42Workspaces } from "../../workspaces";
@@ -233,7 +234,8 @@ export const newFrameConfigDecoder: Decoder<Glue42Workspaces.NewFrameConfig> = o
         top: optional(number()),
         width: optional(nonNegativeNumberDecoder),
         height: optional(nonNegativeNumberDecoder)
-    }))
+    })),
+    frameId: optional(nonEmptyStringDecoder)
 });
 
 export const loadingStrategyDecoder: Decoder<Glue42Workspaces.LoadingStrategy> = oneOf<"direct" | "delayed" | "lazy">(
@@ -289,6 +291,7 @@ export const workspaceDefinitionDecoder: Decoder<Glue42Workspaces.WorkspaceDefin
         allowDropBottom: optional(boolean()),
         allowExtract: optional(boolean()),
         showSaveButton: optional(boolean()),
+        allowWorkspaceTabExtract: optional(boolean()),
         showCloseButton: optional(boolean()),
         allowSplitters: optional(boolean()),
         showWindowCloseButtons: optional(boolean()),
@@ -420,6 +423,7 @@ export const workspaceConfigResultDecoder: Decoder<WorkspaceConfigResult> = obje
     allowSplitters: optional(boolean()),
     showCloseButton: optional(boolean()),
     showSaveButton: optional(boolean()),
+    allowWorkspaceTabExtract: optional(boolean()),
     allowDropLeft: optional(boolean()),
     allowDropTop: optional(boolean()),
     allowDropRight: optional(boolean()),
@@ -461,11 +465,12 @@ export const swimlaneWindowSnapshotConfigDecoder: Decoder<SwimlaneWindowSnapshot
         allowExtract: optional(boolean()),
         showCloseButton: optional(boolean()),
         minWidth: optional(number()),
-        minHeigth: optional(number()),
+        minHeight: optional(number()),
         maxWidth: optional(number()),
         maxHeight: optional(number()),
         widthInPx: optional(number()),
-        heightInPx: optional(number())
+        heightInPx: optional(number()),
+        context: optional(anyJson())
     })
 ) as any;
 
@@ -496,19 +501,22 @@ export const workspaceSnapshotResultDecoder: Decoder<WorkspaceSnapshotResult> = 
     id: nonEmptyStringDecoder,
     config: workspaceConfigResultDecoder,
     children: array(childSnapshotResultDecoder),
-    frameSummary: frameSummaryDecoder
+    frameSummary: frameSummaryDecoder,
+    context: optional(anyJson())
 });
 
 export const windowLayoutItemDecoder: Decoder<Glue42Workspaces.WindowLayoutItem> = object({
     type: constant("window"),
     config: object({
         appName: nonEmptyStringDecoder,
+        windowId: optional(nonEmptyStringDecoder),
+        context: optional(anyJson()),
         url: optional(nonEmptyStringDecoder),
         title: optional(string()),
         allowExtract: optional(boolean()),
         showCloseButton: optional(boolean()),
         minWidth: optional(number()),
-        minHeigth: optional(number()),
+        minHeight: optional(number()),
         maxWidth: optional(number()),
         maxHeight: optional(number()),
         isMaximized: optional(boolean())
@@ -650,6 +658,11 @@ export const simpleItemConfigDecoder: Decoder<SimpleItemConfig> = object({
     itemId: nonEmptyStringDecoder
 });
 
+export const frameSnapshotConfigDecoder: Decoder<FrameSnapshotConfig> = object({
+    itemId: nonEmptyStringDecoder,
+    excludeIds: optional(boolean())
+});
+
 export const frameStateConfigDecoder: Decoder<FrameStateConfig> = object({
     frameId: nonEmptyStringDecoder,
     requestedState: frameStateDecoder
@@ -753,6 +766,7 @@ export const workspaceLockConfigDecoder: Decoder<Glue42Workspaces.WorkspaceLockC
     allowSplitters: optional(boolean()),
     showCloseButton: optional(boolean()),
     showSaveButton: optional(boolean()),
+    allowWorkspaceTabExtract: optional(boolean()),
     showWindowCloseButtons: optional(boolean()),
     showAddWindowButtons: optional(boolean()),
     showEjectButtons: optional(boolean()),

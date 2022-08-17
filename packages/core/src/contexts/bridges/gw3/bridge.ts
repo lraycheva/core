@@ -1063,6 +1063,8 @@ export class GW3Bridge implements ContextBridge {
 
             this._logger.info(`Re-announcing known context: ${ctxName}`);
 
+            await this.flushQueue();
+
             await this.update(ctxName, lastKnownData);
         }
 

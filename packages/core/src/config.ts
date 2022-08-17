@@ -190,7 +190,7 @@ export default function (configuration: Glue42Core.Config, ext: Glue42Core.Exten
         }
     }
 
-    function getLogger(): { console: Glue42Core.LogLevel; publish: Glue42Core.LogLevel } {
+    function getLogger(): { console: Glue42Core.Logger.LogLevel; publish: Glue42Core.Logger.LogLevel } {
         let config = configuration.logger;
         const defaultLevel = "warn";
         if (!config) {
@@ -198,7 +198,7 @@ export default function (configuration: Glue42Core.Config, ext: Glue42Core.Exten
         }
 
         // console level can be overridden by a gd setting
-        let gdConsoleLevel: Glue42Core.LogLevel | undefined;
+        let gdConsoleLevel: Glue42Core.Logger.LogLevel | undefined;
         if (glue42gd) {
             gdConsoleLevel = glue42gd.consoleLogLevel;
         }

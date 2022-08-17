@@ -117,7 +117,11 @@ export class WebWindowModel {
     }
 
     private async focus(): Promise<Glue42Web.Windows.WebWindow> {
-        await this._bridge.send<SimpleWindowCommand, void>("windows", operations.focus, { windowId: this.id });
+        if (this.name === "Platform") {
+            window.open(undefined, this.id);
+        } else {
+            await this._bridge.send<SimpleWindowCommand, void>("windows", operations.focus, { windowId: this.id });
+        }
 
         return this.me;
     }

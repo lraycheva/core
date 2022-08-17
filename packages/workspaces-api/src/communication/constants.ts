@@ -44,7 +44,8 @@ import {
     emptyFrameDefinitionDecoder,
     frameInitProtocolConfigDecoder,
     shortcutClickedDataDecoder,
-    shortcutConfigDecoder
+    shortcutConfigDecoder,
+    frameSnapshotConfigDecoder
 } from "../shared/decoders";
 import { ControlOperation, StreamOperation } from "../types/protocol";
 import { WorkspaceEventType } from "../types/subscription";
@@ -158,7 +159,7 @@ export const OPERATIONS: { [key in OperationsTypes]: ControlOperation } = {
     getFrameState: { name: "getFrameState", argsDecoder: simpleItemConfigDecoder, resultDecoder: frameStateResultDecoder },
     getFrameBounds: { name: "getFrameBounds", argsDecoder: simpleItemConfigDecoder, resultDecoder: frameBoundsResultDecoder },
     moveFrame: { name: "moveFrame", argsDecoder: moveFrameConfigDecoder, resultDecoder: voidResultDecoder },
-    getFrameSnapshot: { name: "getFrameSnapshot", argsDecoder: simpleItemConfigDecoder, resultDecoder: frameSnapshotResultDecoder },
+    getFrameSnapshot: { name: "getFrameSnapshot", argsDecoder: frameSnapshotConfigDecoder, resultDecoder: frameSnapshotResultDecoder },
     forceLoadWindow: { name: "forceLoadWindow", argsDecoder: simpleItemConfigDecoder, resultDecoder: simpleWindowOperationSuccessResultDecoder },
     ejectWindow: { name: "ejectWindow", argsDecoder: simpleItemConfigDecoder, resultDecoder: simpleWindowOperationSuccessResultDecoder },
     setItemTitle: { name: "setItemTitle", argsDecoder: setItemTitleConfigDecoder, resultDecoder: voidResultDecoder },

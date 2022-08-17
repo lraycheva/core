@@ -335,7 +335,7 @@ Methods for tracking Glue42 Window events are available at top-level of the Wind
 
 *The window event methods return an unsubscribe function which you can use to stop tracking the respective event.*
 
-### Window Added/Removed
+### Window Added or Removed
 
 To track the opening and closing of Glue42 Windows, use the [`onWindowAdded()`](../../../reference/core/latest/windows/index.html#API-onWindowAdded) and [`onWindowRemoved()`](../../../reference/core/latest/windows/index.html#API-onWindowRemoved) methods of the Window Management API and pass handlers for the respective events:
 

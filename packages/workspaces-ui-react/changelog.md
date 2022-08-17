@@ -1,3 +1,7 @@
+1.10.1
+chore: bump due to dependencies update
+1.10.0
+chore: exported more default components
 1.9.4
 chore: bump due to dependencies update
 1.9.3

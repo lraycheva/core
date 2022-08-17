@@ -2,7 +2,7 @@ import GoldenLayout from "@glue42/golden-layout";
 import { Glue42Web } from "@glue42/web";
 import { generate } from "shortid";
 import { WorkspacesManager } from "../manager";
-import { EmptyVisibleWindowName, PlatformControlMethod } from "../utils/constants";
+import { EmptyVisibleWindowName } from "../utils/constants";
 import { IFrameController } from "../iframeController";
 import { LayoutStateResolver } from "../state/resolver";
 import store from "../state/store";
@@ -10,8 +10,9 @@ import { getElementBounds, idAsString } from "../utils";
 import createRegistry, { UnsubscribeFunction } from "callback-registry";
 import { LoadingStrategy, Window, WindowSummary, Workspace, WorkspacesSystemConfig } from "../types/internal";
 import { DelayedExecutor } from "../utils/delayedExecutor";
-import systemSettings from "../config/system";
+import { WorkspacesSystemSettingsProvider } from "../config/system";
 import { RestoreWorkspaceConfig } from "../interop/types";
+import { PlatformCommunicator } from "../interop/platformCommunicator";
 
 export class ApplicationFactory {
     private readonly registry = createRegistry();
@@ -23,7 +24,9 @@ export class ApplicationFactory {
         private readonly _stateResolver: LayoutStateResolver,
         private readonly _frameController: IFrameController,
         private readonly _manager: WorkspacesManager,
-        private readonly _delayedExecutor: DelayedExecutor<void>
+        private readonly _delayedExecutor: DelayedExecutor<void>,
+        private readonly _platformCommunicator: PlatformCommunicator,
+        private readonly _systemSettings: WorkspacesSystemSettingsProvider
     ) { }
 
     public async start(component: GoldenLayout.Component, workspaceId: string): Promise<void> {
@@ -85,7 +88,7 @@ export class ApplicationFactory {
         const result = this.getComponentsByVisibility(allComponentsInWorkspace.map((c) => c as GoldenLayout.Component));
         const visiblePromises = result.visibleComponents.map((c) => this.start(c, workspaceId));
 
-        const loadingStrategy = (await systemSettings.getSettings(this._glue)).loadingStrategy;
+        const loadingStrategy = (await this._systemSettings.getSettings()).loadingStrategy;
 
         const loadPromises = Promise.all(visiblePromises).then(() => {
             return this._delayedExecutor.startExecution(
@@ -113,18 +116,6 @@ export class ApplicationFactory {
         await Promise.all(allComponentsInWorkspace.map((c: GoldenLayout.Component) => {
             return this.start(c, workspaceId);
         }));
-    }
-
-    public notifyFrameWillClose(windowId: string, appName?: string): Promise<any> {
-        const systemId = (window as any).glue42core.communicationId;
-
-        return this._glue.interop.invoke(PlatformControlMethod, {
-            domain: appName ? "appManager" : "windows",
-            operation: appName ? "unregisterWorkspaceApp" : "unregisterWorkspaceWindow",
-            data: {
-                windowId,
-            }
-        }, systemId ? { instance: systemId } : undefined);
     }
 
     public onStarted(callback: (args: { summary: WindowSummary }) => void): UnsubscribeFunction {
@@ -193,23 +184,6 @@ export class ApplicationFactory {
         return this._glue.appManager?.instances()?.find(i => i.id === windowId)?.application?.name;
     }
 
-    private notifyFrameWillStart(windowId: string, appName?: string, context?: any, title?: string) {
-        const systemId = (window as any).glue42core.communicationId;
-
-        return this._glue.interop.invoke(PlatformControlMethod, {
-            domain: appName ? "appManager" : "windows",
-            operation: appName ? "registerWorkspaceApp" : "registerWorkspaceWindow",
-            data: {
-                name: `${appName || "window"}_${windowId}`,
-                windowId,
-                frameId: this._manager.frameId,
-                appName,
-                context,
-                title
-            }
-        }, systemId ? { instance: systemId } : undefined);
-    }
-
     private waitFor(numberOfTriggers: number, callback: () => void): [(x: any) => void, () => void] {
         const triggersActivated = [] as any[];
 
@@ -224,7 +198,7 @@ export class ApplicationFactory {
         ];
     }
 
-    private vaidateTitle(title: string): string {
+    private validateTitle(title: string): string {
         if (!title?.length) {
             return undefined;
         }
@@ -249,9 +223,9 @@ export class ApplicationFactory {
         let { windowId } = componentState;
         const componentId = idAsString(component.config.id);
         const applicationTitle = this.getTitleByAppName(appName);
-        const windowTitle = this.vaidateTitle(title) || this.vaidateTitle(applicationTitle) || this.vaidateTitle(appName) || "Glue";
+        const windowTitle = this.validateTitle(title) || this.validateTitle(applicationTitle) || this.validateTitle(appName) || "Glue";
         const windowContext = component?.config.componentState?.context;
-        let url = this.getUrlByAppName(componentState.appName) || componentState.url;
+        let url = this.getUrlByAppName(componentState.appName) || (component.config.workspacesConfig as any)?.noAppWindowState?.createArgs?.url;
 
         const windowFromCollection = store.getWindow(componentId);
         const isNewWindow = !windowFromCollection || !store.getWindow(componentId).windowId;
@@ -306,7 +280,7 @@ export class ApplicationFactory {
         }
 
         try {
-            await this.notifyFrameWillStart(windowId, appName, windowContext, windowTitle);
+            await this._platformCommunicator.notifyFrameWillStart(windowId, appName, windowContext, windowTitle);
             await this._frameController.startFrame(componentId, url, undefined, windowId);
             const newlyAddedWindow = store.getWindow(componentId) as Window;
 
@@ -315,7 +289,7 @@ export class ApplicationFactory {
 
             const newlyOpenedWindow = this._glue.windows.findById(windowId);
             newlyOpenedWindow.getTitle().then((winTitle) => {
-                if (this.vaidateTitle(windowTitle)) {
+                if (this.validateTitle(windowTitle)) {
                     component.setTitle(winTitle);
                 }
             }).catch((e) => {
@@ -338,7 +312,6 @@ export class ApplicationFactory {
                     throw new Error(`Invalid state - the created component ${componentId} with windowId ${windowId} is missing its state object`);
                 }
                 component.config.componentState.appName = appNameToUse;
-
 
                 newlyAddedWindow.appName = appNameToUse;
             }

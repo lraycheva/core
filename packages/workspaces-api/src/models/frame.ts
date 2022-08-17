@@ -101,7 +101,7 @@ export class Frame implements Glue42Workspaces.Frame {
 
     public snapshot(): Promise<Glue42Workspaces.FrameSnapshot> {
         const myId = getData(this).summary.id;
-        return getData(this).controller.getSnapshot(myId, "frame");
+        return getData(this).controller.getSnapshot(myId, "frame") as Promise<Glue42Workspaces.FrameSnapshot>;
     }
 
     public async workspaces(): Promise<Glue42Workspaces.Workspace[]> {

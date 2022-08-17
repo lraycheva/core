@@ -110,22 +110,14 @@ describe('addIntentListener()', () => {
         unsubObj.intent = intentName;
     });
 
-    it('Should find interop method with such intent name after adding an intent listener', (done) => {
-        const GlueWebIntentsPrefix = "Tick42.FDC3.Intents.";
+    it('Should find interop method with such intent name after adding an intent listener', async () => {
+
         const intentName = 'test-intent';
 
-        unsubObj = glue.intents.addIntentListener(intentName, () => {
-            try {
-                const methodsWithSuchName = glue.interop.methods({ name: `${GlueWebIntentsPrefix}${intentName}` });
-                expect(methodsWithSuchName.length).to.eql(1);
-                done();
-            } catch (error) {
-                done(error);
-            }
-        });
+        unsubObj = glue.intents.addIntentListener(intentName, () => { });
 
         unsubObj.intent = intentName;
-        glue.intents.raise(intentName);
+        await gtf.intents.waitForIntentListenerAdded(intentName)
     });
 
     it('Should first register and then unregister interop method with such intent name when immediately invoking the unsubscribe function', (done) => {

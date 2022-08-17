@@ -150,8 +150,8 @@ export class GlueBridge {
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let invocationResult: Glue42Core.Interop.InvocationResult<any>;
-        const baseErrorMessage = `Internal Platform Communication Error. Attempted operation: ${JSON.stringify(operation.name)} with data: ${JSON.stringify(data)}. `;
 
+        const baseErrorMessage = `Internal Platform Communication Error. Attempted operation: ${JSON.stringify(operation.name)} with data: ${JSON.stringify(data)}. `;
 
         const systemId = this.communicationId;
 

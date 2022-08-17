@@ -125,7 +125,8 @@ export class ConfigConverter {
                 minHeight: config?.config?.minHeight ?? (config as any).minHeight,
                 maxHeight: config?.config?.maxHeight ?? (config as any).maxHeight,
                 positionIndex: config?.config?.positionIndex ?? (config as any).positionIndex,
-                isMaximized: config?.config?.isMaximized ?? (config as any).isMaximized
+                isMaximized: config?.config?.isMaximized ?? (config as any).isMaximized,
+                noAppWindowState: config?.config?.noAppWindowState ?? (config as any).noAppWindowState,
             });
 
             if (parent.type !== "group") {

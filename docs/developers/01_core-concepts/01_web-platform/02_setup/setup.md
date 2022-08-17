@@ -28,6 +28,7 @@ Optionally, specify configuration setting for the Glue42 libraries initialized b
 
 ```javascript
 import GlueWebPlatform from "@glue42/web-platform";
+import GlueWorkspaces from "@glue42/workspaces-api";
 
 // Enabling the Workspaces API and specifying
 // the location of the Workspaces App.

@@ -42,3 +42,5 @@ export const serviceWorkerBroadcastChannelName = "glue42-core-worker";
 export const dbVersion = 2;
 
 export const webPlatformTransportName = "web-platform";
+
+export const defaultNoAppWindowComponentAppName = "no-app-window";

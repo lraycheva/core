@@ -1,4 +1,5 @@
 import GoldenLayout from "@glue42/golden-layout";
+import { Glue42Web } from "@glue42/web";
 
 export type ComponentState = GoldenLayout.Component["config"]["componentState"];
 
@@ -67,6 +68,7 @@ export interface WindowItem {
         maxWidth?: number;
         minHeight?: number;
         maxHeight?: number;
+        noAppWindowState?: WindowLayoutState;
         width?:number;
         height?:number;
     };
@@ -181,9 +183,10 @@ export interface FrameSummary {
 
 export interface WorkspaceSnapshot {
     id: string;
-    config: object;
-    children: object;
+    config: WorkspaceItem["config"];
+    children: WorkspaceItem["children"];
     frameSummary: FrameSummary;
+    context: object;
 }
 
 export interface WindowAddedArgs {
@@ -296,6 +299,7 @@ export interface GDWindowOptions {
     maxHeight: number;
     positionIndex?: number;
     isMaximized?: boolean;
+    noAppWindowState?: WindowLayoutState;
 }
 
 export interface SavedConfigWithData {
@@ -378,4 +382,15 @@ export interface Constraints {
     maxWidth?: number;
     minHeight?: number;
     maxHeight?: number;
+}
+
+export interface WindowLayoutState {
+    bounds: Bounds | object;
+    createArgs: Glue42Web.AppManager.Application["userProperties"]["details"];
+}
+
+export interface LayoutRequestConfig{
+    layoutName: string;
+    layoutType: "Global" | "Workspace";
+    context?: any;
 }

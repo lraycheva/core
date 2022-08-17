@@ -1,6 +1,6 @@
 ## Workspaces App
 
-The Workspaces App (or [Frame](../overview/index.html#workspaces_concepts-frame)) is mandatory for using any Workspaces functionality. For [**Glue42 Core**](https://glue42.com/core/) projects you have to create your own Workspaces App using the [@glue42/workspaces-ui-react](https://www.npmjs.com/package/@glue42/workspaces-ui-react) library which provides all functionalities necessary for building a Workspaces App as a single React component - `<Workspaces />`. The `<Workspaces />` component provides extensibility points for passing custom components to it and can also be wrapped in other components (see [Workspaces Component](#workspaces_component)). The library enables you to use custom system popups, create your own popups from HTML elements (see [Custom Popups](#custom_popups)) and compose the content of a Workspace (see [Composing Workspace Content](#composing_workspace_content)).
+The Workspaces App (or [Frame](../overview/index.html#workspaces_concepts-frame)) is mandatory for using any Workspaces functionality. For [**Glue42 Core**](https://glue42.com/core/) projects you have to create your own Workspaces App using the [`@glue42/workspaces-ui-react`](https://www.npmjs.com/package/@glue42/workspaces-ui-react) library which provides all functionalities necessary for building a Workspaces App as a single React component - `<Workspaces />`. The `<Workspaces />` component provides extensibility points for passing custom components to it and can also be wrapped in other components (see [Workspaces Component](#workspaces_component)). The library enables you to use custom system popups, create your own popups from HTML elements (see [Custom Popups](#custom_popups)) and compose the content of a Workspace (see [Composing Workspace Content](#composing_workspace_content)).
 
 Hot module reloading is supported, but keep in mind that each refresh closes all apps and Workspaces in the Frame.
 
@@ -52,6 +52,16 @@ The following example shows the `<Workspaces />` component props, their properti
         header: {
             LogoComponent: GlueLogo,
             AddWorkspaceComponent: AddWorkspaceButton,
+            WorkspaceTabComponent: () => {
+                return (
+                    <>
+                        <WorkspaceIconButton />
+                        <WorkspaceSaveButton />
+                        <WorkspaceTitle />
+                        <WorkspaceTabCloseButton />
+                    </>
+                );
+            },
             SystemButtonsComponent: () => {
                 return (
                     <>
@@ -160,6 +170,58 @@ export default App;
 Using a custom button for the Add Workspace component:
 
 ![Button add workspace](../../../../images/workspaces/button-add-workspace.png)
+
+### Workspace Tab
+
+The contents of the `<WorkspaceTab />` component can be modified by replacing the default `<WorkspaceIconButton />`, `<WorkspaceSaveButton />`, `<WorkspaceTitle />` and `<WorkspaceTabCloseButton />` components it contains. You can provide a custom icon to be used when the [Workspace is pinned](../workspaces-api/index.html#workspace-pinning__unpinning_workspaces), a custom Save button for the Workspace tab, a custom Workspace title, and a custom Close button for the Workspace tab.
+
+The following example demonstrates composing a custom Workspace Tab component using the default `<WorkspaceSaveButton />` and `<WorkspaceIconButton />` components, as well as a custom title and a custom Close button for the Workspace tab. The example also shows how to hide and show conditionally the Workspace Tab contents based on whether the Workspace is pinned:
+
+```javascript
+import React, { useState } from "react";
+import { WorkspaceIconButton, WorkspaceSaveButton } from "@glue42/workspaces-ui-react";
+import CustomTitle from "./CustomTitle";
+import CustomCloseButton from "./CustomCloseButton";
+
+const CustomWorkspaceTab = ({ isPinned, title, onCloseClick, onSaveClick, icon, showSaveButton, showCloseButton }) => {
+    return (
+        <div className="my-custom-workspace-tab">
+            {isPinned ? <WorkspaceIconButton icon={icon} /> : showSaveButton && <SaveButton showSavePopup={onSaveClick} />}
+            {!isPinned && <CustomTitle title={title} />}
+            {(!isPinned && showCloseButton) && <CustomCloseButton close={onCloseClick} />}
+        </div>
+    );
+};
+
+export default CustomWorkspaceTab;
+```
+
+Use the props received by the `<WorkspaceTab />` component to:
+
+- preserve the default component behavior (closing the Workspace tab, saving the Workspace Layout) or define a custom behavior;
+- determine which components to show or hide based on whether the [Workspace is pinned](../workspaces-api/index.html#workspace-pinning__unpinning_workspaces);
+
+The following example demonstrates replacing the default Workspace Tab component:
+
+```javascript
+import React from "react";
+import Workspaces from "@glue42/workspaces-ui-react";
+import CustomWorkspaceTab from "./CustomWorkspaceTab";
+
+const App = () => {
+    return (
+        <Workspaces
+            components={{
+                header: {
+                    WorkspaceTabComponent: CustomWorkspaceTab
+                }
+            }}
+        />
+    );
+};
+
+export default App;
+```
 
 ### System Buttons
 

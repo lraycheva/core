@@ -1,6 +1,6 @@
 import { Glue42Core } from "../../glue";
 
-const order: Glue42Core.LogLevel[] = ["trace", "debug", "info", "warn", "error", "off"];
+const order: Glue42Core.Logger.LogLevel[] = ["trace", "debug", "info", "warn", "error", "off"];
 
 export class Logger implements Glue42Core.Logger.API {
     public static Interop: Glue42Core.Interop.API;
@@ -10,8 +10,8 @@ export class Logger implements Glue42Core.Logger.API {
     public readonly path: string;
 
     private subLoggers: Logger[] = [];
-    private _consoleLevel: Glue42Core.LogLevel | undefined;
-    private _publishLevel: Glue42Core.LogLevel | undefined;
+    private _consoleLevel: Glue42Core.Logger.LogLevel | undefined;
+    private _publishLevel: Glue42Core.Logger.LogLevel | undefined;
     private loggerFullName: string;
     private includeTimeAndLevel: boolean;
     private logFn: Glue42Core.CustomLogger = console;
@@ -59,7 +59,7 @@ export class Logger implements Glue42Core.Logger.API {
         return sub;
     }
 
-    public publishLevel(level?: Glue42Core.LogLevel): Glue42Core.LogLevel | undefined {
+    public publishLevel(level?: Glue42Core.Logger.LogLevel): Glue42Core.Logger.LogLevel | undefined {
         if (level) {
             this._publishLevel = level;
         }
@@ -67,7 +67,7 @@ export class Logger implements Glue42Core.Logger.API {
         return this._publishLevel || this.parent?.publishLevel();
     }
 
-    public consoleLevel(level?: Glue42Core.LogLevel): Glue42Core.LogLevel | undefined {
+    public consoleLevel(level?: Glue42Core.Logger.LogLevel): Glue42Core.Logger.LogLevel | undefined {
         if (level) {
             this._consoleLevel = level;
         }
@@ -75,7 +75,7 @@ export class Logger implements Glue42Core.Logger.API {
         return this._consoleLevel || this.parent?.consoleLevel();
     }
 
-    public log(message: string, level?: Glue42Core.LogLevel, error?: Error) {
+    public log(message: string, level?: Glue42Core.Logger.LogLevel, error?: Error) {
         this.publishMessage(level || "info", message, error);
     }
 
@@ -99,14 +99,14 @@ export class Logger implements Glue42Core.Logger.API {
         this.log(message, "error");
     }
 
-    public canPublish(level: Glue42Core.LogLevel, compareWith?: Glue42Core.LogLevel) {
+    public canPublish(level: Glue42Core.Logger.LogLevel, compareWith?: Glue42Core.Logger.LogLevel) {
         const levelIdx = order.indexOf(level);
         const restrictionIdx = order.indexOf(compareWith || this.consoleLevel() || "trace");
 
         return levelIdx >= restrictionIdx;
     }
 
-    private publishMessage(level: Glue42Core.LogLevel, message: string, error?: Error) {
+    private publishMessage(level: Glue42Core.Logger.LogLevel, message: string, error?: Error) {
         // Retrieve logger name and levels
         const loggerName = this.loggerFullName;
 

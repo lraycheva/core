@@ -96,10 +96,14 @@ export namespace Glue42Workspaces {
     export interface WindowLayoutItemConfig {
         /** The name of the application as defined in Glue Desktop */
         appName: string;
+        /** The id of the window */
+        windowId?: string;
         /** The url of the window, in case it is not a defined as an application. */
         url?: string;
         /** The title of the window */
         title?: string;
+        /** The context of the window used when restoring the window */
+        context?: any;
     }
 
     /** An object describing a window definition in a workspace layout. */
@@ -161,16 +165,23 @@ export namespace Glue42Workspaces {
 
     /** An object containing the bounds of a frame */
     export interface FrameBounds {
-        top?: number;
-        left?: number;
-        width?: number;
-        height?: number;
+        top: number;
+        left: number;
+        width: number;
+        height: number;
     }
 
     /** An object describing the possible settings when defining a new frame. */
     export interface NewFrameConfig {
         /** An object describing the possible settings when defining a new frame. */
-        bounds?: FrameBounds;
+        bounds?: {
+            top?: number;
+            left?: number;
+            width?: number;
+            height?: number;
+        };
+        /** A string which will be used as an id of the new frame. The call will reject if a frame with id already exists */
+        frameId?: string;
     }
 
     /** An object defining the resize parameters of a frame. */
@@ -267,6 +278,9 @@ export namespace Glue42Workspaces {
         /** Controls the visibility of the save workspace button located in the workspace tab */
         showSaveButton?: boolean;
 
+        /** Controls whether a workspace tab can be extracted from the frame (available only for Glue42 Enterprise) */
+        allowWorkspaceTabExtract?: boolean;
+
         /** Controls the visibility of the close button located in the workspaces tab */
         showCloseButton?: boolean;
 
@@ -331,6 +345,9 @@ export namespace Glue42Workspaces {
 
         /** Controls the visibility of the save workspace button located in the workspace tab */
         showSaveButton?: boolean;
+
+        /** Controls the visibility of the close button located in the workspaces tab (available only for Glue42 Enterprise) */
+        allowWorkspaceTabExtract?: boolean;
 
         /** Controls the visibility of all the add window buttons (the ones with the plus icon) located in the group headers */
         showAddWindowButtons?: boolean;
@@ -621,12 +638,12 @@ export namespace Glue42Workspaces {
     export interface EmptyFrameDefinition {
         /** The application name of the workspace app that should be used for the new frame (available only for Glue42 Enterprise) */
         applicationName?: string;
-        
+
         /**      
          * Optional frame related settings
          */
         frameConfig?: Glue42Workspaces.NewFrameConfig;
-        
+
         /**
          * Optional context which will be passed to the initialization callback
          */
@@ -868,6 +885,9 @@ export namespace Glue42Workspaces {
 
         /** Indicates if the save button for this workspace is visible to the user */
         showSaveButton?: boolean;
+
+        /** Controls the visibility of the close button located in the workspaces tab (available only for Glue42 Enterprise) */
+        allowWorkspaceTabExtract?: boolean;
 
         /** Returns the minimum width of the workspace, calculated by the constraints of all elements inside it */
         minWidth?: number;
@@ -1568,10 +1588,14 @@ export namespace Glue42Workspaces {
          * A string identifier unique to each frame
          */
         id: string;
+
+        workspaces: WorkspaceSnapshot[];
+
+        config: any;
     }
 
     /** An object describing the complete state of a workspace at the time when the object was created */
-    export interface WorkspaceSnapshot {
+    export interface WorkspaceSnapshot extends WorkspaceLayoutComponentState {
         /**
          * A string identifier unique to each workspace
          */

@@ -1,9 +1,9 @@
 /* eslint-disable indent */
 import { IDBPDatabase } from "idb";
 import { Glue42Web } from "@glue42/web";
-import { layoutDecoder, layoutTypeDecoder } from "./decoders";
 import { IoC } from "../../shared/ioc";
 import { Glue42CoreDB } from "../../common/types";
+import { glueLayoutDecoder, layoutTypeDecoder } from "../../shared/decoders";
 
 export class IdbLayoutsStore {
 
@@ -50,7 +50,7 @@ export class IdbLayoutsStore {
     }
 
     public async store(layout: Glue42Web.Layouts.Layout, layoutType: Glue42Web.Layouts.LayoutType): Promise<string> {
-        layoutDecoder.runWithException(layout);
+        glueLayoutDecoder.runWithException(layout);
         layoutTypeDecoder.runWithException(layoutType);
 
         switch (layoutType) {

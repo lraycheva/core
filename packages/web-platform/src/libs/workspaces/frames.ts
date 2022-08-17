@@ -49,7 +49,13 @@ export class FramesController {
             height: providedBounds.height ?? this.defaultBounds.height
         };
 
-        const frameWindowId = generate();
+        const frameWindowId = typeof newFrameConfig === "object" && newFrameConfig?.frameId ? newFrameConfig.frameId : generate();
+
+        const allExistingFrames = this.sessionController.getAllFrames();
+
+        if (allExistingFrames.some((frame) => frame.windowId === frameWindowId)) {
+            throw new Error(`Cannot open a frame with id: ${frameWindowId}, because a frame with this id already exists`);
+        }
 
         const frameData: FrameSessionData = {
             windowId: frameWindowId,
@@ -159,6 +165,10 @@ export class FramesController {
         }
 
         return allFrames.length ? this.getLastOpenedFrame() : this.openFrame();
+    }
+
+    public getPlatformFrameSessionData(): FrameSessionData | undefined {
+        return this.sessionController.getAllFrames().find((frame) => frame.isPlatform);
     }
 
     private clearAllWorkspaceWindows(frameId: string): void {

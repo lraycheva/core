@@ -34,6 +34,7 @@ export interface WorkspaceConfigResult {
     allowExtract?: boolean;
     showCloseButton?: boolean;
     showSaveButton?: boolean;
+    allowWorkspaceTabExtract?: boolean;
     minWidth?: number;
     maxWidth?: number;
     minHeight?: number;
@@ -108,6 +109,7 @@ export interface SwimlaneWindowSnapshotConfig extends BaseChildSnapshotConfig {
     showCloseButton?: boolean;
     widthInPx?: number;
     heightInPx?: number;
+    context?: any;
 }
 
 export interface WindowSnapshotResult {
@@ -145,6 +147,7 @@ export interface WorkspaceSnapshotResult {
     config: WorkspaceConfigResult;
     children: ChildSnapshotResult[];
     frameSummary: FrameSummaryResult;
+    context?: any;
 }
 
 export interface WorkspaceSummaryResult {
@@ -231,6 +234,10 @@ export interface DeleteLayoutConfig {
 
 export interface SimpleItemConfig {
     itemId: string;
+}
+
+export interface FrameSnapshotConfig extends SimpleItemConfig {
+    excludeIds?: boolean;
 }
 
 export interface FrameStateConfig {
@@ -375,6 +382,7 @@ export interface LockWorkspaceConfig {
         allowSplitters?: boolean;
         showCloseButton?: boolean;
         showSaveButton?: boolean;
+        allowWorkspaceTabExtract?: boolean;
     };
 }
 

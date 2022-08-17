@@ -222,9 +222,6 @@ lm.utils.copy(lm.controls.Tab.prototype, {
 	},
 
 	_onReorderStart: function (x, y) {
-		if (this.contentItem.config.workspacesConfig && this.contentItem.config.workspacesConfig.allowExtract === false) {
-			return;
-		}
 		const tabX = this.element[0].getBoundingClientRect().x;
 		const parentX = this.header.element[0].getBoundingClientRect().x;
 		const tabXParentOffset = tabX - parentX;

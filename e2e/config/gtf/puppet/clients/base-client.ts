@@ -110,9 +110,8 @@ export class BaseClient implements Gtf.GlueBaseClient {
     }
 
     public async setContext(name: string, data: any): Promise<void> {
-        // console.log("------- Sending setContext Command ------ ");
+
         await this.sendCommand<"setContext">("setContext", { name, data });
-        // console.log("------- Command setContext handled successfully ------ ");
     }
 
     public async updateContext(name: string, data: any): Promise<void> {
@@ -192,17 +191,11 @@ export class BaseClient implements Gtf.GlueBaseClient {
 
     public async sendCommand<T extends ClientCommands>(command: T, args: ClientCommandArgs[T]): Promise<ClientCommandResult[T]> {
 
-        const shouldLog = command === "setContext";
-
         const commandId = this.getId();
 
         const responsePromise = new Promise<{ result: any, error?: string }>((resolve) => {
             this.commandsLocks[commandId] = resolve;
         });
-
-        if (shouldLog) {
-            // console.log(`------- Sending operation ${command} with args: ${JSON.stringify(args)} and id: ${commandId} to the port of client: ${this.clientId} ------`);
-        }
 
         this.port.postMessage({
             operation: command,
@@ -211,10 +204,6 @@ export class BaseClient implements Gtf.GlueBaseClient {
         });
 
         const response = await responsePromise;
-
-        if (shouldLog) {
-            // console.log(`------- Heard valid response, resolving with response: ${JSON.stringify(response)} ------`);
-        }
 
         if (response.error) {
             throw new Error(`Received error from the puppet app for command: ${command} with args ${JSON.stringify(args)} ${response.error}`);
@@ -226,10 +215,6 @@ export class BaseClient implements Gtf.GlueBaseClient {
     private setupPortMessaging(): void {
         this.port.onmessage = (event) => {
             const data = event.data;
-
-            if (!data.log) {
-                // console.log(`------- Heard Port Data: ${JSON.stringify(data)} ------`);
-            }
 
             if (data.eventId && data.event === "methodInvoked") {
                 return this.processMethodInvokedEvent(data);

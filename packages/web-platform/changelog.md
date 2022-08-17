@@ -1,3 +1,8 @@
+1.13.1
+chore: bump due to dependencies update
+1.13.0
+feat: added interception and enabled the layouts messaging
+chore: updated the decoders with allowWorkspaceTabExtract
 1.12.12
 feat: the platform now exposes it's version and disconnects gw clients when handling unregistration of workspaces apps and windows
 1.12.11

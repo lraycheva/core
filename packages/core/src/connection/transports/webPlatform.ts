@@ -38,6 +38,7 @@ export default class WebPlatformTransport implements Transport {
     private parentWindowId: string | undefined;
     private parentInExtMode = false;
 
+    private readonly webNamespace = "g42_core_web";
     private readonly parent: Window | undefined;
     private readonly parentType: "opener" | "top" | "workspace" | undefined;
     private readonly parentPingTimeout = 5000;
@@ -205,8 +206,9 @@ export default class WebPlatformTransport implements Transport {
                 if (data.type === this.messages.gatewayInternalConnect.name && data.success) {
                     this.publicWindowId = this.settings.windowId;
 
-                    if (this.identity) {
+                    if (this.identity && this.publicWindowId) {
                         this.identity.windowId = this.publicWindowId;
+                        this.identity.instance = this.publicWindowId;
                     }
                     resolve();
                 }
@@ -436,7 +438,12 @@ export default class WebPlatformTransport implements Transport {
                 window.name.substring(0, window.name.indexOf("#wsp"));
 
         if (this.identity && this.parentType !== "top") {
-            this.identity.windowId = this.publicWindowId;
+            this.identity.windowId = this.identity.windowId ?? this.publicWindowId;
+            this.identity.instance = this.identity.instance ?? this.publicWindowId;
+        }
+
+        if (this.identity && this.parentType === "top") {
+            this.identity.instance = this.identity.instance ?? this.getIFrameInstanceId();
         }
 
         if (this.identity && data.appName) {
@@ -733,5 +740,21 @@ export default class WebPlatformTransport implements Transport {
             });
 
         }, this.connectionRequestTimeout, "The content script was available, but was never heard to be ready");
+    }
+
+    private getIFrameInstanceId(): string {
+        const sessionStorage = window.sessionStorage;
+
+        const settingsAsString = sessionStorage.getItem(this.webNamespace);
+
+        const settings = settingsAsString ? JSON.parse(settingsAsString) : {};
+
+        if (!settings.clientInstanceId) {
+            settings.clientInstanceId = generate();
+        }
+
+        sessionStorage.setItem(this.webNamespace, JSON.stringify(settings));
+
+        return settings.clientInstanceId;
     }
 }

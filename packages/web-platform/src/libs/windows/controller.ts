@@ -169,6 +169,8 @@ export class WindowsController implements LibController {
 
         this.sessionController.saveWorkspaceClient({ windowId: data.windowId, frameId: data.frameId, initialTitle: data.title });
 
+        this.sessionController.saveNonGlue({ windowId: data.windowId });
+
         if (data.context) {
             await this.glueController.setWindowStartContext(data.windowId, data.context);
         }
@@ -193,12 +195,15 @@ export class WindowsController implements LibController {
 
         this.logger?.trace(`[${commandId}] handling open command with a valid name: ${config.name}, url: ${config.url} and options: ${JSON.stringify(config.options)}`);
 
+        const openBounds = await this.getStartingBounds(config, commandId);
+
         const windowData: SessionWindowData = {
             name: config.name,
-            windowId: (config as any).options?.windowId ?? generate()
+            windowId: (config as any).options?.windowId ?? generate(),
+            initialBounds: openBounds,
+            initialUrl: config.url,
+            initialContext: config.options?.context
         };
-
-        const openBounds = await this.getStartingBounds(config, commandId);
 
         const options = `left=${openBounds.left},top=${openBounds.top},width=${openBounds.width},height=${openBounds.height}`;
 
@@ -223,13 +228,16 @@ export class WindowsController implements LibController {
         if (client.windowId) {
             this.stateController.remove(client.windowId);
 
+            // this is an explicit remove with in most cases will not do anything, because the stateController removes the nonGlue, but not in the case of a workspace-registered window
+            this.sessionController.removeNonGlue({ windowId: client.windowId });
+
             const workspaceClient = this.sessionController.getWorkspaceClientById(client.windowId);
 
             if (workspaceClient && workspaceClient.initialTitle) {
                 const windowId = client.windowId;
                 const title = workspaceClient.initialTitle;
 
-                PromiseWrap<void>(() => this.glueController.callWindow<WindowTitleConfig, void>(this.operations.setTitle, { windowId, title }, windowId), this.clientResponseTimeoutMs)
+                PromiseWrap<void>(() => this.glueController.callWindow<WindowTitleConfig, void>("windows", this.operations.setTitle, { windowId, title }, windowId), this.clientResponseTimeoutMs)
                     .catch((err) => this.logger?.trace(`[${commandId}] error while setting the workspace window title: ${err.message}`));
             }
         }
@@ -255,7 +263,7 @@ export class WindowsController implements LibController {
 
         const timeoutMessage = `Cannot get the url of window: ${data.windowId}, because it is either a non-glue window or it hasn't initiated it's glue yet`;
 
-        return PromiseWrap<WindowUrlResult>(() => this.glueController.callWindow<SimpleWindowCommand, WindowUrlResult>(this.operations.getUrl, data, data.windowId), this.clientResponseTimeoutMs, timeoutMessage);
+        return PromiseWrap<WindowUrlResult>(() => this.glueController.callWindow<SimpleWindowCommand, WindowUrlResult>("windows", this.operations.getUrl, data, data.windowId), this.clientResponseTimeoutMs, timeoutMessage);
     }
 
     private handleGetTitle(data: SimpleWindowCommand, commandId: string): Promise<WindowTitleConfig> {
@@ -269,7 +277,7 @@ export class WindowsController implements LibController {
 
         const timeoutMessage = `Cannot get the title of window: ${data.windowId}, because it is either a non-glue window or it hasn't initiated it's glue yet`;
 
-        return PromiseWrap<WindowTitleConfig>(() => this.glueController.callWindow<SimpleWindowCommand, WindowTitleConfig>(this.operations.getTitle, data, data.windowId), this.clientResponseTimeoutMs, timeoutMessage);
+        return PromiseWrap<WindowTitleConfig>(() => this.glueController.callWindow<SimpleWindowCommand, WindowTitleConfig>("windows", this.operations.getTitle, data, data.windowId), this.clientResponseTimeoutMs, timeoutMessage);
     }
 
     private async handleSetTitle(data: WindowTitleConfig, commandId: string): Promise<void> {
@@ -289,10 +297,10 @@ export class WindowsController implements LibController {
 
         const timeoutMessage = `Cannot set the title of window: ${data.windowId}, because it is either a non-glue window or it hasn't initiated it's glue yet`;
 
-        await PromiseWrap<void>(() => this.glueController.callWindow<WindowTitleConfig, void>(this.operations.setTitle, data, data.windowId), this.clientResponseTimeoutMs, timeoutMessage);
+        await PromiseWrap<void>(() => this.glueController.callWindow<WindowTitleConfig, void>("windows", this.operations.setTitle, data, data.windowId), this.clientResponseTimeoutMs, timeoutMessage);
     }
 
-    private handleMoveResize(data: WindowMoveResizeConfig, commandId: string): Promise<void> {
+    private async handleMoveResize(data: WindowMoveResizeConfig, commandId: string): Promise<void> {
         const workspaceClient = this.sessionController.getWorkspaceClientById(data.windowId);
 
         if (workspaceClient) {
@@ -313,7 +321,10 @@ export class WindowsController implements LibController {
 
         const timeoutMessage = `Cannot move resize window: ${data.windowId}, because it is either a non-glue window or it hasn't initiated it's glue yet`;
 
-        return PromiseWrap<void>(() => this.glueController.callWindow<WindowMoveResizeConfig, void>(this.operations.moveResize, data, data.windowId), this.clientResponseTimeoutMs, timeoutMessage);
+        await PromiseWrap<void>(() => this.glueController.callWindow<WindowMoveResizeConfig, void>("windows", this.operations.moveResize, data, data.windowId), this.clientResponseTimeoutMs, timeoutMessage);
+
+        // this is needed because the browser's resize API is sync, but the window bounds in the browser are not updated sync
+        await this.pause(500);
     }
 
     private handleGetBounds(data: SimpleWindowCommand, commandId: string): Promise<WindowBoundsResult> {
@@ -333,7 +344,7 @@ export class WindowsController implements LibController {
 
         const timeoutMessage = `Cannot get the bounds of window: ${data.windowId}, because it is either a non-glue window or it hasn't initiated it's glue yet`;
 
-        return PromiseWrap<WindowBoundsResult>(() => this.glueController.callWindow<SimpleWindowCommand, WindowBoundsResult>(this.operations.getBounds, data, data.windowId), this.clientResponseTimeoutMs, timeoutMessage);
+        return PromiseWrap<WindowBoundsResult>(() => this.glueController.callWindow<SimpleWindowCommand, WindowBoundsResult>("windows", this.operations.getBounds, data, data.windowId), this.clientResponseTimeoutMs, timeoutMessage);
     }
 
     private async handleFocus(data: SimpleWindowCommand, commandId: string): Promise<void> {
@@ -349,10 +360,6 @@ export class WindowsController implements LibController {
             throw new Error(`Cannot focus window: ${data.windowId}, because it is not known by the platform`);
         }
 
-        if (windowData.name === "Platform") {
-            throw new Error("Focusing the main application is not allowed");
-        }
-
         this.logger?.trace(`[${commandId}] handling a focus request for window ${data.windowId}`);
 
         window.open(undefined, windowData.windowId);
@@ -365,6 +372,16 @@ export class WindowsController implements LibController {
             this.logger?.trace(`[${commandId}] this window is detected as a workspace window, closing via the workspaces controller`);
 
             await this.ioc.workspacesController.closeItem({ itemId: data.windowId }, commandId);
+
+            return;
+        }
+
+        const applicationInstance = this.sessionController.getInstanceData(data.windowId);
+
+        if (applicationInstance) {
+            this.logger?.trace(`[${commandId}] this window is detected as an application instance, closing via the appManager controller`);
+
+            await this.ioc.applicationsController.handleInstanceStop({ id: data.windowId }, commandId);
 
             return;
         }
@@ -423,4 +440,7 @@ export class WindowsController implements LibController {
         }
     }
 
+    private pause(ms: number): Promise<void> {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+    }
 }

@@ -34,7 +34,7 @@ export interface Timer {
 export interface InternalConfig {
     connection: ConnectionSettings;
     application: string | undefined;
-    logger: { console: Glue42Core.LogLevel; publish: Glue42Core.LogLevel };
+    logger: { console: Glue42Core.Logger.LogLevel; publish: Glue42Core.Logger.LogLevel };
     auth: Glue42Core.Auth | undefined;
     metrics: boolean | Glue42Core.MetricsConfig;
     contexts: boolean | Glue42Core.ContextsConfig;

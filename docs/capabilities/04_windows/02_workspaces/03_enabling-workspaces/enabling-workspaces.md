@@ -40,6 +40,9 @@ const config = {
 Finally, you must configure the `layouts` property to ensure that the Workspace Layouts will function properly:
 
 ```javascript
+import GlueWebPlatform from "@glue42/web-platform";
+import GlueWorkspaces from "@glue42/workspaces-api";
+
 // Provide the location of your Workspaces App,
 // the Workspaces API library and configure the Layouts library.
 const config = {
@@ -113,6 +116,8 @@ Workspaces can be configured to use hibernation in order to free up system resou
 By default, hibernation is disabled. To enable and configure hibernating Workspaces, use the `hibernation` property of the `workspaces` key in the configuration object for the [Web Platform](https://www.npmjs.com/package/@glue42/web-platform) library. The following example demonstrates how to allow only three active Workspaces at a time and how to hibernate all Workspaces that have been inactive for 1 minute:
 
 ```javascript
+import GlueWebPlatform from "@glue42/web-platform";
+
 const config = {
     workspaces: {
         src: "https://my-workspaces-app.com",
@@ -158,6 +163,8 @@ Advantages and disadvantages of the different loading strategies:
 To configure the default loading strategy globally, use the `loadingStrategy` property of the `workspaces` key in the configuration object for the [Web Platform](https://www.npmjs.com/package/@glue42/web-platform) library. The following example demonstrates how to use `"delayed"` as a default strategy. The invisible apps will start loading in batches of 2 after an initial interval of 2 seconds and then every 3 seconds a new batch will start loading until all apps in the Workspace have been loaded:
 
 ```javascript
+import GlueWebPlatform from "@glue42/web-platform";
+
 const config = {
     workspaces: {
         src: "https://my-workspaces-app.com",
@@ -200,6 +207,8 @@ The `delayed` object has the following properties, all of which are optional:
 If you want to use your [Workspaces App](../workspaces-app/index.html) as a [Main app](../../../../developers/core-concepts/web-platform/overview/index.html) as well, you must set the `isFrame` property of the `workspaces` object to `true` when configuring the [Web Platform](https://www.npmjs.com/package/@glue42/web-platform) library:
 
 ```javascript
+import GlueWebPlatform from "@glue42/web-platform";
+
 const config = {
     workspaces: {
         src: "https://my-workspaces-app.com",
@@ -222,6 +231,8 @@ Use the `frameCache` property to set the refresh behavior of the Main app when u
 To control whether an app will be available in the Workspace "Add Application" menu (the dropdown that appears when you click the "+" button to add an app), use the `includeInWorkspaces` property of the `customProperties` top-level key in your [app definition](../../../application-management/index.html#app_definitions):
 
 ```javascript
+import GlueWebPlatform from "@glue42/web-platform";
+
 const config = {
     applications: {
         local: [
@@ -301,9 +312,13 @@ npm install --save @glue42/web @glue42/workspaces-api
 Initialize the Glue42 Web library enabling the Workspaces API:
 
 ```javascript
+import GlueWeb from "@glue42/web";
+import GlueWorkspaces from "@glue42/workspaces-api";
+
 const config = {
     libraries: [GlueWorkspaces]
 };
+
 const glue = await GlueWeb(config);
 
 // Now you can access the Workspaces API through `glue.workspaces`.

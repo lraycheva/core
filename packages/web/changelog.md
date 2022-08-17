@@ -1,3 +1,7 @@
+2.7.1
+chore: updated comments in the typings for improved reference documentation
+2.7.0
+feat: enabled layouts API messages
 2.6.12
 chore: bump due to dependencies update
 2.6.11

@@ -26,11 +26,12 @@ import { ComponentPopupManager } from "./popups/component";
 import { GlueFacade } from "./interop/facade";
 import { ApplicationFactory } from "./app/factory";
 import { DelayedExecutor } from "./utils/delayedExecutor";
-import systemSettings from "./config/system";
+import { WorkspacesSystemSettingsProvider } from "./config/system";
 import { ConstraintsValidator } from "./config/constraintsValidator";
 import { WorkspaceWrapper } from "./state/workspaceWrapper";
 import uiExecutor from "./uiExecutor";
 import { ComponentFactory } from "./types/componentFactory";
+import { PlatformCommunicator } from "./interop/platformCommunicator";
 
 export class WorkspacesManager {
     private _controller: LayoutController;
@@ -48,6 +49,8 @@ export class WorkspacesManager {
     private _applicationFactory: ApplicationFactory;
     private _facade: GlueFacade;
     private _context?: object;
+    private _systemSettings: WorkspacesSystemSettingsProvider;
+    private _platformCommunicator: PlatformCommunicator;
 
     public get stateResolver(): LayoutStateResolver {
         return this._stateResolver;
@@ -92,8 +95,10 @@ export class WorkspacesManager {
         const eventEmitter = new LayoutEventEmitter(registryFactory());
         this._stateResolver = new LayoutStateResolver(this._frameId, eventEmitter, this._frameController, converter);
         this._controller = new LayoutController(eventEmitter, this._stateResolver, startupConfig, this._configFactory);
-        this._applicationFactory = new ApplicationFactory(glue, this.stateResolver, this._frameController, this, new DelayedExecutor());
-        this._layoutsManager = new LayoutsManager(this.stateResolver, glue, this._configFactory, converter, new ConstraintsValidator());
+        this._platformCommunicator = new PlatformCommunicator(this._glue, this._frameId);
+        this._systemSettings = new WorkspacesSystemSettingsProvider(this._platformCommunicator);
+        this._applicationFactory = new ApplicationFactory(glue, this.stateResolver, this._frameController, this, new DelayedExecutor(), this._platformCommunicator, this._systemSettings);
+        this._layoutsManager = new LayoutsManager(this.stateResolver, glue, this._configFactory, converter, new ConstraintsValidator(), this._platformCommunicator);
         this._popupManager = new PopupManagerComposer(new PopupManager(glue), new ComponentPopupManager(componentFactory, frameId), componentFactory);
 
         if (!startupConfig.emptyFrame) {
@@ -790,7 +795,7 @@ export class WorkspacesManager {
         this._controller.removeLayoutElement(itemId);
         this._frameController.remove(itemId);
 
-        this._applicationFactory.notifyFrameWillClose(windowSummary.config.windowId, windowSummary.config.appName).catch((e) => {
+        this._platformCommunicator.notifyFrameWillClose(windowSummary.config.windowId, windowSummary.config.appName).catch((e) => {
             // Log the error
         });
 
@@ -870,6 +875,10 @@ export class WorkspacesManager {
         await this._popupManager.showSaveWorkspacePopup(targetBounds, payload);
     }
 
+    public getWorkspaceContext(workspaceId: string): Promise<object> {
+        return this._glue.contexts.get(getWorkspaceContextName(workspaceId));
+    }
+
     private resizeWorkspaceItem(args: ResizeItemArguments): void {
         const item = store.getContainer(args.itemId) || store.getWindowContentItem(args.itemId);
 
@@ -931,7 +940,7 @@ export class WorkspacesManager {
     }
 
     private async initLayout(): Promise<void> {
-        const workspacesSystemSettings = await systemSettings.getSettings(this._glue);
+        const workspacesSystemSettings = await this._systemSettings.getSettings();
         const config = await this._layoutsManager.getInitialConfig();
 
         this.subscribeForPopups();
@@ -971,7 +980,7 @@ export class WorkspacesManager {
     private async reinitializeWorkspace(id: string, config: GoldenLayout.Config): Promise<void> {
         await this._controller.reinitializeWorkspace(id, config);
 
-        const workspacesSystemSettings = await systemSettings.getSettings(this._glue);
+        const workspacesSystemSettings = await this._systemSettings.getSettings();
         const loadingStrategy = this._applicationFactory.getLoadingStrategy(workspacesSystemSettings, config);
         this.handleWindows(id, loadingStrategy);
     }
@@ -1319,7 +1328,7 @@ export class WorkspacesManager {
         });
 
         windowSummaries.forEach((ws) => {
-            this._applicationFactory.notifyFrameWillClose(ws.config.windowId, ws.config.appName).catch((e) => {
+            this._platformCommunicator.notifyFrameWillClose(ws.config.windowId, ws.config.appName).catch((e) => {
                 // Log the error
             });
             this.workspacesEventEmitter.raiseWindowEvent({ action: "removed", payload: { windowSummary: ws } });
@@ -1369,7 +1378,7 @@ export class WorkspacesManager {
 
         const isFrameEmpty = this.checkForEmptyWorkspace(workspace);
         windowSummaries.forEach((ws) => {
-            this._applicationFactory.notifyFrameWillClose(ws.config.windowId, ws.config.appName).catch((e) => {
+            this._platformCommunicator.notifyFrameWillClose(ws.config.windowId, ws.config.appName).catch((e) => {
                 // Log the error
             });
             this.workspacesEventEmitter.raiseWindowEvent({
@@ -1395,14 +1404,14 @@ export class WorkspacesManager {
 
     private closeHibernatedWorkspaceCore(workspace: Workspace): void {
         const workspaceSummary = this.stateResolver.getWorkspaceSummary(workspace.id);
-        const snapshot = this.stateResolver.getSnapshot(workspace.id, this) as GoldenLayout.Config;
+        const snapshot = this.stateResolver.getWorkspaceConfig(workspace.id);
         const windowSummaries = this.stateResolver.extractWindowSummariesFromSnapshot(snapshot);
 
         workspace.windows.forEach((w) => this._frameController.remove(w.id));
 
         const isFrameEmpty = this.checkForEmptyWorkspace(workspace);
         windowSummaries.forEach((ws) => {
-            this._applicationFactory.notifyFrameWillClose(ws.config.windowId, ws.config.appName).catch((e) => {
+            this._platformCommunicator.notifyFrameWillClose(ws.config.windowId, ws.config.appName).catch((e) => {
                 // Log the error
             });
             this.workspacesEventEmitter.raiseWindowEvent({
@@ -1431,7 +1440,7 @@ export class WorkspacesManager {
 
         this._controller.emitter.raiseEvent("workspace-added", { workspace: store.getById(id) });
 
-        const workspacesSystemSettings = await systemSettings.getSettings(this._glue);
+        const workspacesSystemSettings = await this._systemSettings.getSettings();
         const loadingStrategy = this._applicationFactory.getLoadingStrategy(workspacesSystemSettings, config);
         this.handleWindows(id, loadingStrategy).catch((e) => {
             // If it fails do nothing
@@ -1459,8 +1468,8 @@ export class WorkspacesManager {
             if (this._isLayoutInitialized && (window as any).glue42core.isPlatformFrame) {
                 const newId = this._configFactory.getId();
 
-                this._controller.addWorkspace(newId, undefined).then(() => {
-                    this.handleOnWorkspaceAddedWithSnapshot(store.getById(newId));
+                this._controller.addWorkspace(newId, undefined).then(async () => {
+                    await this.handleOnWorkspaceAddedWithSnapshot(store.getById(newId));
                     this.checkForEmptyWorkspace(workspace);
                 }).catch(() => {
                     // Can happen if the workspace has already been closed
@@ -1678,11 +1687,11 @@ export class WorkspacesManager {
         }
     }
 
-    private handleOnWorkspaceAddedWithSnapshot(workspace: Workspace): void {
+    private async handleOnWorkspaceAddedWithSnapshot(workspace: Workspace): Promise<void> {
         const allOtherWindows = store.workspaceIds.filter((wId) => wId !== workspace.id).reduce((acc, w) => {
             return [...acc, ...store.getById(w).windows];
         }, []);
-        const snapshot = this._stateResolver.getWorkspaceSnapshot(workspace.id, this);
+        const snapshot = await this._stateResolver.getWorkspaceSnapshot(workspace.id, this);
         this._workspacesEventEmitter.raiseWorkspaceEvent({
             action: "opened",
             payload: {

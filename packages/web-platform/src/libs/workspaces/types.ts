@@ -1,4 +1,5 @@
 import { Glue42Workspaces } from "@glue42/workspaces-api";
+import { RawWindowsLayoutDataRequestConfig } from "../layouts/types";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export interface WorkspaceWindowData {
@@ -60,7 +61,11 @@ export type WorkspacesOperationsTypes = "isWindowInWorkspace" |
     "getWorkspaceIcon" |
     "setWorkspaceIcon" |
     "createFrame" |
-    "initFrame";
+    "initFrame" |
+    "checkStarted" |
+    "getPlatformFrameId" |
+    "getWorkspaceWindowsOnLayoutSaveContext" |
+    "getWorkspacesLayouts";
 
 export interface FrameQueryConfig {
     frameId?: string;
@@ -141,10 +146,11 @@ export interface SwimlaneWindowSnapshotConfig extends BaseChildSnapshotConfig {
     isFocused: boolean;
     appName?: string;
     title?: string;
+    context?: any;
 }
 
 export interface ChildSnapshotResult {
-    id: string;
+    id?: string;
     type: "window" | "row" | "column" | "group";
     children?: ChildSnapshotResult[];
     config: ParentSnapshotConfig | SwimlaneWindowSnapshotConfig;
@@ -173,6 +179,7 @@ export interface WorkspaceSnapshotResult {
     config: WorkspaceConfigResult;
     children: ChildSnapshotResult[];
     frameSummary: FrameSummaryResult;
+    context?: any;
 }
 
 export interface WorkspaceSummaryResult {
@@ -258,6 +265,10 @@ export interface DeleteLayoutConfig {
 
 export interface SimpleItemConfig {
     itemId: string;
+}
+
+export interface FrameSnapshotConfig extends SimpleItemConfig {
+    excludeIds?: boolean;
 }
 
 export interface FrameStateConfig {
@@ -437,4 +448,28 @@ export interface ColumnDefinitionConfig {
     allowDrop?: boolean;
     allowSplitters?: boolean;
     isPinned?: boolean;
+}
+
+export interface GetWorkspaceWindowsOnLayoutSaveContextConfig extends RawWindowsLayoutDataRequestConfig {
+    windowIds: string[];
+}
+
+export interface WorkspaceWindowOnSaveData {
+    windowId: string;
+    windowContext?: any;
+}
+
+export interface GetWorkspaceWindowsOnLayoutSaveContextResult {
+    windowsOnSaveData: WorkspaceWindowOnSaveData[];
+}
+
+export interface GetWorkspacesLayoutsConfig {
+    frameId: string;
+    layoutName: string;
+    layoutType: "Global" | "Workspace";
+    context?: any;
+}
+
+export interface GetWorkspacesLayoutsResponse {
+    workspaces: WorkspaceSnapshotResult[];
 }
