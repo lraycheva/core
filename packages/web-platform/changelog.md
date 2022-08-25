@@ -1,3 +1,5 @@
+1.13.2
+feat: added frameBounds to the data provided to workspace and frame closed events
 1.13.1
 chore: bump due to dependencies update
 1.13.0

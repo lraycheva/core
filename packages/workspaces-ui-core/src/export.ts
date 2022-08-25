@@ -33,7 +33,7 @@ const init = (glue: Glue42Web.API, componentFactory?: ComponentFactory) => {
     done = result.cleanUp;
     facade.init(glue, glue.agm.instance.windowId).then(() => {
         if (!startupReader.config.emptyFrame) {
-            manager.workspacesEventEmitter.raiseFrameEvent({ action: "opened", payload: { frameSummary: { id: glue.agm.instance.windowId } } });
+            manager.workspacesEventEmitter.raiseFrameEvent({ action: "opened", payload: { frameSummary: { id: glue.agm.instance.windowId }, frameBounds: manager.stateResolver.getFrameBounds() } });
         }
     }).catch(console.warn);
 

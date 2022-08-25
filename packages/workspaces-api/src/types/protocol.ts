@@ -194,13 +194,15 @@ export interface FrameStateResult {
     state: Glue42Workspaces.FrameState;
 }
 
+export interface FrameBounds {
+    top: number;
+    left: number;
+    width: number;
+    height: number;
+}
+
 export interface FrameBoundsResult {
-    bounds: {
-        top: number;
-        left: number;
-        width: number;
-        height: number;
-    };
+    bounds: FrameBounds;
 }
 
 export interface GetWorkspaceIconResult {
@@ -303,6 +305,7 @@ export interface WorkspaceSelector {
 // #region stream incoming
 export interface FrameStreamData {
     frameSummary: FrameSummaryResult;
+    frameBounds?: FrameBounds;
 }
 
 // the optional workspaceSnapshot is expected only when the last workspace in a Core platform-frame is being closed, which triggers the creation of a default workspace 
@@ -311,6 +314,7 @@ export interface WorkspaceStreamData {
     workspaceSummary: WorkspaceSummaryResult;
     frameSummary: FrameSummaryResult;
     workspaceSnapshot?: WorkspaceSnapshotResult;
+    frameBounds?: FrameBounds;
 }
 
 export interface ContainerStreamData {

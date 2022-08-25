@@ -139,12 +139,12 @@ export class Frame implements Glue42Workspaces.Frame {
         return getData(this).controller.initFrame(this.id, config);
     }
 
-    public async onClosed(callback: (closed: { frameId: string }) => void): Promise<Glue42Workspaces.Unsubscribe> {
+    public async onClosed(callback: (closed: Glue42Workspaces.FrameClosedData) => void): Promise<Glue42Workspaces.Unsubscribe> {
         checkThrowCallback(callback);
         const myId = getData(this).summary.id;
 
         const wrappedCallback = (payload: FrameStreamData): void => {
-            callback({ frameId: payload.frameSummary.id });
+            callback({ frameId: payload.frameSummary.id, frameBounds: payload.frameBounds });
         };
 
         const config: SubscriptionConfig = {
@@ -249,12 +249,12 @@ export class Frame implements Glue42Workspaces.Frame {
         return unsubscribe;
     }
 
-    public async onWorkspaceClosed(callback: (closed: { frameId: string; workspaceId: string }) => void): Promise<Glue42Workspaces.Unsubscribe> {
+    public async onWorkspaceClosed(callback: (closed: Glue42Workspaces.WorkspaceClosedData) => void): Promise<Glue42Workspaces.Unsubscribe> {
         checkThrowCallback(callback);
         const myId = getData(this).summary.id;
 
         const wrappedCallback = (payload: WorkspaceStreamData): void => {
-            callback({ frameId: payload.frameSummary.id, workspaceId: payload.workspaceSummary.id });
+            callback({ frameId: payload.frameSummary.id, workspaceId: payload.workspaceSummary.id, frameBounds: payload.frameBounds });
         };
 
         const config: SubscriptionConfig = {

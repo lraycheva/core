@@ -55,7 +55,8 @@ import {
     WorkspaceSelector,
     ShortcutClickedData,
     ShortcutConfig,
-    FrameSnapshotConfig
+    FrameSnapshotConfig,
+    FrameBounds
 } from "../types/protocol";
 import { WorkspaceEventType, WorkspaceEventAction } from "../types/subscription";
 import { Glue42Workspaces } from "../../workspaces";
@@ -629,13 +630,15 @@ export const frameStateResultDecoder: Decoder<FrameStateResult> = object({
     state: frameStateDecoder
 });
 
+export const frameBoundsDecoder: Decoder<FrameBounds> = object({
+    top: number(),
+    left: number(),
+    width: nonNegativeNumberDecoder,
+    height: nonNegativeNumberDecoder
+});
+
 export const frameBoundsResultDecoder: Decoder<FrameBoundsResult> = object({
-    bounds: object({
-        top: number(),
-        left: number(),
-        width: nonNegativeNumberDecoder,
-        height: nonNegativeNumberDecoder
-    })
+    bounds: frameBoundsDecoder
 });
 
 export const getWorkspaceIconResultDecoder: Decoder<GetWorkspaceIconResult> = object({
@@ -728,13 +731,15 @@ export const containerSummaryResultDecoder: Decoder<ContainerSummaryResult> = ob
 });
 
 export const frameStreamDataDecoder: Decoder<FrameStreamData> = object({
-    frameSummary: frameSummaryDecoder
+    frameSummary: frameSummaryDecoder,
+    frameBounds: optional(frameBoundsDecoder)
 });
 
 export const workspaceStreamDataDecoder: Decoder<WorkspaceStreamData> = object({
     workspaceSummary: workspaceSummaryResultDecoder,
     frameSummary: frameSummaryDecoder,
-    workspaceSnapshot: optional(workspaceSnapshotResultDecoder)
+    workspaceSnapshot: optional(workspaceSnapshotResultDecoder),
+    frameBounds: optional(frameBoundsDecoder)
 });
 
 export const containerStreamDataDecoder: Decoder<ContainerStreamData> = object({

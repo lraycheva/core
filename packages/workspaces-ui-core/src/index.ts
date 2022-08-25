@@ -38,7 +38,7 @@ if (!isInIframe) {
         // tslint:disable-next-line: no-console
     }).then(() => {
         if (!startupReader.config.emptyFrame) {
-            manager.workspacesEventEmitter.raiseFrameEvent({ action: "opened", payload: { frameSummary: { id: window.glue.agm.instance.windowId } } });
+            manager.workspacesEventEmitter.raiseFrameEvent({ action: "opened", payload: { frameSummary: { id: window.glue.agm.instance.windowId }, frameBounds: manager.stateResolver.getFrameBounds() } });
         }
     }).catch(console.warn);
 }

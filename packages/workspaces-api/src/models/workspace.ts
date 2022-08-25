@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { WorkspaceSnapshotResult, WindowStreamData } from "../types/protocol";
+import { WorkspaceSnapshotResult, WindowStreamData, WorkspaceStreamData } from "../types/protocol";
 import { checkThrowCallback, nonEmptyStringDecoder, workspaceLockConfigDecoder, workspacePinOptionsDecoder } from "../shared/decoders";
 import { PrivateDataManager } from "../shared/privateDataManager";
 import { FrameCreateConfig } from "../types/ioc";
@@ -427,13 +427,13 @@ export class Workspace implements Glue42Workspaces.Workspace {
         await this.refreshReference();
     }
 
-    public async onClosed(callback: () => void): Promise<Glue42Workspaces.Unsubscribe> {
+    public async onClosed(callback: (closed: Glue42Workspaces.WorkspaceClosedData) => void): Promise<Glue42Workspaces.Unsubscribe> {
         checkThrowCallback(callback);
         const id = getData(this).id;
 
-        const wrappedCallback = async (): Promise<void> => {
+        const wrappedCallback = async (payload: WorkspaceStreamData): Promise<void> => {
             // await this.refreshReference();
-            callback();
+            callback({ frameId: payload.frameSummary.id, workspaceId: payload.workspaceSummary.id, frameBounds: payload.frameBounds });
         };
         const config: SubscriptionConfig = {
             action: "closed",

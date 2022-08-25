@@ -3,7 +3,7 @@
 import { Glue42Workspaces } from "@glue42/workspaces-api";
 import { anyJson, array, boolean, constant, Decoder, intersection, lazy, number, object, oneOf, optional, string } from "decoder-validate";
 import { nonEmptyStringDecoder, nonNegativeNumberDecoder, windowLayoutItemDecoder } from "../../shared/decoders";
-import { AddContainerConfig, AddItemResult, AddWindowConfig, BaseChildSnapshotConfig, BundleConfig, ChildSnapshotResult, ColumnDefinitionConfig, ContainerStreamData, ContainerSummaryResult, DeleteLayoutConfig, ExportedLayoutsResult, FrameBoundsResult, FrameHello, FrameInitializationConfigProtocol, FrameSnapshotConfig, FrameSnapshotResult, FrameStateConfig, FrameStateResult, FrameStreamData, FrameSummariesResult, FrameSummaryResult, GetFrameSummaryConfig, GetWorkspacesLayoutsConfig, GetWorkspacesLayoutsResponse, GetWorkspaceWindowsOnLayoutSaveContextConfig, GetWorkspaceWindowsOnLayoutSaveContextResult, GroupDefinitionConfig, IsWindowInSwimlaneResult, LayoutSummariesResult, LayoutSummary, LockColumnConfig, LockContainerConfig, LockGroupConfig, LockRowConfig, LockWindowConfig, LockWorkspaceConfig, MoveFrameConfig, MoveWindowConfig, OpenWorkspaceConfig, ParentSnapshotConfig, PingResult, PinWorkspaceConfig, ResizeItemConfig, RowDefinitionConfig, SetItemTitleConfig, SetWorkspaceIconConfig, SimpleItemConfig, SimpleWindowOperationSuccessResult, SwimlaneWindowSnapshotConfig, WindowStreamData, WorkspaceConfigResult, WorkspaceCreateConfigProtocol, WorkspaceEventAction, WorkspaceEventType, WorkspaceIconResult, WorkspaceSelector, WorkspacesLayoutImportConfig, WorkspaceSnapshotResult, WorkspacesOperationsTypes, WorkspaceStreamData, WorkspaceSummariesResult, WorkspaceSummaryResult, WorkspaceWindowData, WorkspaceWindowOnSaveData } from "./types";
+import { AddContainerConfig, AddItemResult, AddWindowConfig, BaseChildSnapshotConfig, BundleConfig, ChildSnapshotResult, ColumnDefinitionConfig, ContainerStreamData, ContainerSummaryResult, DeleteLayoutConfig, ExportedLayoutsResult, FrameBounds, FrameBoundsResult, FrameHello, FrameInitializationConfigProtocol, FrameSnapshotConfig, FrameSnapshotResult, FrameStateConfig, FrameStateResult, FrameStreamData, FrameSummariesResult, FrameSummaryResult, GetFrameSummaryConfig, GetWorkspacesLayoutsConfig, GetWorkspacesLayoutsResponse, GetWorkspaceWindowsOnLayoutSaveContextConfig, GetWorkspaceWindowsOnLayoutSaveContextResult, GroupDefinitionConfig, IsWindowInSwimlaneResult, LayoutSummariesResult, LayoutSummary, LockColumnConfig, LockContainerConfig, LockGroupConfig, LockRowConfig, LockWindowConfig, LockWorkspaceConfig, MoveFrameConfig, MoveWindowConfig, OpenWorkspaceConfig, ParentSnapshotConfig, PingResult, PinWorkspaceConfig, ResizeItemConfig, RowDefinitionConfig, SetItemTitleConfig, SetWorkspaceIconConfig, SimpleItemConfig, SimpleWindowOperationSuccessResult, SwimlaneWindowSnapshotConfig, WindowStreamData, WorkspaceConfigResult, WorkspaceCreateConfigProtocol, WorkspaceEventAction, WorkspaceEventType, WorkspaceIconResult, WorkspaceSelector, WorkspacesLayoutImportConfig, WorkspaceSnapshotResult, WorkspacesOperationsTypes, WorkspaceStreamData, WorkspaceSummariesResult, WorkspaceSummaryResult, WorkspaceWindowData, WorkspaceWindowOnSaveData } from "./types";
 
 export const workspacesOperationDecoder: Decoder<WorkspacesOperationsTypes> = oneOf<
     "isWindowInWorkspace" | "createWorkspace" | "getAllFramesSummaries" | "getFrameSummary" |
@@ -567,13 +567,15 @@ export const frameStateResultDecoder: Decoder<FrameStateResult> = object({
     state: frameStateDecoder
 });
 
+export const frameBoundsDecoder: Decoder<FrameBounds> = object({
+    top: number(),
+    left: number(),
+    width: nonNegativeNumberDecoder,
+    height: nonNegativeNumberDecoder
+});
+
 export const frameBoundsResultDecoder: Decoder<FrameBoundsResult> = object({
-    bounds: object({
-        top: number(),
-        left: number(),
-        width: nonNegativeNumberDecoder,
-        height: nonNegativeNumberDecoder
-    })
+    bounds: frameBoundsDecoder
 });
 
 export const resizeConfigDecoder: Decoder<Glue42Workspaces.ResizeConfig> = object({
@@ -666,12 +668,14 @@ export const containerSummaryResultDecoder: Decoder<ContainerSummaryResult> = ob
 });
 
 export const frameStreamDataDecoder: Decoder<FrameStreamData> = object({
-    frameSummary: frameSummaryDecoder
+    frameSummary: frameSummaryDecoder,
+    frameBounds: optional(frameBoundsDecoder)
 });
 
 export const workspaceStreamDataDecoder: Decoder<WorkspaceStreamData> = object({
     workspaceSummary: workspaceSummaryResultDecoder,
-    frameSummary: frameSummaryDecoder
+    frameSummary: frameSummaryDecoder,
+    frameBounds: optional(frameBoundsDecoder)
 });
 
 export const containerStreamDataDecoder: Decoder<ContainerStreamData> = object({

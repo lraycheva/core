@@ -225,13 +225,15 @@ export interface FrameStateResult {
     state: Glue42Workspaces.FrameState;
 }
 
+export interface FrameBounds {
+    top: number;
+    left: number;
+    width: number;
+    height: number;
+}
+
 export interface FrameBoundsResult {
-    bounds: {
-        top: number;
-        left: number;
-        width: number;
-        height: number;
-    };
+    bounds: FrameBounds;
 }
 
 export interface WorkspaceIconResult {
@@ -333,11 +335,13 @@ export interface SetWorkspaceIconConfig extends WorkspaceSelector {
 
 export interface FrameStreamData {
     frameSummary: FrameSummaryResult;
+    frameBounds?: FrameBounds;
 }
 
 export interface WorkspaceStreamData {
     workspaceSummary: WorkspaceSummaryResult;
     frameSummary: FrameSummaryResult;
+    frameBounds?: FrameBounds;
 }
 
 export interface ContainerStreamData {

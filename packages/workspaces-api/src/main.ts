@@ -172,10 +172,10 @@ export const composeAPI = (glue: any, ioc: IoC): API => {
         return unsubscribe;
     };
 
-    const onFrameClosed = async (callback: (closed: { frameId: string }) => void): Promise<Glue42Workspaces.Unsubscribe> => {
+    const onFrameClosed = async (callback: (closed: Glue42Workspaces.FrameClosedData) => void): Promise<Glue42Workspaces.Unsubscribe> => {
         checkThrowCallback(callback);
         const wrappedCallback = (payload: FrameStreamData): void => {
-            callback({ frameId: payload.frameSummary.id });
+            callback({ frameId: payload.frameSummary.id, frameBounds: payload.frameBounds });
         };
         const unsubscribe = await controller.processGlobalSubscription(wrappedCallback, "frame", "closed");
         return unsubscribe;
@@ -193,11 +193,11 @@ export const composeAPI = (glue: any, ioc: IoC): API => {
         return unsubscribe;
     };
 
-    const onWorkspaceClosed = async (callback: (closed: { frameId: string; workspaceId: string }) => void): Promise<Glue42Workspaces.Unsubscribe> => {
+    const onWorkspaceClosed = async (callback: (closed: Glue42Workspaces.WorkspaceClosedData) => void): Promise<Glue42Workspaces.Unsubscribe> => {
         checkThrowCallback(callback);
 
         const wrappedCallback = (payload: WorkspaceStreamData): void => {
-            callback({ frameId: payload.frameSummary.id, workspaceId: payload.workspaceSummary.id });
+            callback({ frameId: payload.frameSummary.id, workspaceId: payload.workspaceSummary.id, frameBounds: payload.frameBounds });
         };
 
         const unsubscribe = await controller.processGlobalSubscription(wrappedCallback, "workspace", "closed");

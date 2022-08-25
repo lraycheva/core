@@ -287,6 +287,15 @@ export class LayoutStateResolver {
         });
     }
 
+    public getFrameBounds(): Bounds {
+        return {
+            top: window.screenTop,
+            left: window.screenLeft,
+            width: window.innerWidth,
+            height: window.innerHeight
+        }
+    }
+
     private waitForWindowContentItem(windowId: string): Promise<void> {
         return new Promise<void>((res) => {
             const unsub = this._layoutEventEmitter.onContentComponentCreated((component) => {

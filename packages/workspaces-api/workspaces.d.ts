@@ -774,7 +774,7 @@ export namespace Glue42Workspaces {
          * Notifies when this frame is closed.
          * @param callback Callback function to handle the event.
          */
-        onClosed(callback: (closed: { frameId: string }) => void): Promise<Unsubscribe>;
+        onClosed(callback: (closed: FrameClosedData) => void): Promise<Unsubscribe>;
 
         /**
          * Notifies when this frame is maximized.
@@ -1107,7 +1107,7 @@ export namespace Glue42Workspaces {
          * Notifies when this workspace is closed.
          * @param callback Callback function to handle the event.
          */
-        onClosed(callback: () => void): Promise<Unsubscribe>;
+        onClosed(callback: (closed?: WorkspaceClosedData) => void): Promise<Unsubscribe>;
 
         /**
          * Notifies when a new window was added to this workspace and returns an unsubscribe function.
@@ -1594,6 +1594,17 @@ export namespace Glue42Workspaces {
         config: any;
     }
 
+    export interface FrameClosedData {
+        frameId: string;
+        frameBounds?: FrameBounds;
+    }
+
+    export interface WorkspaceClosedData {
+        frameId: string;
+        workspaceId: string;
+        frameBounds?: FrameBounds;
+    }
+
     /** An object describing the complete state of a workspace at the time when the object was created */
     export interface WorkspaceSnapshot extends WorkspaceLayoutComponentState {
         /**
@@ -1767,7 +1778,7 @@ export namespace Glue42Workspaces {
          * Notifies when a new frame was closed and returns an unsubscribe function.
          * @param callback Callback function to handle the event. Receives an object containing the id of the closed frame as a parameter.
          */
-        onFrameClosed(callback: (closed: { frameId: string }) => void): Promise<Unsubscribe>;
+        onFrameClosed(callback: (closed: FrameClosedData) => void): Promise<Unsubscribe>;
 
         /**
          * Notifies when a new workspace was opened in any of the opened frames and returns an unsubscribe function.
@@ -1779,7 +1790,7 @@ export namespace Glue42Workspaces {
          * Notifies when a workspace present in any of the opened frames was closed and returns an unsubscribe function.
          * @param callback Callback function to handle the event. Receives an object with the closed workspace id and frame id as a parameter.
          */
-        onWorkspaceClosed(callback: (closed: { frameId: string; workspaceId: string }) => void): Promise<Unsubscribe>;
+        onWorkspaceClosed(callback: (closed: WorkspaceClosedData) => void): Promise<Unsubscribe>;
 
         /**
          * Notifies when a new window was added to any workspace in any frame and returns an unsubscribe function.

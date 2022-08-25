@@ -1,5 +1,4 @@
 describe('workspace.onClosed ', () => {
-
     const basicConfig = {
         children: [
             {
@@ -70,6 +69,48 @@ describe('workspace.onClosed ', () => {
             })
             .then(ready)
             .catch(done);
+    });
+
+    it('should notify with a valid object when the workspace was closed', async () => {
+        const wrapper = gtf.wrapPromise();
+
+        const unSub = await defaultWorkspace.onClosed((closed) => {
+            try {
+                expect(closed.workspaceId).to.eql(defaultWorkspace.id);
+                expect(closed.frameId).to.eql(defaultWorkspace.frameId);
+                expect(closed.frameBounds).to.be.an("object");
+                wrapper.resolve();
+            } catch (error) {
+                wrapper.reject(error);
+            }
+        });
+
+        unSubFuncs.push(unSub);
+        await defaultFrame.close();
+
+        return wrapper.promise;
+    });
+
+    it('should provide the correct frame bounds', async () => {
+        const wrapper = gtf.wrapPromise();
+        const bounds = {
+            left: 42,
+            top: 84,
+            width: 400,
+            height: 500
+        };
+        const workspace = await glue.workspaces.createWorkspace(Object.assign({}, basicConfig, { frame: { newFrame: { bounds } } }));
+
+        const unSub = await workspace.frame.onWorkspaceClosed((data) => {
+            expect(data.frameBounds).to.eql(bounds);
+            wrapper.resolve();
+        });
+
+        unSubFuncs.push(unSub);
+
+        await workspace.close();
+
+        return wrapper.promise;
     });
 
     it('should notify exactly once of the closed workspace by closing the frame', (done) => {

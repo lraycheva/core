@@ -76,6 +76,7 @@ describe('frame.onClosed() ', () => {
             try {
                 expect(closed).to.be.an("object");
                 expect(closed.frameId).to.be.a("string");
+                expect(closed.frameBounds).to.be.an("object");
                 ready();
             } catch (error) {
                 done(error);
@@ -107,6 +108,32 @@ describe('frame.onClosed() ', () => {
             })
             .then(ready)
             .catch(done);
+    });
+
+    it('should provide the correct frameBounds when notifying of a closed frame', async () => {
+        const wrapper = gtf.wrapPromise();
+        const bounds = {
+            left: 42,
+            top: 84,
+            width: 600,
+            height: 500
+        };
+
+        const workspace = await glue.workspaces.createWorkspace(Object.assign({}, basicConfig, { frame: { newFrame: { bounds } } }));
+
+        const unSub = await workspace.frame.onClosed((closed) => {
+            try {
+                expect(closed.frameBounds).to.eql(bounds);
+                wrapper.resolve();
+            } catch (error) {
+                wrapper.reject(error);
+            }
+        })
+        unSubFuncs.push(unSub);
+
+        await workspace.frame.close();
+
+        return wrapper.promise;
     });
 
     it('should notify exactly once of the closed frame', (done) => {

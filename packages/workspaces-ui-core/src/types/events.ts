@@ -1,4 +1,4 @@
-import { ContainerSummary, WorkspaceSnapshot } from "./internal";
+import { Bounds, ContainerSummary, WorkspaceSnapshot } from "./internal";
 
 export type EventType = "window" | "workspace" | "frame" | "container";
 export type EventActionType = WindowEventAction | WorkspaceEventAction | FrameEventAction | ContainerEventAction;
@@ -34,6 +34,7 @@ export interface FrameEventPayload {
     frameSummary: {
         id: string;
     };
+    frameBounds: Bounds;
 }
 
 export interface WorkspaceEventPayload {
@@ -50,6 +51,7 @@ export interface WorkspaceEventPayload {
     frameSummary: {
         id: string;
     };
+    frameBounds: Bounds;
 }
 
 export interface ContainerEventPayload {

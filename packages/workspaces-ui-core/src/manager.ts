@@ -971,7 +971,8 @@ export class WorkspacesManager {
                 action: "opened", payload: {
                     frameSummary: {
                         id: this._frameId
-                    }
+                    },
+                    frameBounds: this.stateResolver.getFrameBounds()
                 }
             });
         }
@@ -1072,7 +1073,8 @@ export class WorkspacesManager {
                 this._workspacesEventEmitter.raiseWorkspaceEvent({
                     action: "selected", payload: {
                         frameSummary: { id: this._frameId },
-                        workspaceSummary: this.stateResolver.getWorkspaceSummary(workspace.id)
+                        workspaceSummary: this.stateResolver.getWorkspaceSummary(workspace.id),
+                        frameBounds: this.stateResolver.getFrameBounds()
                     }
                 });
 
@@ -1089,7 +1091,8 @@ export class WorkspacesManager {
             this._workspacesEventEmitter.raiseWorkspaceEvent({
                 action: "selected", payload: {
                     frameSummary: { id: this._frameId },
-                    workspaceSummary: this.stateResolver.getWorkspaceSummary(workspace.id)
+                    workspaceSummary: this.stateResolver.getWorkspaceSummary(workspace.id),
+                    frameBounds: this.stateResolver.getFrameBounds()
                 }
             });
         });
@@ -1335,14 +1338,14 @@ export class WorkspacesManager {
         });
 
         workspaceSummaries.forEach((ws) => {
-            this.workspacesEventEmitter.raiseWorkspaceEvent({ action: "closed", payload: { frameSummary: { id: this._frameId }, workspaceSummary: ws } });
+            this.workspacesEventEmitter.raiseWorkspaceEvent({ action: "closed", payload: { frameSummary: { id: this._frameId }, workspaceSummary: ws, frameBounds: this.stateResolver.getFrameBounds() } });
         });
 
         const currentWorkspaces = store.layouts.filter(l => !l.layout?.config?.workspacesOptions?.noTabHeader);
 
         this._layoutsManager.saveWorkspacesFrame(currentWorkspaces);
 
-        this.workspacesEventEmitter.raiseFrameEvent({ action: "closed", payload: { frameSummary: { id: this._frameId } } });
+        this.workspacesEventEmitter.raiseFrameEvent({ action: "closed", payload: { frameSummary: { id: this._frameId }, frameBounds: this.stateResolver.getFrameBounds() } });
     };
 
     private reportLayoutStructure(layout: Workspace["layout"]): void {
@@ -1397,7 +1400,8 @@ export class WorkspacesManager {
             action: "closed",
             payload: {
                 workspaceSummary,
-                frameSummary: { id: this._frameId }
+                frameSummary: { id: this._frameId },
+                frameBounds: this.stateResolver.getFrameBounds()
             }
         });
     }
@@ -1429,7 +1433,8 @@ export class WorkspacesManager {
             action: "closed",
             payload: {
                 workspaceSummary,
-                frameSummary: { id: this._frameId }
+                frameSummary: { id: this._frameId },
+                frameBounds: this.stateResolver.getFrameBounds()
             }
         });
     }
@@ -1656,7 +1661,8 @@ export class WorkspacesManager {
             action: "opened",
             payload: {
                 frameSummary: { id: this._frameId },
-                workspaceSummary: this.stateResolver.getWorkspaceSummary(workspace.id)
+                workspaceSummary: this.stateResolver.getWorkspaceSummary(workspace.id),
+                frameBounds: this.stateResolver.getFrameBounds()
             }
         });
         if (store.getActiveWorkspace().id === workspace.id) {
@@ -1664,7 +1670,8 @@ export class WorkspacesManager {
                 action: "selected",
                 payload: {
                     frameSummary: { id: this._frameId },
-                    workspaceSummary: this.stateResolver.getWorkspaceSummary(workspace.id)
+                    workspaceSummary: this.stateResolver.getWorkspaceSummary(workspace.id),
+                    frameBounds: this.stateResolver.getFrameBounds(),
                 }
             });
             if (!workspace.layout) {
@@ -1697,7 +1704,8 @@ export class WorkspacesManager {
             payload: {
                 frameSummary: { id: this._frameId },
                 workspaceSnapshot: snapshot,
-                workspaceSummary: this.stateResolver.getWorkspaceSummary(workspace.id)
+                workspaceSummary: this.stateResolver.getWorkspaceSummary(workspace.id),
+                frameBounds: this.stateResolver.getFrameBounds()
             }
         });
         if (store.getActiveWorkspace().id === workspace.id) {
@@ -1705,7 +1713,8 @@ export class WorkspacesManager {
                 action: "selected",
                 payload: {
                     frameSummary: { id: this._frameId },
-                    workspaceSummary: this.stateResolver.getWorkspaceSummary(workspace.id)
+                    workspaceSummary: this.stateResolver.getWorkspaceSummary(workspace.id),
+                    frameBounds: this.stateResolver.getFrameBounds()
                 }
             });
             if (!workspace.layout) {
