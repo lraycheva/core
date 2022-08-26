@@ -848,6 +848,8 @@ d='M224 448v-96h64v96l-32 64zM336 224v-160c48 0 80-32 80-64v0 0h-320c0 32 32 64 
                 config: {
                     allowDrop: false,
                     allowExtract: false,
+                    allowWindowReorder: false,
+                    allowWorkspaceTabReorder: false,
                     showSaveButton: false,
                     showCloseButton: false,
                     allowSplitters: false,
@@ -861,6 +863,8 @@ d='M224 448v-96h64v96l-32 64zM336 224v-160c48 0 80-32 80-64v0 0h-320c0 32 32 64 
 
             expect(workspace.allowDrop).to.be.true;
             expect(workspace.allowExtract).to.be.false;
+            expect(workspace.allowWindowReorder).to.be.false;
+            expect(workspace.allowWorkspaceTabReorder).to.be.false;
             expect(workspace.showSaveButton).to.be.false;
             expect(workspace.showCloseButton).to.be.false;
             expect(workspace.allowSplitters).to.be.false;
@@ -942,6 +946,8 @@ d='M224 448v-96h64v96l-32 64zM336 224v-160c48 0 80-32 80-64v0 0h-320c0 32 32 64 
                 config: {
                     allowDrop: false,
                     allowExtract: false,
+                    allowWindowReorder: false,
+                    allowWorkspaceTabReorder: false,
                     showSaveButton: false,
                     showCloseButton: false,
                     allowSplitters: false
@@ -973,6 +979,8 @@ d='M224 448v-96h64v96l-32 64zM336 224v-160c48 0 80-32 80-64v0 0h-320c0 32 32 64 
                 config: {
                     allowDrop: false,
                     allowExtract: false,
+                    allowWindowReorder: false,
+                    allowWorkspaceTabReorder: false,
                     showSaveButton: false,
                     showCloseButton: false,
                     allowSplitters: false
@@ -1004,6 +1012,8 @@ d='M224 448v-96h64v96l-32 64zM336 224v-160c48 0 80-32 80-64v0 0h-320c0 32 32 64 
                 config: {
                     allowDrop: false,
                     allowExtract: false,
+                    allowWindowReorder: false,
+                    allowWorkspaceTabReorder: false,
                     showSaveButton: false,
                     showCloseButton: false,
                     allowSplitters: false,
@@ -1019,6 +1029,7 @@ d='M224 448v-96h64v96l-32 64zM336 224v-160c48 0 80-32 80-64v0 0h-320c0 32 32 64 
                 expect(g.allowExtract).to.be.false;
                 expect(g.showEjectButton).to.be.false;
                 expect(g.showAddWindowButton).to.be.false;
+                expect(g.allowReorder).to.be.false;
             });
         });
 
@@ -1037,6 +1048,7 @@ d='M224 448v-96h64v96l-32 64zM336 224v-160c48 0 80-32 80-64v0 0h-320c0 32 32 64 
                                 config: {
                                     allowDrop: false,
                                     allowExtract: false,
+                                    allowReorder: false,
                                     showEjectButton: false,
                                     showMaximizeButton: false,
                                     showAddWindowButton: false
@@ -1051,6 +1063,7 @@ d='M224 448v-96h64v96l-32 64zM336 224v-160c48 0 80-32 80-64v0 0h-320c0 32 32 64 
             allGroups.forEach((g) => {
                 expect(g.allowDrop).to.be.false;
                 expect(g.allowExtract).to.be.false;
+                expect(g.allowReorder).to.be.false;
                 expect(g.showEjectButton).to.be.false;
                 expect(g.showMaximizeButton).to.be.false;
                 expect(g.showAddWindowButton).to.be.false;
@@ -1125,6 +1138,7 @@ d='M224 448v-96h64v96l-32 64zM336 224v-160c48 0 80-32 80-64v0 0h-320c0 32 32 64 
                                     type: "window",
                                     config: {
                                         allowExtract: false,
+                                        allowReorder: false,
                                         showCloseButton: false
                                     },
                                     appName: "noGlueApp"
@@ -1139,11 +1153,12 @@ d='M224 448v-96h64v96l-32 64zM336 224v-160c48 0 80-32 80-64v0 0h-320c0 32 32 64 
             const allWindows = workspace.getAllWindows();
             allWindows.forEach((c) => {
                 expect(c.allowExtract).to.be.false;
+                expect(c.allowReorder).to.be.false;
                 expect(c.showCloseButton).to.be.false;
             });
         });
 
-        Array.from(["allowDrop", "allowExtract", "showEjectButton", "showMaximizeButton", "showAddWindowButton"]).forEach((key, i, arr) => {
+        Array.from(["allowDrop", "allowExtract", "allowReorder", "showEjectButton", "showMaximizeButton", "showAddWindowButton"]).forEach((key, i, arr) => {
             it(`set the ${key} constraint when all other constraints are not set and the target item is a group`, async () => {
                 const groupConfig = arr.reduce((acc, k) => {
                     if (k === key) {
@@ -1206,6 +1221,8 @@ d='M224 448v-96h64v96l-32 64zM336 224v-160c48 0 80-32 80-64v0 0h-320c0 32 32 64 
                 config: {
                     allowDrop: false,
                     allowExtract: false,
+                    allowWindowReorder: false,
+                    allowWorkspaceTabReorder: false,
                     showSaveButton: false,
                     showCloseButton: false,
                     allowSplitters: false
@@ -1244,6 +1261,8 @@ d='M224 448v-96h64v96l-32 64zM336 224v-160c48 0 80-32 80-64v0 0h-320c0 32 32 64 
                     }],
                 config: {
                     allowDrop: false,
+                    allowWindowReorder: false,
+                    allowWorkspaceTabReorder: false,
                     allowExtract: false,
                     showSaveButton: false,
                     showCloseButton: false,
@@ -1278,6 +1297,7 @@ d='M224 448v-96h64v96l-32 64zM336 224v-160c48 0 80-32 80-64v0 0h-320c0 32 32 64 
                                 config: {
                                     allowDrop: true,
                                     allowExtract: true,
+                                    allowReorder: true,
                                     showEjectButton: true,
                                     showAddWindowButton: true
                                 }
@@ -1287,6 +1307,8 @@ d='M224 448v-96h64v96l-32 64zM336 224v-160c48 0 80-32 80-64v0 0h-320c0 32 32 64 
                 config: {
                     allowDrop: false,
                     allowExtract: false,
+                    allowWindowReorder: false,
+                    allowWorkspaceTabReorder: false,
                     showSaveButton: false,
                     showCloseButton: false,
                     allowSplitters: false,
@@ -1300,6 +1322,7 @@ d='M224 448v-96h64v96l-32 64zM336 224v-160c48 0 80-32 80-64v0 0h-320c0 32 32 64 
             allGroups.forEach((g) => {
                 expect(g.allowDrop).to.be.true;
                 expect(g.allowExtract).to.be.true;
+                expect(g.allowReorder).to.be.true;
                 expect(g.showEjectButton).to.be.true;
                 expect(g.showAddWindowButton).to.be.true;
             });
@@ -1318,6 +1341,7 @@ d='M224 448v-96h64v96l-32 64zM336 224v-160c48 0 80-32 80-64v0 0h-320c0 32 32 64 
                                     appName: "noGlueApp",
                                     config: {
                                         allowExtract: true,
+                                        allowReorder: true,
                                         showCloseButton: true,
                                     }
                                 }],
@@ -1328,6 +1352,8 @@ d='M224 448v-96h64v96l-32 64zM336 224v-160c48 0 80-32 80-64v0 0h-320c0 32 32 64 
                 config: {
                     allowDrop: false,
                     allowExtract: false,
+                    allowWindowReorder: false,
+                    allowWorkspaceTabReorder: false,
                     showSaveButton: false,
                     showCloseButton: false,
                     allowSplitters: false,
@@ -1341,6 +1367,7 @@ d='M224 448v-96h64v96l-32 64zM336 224v-160c48 0 80-32 80-64v0 0h-320c0 32 32 64 
             const allWindows = workspace.getAllWindows();
             allWindows.forEach((w) => {
                 expect(w.allowExtract).to.be.true;
+                expect(w.allowReorder).to.be.true;
                 expect(w.showCloseButton).to.be.true;
             });
         });

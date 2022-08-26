@@ -58,6 +58,10 @@ export class Group implements Glue42Workspaces.Group {
         return getBase(this).getAllowExtract(this);
     }
 
+    public get allowReorder():boolean{
+        return getBase(this).getAllowReorder(this);
+    }
+
     public get allowDropLeft(): boolean {
         return getBase(this).getAllowDropLeft(this);
     }
@@ -166,6 +170,7 @@ export class Group implements Glue42Workspaces.Group {
                 allowDropTop: this.allowDropTop,
                 allowDropBottom: this.allowDropBottom,
                 allowExtract: this.allowExtract,
+                allowReorder: this.allowReorder,
                 showAddWindowButton: this.showAddWindowButton,
                 showEjectButton: this.showEjectButton,
                 showMaximizeButton: this.showMaximizeButton

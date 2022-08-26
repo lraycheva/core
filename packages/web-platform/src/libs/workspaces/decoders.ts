@@ -153,6 +153,7 @@ export const groupDefinitionConfigDecoder: Decoder<GroupDefinitionConfig> = obje
     minHeight: optional(number()),
     maxHeight: optional(number()),
     allowExtract: optional(boolean()),
+    allowReorder: optional(boolean()),
     allowDrop: optional(boolean()),
     allowDropHeader: optional(boolean()),
     allowDropLeft: optional(boolean()),
@@ -288,7 +289,9 @@ export const workspaceDefinitionDecoder: Decoder<Glue42Workspaces.WorkspaceDefin
         allowDropRight: optional(boolean()),
         allowDropBottom: optional(boolean()),
         allowExtract: optional(boolean()),
+        allowWindowReorder: optional(boolean()),
         showSaveButton: optional(boolean()),
+        allowWorkspaceTabReorder: optional(boolean()),
         allowWorkspaceTabExtract: optional(boolean()),
         showCloseButton: optional(boolean()),
         allowSplitters: optional(boolean()),
@@ -386,9 +389,11 @@ export const workspaceConfigResultDecoder: Decoder<WorkspaceConfigResult> = obje
     lastActive: number(),
     allowDrop: optional(boolean()),
     allowExtract: optional(boolean()),
+    allowWindowReorder: optional(boolean()),
     allowSplitters: optional(boolean()),
     showCloseButton: optional(boolean()),
     showSaveButton: optional(boolean()),
+    allowWorkspaceTabReorder: optional(boolean()),
     allowDropLeft: optional(boolean()),
     allowDropTop: optional(boolean()),
     allowDropRight: optional(boolean()),
@@ -705,9 +710,11 @@ export const lockWorkspaceDecoder: Decoder<LockWorkspaceConfig> = object({
         allowDropRight: optional(boolean()),
         allowDropBottom: optional(boolean()),
         allowExtract: optional(boolean()),
+        allowWindowReorder: optional(boolean()),
         allowSplitters: optional(boolean()),
         showCloseButton: optional(boolean()),
         showSaveButton: optional(boolean()),
+        allowWorkspaceTabReorder: optional(boolean()),
         showWindowCloseButtons: optional(boolean()),
         showEjectButtons: optional(boolean()),
         showAddWindowButtons: optional(boolean())
@@ -718,6 +725,7 @@ export const lockWindowDecoder: Decoder<LockWindowConfig> = object({
     windowPlacementId: nonEmptyStringDecoder,
     config: optional(object({
         allowExtract: optional(boolean()),
+        allowReorder: optional(boolean()),
         showCloseButton: optional(boolean())
     }))
 });
@@ -746,6 +754,7 @@ export const lockGroupDecoder: Decoder<LockGroupConfig> = object({
     type: constant("group"),
     config: optional(object({
         allowExtract: optional(boolean()),
+        allowReorder: optional(boolean()),
         allowDrop: optional(boolean()),
         allowDropHeader: optional(boolean()),
         allowDropLeft: optional(boolean()),

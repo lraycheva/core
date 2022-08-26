@@ -115,6 +115,7 @@ export const windowDefinitionConfigDecoder: Decoder<Glue42Workspaces.WorkspaceWi
     minHeight: optional(number()),
     maxHeight: optional(number()),
     allowExtract: optional(boolean()),
+    allowReorder: optional(boolean()),
     showCloseButton: optional(boolean())
 });
 
@@ -124,6 +125,7 @@ export const groupDefinitionConfigDecoder: Decoder<Glue42Workspaces.GroupDefinit
     minHeight: optional(number()),
     maxHeight: optional(number()),
     allowExtract: optional(boolean()),
+    allowReorder: optional(boolean()),
     allowDrop: optional(boolean()),
     allowDropHeader: optional(boolean()),
     allowDropLeft: optional(boolean()),
@@ -291,7 +293,9 @@ export const workspaceDefinitionDecoder: Decoder<Glue42Workspaces.WorkspaceDefin
         allowDropRight: optional(boolean()),
         allowDropBottom: optional(boolean()),
         allowExtract: optional(boolean()),
+        allowWindowReorder: optional(boolean()),
         showSaveButton: optional(boolean()),
+        allowWorkspaceTabReorder: optional(boolean()),
         allowWorkspaceTabExtract: optional(boolean()),
         showCloseButton: optional(boolean()),
         allowSplitters: optional(boolean()),
@@ -421,9 +425,11 @@ export const workspaceConfigResultDecoder: Decoder<WorkspaceConfigResult> = obje
     isSelected: optional(boolean()),
     allowDrop: optional(boolean()),
     allowExtract: optional(boolean()),
+    allowWindowReorder: optional(boolean()),
     allowSplitters: optional(boolean()),
     showCloseButton: optional(boolean()),
     showSaveButton: optional(boolean()),
+    allowWorkspaceTabReorder: optional(boolean()),
     allowWorkspaceTabExtract: optional(boolean()),
     allowDropLeft: optional(boolean()),
     allowDropTop: optional(boolean()),
@@ -464,6 +470,7 @@ export const swimlaneWindowSnapshotConfigDecoder: Decoder<SwimlaneWindowSnapshot
         title: optional(string()),
         appName: optional(nonEmptyStringDecoder),
         allowExtract: optional(boolean()),
+        allowReorder: optional(boolean()),
         showCloseButton: optional(boolean()),
         minWidth: optional(number()),
         minHeight: optional(number()),
@@ -515,6 +522,7 @@ export const windowLayoutItemDecoder: Decoder<Glue42Workspaces.WindowLayoutItem>
         url: optional(nonEmptyStringDecoder),
         title: optional(string()),
         allowExtract: optional(boolean()),
+        allowReorder: optional(boolean()),
         showCloseButton: optional(boolean()),
         minWidth: optional(number()),
         minHeight: optional(number()),
@@ -768,9 +776,11 @@ export const workspaceLockConfigDecoder: Decoder<Glue42Workspaces.WorkspaceLockC
     allowDropRight: optional(boolean()),
     allowDropBottom: optional(boolean()),
     allowExtract: optional(boolean()),
+    allowWindowReorder: optional(boolean()),
     allowSplitters: optional(boolean()),
     showCloseButton: optional(boolean()),
     showSaveButton: optional(boolean()),
+    allowWorkspaceTabReorder: optional(boolean()),
     allowWorkspaceTabExtract: optional(boolean()),
     showWindowCloseButtons: optional(boolean()),
     showAddWindowButtons: optional(boolean()),
@@ -784,6 +794,7 @@ export const lockWorkspaceDecoder: Decoder<LockWorkspaceConfig> = object({
 
 export const windowLockConfigDecoder: Decoder<Glue42Workspaces.WorkspaceWindowLockConfig> = object({
     allowExtract: optional(boolean()),
+    allowReorder: optional(boolean()),
     showCloseButton: optional(boolean())
 });
 
@@ -809,6 +820,7 @@ export const columnLockConfigDecoder: Decoder<Glue42Workspaces.ColumnLockConfig>
 
 export const groupLockConfigDecoder: Decoder<Glue42Workspaces.GroupLockConfig> = object({
     allowExtract: optional(boolean()),
+    allowReorder: optional(boolean()),
     allowDrop: optional(boolean()),
     allowDropLeft: optional(boolean()),
     allowDropRight: optional(boolean()),

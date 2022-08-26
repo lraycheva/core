@@ -432,7 +432,7 @@ describe("lock()", () => {
         //allowDropBottom:false,
         //allowDropHeader:true
 
-        ["allowExtract", "allowDrop", "showMaximizeButton",
+        ["allowExtract", "allowReorder", "allowDrop", "showMaximizeButton",
             "showAddWindowButton", "showEjectButton", "allowDropLeft",
             "allowDropRight", "allowDropTop", "allowDropBottom", "allowDropHeader"
         ].forEach((propertyUnderTest) => {
@@ -501,6 +501,19 @@ describe("lock()", () => {
 
             immediateChildren.forEach((ic) => {
                 expect(ic.allowExtract).to.eql(false);
+            });
+        });
+
+        it("set allowReorder to false of all its children when invoked without arguments and the container is a group", async () => {
+            const group = workspace.getAllGroups()[0];
+
+            await group.lock();
+
+            await workspace.refreshReference();
+            const immediateChildren = group.children;
+
+            immediateChildren.forEach((ic) => {
+                expect(ic.allowReorder).to.eql(false);
             });
         });
 

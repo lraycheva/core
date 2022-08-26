@@ -1,3 +1,5 @@
+2.3.3
+feat: allowReorder support
 2.3.2
 fix: reorder improvements
 2.3.1

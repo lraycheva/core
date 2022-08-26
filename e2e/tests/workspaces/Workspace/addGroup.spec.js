@@ -146,6 +146,48 @@ describe('addGroup() Should ', function () {
         });
     });
 
+    it("add group with allowReorder false when the workspace has been locked", async () => {
+        await workspace.lock();
+        const group = await workspace.addGroup({
+            children: [
+                {
+                    type: "window",
+                    appName: "noGlueApp"
+                },
+                {
+                    type: "window",
+                    appName: "noGlueApp"
+                }
+            ]
+        });
+
+        await workspace.refreshReference();
+
+        expect(group.allowReorder).to.be.false;
+    });
+
+    it("add a window in a group with allowReorder false when the workspace has been locked", async () => {
+        await workspace.lock();
+        const group = await workspace.addGroup({
+            children: [
+                {
+                    type: "window",
+                    appName: "noGlueApp"
+                },
+                {
+                    type: "window",
+                    appName: "noGlueApp"
+                }
+            ]
+        });
+
+        await workspace.refreshReference();
+
+        group.children.forEach((w) => {
+            expect(w.allowReorder).to.be.false;
+        });
+    });
+
     it("add the group and set the constraints when the group has constraints", async () => {
         const group = await workspace.addGroup({
             children: [

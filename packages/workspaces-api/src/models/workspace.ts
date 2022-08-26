@@ -94,12 +94,20 @@ export class Workspace implements Glue42Workspaces.Workspace {
         return getData(this).config.allowExtract;
     }
 
+    public get allowWindowReorder(): boolean {
+        return getData(this).config.allowWindowReorder;
+    }
+
     public get showCloseButton(): boolean {
         return getData(this).config.showCloseButton;
     }
 
     public get showSaveButton(): boolean {
         return getData(this).config.showSaveButton;
+    }
+
+    public get allowWorkspaceTabReorder(): boolean {
+        return getData(this).config.allowWorkspaceTabReorder;
     }
 
     public get allowWorkspaceTabExtract(): boolean {
@@ -396,9 +404,11 @@ export class Workspace implements Glue42Workspaces.Workspace {
                 allowDropRight: this.allowDropRight,
                 allowDropBottom: this.allowDropBottom,
                 allowExtract: this.allowExtract,
+                allowWindowReorder: this.allowWindowReorder,
                 allowSplitters: this.allowSplitters,
                 showCloseButton: this.showCloseButton,
                 showSaveButton: this.showSaveButton,
+                allowWorkspaceTabReorder: this.allowWorkspaceTabReorder,
                 allowWorkspaceTabExtract: this.allowWorkspaceTabExtract,
                 showAddWindowButtons: this.showAddWindowButtons,
                 showEjectButtons: this.showEjectButtons,

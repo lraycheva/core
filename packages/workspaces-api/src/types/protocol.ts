@@ -32,8 +32,10 @@ export interface WorkspaceConfigResult {
     allowDropRight?: boolean;
     allowDropBottom?: boolean;
     allowExtract?: boolean;
+    allowWindowReorder?: boolean;
     showCloseButton?: boolean;
     showSaveButton?: boolean;
+    allowWorkspaceTabReorder?: boolean;
     allowWorkspaceTabExtract?: boolean;
     minWidth?: number;
     maxWidth?: number;
@@ -91,6 +93,7 @@ export interface GroupSnapshotConfig extends BaseChildSnapshotConfig {
     allowDropBottom?: boolean;
     allowDropHeader?: boolean;
     allowExtract?: boolean;
+    allowReorder?: boolean;
     showMaximizeButton?: boolean;
     showEjectButton?: boolean;
     showAddWindowButton?: boolean;
@@ -106,6 +109,7 @@ export interface SwimlaneWindowSnapshotConfig extends BaseChildSnapshotConfig {
     appName?: string;
     title?: string;
     allowExtract?: boolean;
+    allowReorder?: boolean;
     showCloseButton?: boolean;
     widthInPx?: number;
     heightInPx?: number;
@@ -333,6 +337,7 @@ export interface LockWindowConfig {
     windowPlacementId: string;
     config?: {
         allowExtract?: boolean;
+        allowReorder?: boolean;
         showCloseButton?: boolean;
     };
 }
@@ -360,6 +365,7 @@ export interface LockGroupConfig {
     type: "group";
     config?: {
         allowExtract?: boolean;
+        allowReorder?: boolean;
         allowDrop?: boolean;
         allowDropLeft?: boolean;
         allowDropRight?: boolean;
@@ -383,9 +389,11 @@ export interface LockWorkspaceConfig {
         allowDropRight?: boolean;
         allowDropBottom?: boolean;
         allowExtract?: boolean;
+        allowWindowReorder?: boolean;
         allowSplitters?: boolean;
         showCloseButton?: boolean;
         showSaveButton?: boolean;
+        allowWorkspaceTabReorder?: boolean;
         allowWorkspaceTabExtract?: boolean;
     };
 }

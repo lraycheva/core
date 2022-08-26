@@ -1,4 +1,5 @@
 1.16.1
+feat: added support for allowReorder, allowWindowReorder and allowWorkspaceTabReorder
 feat: added frameBounds to the data provided to workspace and frame closed events
 1.16.0
 feat: added support for allowWorkspaceTabExtract

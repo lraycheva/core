@@ -591,9 +591,11 @@ export class WorkspacesManager {
                 allowDropRight: false,
                 allowDropBottom: false,
                 allowExtract: false,
+                allowWindowReorder: false,
                 allowSplitters: false,
                 showCloseButton: false,
                 showSaveButton: false,
+                allowWorkspaceTabReorder: false,
                 showWindowCloseButtons: false,
                 showEjectButtons: false,
                 showAddWindowButtons: false
@@ -614,7 +616,7 @@ export class WorkspacesManager {
             lockConfig.config.allowDropBottom = lockConfig.config.allowDropBottom ?? lockConfig.config.allowDrop;
         }
 
-        const { allowDrop, allowExtract, allowSplitters, showCloseButton, showSaveButton, showAddWindowButtons, showWindowCloseButtons, showEjectButtons } = lockConfig.config;
+        const { allowDrop, allowExtract, allowWindowReorder, allowSplitters, showCloseButton, showSaveButton, allowWorkspaceTabReorder, showAddWindowButtons, showWindowCloseButtons, showEjectButtons } = lockConfig.config;
         const { workspaceId } = lockConfig;
 
         if (allowDrop === false) {
@@ -627,6 +629,12 @@ export class WorkspacesManager {
             this._controller.disableWorkspaceExtract(workspaceId);
         } else {
             this._controller.enableWorkspaceExtract(workspaceId);
+        }
+
+        if (allowWindowReorder === false) {
+            this._controller.disableWorkspaceWindowReorder(workspaceId);
+        } else {
+            this._controller.enableWorkspaceWindowReorder(workspaceId);
         }
 
         if (allowSplitters === false) {
@@ -645,6 +653,12 @@ export class WorkspacesManager {
             this._controller.disableWorkspaceSaveButton(workspaceId);
         } else {
             this._controller.enableWorkspaceSaveButton(workspaceId);
+        }
+
+        if (allowWorkspaceTabReorder === false) {
+            this._controller.disableWorkspaceReorder(workspaceId);
+        } else {
+            this._controller.enableWorkspaceReorder(workspaceId);
         }
 
         if (showAddWindowButtons === false) {
@@ -686,6 +700,7 @@ export class WorkspacesManager {
                 allowDropTop: false,
                 allowDropBottom: false,
                 allowExtract: false,
+                allowReorder: false,
                 showAddWindowButton: false,
                 showEjectButton: false,
                 showMaximizeButton: false
@@ -724,6 +739,7 @@ export class WorkspacesManager {
         if (!lockConfig.config) {
             lockConfig.config = {
                 allowExtract: false,
+                allowReorder: false,
                 showCloseButton: false,
             };
         }
@@ -735,13 +751,19 @@ export class WorkspacesManager {
             }
         });
 
-        const { allowExtract, showCloseButton } = lockConfig.config;
+        const { allowExtract, allowReorder, showCloseButton } = lockConfig.config;
         const { windowPlacementId } = lockConfig;
 
         if (allowExtract === false) {
             this._controller.disableWindowExtract(windowPlacementId);
         } else {
             this._controller.enableWindowExtract(windowPlacementId, allowExtract);
+        }
+
+        if (allowReorder === false) {
+            this._controller.disableWindowReorder(windowPlacementId);
+        } else {
+            this._controller.enableWindowReorder(windowPlacementId, allowReorder);
         }
 
         if (showCloseButton === false) {
@@ -1528,11 +1550,17 @@ export class WorkspacesManager {
     }
 
     private handleGroupLockRequested(data: LockGroupArguments): void {
-        const { allowExtract, showAddWindowButton, showEjectButton, showMaximizeButton, allowDrop } = data.config;
+        const { allowExtract, allowReorder, showAddWindowButton, showEjectButton, showMaximizeButton, allowDrop } = data.config;
         if (allowExtract === false) {
             this._controller.disableGroupExtract(data.itemId);
         } else {
             this._controller.enableGroupExtract(data.itemId, allowExtract);
+        }
+
+        if (allowReorder === false) {
+            this._controller.disableGroupReorder(data.itemId);
+        } else {
+            this._controller.enableGroupReorder(data.itemId, allowReorder);
         }
 
         if (showAddWindowButton === false) {

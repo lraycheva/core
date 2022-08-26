@@ -626,6 +626,7 @@ describe("addGroup() Should", () => {
             config: {
                 allowDrop: false,
                 allowExtract: false,
+                allowReorder: false,
                 showMaximizeButton: false,
                 showEjectButton: false,
                 showAddWindowButton: false,
@@ -641,6 +642,7 @@ describe("addGroup() Should", () => {
         expect(group.allowDropRight).to.be.false;
         expect(group.allowDropBottom).to.be.false;
         expect(group.allowExtract).to.be.false;
+        expect(group.allowReorder).to.be.false;
         expect(group.showMaximizeButton).to.be.false;
         expect(group.showEjectButton).to.be.false;
     });
@@ -754,6 +756,7 @@ describe("addGroup() Should", () => {
             config: {
                 allowDrop: false,
                 allowExtract: false,
+                allowReorder:false,
                 showMaximizeButton: false,
                 showEjectButton: false,
                 showAddWindowButton: false,
@@ -763,6 +766,7 @@ describe("addGroup() Should", () => {
         await workspace.refreshReference();
 
         expect(group.children[0].allowExtract).to.be.false;
+        expect(group.children[0].allowReorder).to.be.false;
     });
 
     it("add a locked group with unlocked children when the parent is an empty row, the group has constraints set and the children have overrides", async () => {
@@ -782,13 +786,15 @@ describe("addGroup() Should", () => {
                     type: "window",
                     appName: "noGlueApp",
                     config: {
-                        allowExtract: true
+                        allowExtract: true,
+                        allowReorder: true
                     }
                 }
             ],
             config: {
                 allowDrop: false,
                 allowExtract: false,
+                allowReorder: false,
                 showMaximizeButton: false,
                 showEjectButton: false,
                 showAddWindowButton: false,
@@ -798,6 +804,8 @@ describe("addGroup() Should", () => {
         await workspace.refreshReference();
 
         expect(group.children[0].allowExtract).to.be.true;
+        expect(group.children[0].allowReorder).to.be.true;
+
     });
 
     it("add a locked group when the parent is a row and the group has constraints set", async () => {
@@ -833,6 +841,7 @@ describe("addGroup() Should", () => {
             config: {
                 allowDrop: false,
                 allowExtract: false,
+                allowReorder: false,
                 showMaximizeButton: false,
                 showEjectButton: false,
                 showAddWindowButton: false,
@@ -848,6 +857,7 @@ describe("addGroup() Should", () => {
         expect(group.allowDropRight).to.be.false;
         expect(group.allowDropBottom).to.be.false;
         expect(group.allowExtract).to.be.false;
+        expect(group.allowReorder).to.be.false;
         expect(group.showMaximizeButton).to.be.false;
         expect(group.showEjectButton).to.be.false;
     });
@@ -887,6 +897,7 @@ describe("addGroup() Should", () => {
             config: {
                 allowDrop: false,
                 allowExtract: false,
+                allowReorder: false,
                 showMaximizeButton: false,
                 showEjectButton: false,
                 showAddWindowButton: false,
@@ -896,6 +907,7 @@ describe("addGroup() Should", () => {
         await workspace.refreshReference();
 
         expect(group.children[0].allowExtract).to.be.false;
+        expect(group.children[0].allowReorder).to.be.false;
     });
 
     it("add a locked group with unlocked children when the parent is a row, the group has constraints set and the children have overrides", async () => {
@@ -925,13 +937,15 @@ describe("addGroup() Should", () => {
                     type: "window",
                     appName: "noGlueApp",
                     config: {
-                        allowExtract: true
+                        allowExtract: true,
+                        allowReorder: true
                     }
                 }
             ],
             config: {
                 allowDrop: false,
                 allowExtract: false,
+                allowReorder: false,
                 showMaximizeButton: false,
                 showEjectButton: false,
                 showAddWindowButton: false,
@@ -941,6 +955,8 @@ describe("addGroup() Should", () => {
         await workspace.refreshReference();
 
         expect(group.children[0].allowExtract).to.be.true;
+        expect(group.children[0].allowReorder).to.be.true;
+
     });
 
     it("preserve the placeholder element when the group with a window is added to a parent element of the placeholder and the parent is a row", async () => {

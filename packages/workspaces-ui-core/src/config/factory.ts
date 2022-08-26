@@ -42,6 +42,7 @@ export class WorkspacesConfigurationFactory {
         const baseConfiguration = this.createWindowConfigurationCore(args.id);
         const workspacesConfig = {
             allowExtract: args.allowExtract,
+            allowReorder: args.allowReorder,
             showCloseButton: args.showCloseButton,
             minWidth: args.minWidth,
             minHeight: args.minHeight,
@@ -85,6 +86,7 @@ export class WorkspacesConfigurationFactory {
                 frameId: args.frameId,
                 positionIndex: args.positionIndex,
                 allowExtract: args.allowExtract,
+                allowReorder: args.allowReorder,
                 showCloseButton: args.showCloseButton,
                 minWidth: args.minWidth,
                 maxWidth: args.maxWidth,

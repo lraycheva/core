@@ -92,8 +92,10 @@ export class WorkspaceWrapper {
         glConfig.workspacesOptions.allowDropRight = this.allowDropRight;
         glConfig.workspacesOptions.allowDropBottom = this.allowDropBottom;
         glConfig.workspacesOptions.allowExtract = this.allowExtract;
+        glConfig.workspacesOptions.allowWindowReorder =  this.allowWindowReorder;
         glConfig.workspacesOptions.showCloseButton = this.showCloseButton;
         glConfig.workspacesOptions.showSaveButton = this.showSaveButton;
+        glConfig.workspacesOptions.allowWorkspaceTabReorder = this.allowWorkspaceTabReorder;
         glConfig.workspacesOptions.allowSplitters = this.allowSplitters;
         glConfig.workspacesOptions.showAddWindowButtons = this.showAddWindowButtons;
         glConfig.workspacesOptions.showEjectButtons = this.showEjectButtons;
@@ -139,9 +141,11 @@ export class WorkspaceWrapper {
             allowDropRight: this.allowDropRight,
             allowDropBottom: this.allowDropBottom,
             allowExtract: this.allowExtract,
+            allowWindowReorder: this.allowWindowReorder,
             allowSplitters: this.allowSplitters,
             showCloseButton: this.showCloseButton,
             showSaveButton: this.showSaveButton,
+            allowWorkspaceTabReorder: this.allowWorkspaceTabReorder,
             showAddWindowButtons: this.showAddWindowButtons,
             showEjectButtons: this.showEjectButtons,
             showWindowCloseButtons: this.showWindowCloseButtons,
@@ -237,6 +241,19 @@ export class WorkspaceWrapper {
         this.populateChildrenAllowExtract(value);
     }
 
+    public get allowWindowReorder(): boolean {
+        return this.getPropertyFromConfig("allowWindowReorder") ?? true;
+    }
+
+    public set allowWindowReorder(value: boolean) {
+        if (this.workspace?.layout) {
+            this.workspace.layout.config.workspacesOptions.allowWindowReorder = value;
+        }
+        this.workspaceContentItem.config.workspacesConfig.allowWindowReorder = value;
+
+        this.populateChildrenAllowReorder(value);
+    }
+
     public get allowSplitters(): boolean {
         return this.getPropertyFromConfig("allowSplitters") ?? true;
     }
@@ -260,6 +277,17 @@ export class WorkspaceWrapper {
         this.workspaceContentItem.config.workspacesConfig.showSaveButton = value;
 
         componentStateMonitor.decoratedFactory.updateWorkspaceTabs({ workspaceId: this.workspace.id, showSaveButton: value });
+    }
+
+    public get allowWorkspaceTabReorder(): boolean {
+        return this.getPropertyFromConfig("allowWorkspaceTabReorder") ?? true;
+    }
+
+    public set allowWorkspaceTabReorder(value: boolean) {
+        if (this.workspace?.layout) {
+            this.workspace.layout.config.workspacesOptions.allowWorkspaceTabReorder = value;
+        }
+        this.workspaceContentItem.config.workspacesConfig.allowWorkspaceTabReorder = value;
     }
 
     public get showCloseButton(): boolean {
@@ -483,6 +511,36 @@ export class WorkspaceWrapper {
             if (item.type === "stack") {
                 const containerWrapper = new WorkspaceContainerWrapper(this.stateResolver, item, this.frameId, this.workspace.id);
                 containerWrapper.allowExtract = value;
+            }
+
+            item.contentItems.forEach((ci) => {
+                populateRecursive(ci);
+            });
+        };
+
+        layout.root.contentItems.forEach((ci) => {
+            populateRecursive(ci);
+        });
+    }
+
+    private populateChildrenAllowReorder(value?: boolean): void {
+        const { layout } = this.workspace;
+
+        if (!layout) {
+            return;
+        }
+
+        const populateRecursive = (item: GoldenLayout.ContentItem): void => {
+            if (item.type === "component") {
+                const windowWrapper = new WorkspaceWindowWrapper(this.stateResolver, item, this.frameId);
+
+                windowWrapper.allowReorder = value;
+                return;
+            }
+
+            if (item.type === "stack") {
+                const containerWrapper = new WorkspaceContainerWrapper(this.stateResolver, item, this.frameId, this.workspace.id);
+                containerWrapper.allowReorder = value;
             }
 
             item.contentItems.forEach((ci) => {

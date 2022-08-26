@@ -489,6 +489,7 @@ describe("addWindow() Should", () => {
                 appName: "noGlueApp",
                 config: {
                     allowExtract: false,
+                    allowReorder: false,
                     showCloseButton: false
                 }
             });
@@ -496,6 +497,7 @@ describe("addWindow() Should", () => {
             await secondWorkspace.refreshReference();
 
             expect(window.allowExtract).to.be.false;
+            expect(window.allowReorder).to.be.false;
             expect(window.showCloseButton).to.be.false;
         });
 
@@ -514,6 +516,7 @@ describe("addWindow() Should", () => {
                 appName: "noGlueApp",
                 config: {
                     allowExtract: false,
+                    allowReorder: false,
                     showCloseButton: false
                 }
             });
@@ -521,6 +524,7 @@ describe("addWindow() Should", () => {
             await secondWorkspace.refreshReference();
 
             expect(window.allowExtract).to.be.false;
+            expect(window.allowReorder).to.be.false;
             expect(window.showCloseButton).to.be.false;
         });
 
@@ -542,6 +546,7 @@ describe("addWindow() Should", () => {
                 appName: "noGlueApp",
                 config: {
                     allowExtract: false,
+                    allowReorder: false,
                     showCloseButton: false
                 }
             });
@@ -549,6 +554,7 @@ describe("addWindow() Should", () => {
             await secondWorkspace.refreshReference();
 
             expect(window.allowExtract).to.be.false;
+            expect(window.allowReorder).to.be.false;
             expect(window.showCloseButton).to.be.false;
         });
 
@@ -567,6 +573,7 @@ describe("addWindow() Should", () => {
                 appName: "noGlueApp",
                 config: {
                     allowExtract: false,
+                    allowReorder: false,
                     showCloseButton: false
                 }
             });
@@ -574,6 +581,7 @@ describe("addWindow() Should", () => {
             await secondWorkspace.refreshReference();
 
             expect(window.allowExtract).to.be.false;
+            expect(window.allowReorder).to.be.false;
             expect(window.showCloseButton).to.be.false;
         });
 

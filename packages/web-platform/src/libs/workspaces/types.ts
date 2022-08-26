@@ -112,9 +112,11 @@ export interface WorkspaceConfigResult {
     lastActive: number;
     allowDrop?: boolean;
     allowExtract?: boolean;
+    allowWindowReorder?: boolean;
     allowSplitters?: boolean;
     showCloseButton?: boolean;
     showSaveButton?: boolean;
+    allowWorkspaceTabReorder?: boolean;
     allowDropLeft?: boolean;
     allowDropTop?: boolean;
     allowDropRight?: boolean;
@@ -362,6 +364,7 @@ export interface LockWindowConfig {
     windowPlacementId: string;
     config?: {
         allowExtract?: boolean;
+        allowReorder?: boolean;
         showCloseButton?: boolean;
     };
 }
@@ -389,6 +392,7 @@ export interface LockGroupConfig {
     type: "group";
     config?: {
         allowExtract?: boolean;
+        allowReorder?: boolean;
         allowDrop?: boolean;
         allowDropHeader?: boolean;
         allowDropLeft?: boolean;
@@ -412,9 +416,11 @@ export interface LockWorkspaceConfig {
         allowDropRight?: boolean;
         allowDropBottom?: boolean;
         allowExtract?: boolean;
+        allowWindowReorder?: boolean;
         allowSplitters?: boolean;
         showCloseButton?: boolean;
         showSaveButton?: boolean;
+        allowWorkspaceTabReorder?: boolean;
         showAddWindowButtons?: boolean;
         showWindowCloseButtons?: boolean;
         showEjectButtons?: boolean;
@@ -427,6 +433,7 @@ export interface GroupDefinitionConfig {
     minHeight?: number;
     maxHeight?: number;
     allowExtract?: boolean;
+    allowReorder?: boolean;
     showMaximizeButton?: boolean;
     showEjectButton?: boolean;
     allowDrop?: boolean;

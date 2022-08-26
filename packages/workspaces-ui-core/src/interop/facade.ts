@@ -364,6 +364,7 @@ export class GlueFacade {
             url: operationArguments.definition.url,
             context: operationArguments.definition.context,
             allowExtract: operationArguments.definition.config?.allowExtract,
+            allowReorder: operationArguments.definition.config?.allowReorder,
             showCloseButton: operationArguments.definition.config?.showCloseButton,
             minWidth: operationArguments.definition.config?.minWidth,
             maxWidth: operationArguments.definition.config?.maxWidth,

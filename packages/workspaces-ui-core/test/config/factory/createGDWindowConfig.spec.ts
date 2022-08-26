@@ -8,6 +8,7 @@ describe("createGDWindowConfig() Should", () => {
     const mockUrl = "mockUrl";
     const mockId = "mockId";
     const mockAllowExtract = true;
+    const mockAllowReorder = true;
     const mockShowCloseButton = true;
     const mockMinWidth = 0;
     const mockMinHeight = 0;
@@ -33,6 +34,7 @@ describe("createGDWindowConfig() Should", () => {
             url: mockUrl,
             id: mockId,
             allowExtract: mockAllowExtract,
+            allowReorder: mockAllowReorder,
             showCloseButton: mockShowCloseButton,
             minWidth: mockMinWidth,
             maxWidth: mockMaxWidth,
@@ -50,6 +52,7 @@ describe("createGDWindowConfig() Should", () => {
             url: mockUrl,
             id: mockId,
             allowExtract: mockAllowExtract,
+            allowReorder: mockAllowReorder,
             showCloseButton: mockShowCloseButton,
             minWidth: mockMinWidth,
             maxWidth: mockMaxWidth,
@@ -67,6 +70,7 @@ describe("createGDWindowConfig() Should", () => {
             url: mockUrl,
             id: mockId,
             allowExtract: mockAllowExtract,
+            allowReorder: mockAllowReorder,
             showCloseButton: mockShowCloseButton,
             minWidth: mockMinWidth,
             maxWidth: mockMaxWidth,
@@ -84,6 +88,7 @@ describe("createGDWindowConfig() Should", () => {
             url: mockUrl,
             id: mockId,
             allowExtract: mockAllowExtract,
+            allowReorder: mockAllowReorder,
             showCloseButton: mockShowCloseButton,
             minWidth: mockMinWidth,
             maxWidth: mockMaxWidth,
@@ -101,6 +106,7 @@ describe("createGDWindowConfig() Should", () => {
             url: mockUrl,
             id: mockId,
             allowExtract: mockAllowExtract,
+            allowReorder: mockAllowReorder,
             showCloseButton: mockShowCloseButton,
             minWidth: mockMinWidth,
             maxWidth: mockMaxWidth,
@@ -117,6 +123,7 @@ describe("createGDWindowConfig() Should", () => {
             appName: mockAppName,
             url: mockUrl,
             allowExtract: mockAllowExtract,
+            allowReorder: mockAllowReorder,
             showCloseButton: mockShowCloseButton,
             minWidth: mockMinWidth,
             maxWidth: mockMaxWidth,
@@ -135,6 +142,7 @@ describe("createGDWindowConfig() Should", () => {
             appName: mockAppName,
             url: mockUrl,
             allowExtract: mockAllowExtract,
+            allowReorder: mockAllowReorder,
             showCloseButton: mockShowCloseButton,
             minWidth: mockMinWidth,
             maxWidth: mockMaxWidth,
@@ -147,6 +155,7 @@ describe("createGDWindowConfig() Should", () => {
             appName: mockAppName,
             url: mockUrl,
             allowExtract: mockAllowExtract,
+            allowReorder: mockAllowReorder,
             showCloseButton: mockShowCloseButton,
             minWidth: mockMinWidth,
             maxWidth: mockMaxWidth,

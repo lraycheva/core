@@ -90,6 +90,7 @@ export class ConfigConverter {
             glConfig.workspacesConfig.allowDropTop = config.config?.allowDropTop;
             glConfig.workspacesConfig.allowDropBottom = config.config?.allowDropBottom;
             glConfig.workspacesConfig.allowExtract = config.config?.allowExtract;
+            glConfig.workspacesConfig.allowReorder = config.config?.allowReorder;
             glConfig.workspacesConfig.showMaximizeButton = config.config?.showMaximizeButton;
             glConfig.workspacesConfig.showEjectButton = config.config?.showEjectButton;
             glConfig.workspacesConfig.showAddWindowButton = config.config?.showAddWindowButton;
@@ -119,6 +120,7 @@ export class ConfigConverter {
                 title: config.config?.title || (config as any).title,
                 context: config.config?.context || (config as any).context,
                 allowExtract: config?.config?.allowExtract ?? (config as any).allowExtract,
+                allowReorder: config?.config?.allowReorder ?? (config as any).allowReorder,
                 showCloseButton: config?.config?.showCloseButton ?? (config as any).showCloseButton,
                 minWidth: config?.config?.minWidth ?? (config as any).minWidth,
                 maxWidth: config?.config?.maxWidth ?? (config as any).maxWidth,
@@ -131,7 +133,7 @@ export class ConfigConverter {
 
             if (parent.type !== "group") {
                 resultWindow.componentState.header = false;
-                const group =  this.wrap([resultWindow], "stack");
+                const group = this.wrap([resultWindow], "stack");
                 group.width = config?.config?.width ?? (config as any).width;
                 group.height = config?.config?.height ?? (config as any).height;
                 return group;
@@ -154,7 +156,7 @@ export class ConfigConverter {
         if (config.type === "component" && config.componentName === EmptyVisibleWindowName) {
             return [];
         } else if (config.type !== "component" && config.workspacesConfig && config.workspacesConfig.wrapper) {
-            const items =  this.flat(config.content.map((c) => this.convertToApiConfigCore(c)));
+            const items = this.flat(config.content.map((c) => this.convertToApiConfigCore(c)));
             items.forEach((i: any) => {
                 i.config.width = (config as GoldenLayout.ItemConfig).width;
                 i.config.height = (config as GoldenLayout.ItemConfig).height;
@@ -175,6 +177,7 @@ export class ConfigConverter {
                 title: wspsConfig.title,
                 positionIndex: wspsConfig.positionIndex,
                 allowExtract: wspsConfig.allowExtract,
+                allowReorder: wspsConfig.allowReorder,
                 showCloseButton: wspsConfig.showCloseButton,
                 maxHeight: wspsConfig.maxHeight,
                 maxWidth: wspsConfig.maxWidth,
@@ -206,6 +209,7 @@ export class ConfigConverter {
                 allowDropBottom: configAsAny.workspacesConfig?.allowDropBottom,
                 isPinned: configAsAny.workspacesConfig?.isPinned,
                 allowExtract: configAsAny.workspacesConfig?.allowExtract,
+                allowReorder: configAsAny.workspacesConfig?.allowReorder,
                 showMaximizeButton: configAsAny.workspacesConfig?.showMaximizeButton,
                 showEjectButton: configAsAny.workspacesConfig?.showEjectButton,
                 showAddWindowButton: configAsAny.workspacesConfig?.showAddWindowButton,
@@ -223,6 +227,7 @@ export class ConfigConverter {
 
         if (containerResult.type !== "group") {
             delete containerResult.config.allowExtract;
+            delete containerResult.config.allowReorder;
             delete containerResult.config.allowDropHeader;
             delete containerResult.config.allowDropLeft;
             delete containerResult.config.allowDropTop;

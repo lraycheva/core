@@ -147,6 +147,7 @@ describe("convertToRendererConfig() Should", () => {
                                 title: undefined,
                                 workspacesConfig: {
                                     allowExtract: undefined,
+                                    allowReorder: undefined,
                                     showCloseButton: undefined,
                                     noAppWindowState: undefined,
                                     minWidth: undefined,
@@ -184,6 +185,7 @@ describe("convertToRendererConfig() Should", () => {
                                 title: undefined,
                                 workspacesConfig: {
                                     allowExtract: undefined,
+                                    allowReorder: undefined,
                                     showCloseButton: undefined,
                                     noAppWindowState: undefined,
                                     minWidth: undefined,
@@ -221,6 +223,7 @@ describe("convertToRendererConfig() Should", () => {
                                 title: undefined,
                                 workspacesConfig: {
                                     allowExtract: undefined,
+                                    allowReorder: undefined,
                                     showCloseButton: undefined,
                                     noAppWindowState: undefined,
                                     minWidth: undefined,
@@ -429,6 +432,7 @@ describe("convertToRendererConfig() Should", () => {
                     allowDropRight: undefined,
                     allowDropBottom: undefined,
                     allowExtract: undefined,
+                    allowReorder: undefined,
                     showEjectButton: undefined,
                     showMaximizeButton: undefined,
                     showAddWindowButton: undefined,
@@ -502,6 +506,7 @@ describe("convertToRendererConfig() Should", () => {
                 allowDropRight: undefined,
                 allowDropBottom: undefined,
                 allowExtract: undefined,
+                allowReorder: undefined,
                 showEjectButton: undefined,
                 showMaximizeButton: undefined,
                 showAddWindowButton: undefined,
@@ -551,6 +556,7 @@ describe("convertToRendererConfig() Should", () => {
                     title: undefined,
                     workspacesConfig: {
                         allowExtract: undefined,
+                        allowReorder: undefined,
                         showCloseButton: undefined,
                         noAppWindowState: undefined,
                         minWidth: undefined,
@@ -576,6 +582,7 @@ describe("convertToRendererConfig() Should", () => {
                     windowId: undefined,
                     workspacesConfig: {
                         allowExtract: undefined,
+                        allowReorder: undefined,
                         showCloseButton: undefined,
                         noAppWindowState: undefined,
                         minWidth: undefined,
@@ -601,6 +608,7 @@ describe("convertToRendererConfig() Should", () => {
                     title: undefined,
                     workspacesConfig: {
                         allowExtract: undefined,
+                        allowReorder: undefined,
                         showCloseButton: undefined,
                         noAppWindowState: undefined,
                         minWidth: undefined,
@@ -620,6 +628,7 @@ describe("convertToRendererConfig() Should", () => {
                 allowDropRight: undefined,
                 allowDropBottom: undefined,
                 allowExtract: undefined,
+                allowReorder: undefined,
                 showEjectButton: undefined,
                 showMaximizeButton: undefined,
                 showAddWindowButton: undefined,
@@ -796,6 +805,7 @@ describe("convertToRendererConfig() Should", () => {
                 allowDropRight: undefined,
                 allowDropBottom: undefined,
                 allowExtract: undefined,
+                allowReorder: undefined,
                 showEjectButton: undefined,
                 showMaximizeButton: undefined,
                 showAddWindowButton: undefined,
@@ -886,6 +896,7 @@ describe("convertToRendererConfig() Should", () => {
                                         title: undefined,
                                         workspacesConfig: {
                                             allowExtract: undefined,
+                                            allowReorder: undefined,
                                             showCloseButton: undefined,
                                             noAppWindowState: undefined,
                                             minWidth: undefined,
@@ -905,6 +916,7 @@ describe("convertToRendererConfig() Should", () => {
                                     allowDropRight: undefined,
                                     allowDropBottom: undefined,
                                     allowExtract: undefined,
+                                    allowReorder: undefined,
                                     showEjectButton: undefined,
                                     showMaximizeButton: undefined,
                                     showAddWindowButton: undefined,
@@ -960,6 +972,7 @@ describe("convertToRendererConfig() Should", () => {
                                             title: undefined,
                                             workspacesConfig: {
                                                 allowExtract: undefined,
+                                                allowReorder: undefined,
                                                 showCloseButton: undefined,
                                                 noAppWindowState: undefined,
                                                 minWidth: undefined,
@@ -979,6 +992,7 @@ describe("convertToRendererConfig() Should", () => {
                                         allowDropRight: undefined,
                                         allowDropBottom: undefined,
                                         allowExtract: undefined,
+                                        allowReorder: undefined,
                                         showEjectButton: undefined,
                                         showMaximizeButton: undefined,
                                         showAddWindowButton: undefined,

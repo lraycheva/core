@@ -126,6 +126,8 @@ describe("init() Should ", () => {
         ["showSaveButton",
             "showCloseButton",
             "allowExtract",
+            "allowWindowReorder",
+            "allowWorkspaceTabReorder",
             "allowSplitters",
             "allowDropLeft",
             "allowDropTop",

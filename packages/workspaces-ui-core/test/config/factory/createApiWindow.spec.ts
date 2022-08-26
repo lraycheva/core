@@ -12,6 +12,7 @@ describe("createApiWindow() Should", () => {
     const mockPositionIndex = 0;
     const mockWorkspaceId = "mockWorkspaceId";
     const mockAllowExtract = true;
+    const mockAllowReorder = true;
     const mockShowCloseButton = true;
     const mockMinWidth = 0;
     const mockMinHeight = 0;
@@ -48,6 +49,7 @@ describe("createApiWindow() Should", () => {
                 title: mockTitle,
                 workspaceId: mockWorkspaceId,
                 allowExtract: mockAllowExtract,
+                allowReorder: mockAllowReorder,
                 showCloseButton: mockShowCloseButton,
                 minWidth: mockMinWidth,
                 maxWidth: mockMaxWidth,
@@ -70,6 +72,7 @@ describe("createApiWindow() Should", () => {
             title: mockTitle,
             workspaceId: mockWorkspaceId,
             allowExtract: mockAllowExtract,
+            allowReorder: mockAllowReorder,
             showCloseButton: mockShowCloseButton,
             minWidth: mockMinWidth,
             maxWidth: mockMaxWidth,
@@ -98,6 +101,7 @@ describe("createApiWindow() Should", () => {
                 title: mockTitle,
                 workspaceId: mockWorkspaceId,
                 allowExtract: mockAllowExtract,
+                allowReorder: mockAllowReorder,
                 showCloseButton: mockShowCloseButton,
                 minWidth: mockMinWidth,
                 maxWidth: mockMaxWidth,
@@ -120,6 +124,7 @@ describe("createApiWindow() Should", () => {
             title: mockTitle,
             workspaceId: mockWorkspaceId,
             allowExtract: mockAllowExtract,
+            allowReorder: mockAllowReorder,
             showCloseButton: mockShowCloseButton,
             minWidth: mockMinWidth,
             maxWidth: mockMaxWidth,
@@ -148,6 +153,7 @@ describe("createApiWindow() Should", () => {
                 title: mockTitle,
                 workspaceId: mockWorkspaceId,
                 allowExtract: mockAllowExtract,
+                allowReorder: mockAllowReorder,
                 showCloseButton: mockShowCloseButton,
                 minWidth: mockMinWidth,
                 maxWidth: mockMaxWidth,
@@ -170,6 +176,7 @@ describe("createApiWindow() Should", () => {
             title: mockTitle,
             workspaceId: mockWorkspaceId,
             allowExtract: mockAllowExtract,
+            allowReorder: mockAllowReorder,
             showCloseButton: mockShowCloseButton,
             minWidth: mockMinWidth,
             maxWidth: mockMaxWidth,

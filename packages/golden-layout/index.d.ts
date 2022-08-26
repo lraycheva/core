@@ -399,6 +399,16 @@ declare module '@glue42/golden-layout' {
             allowExtract?: boolean;
 
             /**
+             * Controls whether the window can be reordered
+             */
+            allowReorder?:boolean;
+
+            /**
+             * Controls whether the windows in the workspace can be reordered
+             */
+            allowWindowReorder?:boolean;
+
+            /**
            * Controls the visibility of the add window buttons in the group headers
            */
             showAddWindowButton?: boolean;
@@ -439,6 +449,11 @@ declare module '@glue42/golden-layout' {
           * Controls the visibility of the save button located in the workspace tab
           */
             showSaveButton?: boolean;
+
+            /**
+             * Controls whether the workspace tab can be reordered
+             */
+            allowWorkspaceTabReorder?: boolean;
             /**
              * Controls whether the workspace tab can be dragged out or not
              */
@@ -640,6 +655,11 @@ declare module '@glue42/golden-layout' {
           * Enables or disables the ability to drag windows out of the workspace
           */
             allowExtract?: boolean;
+
+            /**
+             * Enables or disables the ability to reorder windows in the workspace
+             */
+            allowWindowReorder?:boolean;
             /**
           * Constrols the visibility of the workspace close button located in the workspace tab
           */
@@ -648,6 +668,10 @@ declare module '@glue42/golden-layout' {
           * Controls the visibility of the save button located in the workspace tab
           */
             showSaveButton?: boolean;
+            /**
+             * Controls whether the workspace tab can be reordered or not
+             */
+            allowWorkspaceTabReorder?:boolean;
             /**
              * Controls whether the workspace tab can be dragged out or not
              */

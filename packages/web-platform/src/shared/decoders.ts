@@ -116,6 +116,7 @@ export const windowLayoutItemDecoder: Decoder<Glue42Workspaces.WindowLayoutItem>
         title: optional(string()),
         showCloseButton: optional(boolean()),
         allowExtract: optional(boolean()),
+        allowReorder: optional(boolean()),
         isMaximized: optional(boolean())
     })
 });

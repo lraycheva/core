@@ -71,7 +71,7 @@ describe("lock() Should", () => {
     // allowExtract?: boolean;
     // showCloseButton?: boolean;
 
-    ["allowExtract", "showCloseButton"].forEach((propertyUnderTest) => {
+    ["allowExtract", "allowReorder", "showCloseButton"].forEach((propertyUnderTest) => {
         it(`Should set ${propertyUnderTest} to false when invoked without arguments`, async () => {
             const window = workspace.getAllWindows()[0];
 
@@ -152,5 +152,31 @@ describe("lock() Should", () => {
         const otherWindow = parent.children.find(c => c.id !== window.id);
 
         expect(otherWindow.allowExtract).to.eql(false);
+    });
+
+    it("be able to override the parent allowReorder when the parent is disabled and the the window is explicitly set to to true", async () => {
+        const window = workspace.getAllWindows()[0];
+        const parent = window.parent;
+
+        await parent.lock();
+        await window.lock({ allowReorder: true });
+
+        await workspace.refreshReference();
+
+        expect(window.allowReorder).to.eql(true);
+    });
+
+    it("preserve the neighbouring windows value when overriding the allowReorder property of the parent", async () => {
+        const window = workspace.getAllWindows()[0];
+        const parent = window.parent;
+
+        await parent.lock();
+        await window.lock({ allowReorder: true });
+
+        await workspace.refreshReference();
+
+        const otherWindow = parent.children.find(c => c.id !== window.id);
+
+        expect(otherWindow.allowReorder).to.eql(false);
     });
 });

@@ -702,6 +702,8 @@ describe('restoreWorkspace() Should', function () {
 
             expect(restoredWorkspace.allowDrop).to.be.true;
             expect(restoredWorkspace.allowExtract).to.be.false;
+            expect(restoredWorkspace.allowWindowReorder).to.be.false;
+            expect(restoredWorkspace.allowWorkspaceTabReorder).to.be.false;
             expect(restoredWorkspace.showSaveButton).to.be.false;
             expect(restoredWorkspace.showCloseButton).to.be.false;
             expect(restoredWorkspace.allowSplitters).to.be.false;
@@ -724,6 +726,7 @@ describe('restoreWorkspace() Should', function () {
             restoredWorkspace.getAllGroups().forEach((g) => {
                 expect(g.allowDrop).to.be.false;
                 expect(g.allowExtract).to.be.false;
+                expect(g.allowReorder).to.be.false;
                 expect(g.showMaximizeButton).to.be.false;
                 expect(g.showEjectButton).to.be.false;
                 expect(g.showAddWindowButton).to.be.false;
@@ -784,6 +787,7 @@ describe('restoreWorkspace() Should', function () {
 
             restoredWorkspace.getAllWindows().forEach((w) => {
                 expect(w.allowExtract).to.be.false;
+                expect(w.allowReorder).to.be.false;
                 expect(w.showCloseButton).to.be.false;
             });
         });
@@ -805,12 +809,14 @@ describe('restoreWorkspace() Should', function () {
 
             expect(workspace.allowDrop).to.be.true;
             expect(workspace.allowExtract).to.be.false;
+            expect(workspace.allowWindowReorder).to.be.false;
 
             restoredWorkspace.getAllGroups().forEach((g) => {
                 expect(g.allowDrop).to.be.true;
                 expect(g.showMaximizeButton).to.be.true;
                 expect(g.showEjectButton).to.be.true;
                 expect(g.allowExtract).to.be.true;
+                expect(g.allowReorder).to.be.true;
                 expect(g.showAddWindowButton).to.be.true;
             });
         });
@@ -878,9 +884,11 @@ describe('restoreWorkspace() Should', function () {
 
             expect(workspace.allowDrop).to.be.true;
             expect(workspace.allowExtract).to.be.false;
+            expect(workspace.allowWindowReorder).to.be.false;
 
             restoredWorkspace.getAllWindows().forEach((w) => {
                 expect(w.allowExtract).to.be.true;
+                expect(w.allowReorder).to.be.true;
                 expect(w.showCloseButton).to.be.true;
             });
         });
@@ -902,10 +910,12 @@ describe('restoreWorkspace() Should', function () {
 
             restoredWorkspace.getAllGroups(g => {
                 expect(g.allowExtract).to.be.false;
+                expect(g.allowReorder).to.be.false;
             });
 
             restoredWorkspace.getAllWindows().forEach((w) => {
                 expect(w.allowExtract).to.be.true;
+                expect(w.allowReorder).to.be.true;
                 expect(w.showCloseButton).to.be.true;
             });
         });

@@ -275,8 +275,14 @@ export namespace Glue42Workspaces {
         /** Controls the users ability to extract windows from the workspace */
         allowExtract?: boolean;
 
+        /** Control the users ability to reorder windows in the workspace */
+        allowWindowReorder?: boolean;
+
         /** Controls the visibility of the save workspace button located in the workspace tab */
         showSaveButton?: boolean;
+
+        /** Controls whether a workspace tab can be reordered in the frame */
+        allowWorkspaceTabReorder?: boolean;
 
         /** Controls whether a workspace tab can be extracted from the frame (available only for Glue42 Enterprise) */
         allowWorkspaceTabExtract?: boolean;
@@ -340,13 +346,19 @@ export namespace Glue42Workspaces {
         /** Controls the ability of the users to extract (or rearrange) windows inside the workspace */
         allowExtract?: boolean;
 
+        /** Control the users ability to reorder windows in the workspace */
+        allowWindowReorder?: boolean;
+
         /** Controls the visibility of the close button located in the workspaces tab */
         showCloseButton?: boolean;
 
         /** Controls the visibility of the save workspace button located in the workspace tab */
         showSaveButton?: boolean;
 
-        /** Controls the visibility of the close button located in the workspaces tab (available only for Glue42 Enterprise) */
+        /** Controls the whether the workspace tab can be reordered */
+        allowWorkspaceTabReorder?: boolean;
+
+        /** Controls the whether the workspace tab can be extracted (available only for Glue42 Enterprise) */
         allowWorkspaceTabExtract?: boolean;
 
         /** Controls the visibility of all the add window buttons (the ones with the plus icon) located in the group headers */
@@ -364,6 +376,9 @@ export namespace Glue42Workspaces {
         /**  Blocks the users ability to extract the specified window */
         allowExtract?: boolean;
 
+        /** Blocks the users ability to reorder the specified window */
+        allowReorder?: boolean;
+
         /** Controls the visibility of the close button which is located in the window's tab */
         showCloseButton?: boolean;
     }
@@ -372,6 +387,9 @@ export namespace Glue42Workspaces {
     export interface GroupLockConfig {
         /**  Blocks the users ability to extract windows from the group */
         allowExtract?: boolean;
+
+        /** Blocks the ussers ability to reorder windows from the group */
+        allowReorder?: boolean;
 
         /** (Enterprise only) Controls the ability of the users to drop outside windows in the group */
         allowDrop?: boolean;
@@ -436,6 +454,9 @@ export namespace Glue42Workspaces {
         /**  Blocks the users ability to extract the specified window */
         allowExtract?: boolean;
 
+        /** Blocks the users ability to reorder the specified window */
+        allowReorder?: boolean;
+
         /** Controls the visibility of the close button which is located in the window's tab */
         showCloseButton?: boolean;
     }
@@ -456,6 +477,9 @@ export namespace Glue42Workspaces {
 
         /**  Blocks the users ability to extract windows from the group */
         allowExtract?: boolean;
+
+        /**  Blocks the users ability to reorder windows from the group */
+        allowReorder?: boolean;
 
         /** Controls the visibility of the maximize/restore button located in the group header */
         showMaximizeButton?: boolean;
@@ -719,12 +743,6 @@ export namespace Glue42Workspaces {
         minimize(): Promise<void>;
 
         /**
-         * Minimizes this frame.
-         * Not available in Glue42 Core
-         */
-        minimize(): Promise<void>;
-
-        /**
          * Maximizes this frame.
          * Not available in Glue42 Core
          */
@@ -880,14 +898,20 @@ export namespace Glue42Workspaces {
         /** Indicates if extracting windows from the workspace is allowed */
         allowExtract?: boolean;
 
+        /** Indicates if reordering windows in the workspace is allowed */
+        allowWindowReorder?: boolean;
+
         /** Indicates if the close button for this workspace is visible to the user */
         showCloseButton?: boolean;
 
         /** Indicates if the save button for this workspace is visible to the user */
         showSaveButton?: boolean;
 
-        /** Controls the visibility of the close button located in the workspaces tab (available only for Glue42 Enterprise) */
+        /** Controls whether the workspace tab can be extracted (available only for Glue42 Enterprise) */
         allowWorkspaceTabExtract?: boolean;
+
+        /** Controls whether the workspace tab can be reordered*/
+        allowWorkspaceTabReorder?: boolean;
 
         /** Returns the minimum width of the workspace, calculated by the constraints of all elements inside it */
         minWidth?: number;
@@ -1323,6 +1347,9 @@ export namespace Glue42Workspaces {
         /** Controls the users ability to extract windows from the group */
         allowExtract?: boolean;
 
+        /** Controls the users ability to reorder windows in the group */
+        allowReorder?: boolean;
+
         /** Controls the users ability to drop windows in the left zone of the group */
         allowDropLeft?: boolean;
 
@@ -1397,6 +1424,9 @@ export namespace Glue42Workspaces {
 
         /** Show whether or not the user can extract the specified window */
         allowExtract?: boolean;
+
+        /** Show whether or not the user can reorder the specified window */
+        allowReorder?: boolean;
 
         /** Indicates whether the close button which is located in the window's tab is visible */
         showCloseButton?: boolean;

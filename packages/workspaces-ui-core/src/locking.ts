@@ -92,7 +92,7 @@ export class WorkspacesLocker {
     }
 
     private doesWindowContainLockingProperties(window: WindowItem): boolean {
-        return this.isLockingPropertySet(window.config?.showCloseButton) || this.isLockingPropertySet(window.config?.allowExtract);
+        return this.isLockingPropertySet(window.config?.showCloseButton) || this.isLockingPropertySet(window.config?.allowExtract) || this.isLockingPropertySet(window.config?.allowReorder) ;
     }
 
     private doesContainerContainLockingProperties(container: ColumnItem | RowItem | GroupItem): boolean {
@@ -103,6 +103,7 @@ export class WorkspacesLocker {
             this.isLockingPropertySet(container.config?.allowDropTop) ||
             this.isLockingPropertySet(container.config?.allowDropBottom) ||
             this.isLockingPropertySet(container.config?.allowExtract) ||
+            this.isLockingPropertySet(container.config?.allowReorder) ||
             this.isLockingPropertySet(container.config?.showExtractButton) ||
             this.isLockingPropertySet(container.config?.showMaximizeButton) ||
             this.isLockingPropertySet(container.config?.showAddWindowButton) ||
@@ -116,10 +117,12 @@ export class WorkspacesLocker {
             this.isLockingPropertySet(workspace.config?.allowDropRight) ||
             this.isLockingPropertySet(workspace.config?.allowDropBottom) ||
             this.isLockingPropertySet(workspace.config?.allowExtract) ||
+            this.isLockingPropertySet(workspace.config?.allowWindowReorder) ||
             this.isLockingPropertySet(workspace.config?.showExtractButtons) ||
             this.isLockingPropertySet(workspace.config?.showWindowCloseButtons) ||
             this.isLockingPropertySet(workspace.config?.showAddWindowButtons) ||
             this.isLockingPropertySet(workspace.config?.showSaveButton) ||
+            this.isLockingPropertySet(workspace.config?.allowWorkspaceTabReorder)||
             this.isLockingPropertySet(workspace.config?.showCloseButton) ||
             this.isLockingPropertySet(workspace.config?.allowSplitters);
     }

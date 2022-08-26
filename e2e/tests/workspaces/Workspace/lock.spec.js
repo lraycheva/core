@@ -69,7 +69,7 @@ describe("lock() Should", () => {
         });
     });
 
-    ["showSaveButton", "showCloseButton", "allowExtract", "allowSplitters", "allowDropLeft", "allowDropTop", "allowDropRight", "allowDropBottom", "showWindowCloseButtons", "showEjectButtons", "showAddWindowButtons"].forEach(propertyUnderTest => {
+    ["showSaveButton", "showCloseButton", "allowExtract", "allowWindowReorder", "allowWorkspaceTabReorder", "allowSplitters", "allowDropLeft", "allowDropTop", "allowDropRight", "allowDropBottom", "showWindowCloseButtons", "showEjectButtons", "showAddWindowButtons"].forEach(propertyUnderTest => {
         it(`invoke the builder function with an object with ${propertyUnderTest}: true when invoked with a function`, async () => {
             await workspace.lock((config) => {
                 expect(config[propertyUnderTest]).to.be.eql(true);
@@ -135,6 +135,22 @@ describe("lock() Should", () => {
         });
     });
 
+    it("set allowReorder constraint to children when invoked without arguments", async () => {
+        await workspace.lock();
+        await workspace.refreshReference();
+
+        const allGroups = workspace.getAllGroups();
+        const allWindows = workspace.getAllWindows();
+
+        allGroups.forEach(g => {
+            expect(g.allowDrop).to.be.true;
+        });
+
+        allWindows.forEach(w => {
+            expect(w.allowReorder).to.be.false;
+        });
+    });
+
     it("not set allowDrop constraint when invoked with all other constraints removed and allowDrop false", async () => {
         await workspace.lock({
             allowSplitters: true,
@@ -142,6 +158,8 @@ describe("lock() Should", () => {
             showWindowCloseButtons: true,
             showEjectButtons: true,
             allowExtract: true,
+            allowWindowReorder: true,
+            allowWorkspaceTabReorder: true,
             showCloseButton: true,
             showSaveButton: true,
             allowDrop: false
@@ -157,6 +175,8 @@ describe("lock() Should", () => {
             showWindowCloseButtons: true,
             allowSplitters: true,
             allowExtract: true,
+            allowWindowReorder: true,
+            allowWorkspaceTabReorder: true,
             showCloseButton: true,
             showSaveButton: true,
             allowDrop: true
@@ -173,6 +193,8 @@ describe("lock() Should", () => {
             allowSplitters: true,
             showWindowCloseButtons: false,
             allowExtract: true,
+            allowWindowReorder: true,
+            allowWorkspaceTabReorder: true,
             showCloseButton: true,
             showSaveButton: true,
             allowDrop: true
@@ -189,6 +211,8 @@ describe("lock() Should", () => {
             showWindowCloseButtons: true,
             allowSplitters: true,
             allowExtract: true,
+            allowWindowReorder: true,
+            allowWorkspaceTabReorder: true,
             showCloseButton: true,
             showSaveButton: true,
             allowDrop: true
@@ -205,6 +229,8 @@ describe("lock() Should", () => {
             showWindowCloseButtons: true,
             allowSplitters: false,
             allowExtract: true,
+            allowWindowReorder: true,
+            allowWorkspaceTabReorder: true,
             showCloseButton: true,
             showSaveButton: true,
             allowDrop: true
@@ -220,12 +246,48 @@ describe("lock() Should", () => {
             showWindowCloseButtons: true,
             allowSplitters: true,
             allowExtract: false,
+            allowWindowReorder: true,
+            allowWorkspaceTabReorder: true,
             showCloseButton: true,
             showSaveButton: true,
             allowDrop: true
         });
 
         expect(workspace.allowExtract).to.be.false;
+    });
+
+    it("set allowWindowReorder constraint when invoked with all other constraints removed and allowWindowReorder false", async () => {
+        await workspace.lock({
+            showEjectButtons: true,
+            showAddWindowButtons: true,
+            showWindowCloseButtons: true,
+            allowSplitters: true,
+            allowExtract: true,
+            allowWindowReorder: false,
+            allowWorkspaceTabReorder: true,
+            showCloseButton: true,
+            showSaveButton: true,
+            allowDrop: true
+        });
+
+        expect(workspace.allowWindowReorder).to.be.false;
+    });
+
+    it("set allowWorkspaceTabReorder constraint when invoked with all other constraints removed and allowWorkspaceTabReorder false", async () => {
+        await workspace.lock({
+            showEjectButtons: true,
+            showAddWindowButtons: true,
+            showWindowCloseButtons: true,
+            allowSplitters: true,
+            allowExtract: true,
+            allowWindowReorder: true,
+            allowWorkspaceTabReorder: false,
+            showCloseButton: true,
+            showSaveButton: true,
+            allowDrop: true
+        });
+
+        expect(workspace.allowWorkspaceTabReorder).to.be.false;
     });
 
     it("set showCloseButton constraint when invoked with all other constraints removed and showCloseButton false", async () => {
@@ -235,6 +297,8 @@ describe("lock() Should", () => {
             showWindowCloseButtons: true,
             allowSplitters: true,
             allowExtract: true,
+            allowWindowReorder: true,
+            allowWorkspaceTabReorder: true,
             showCloseButton: false,
             showSaveButton: true,
             allowDrop: true
@@ -250,6 +314,8 @@ describe("lock() Should", () => {
             showWindowCloseButtons: true,
             allowSplitters: true,
             allowExtract: true,
+            allowWindowReorder: true,
+            allowWorkspaceTabReorder: true,
             showCloseButton: true,
             showSaveButton: false,
             allowDrop: true
@@ -269,6 +335,8 @@ describe("lock() Should", () => {
             showWindowCloseButtons: false,
             allowSplitters: false,
             allowExtract: false,
+            allowWindowReorder: false,
+            allowWorkspaceTabReorder: false,
             showCloseButton: false,
             showSaveButton: false,
             allowDrop: true
@@ -284,6 +352,8 @@ describe("lock() Should", () => {
             showWindowCloseButtons: false,
             allowSplitters: true,
             allowExtract: false,
+            allowWindowReorder: false,
+            allowWorkspaceTabReorder: false,
             showCloseButton: false,
             showSaveButton: false,
             allowDrop: false
@@ -299,6 +369,8 @@ describe("lock() Should", () => {
             showWindowCloseButtons: false,
             allowSplitters: false,
             allowExtract: false,
+            allowWindowReorder: false,
+            allowWorkspaceTabReorder: false,
             showCloseButton: false,
             showSaveButton: false,
             allowDrop: false
@@ -314,6 +386,8 @@ describe("lock() Should", () => {
             showWindowCloseButtons: false,
             allowSplitters: false,
             allowExtract: false,
+            allowWindowReorder: false,
+            allowWorkspaceTabReorder: false,
             showCloseButton: false,
             showSaveButton: false,
             allowDrop: false
@@ -329,6 +403,8 @@ describe("lock() Should", () => {
             showWindowCloseButtons: true,
             allowSplitters: false,
             allowExtract: false,
+            allowWindowReorder: false,
+            allowWorkspaceTabReorder: false,
             showCloseButton: false,
             showSaveButton: false,
             allowDrop: false
@@ -344,12 +420,48 @@ describe("lock() Should", () => {
             showWindowCloseButtons: false,
             allowSplitters: false,
             allowExtract: true,
+            allowWindowReorder: false,
+            allowWorkspaceTabReorder: false,
             showCloseButton: false,
             showSaveButton: false,
             allowDrop: false
         });
 
         expect(workspace.allowExtract).to.be.true;
+    });
+
+    it("remove allowWindowReorder constraint when invoked with all other constraints set and allowWindowReorder true", async () => {
+        await workspace.lock({
+            showEjectButtons: false,
+            showAddWindowButtons: false,
+            showWindowCloseButtons: false,
+            allowSplitters: false,
+            allowExtract: false,
+            allowWindowReorder: true,
+            allowWorkspaceTabReorder: false,
+            showCloseButton: false,
+            showSaveButton: false,
+            allowDrop: false
+        });
+
+        expect(workspace.allowWindowReorder).to.be.true;
+    });
+
+    it("remove allowWorkspaceTabReorder constraint when invoked with all other constraints set and allowWorkspaceTabReorder true", async () => {
+        await workspace.lock({
+            showEjectButtons: false,
+            showAddWindowButtons: false,
+            showWindowCloseButtons: false,
+            allowSplitters: false,
+            allowExtract: false,
+            allowWindowReorder: false,
+            allowWorkspaceTabReorder: true,
+            showCloseButton: false,
+            showSaveButton: false,
+            allowDrop: false
+        });
+
+        expect(workspace.allowWorkspaceTabReorder).to.be.true;
     });
 
     it("remove showCloseButton constraint when invoked with all other constraints set and showCloseButton true", async () => {
@@ -359,6 +471,8 @@ describe("lock() Should", () => {
             showWindowCloseButtons: false,
             allowSplitters: false,
             allowExtract: false,
+            allowWindowReorder: false,
+            allowWorkspaceTabReorder: false,
             showCloseButton: true,
             showSaveButton: false,
             allowDrop: false
@@ -374,6 +488,8 @@ describe("lock() Should", () => {
             showWindowCloseButtons: false,
             allowSplitters: false,
             allowExtract: false,
+            allowWindowReorder: false,
+            allowWorkspaceTabReorder: false,
             showCloseButton: false,
             showSaveButton: true,
             allowDrop: false
@@ -386,6 +502,8 @@ describe("lock() Should", () => {
         await workspace.lock(() => ({
             allowSplitters: true,
             allowExtract: true,
+            allowWindowReorder: true,
+            allowWorkspaceTabReorder: true,
             showCloseButton: true,
             showSaveButton: true,
             allowDrop: false
@@ -398,6 +516,8 @@ describe("lock() Should", () => {
         await workspace.lock(() => ({
             allowSplitters: false,
             allowExtract: true,
+            allowWindowReorder: true,
+            allowWorkspaceTabReorder: true,
             showCloseButton: true,
             showSaveButton: true,
             allowDrop: true
@@ -410,6 +530,8 @@ describe("lock() Should", () => {
         await workspace.lock(() => ({
             allowSplitters: true,
             allowExtract: false,
+            allowWindowReorder: true,
+            allowWorkspaceTabReorder: true,
             showCloseButton: true,
             showSaveButton: true,
             allowDrop: true
@@ -418,10 +540,40 @@ describe("lock() Should", () => {
         expect(workspace.allowExtract).to.be.false;
     });
 
+    it("set allowWindowReorder constraint when invoked with a function and all other constraints removed and allowWindowReorder false", async () => {
+        await workspace.lock(() => ({
+            allowSplitters: true,
+            allowExtract: true,
+            allowWindowReorder: false,
+            allowWorkspaceTabReorder: true,
+            showCloseButton: true,
+            showSaveButton: true,
+            allowDrop: true
+        }));
+
+        expect(workspace.allowWindowReorder).to.be.false;
+    });
+
+    it("set allowWorkspaceTabReorder constraint when invoked with a function and all other constraints removed and allowWorkspaceTabReorder false", async () => {
+        await workspace.lock(() => ({
+            allowSplitters: true,
+            allowExtract: true,
+            allowWindowReorder: true,
+            allowWorkspaceTabReorder: false,
+            showCloseButton: true,
+            showSaveButton: true,
+            allowDrop: true
+        }));
+
+        expect(workspace.allowWorkspaceTabReorder).to.be.false;
+    });
+
     it("set showCloseButton constraint when invoked with a function and all other constraints removed and showCloseButton false", async () => {
         await workspace.lock(() => ({
             allowSplitters: true,
             allowExtract: true,
+            allowWindowReorder: true,
+            allowWorkspaceTabReorder: true,
             showCloseButton: false,
             showSaveButton: true,
             allowDrop: true
@@ -434,6 +586,8 @@ describe("lock() Should", () => {
         await workspace.lock(() => ({
             allowSplitters: true,
             allowExtract: true,
+            allowWindowReorder: true,
+            allowWorkspaceTabReorder: true,
             showCloseButton: true,
             showSaveButton: false,
             allowDrop: true
@@ -450,6 +604,8 @@ describe("lock() Should", () => {
         await workspace.lock(() => ({
             allowSplitters: false,
             allowExtract: false,
+            allowWindowReorder: false,
+            allowWorkspaceTabReorder: false,
             showCloseButton: false,
             showSaveButton: false,
             allowDrop: true
@@ -462,6 +618,8 @@ describe("lock() Should", () => {
         await workspace.lock(() => ({
             allowSplitters: true,
             allowExtract: false,
+            allowWindowReorder: false,
+            allowWorkspaceTabReorder: false,
             showCloseButton: false,
             showSaveButton: false,
             allowDrop: false
@@ -474,6 +632,8 @@ describe("lock() Should", () => {
         await workspace.lock(() => ({
             allowSplitters: false,
             allowExtract: true,
+            allowWindowReorder: false,
+            allowWorkspaceTabReorder: false,
             showCloseButton: false,
             showSaveButton: false,
             allowDrop: false
@@ -482,10 +642,40 @@ describe("lock() Should", () => {
         expect(workspace.allowExtract).to.be.true;
     });
 
+    it("remove allowWindowReorder constraint when invoked with a function with all other constraints set and allowWindowReorder true", async () => {
+        await workspace.lock(() => ({
+            allowSplitters: false,
+            allowExtract: false,
+            allowWindowReorder: true,
+            allowWorkspaceTabReorder: false,
+            showCloseButton: false,
+            showSaveButton: false,
+            allowDrop: false
+        }));
+
+        expect(workspace.allowWindowReorder).to.be.true;
+    });
+
+    it("remove allowWorkspaceTabReorder constraint when invoked with a function with all other constraints set and allowWorkspaceTabReorder true", async () => {
+        await workspace.lock(() => ({
+            allowSplitters: false,
+            allowExtract: false,
+            allowWindowReorder: false,
+            allowWorkspaceTabReorder: true,
+            showCloseButton: false,
+            showSaveButton: false,
+            allowDrop: false
+        }));
+
+        expect(workspace.allowWorkspaceTabReorder).to.be.true;
+    });
+
     it("remove showCloseButton constraint when invoked with a function with all other constraints set and showCloseButton true", async () => {
         await workspace.lock(() => ({
             allowSplitters: false,
             allowExtract: false,
+            allowWindowReorder: false,
+            allowWorkspaceTabReorder: false,
             showCloseButton: true,
             showSaveButton: false,
             allowDrop: false
@@ -498,6 +688,8 @@ describe("lock() Should", () => {
         await workspace.lock((config) => ({
             allowSplitters: false,
             allowExtract: false,
+            allowWindowReorder: false,
+            allowWorkspaceTabReorder: false,
             showCloseButton: false,
             showSaveButton: true,
             allowDrop: false
@@ -516,6 +708,8 @@ describe("lock() Should", () => {
         expect(workspace.showEjectButtons).to.be.true;
         expect(workspace.showWindowCloseButtons).to.be.true;
         expect(workspace.allowExtract).to.be.true;
+        expect(workspace.allowWindowReorder).to.be.true;
+        expect(workspace.allowWorkspaceTabReorder).to.be.true;
         expect(workspace.showCloseButton).to.be.true;
         expect(workspace.showSaveButton).to.be.true;
         expect(workspace.allowDrop).to.be.true;
@@ -543,6 +737,8 @@ describe("lock() Should", () => {
 
         expect(emptyWorkspace.allowDrop).to.be.true;
         expect(emptyWorkspace.allowExtract).to.be.false;
+        expect(emptyWorkspace.allowWindowReorder).to.be.false;
+        expect(emptyWorkspace.allowWorkspaceTabReorder).to.be.false;
         expect(emptyWorkspace.showCloseButton).to.be.false;
         expect(emptyWorkspace.showSaveButton).to.be.false;
         expect(emptyWorkspace.allowSplitters).to.be.false;
@@ -576,6 +772,8 @@ describe("lock() Should", () => {
 
         expect(emptyWorkspace.allowDrop).to.be.true;
         expect(emptyWorkspace.allowExtract).to.be.true;
+        expect(emptyWorkspace.allowWindowReorder).to.be.true;
+        expect(emptyWorkspace.allowWorkspaceTabReorder).to.be.true;
         expect(emptyWorkspace.showCloseButton).to.be.true;
         expect(emptyWorkspace.showSaveButton).to.be.true;
         expect(emptyWorkspace.allowSplitters).to.be.true;

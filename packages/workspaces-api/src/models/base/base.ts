@@ -252,9 +252,17 @@ export class Base {
     public getAllowExtract(model: Group): boolean {
         const privateData = getData(this, model);
         if (privateData.type !== "group") {
-            throw new Error(`Cannot get allow extract from private data${privateData.type} with config ${privateData.type !== "workspace" ? privateData.config.type : ""}`);
+            throw new Error(`Cannot get allow extract from private data ${privateData.type} with config ${privateData.type !== "workspace" ? privateData.config.type : ""}`);
         }
         return privateData.config.allowExtract;
+    }
+
+    public getAllowReorder(model: Group): boolean {
+        const privateData = getData(this, model);
+        if (privateData.type !== "group") {
+            throw new Error(`Cannot get allow extract from private data ${privateData.type} with config ${privateData.type !== "workspace" ? privateData.config.type : ""}`);
+        }
+        return privateData.config.allowReorder;
     }
 
     public getShowMaximizeButton(model: Group): boolean {

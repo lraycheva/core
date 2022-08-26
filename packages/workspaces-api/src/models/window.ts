@@ -68,6 +68,10 @@ export class Window implements Glue42Workspaces.WorkspaceWindow {
         return getData(this).config.allowExtract;
     }
 
+    public get allowReorder(): boolean {
+        return getData(this).config.allowReorder;
+    }
+
     public get showCloseButton(): boolean {
         return getData(this).config.showCloseButton;
     }
@@ -228,6 +232,7 @@ export class Window implements Glue42Workspaces.WorkspaceWindow {
         if (typeof config === "function") {
             const currentLockConfig = {
                 allowExtract: this.allowExtract,
+                allowReorder: this.allowReorder,
                 showCloseButton: this.showCloseButton
             };
             lockConfigResult = config(currentLockConfig);

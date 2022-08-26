@@ -128,7 +128,17 @@ export class WorkspaceContainerWrapper {
     public set allowExtract(value: boolean | undefined) {
         (this.containerContentItem.config.workspacesConfig as any).allowExtract = value;
 
-        this.populateChildrenAllowExtact(value);
+        this.populateChildrenAllowExtract(value);
+    }
+
+    public get allowReorder(): boolean {
+        return (this.containerContentItem.config.workspacesConfig as any).allowReorder ?? true;
+    }
+
+    public set allowReorder(value: boolean | undefined) {
+        (this.containerContentItem.config.workspacesConfig as any).allowReorder = value;
+
+        this.populateChildrenAllowReorder(value);
     }
 
     public get allowSplitters(): boolean {
@@ -252,6 +262,7 @@ export class WorkspaceContainerWrapper {
             config = {
                 ...config,
                 allowExtract: this.allowExtract,
+                allowReorder: this.allowReorder,
                 showMaximizeButton: this.showMaximizeButton,
                 showEjectButton: this.showEjectButton,
                 showAddWindowButton: this.showAddWindowButton,
@@ -309,7 +320,7 @@ export class WorkspaceContainerWrapper {
         lockChildren(this.containerContentItem.contentItems);
     }
 
-    private populateChildrenAllowExtact(value: boolean | undefined): void {
+    private populateChildrenAllowExtract(value: boolean | undefined): void {
         const lockChildren = (children: ContentItem[]): void => {
             children.forEach((c) => {
                 if (c.type === "component") {
@@ -322,6 +333,28 @@ export class WorkspaceContainerWrapper {
                 if (c.type === "stack") {
                     const containerWrapper = new WorkspaceContainerWrapper(this.stateResolver, c, this.frameId);
                     containerWrapper.allowExtract = value;
+                }
+
+                lockChildren(c.contentItems);
+            });
+        };
+
+        lockChildren(this.containerContentItem.contentItems);
+    }
+
+    private populateChildrenAllowReorder(value: boolean | undefined): void {
+        const lockChildren = (children: ContentItem[]): void => {
+            children.forEach((c) => {
+                if (c.type === "component") {
+                    const windowWrapper = new WorkspaceWindowWrapper(this.stateResolver, c, this.frameId);
+
+                    windowWrapper.allowReorder = value;
+                    return;
+                }
+
+                if (c.type === "stack") {
+                    const containerWrapper = new WorkspaceContainerWrapper(this.stateResolver, c, this.frameId);
+                    containerWrapper.allowReorder = value;
                 }
 
                 lockChildren(c.contentItems);

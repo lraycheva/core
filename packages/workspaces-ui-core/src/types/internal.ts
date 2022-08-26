@@ -21,6 +21,7 @@ export interface WorkspaceItem {
         maxHeight?: number;
         allowDrop?: boolean;
         allowExtract?: boolean;
+        allowWindowReorder?: boolean;
         showEjectButtons?: boolean;
         allowSplitters?: boolean;
         showWindowCloseButtons?: boolean;
@@ -36,6 +37,7 @@ export interface GroupItem {
     config?: {
         allowDrop?: boolean;
         allowExtract?: boolean;
+        allowReorder?: boolean;
         showEjectButton?: boolean;
         showMaximizeButton?: boolean;
         showAddWindowButton?: boolean;
@@ -63,6 +65,7 @@ export interface WindowItem {
         title?: string;
         context?: string;
         allowExtract?: boolean;
+        allowReorder?: boolean;
         showCloseButton?: boolean;
         minWidth?: number;
         maxWidth?: number;
@@ -132,6 +135,7 @@ export interface WindowSummary {
         appName: string;
         url: string;
         allowExtract?: boolean;
+        allowReorder?: boolean;
         showCloseButton?: boolean;
         title: string;
         minWidth: number;
@@ -157,6 +161,7 @@ export interface ContainerSummary {
         allowDropRight?: boolean;
         allowDropBottom?: boolean;
         allowExtract?: boolean;
+        allowReorder?:boolean;
         showMaximizeButton?: boolean;
         showEjectButton?: boolean;
         showAddWindowButton?: boolean;
@@ -246,6 +251,7 @@ export interface WindowDefinition {
     config?: {
         showCloseButton?: boolean;
         allowExtract?: boolean;
+        allowReorder?:boolean;
         minWidth?: number;
         minHeight?: number;
         maxWidth?: number;
@@ -275,6 +281,7 @@ export interface APIWIndowSettings {
     title: string;
     positionIndex: number;
     allowExtract: boolean;
+    allowReorder: boolean;
     showCloseButton: boolean;
     minWidth: number;
     minHeight: number;
@@ -292,6 +299,7 @@ export interface GDWindowOptions {
     title?: string;
     context?: object;
     allowExtract: boolean;
+    allowReorder: boolean;
     showCloseButton: boolean;
     minWidth: number;
     maxWidth: number;

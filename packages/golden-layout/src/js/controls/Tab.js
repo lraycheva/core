@@ -228,6 +228,14 @@ lm.utils.copy(lm.controls.Tab.prototype, {
 		const tabWidth = this.element[0].getBoundingClientRect().width;
 		this._elementOffset = tabXParentOffset - x;
 
+		const isWorkspaceTab = this._layoutManager.config.settings.mode === "workspace";
+		const isWorkspaceTabReorderLocked = isWorkspaceTab && this.contentItem.config.workspacesConfig.allowWorkspaceTabReorder === false;
+		const isWindowTabReorderLocked =  !isWorkspaceTab && this.contentItem.config.workspacesConfig.allowReorder === false;
+
+		if (isWorkspaceTabReorderLocked|| isWindowTabReorderLocked) {
+			return;
+		}
+
 		this._xOfLastReorder = x;
 		this.element.css("position", `absolute`);
 		this.element.css("z-index", `42`);

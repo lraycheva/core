@@ -676,6 +676,22 @@ export class LayoutController {
         uiExecutor.hideWorkspaceSaveButton({ workspaceTab: workspaceContentItem.tab });
     }
 
+    public enableWorkspaceReorder(workspaceId: string): void {
+        const workspace = store.getById(workspaceId);
+        const workspaceContentItem = store.getWorkspaceContentItem(workspaceId);
+        const wrapper = new WorkspaceWrapper(this._stateResolver, workspace, workspaceContentItem, this._frameId);
+
+        wrapper.allowWorkspaceTabReorder = true;
+    }
+
+    public disableWorkspaceReorder(workspaceId: string): void {
+        const workspace = store.getById(workspaceId);
+        const workspaceContentItem = store.getWorkspaceContentItem(workspaceId);
+        const wrapper = new WorkspaceWrapper(this._stateResolver, workspace, workspaceContentItem, this._frameId);
+
+        wrapper.allowWorkspaceTabReorder = false;
+    }
+
     public enableWorkspaceCloseButton(workspaceId: string): void {
         const workspace = store.getById(workspaceId);
         const workspaceContentItem = store.getWorkspaceContentItem(workspaceId);
@@ -726,6 +742,22 @@ export class LayoutController {
         const wrapper = new WorkspaceWrapper(this._stateResolver, workspace, workspaceContentItem, this._frameId);
 
         wrapper.allowExtract = false;
+    }
+
+    public enableWorkspaceWindowReorder(workspaceId: string): void {
+        const workspace = store.getById(workspaceId);
+        const workspaceContentItem = store.getWorkspaceContentItem(workspaceId);
+        const wrapper = new WorkspaceWrapper(this._stateResolver, workspace, workspaceContentItem, this._frameId);
+
+        wrapper.allowWindowReorder = true;
+    }
+
+    public disableWorkspaceWindowReorder(workspaceId: string): void {
+        const workspace = store.getById(workspaceId);
+        const workspaceContentItem = store.getWorkspaceContentItem(workspaceId);
+        const wrapper = new WorkspaceWrapper(this._stateResolver, workspace, workspaceContentItem, this._frameId);
+
+        wrapper.allowWindowReorder = false;
     }
 
     public enableWorkspaceWindowCloseButtons(workspaceId: string): void {
@@ -794,6 +826,20 @@ export class LayoutController {
         const wrapper = new WorkspaceWindowWrapper(this._stateResolver, windowContentItem, this._frameId);
 
         wrapper.allowExtract = false;
+    }
+
+    public enableWindowReorder(windowId: string, value: boolean | undefined): void {
+        const windowContentItem = store.getWindowContentItem(windowId);
+        const wrapper = new WorkspaceWindowWrapper(this._stateResolver, windowContentItem, this._frameId);
+
+        wrapper.allowReorder = value;
+    }
+
+    public disableWindowReorder(windowId: string): void {
+        const windowContentItem = store.getWindowContentItem(windowId);
+        const wrapper = new WorkspaceWindowWrapper(this._stateResolver, windowContentItem, this._frameId);
+
+        wrapper.allowReorder = false;
     }
 
     public enableWindowCloseButton(windowId: string, value: boolean | undefined): void {
@@ -1026,6 +1072,27 @@ export class LayoutController {
 
         const wrapper = new WorkspaceContainerWrapper(this._stateResolver, containerContenteItem, this._frameId);
         wrapper.allowExtract = false;
+    }
+
+    public enableGroupReorder(itemId: string, allowReorder: boolean): void {
+        const containerContenteItem = store.getContainer(itemId);
+
+        if (containerContenteItem.type !== "stack") {
+            throw new Error(`Expected item with type stack but received ${containerContenteItem.type} ${itemId}`);
+        }
+
+        const wrapper = new WorkspaceContainerWrapper(this._stateResolver, containerContenteItem, this._frameId);
+        wrapper.allowReorder = allowReorder;
+    }
+    public disableGroupReorder(itemId: string): void {
+        const containerContenteItem = store.getContainer(itemId);
+
+        if (containerContenteItem.type !== "stack") {
+            throw new Error(`Expected item with type stack but received ${containerContenteItem.type} ${itemId}`);
+        }
+
+        const wrapper = new WorkspaceContainerWrapper(this._stateResolver, containerContenteItem, this._frameId);
+        wrapper.allowReorder = false;
     }
 
     public resizeRow(rowItem: GoldenLayout.Row, height?: number): void {
@@ -1984,6 +2051,11 @@ export class LayoutController {
                 itemConfig.workspacesConfig.allowExtract = itemConfig.workspacesConfig.allowExtract ?? parentAllowExtract;
             }
 
+            if (typeof itemConfig.workspacesConfig.allowReorder === "undefined") {
+                const parentAllowReorder = workspaceWrapper.allowWindowReorder;
+                itemConfig.workspacesConfig.allowReorder = itemConfig.workspacesConfig.allowReorder ?? parentAllowReorder;
+            }
+
             if (typeof itemConfig.workspacesConfig.showAddWindowButton === "undefined") {
                 itemConfig.workspacesConfig.showAddWindowButton = workspaceWrapper.showAddWindowButtons;
             }
@@ -2003,8 +2075,12 @@ export class LayoutController {
                 const parentAllowExtract = isParentWorkspace ? workspaceWrapper.allowExtract : parent.config.workspacesConfig.allowExtract;
                 itemConfig.workspacesConfig.allowExtract = parentAllowExtract;
             }
+            if (typeof itemConfig.workspacesConfig.allowReorder === "undefined") {
+                const parentAllowReorder = isParentWorkspace ? workspaceWrapper.allowWindowReorder : parent.config.workspacesConfig.allowReorder;
+                itemConfig.workspacesConfig.allowReorder = parentAllowReorder;
+            }
             if (typeof itemConfig.workspacesConfig.showCloseButton === "undefined") {
-                itemConfig.workspacesConfig.allowExtract = workspaceWrapper.showWindowCloseButtons;
+                itemConfig.workspacesConfig.showWindowCloseButtons = workspaceWrapper.showWindowCloseButtons;
             }
         }
     }

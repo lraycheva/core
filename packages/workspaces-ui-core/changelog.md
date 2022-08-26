@@ -1,4 +1,5 @@
 1.9.2
+feat: added new locking options - allowReorder, allowWindowReorder and allowWorkspaceTabReorder
 feat: started providing frameBounds for frame and workspace closed events
 1.9.1
 chore: bump due to dependencies update

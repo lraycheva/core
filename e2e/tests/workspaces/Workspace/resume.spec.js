@@ -134,6 +134,8 @@ describe("resume() Should", () => {
 
         expect(workspace.allowDrop).to.be.true;
         expect(workspace.allowExtract).to.be.false;
+        expect(workspace.allowWindowReorder).to.be.false;
+        expect(workspace.allowWorkspaceTabReorder).to.be.false;
         expect(workspace.allowDropLeft).to.be.false;
         expect(workspace.allowDropTop).to.be.false;
         expect(workspace.allowDropRight).to.be.false;
@@ -154,6 +156,7 @@ describe("resume() Should", () => {
         workspace.getAllGroups().forEach((group) => {
             expect(group.allowDrop).to.be.true;
             expect(group.allowExtract).to.be.false;
+            expect(group.allowReorder).to.be.false;
         });
     });
 
@@ -193,6 +196,7 @@ describe("resume() Should", () => {
 
         workspace.getAllWindows().forEach((window) => {
             expect(window.allowExtract).to.be.false;
+            expect(window.allowReorder).to.be.false;
         });
     });
 

@@ -52,6 +52,14 @@ export class WorkspaceWindowWrapper {
         this.windowContentItem.config.workspacesConfig.allowExtract = value;
     }
 
+    public get allowReorder(): boolean | undefined {
+        return this.windowContentItem.config.workspacesConfig.allowReorder ?? true;
+    }
+
+    public set allowReorder(value: boolean | undefined) {
+        this.windowContentItem.config.workspacesConfig.allowReorder = value;
+    }
+
     public get showCloseButton(): boolean | undefined {
         return this.windowContentItem.config.workspacesConfig.showCloseButton ?? true;
     }
@@ -139,6 +147,7 @@ export class WorkspaceWindowWrapper {
                 url,
                 title: windowContentItem.config.title,
                 allowExtract: this.allowExtract,
+                allowReorder: this.allowReorder,
                 showCloseButton: this.showCloseButton,
                 minWidth: this.minWidth,
                 maxWidth: this.maxWidth,
