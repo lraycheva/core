@@ -1,3 +1,5 @@
+2.5.15
+fix: data wrapping when broadcasting a context
 2.5.14
 chore: bump due to dependencies update
 2.5.13

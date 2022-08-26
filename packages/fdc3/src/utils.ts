@@ -3,6 +3,7 @@ import { Glue42 } from "@glue42/desktop";
 import { WindowType } from "./types/windowtype";
 
 const CONTEXT_PREFIX = "___channel___";
+const fdc3Delimiter = "&";
 
 /**
  * Changes to subscribe to comply with the FDC3 specification:
@@ -153,14 +154,23 @@ export const mapChannelNameToContextName = (channelName: string): string => {
     return `${CONTEXT_PREFIX}${channelName}`;
 }
 
+export const mapFDC3TypeToChannelsDelimiter = (type: string): string => {
+    return type.split(".").join(fdc3Delimiter);
+}
+
+export const mapChannelsDelimiterToFDC3Type = (type: string): string => {
+    return type.split(fdc3Delimiter).join(".");
+}
+
 export const removeFDC3Prefix = (type: string): string => {
-    return type.split("_").slice(1).join("");
+    const typeWithoutPrefix = type.split("_").slice(1).join("");
+    return mapChannelsDelimiterToFDC3Type(typeWithoutPrefix);
 }
 
 // { fdc3_contact: { name: "John Smith", id: { email: "john.smith@company.com" }}}  => { type: "contact", name: "John Smith", id: { email: "john.smith@company.com" }} 
 export const parseGlue42DataToInitialFDC3Data = (glue42Data: { data: any, latest_fdc3_type: string}) => {
     const latestPublishedData = parseContextsDataToInitialFDC3Data(glue42Data);
-
+    
     const initialFDC3DataArr = Object.entries(glue42Data.data).map(([fdc3Type, dataValue]: [string, any]) => {
         const type = removeFDC3Prefix(fdc3Type);
         return { type, ...dataValue };
@@ -172,7 +182,9 @@ export const parseGlue42DataToInitialFDC3Data = (glue42Data: { data: any, latest
 export const parseContextsDataToInitialFDC3Data = (context: { data: any, latest_fdc3_type: string }): Context  => {
     const { data, latest_fdc3_type } = context;
 
-    return { type: latest_fdc3_type, ...data[`fdc3_${latest_fdc3_type}`] };
+    const parsedType = mapChannelsDelimiterToFDC3Type(latest_fdc3_type);
+
+    return { type: parsedType, ...data[`fdc3_${latest_fdc3_type}`] };
 }
 
 // FDC3 updated data is stored in Glue Channels and Contexts in format { fdc3_type: data}
@@ -180,7 +192,9 @@ export const parseContextsDataToInitialFDC3Data = (context: { data: any, latest_
 export const parseFDC3ContextToGlueContexts = (context: Context) => {
     const { type, ...rest } = context;
 
-    return { [`fdc3_${type}`]: rest };
+    const parsedType = mapFDC3TypeToChannelsDelimiter(type);
+
+    return { [`fdc3_${parsedType}`]: rest };
 }
 
 export const contextUpdate = async (contextId: string, context: Context): Promise<void> => {

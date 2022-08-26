@@ -7,7 +7,8 @@ import { newContextsSubscribe,
     newChannelsSubscribe, 
     AsyncListener,
     contextUpdate,
-    channelsUpdate
+    channelsUpdate,
+    mapFDC3TypeToChannelsDelimiter
 } from "../utils";
 import { SystemChannel } from '../types/channel';
 import { addAppChannelSubscription } from './appChannelsSubscriptions';
@@ -29,7 +30,6 @@ export const createSystemChannel = (glChannel: Glue42.Channels.ChannelContext): 
 
     const getCurrentContext = async function(contextType?: string): Promise<Context | null> {
         if (!contextType) {
-            // return the latest broadcasted context
             const contextName = mapChannelNameToContextName(channel.id);
             
             const context = await (window as WindowType).glue.contexts.get(contextName);
@@ -43,8 +43,10 @@ export const createSystemChannel = (glChannel: Glue42.Channels.ChannelContext): 
 
         const { data } = channelData;
 
-        return data && data[`fdc3_${contextType}`] !== undefined
-            ? parseContextsDataToInitialFDC3Data({ data, latest_fdc3_type: contextType })
+        const parsedType = mapFDC3TypeToChannelsDelimiter(contextType);
+
+        return data && data[`fdc3_${parsedType}`] !== undefined
+            ? parseContextsDataToInitialFDC3Data({ data, latest_fdc3_type: parsedType })
             : null;
     }
 
@@ -108,11 +110,13 @@ export const createAppChannel = (id: string): Channel => {
         if (!contextType) {
             // return the latest broadcasted context
             return latest_fdc3_type
-            ? parseContextsDataToInitialFDC3Data(context)
-            : null;
+                ? parseContextsDataToInitialFDC3Data(context)
+                : null;
         }
 
-        return data && data[`fdc3_${contextType}`] !== undefined            
+        const parsedLatestContextType =mapFDC3TypeToChannelsDelimiter(contextType);
+
+        return data && data[`fdc3_${parsedLatestContextType}`] !== undefined            
             ? parseContextsDataToInitialFDC3Data(context)
             : null;
     }
