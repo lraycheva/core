@@ -1,3 +1,5 @@
+5.7.8
+fix: iframes now have unique ids every time, even after top refresh
 5.7.7
 fix: Improved the message flushing when re-announcing the contexts
 5.7.6

@@ -443,7 +443,7 @@ export default class WebPlatformTransport implements Transport {
         }
 
         if (this.identity && this.parentType === "top") {
-            this.identity.instance = this.identity.instance ?? this.getIFrameInstanceId();
+            this.identity.instance = this.identity.instance ?? generate();
         }
 
         if (this.identity && data.appName) {
@@ -740,21 +740,5 @@ export default class WebPlatformTransport implements Transport {
             });
 
         }, this.connectionRequestTimeout, "The content script was available, but was never heard to be ready");
-    }
-
-    private getIFrameInstanceId(): string {
-        const sessionStorage = window.sessionStorage;
-
-        const settingsAsString = sessionStorage.getItem(this.webNamespace);
-
-        const settings = settingsAsString ? JSON.parse(settingsAsString) : {};
-
-        if (!settings.clientInstanceId) {
-            settings.clientInstanceId = generate();
-        }
-
-        sessionStorage.setItem(this.webNamespace, JSON.stringify(settings));
-
-        return settings.clientInstanceId;
     }
 }
