@@ -1,3 +1,5 @@
+2.7.3
+chore: bump due to dependencies update
 2.7.2
 chore: bump due to dependencies update in relation to the new workspace reorder locks
 2.7.1
