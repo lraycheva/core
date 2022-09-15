@@ -62,7 +62,6 @@ lm.utils.copy(lm.utils.TabDragListener.prototype, {
 
     onMouseMove: function (oEvent) {
         const coordinates = this._getCoordinates(oEvent);
-
         if (this._timeout != null) {
             oEvent.preventDefault();
 
@@ -75,7 +74,6 @@ lm.utils.copy(lm.utils.TabDragListener.prototype, {
                     Math.abs(this._nY) > this._nDistance
                 ) {
                     clearTimeout(this._timeout);
-                    this._timeout = null;
                     this._startDrag(oEvent);
                 }
             }
@@ -83,6 +81,7 @@ lm.utils.copy(lm.utils.TabDragListener.prototype, {
             if (this._bDragging) {
                 this.emit('drag', this._nX, this._nY, oEvent);
             }
+        
         } else if (this._inReorder) {
             const parent = this._eElement.parent();
             const parentBounds = parent[0].getBoundingClientRect();

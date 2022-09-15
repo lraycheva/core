@@ -56,10 +56,12 @@ import {
     ShortcutClickedData,
     ShortcutConfig,
     FrameSnapshotConfig,
-    FrameBounds
+    FrameBounds,
+    SetMaximizationBoundaryConfig
 } from "../types/protocol";
 import { WorkspaceEventType, WorkspaceEventAction } from "../types/subscription";
 import { Glue42Workspaces } from "../../workspaces";
+import { SetMaximizationBoundaryConfig as APISetMaximizationBoundaryConfig } from "../../temp";
 
 export const nonEmptyStringDecoder: Decoder<string> = string().where((s) => s.length > 0, "Expected a non-empty string");
 export const nonNegativeNumberDecoder: Decoder<number> = number().where((num) => num >= 0, "Expected a non-negative number");
@@ -694,6 +696,11 @@ export const resizeItemConfigDecoder: Decoder<ResizeItemConfig> = intersection(
     resizeConfigDecoder
 );
 
+export const setMaximizationBoundaryConfigDecoder: Decoder<SetMaximizationBoundaryConfig> = object({
+    itemId: nonEmptyStringDecoder,
+    enabled: boolean()
+});
+
 export const moveFrameConfigDecoder: Decoder<MoveFrameConfig> = intersection(
     simpleItemConfigDecoder,
     moveConfigDecoder
@@ -874,4 +881,8 @@ export const shortcutConfigDecoder: Decoder<ShortcutConfig> = object({
 export const shortcutClickedDataDecoder: Decoder<ShortcutClickedData> = object({
     shortcut: nonEmptyStringDecoder,
     frameId: nonEmptyStringDecoder
+});
+
+export const setMaximizationBoundaryAPIConfigDecoder: Decoder<APISetMaximizationBoundaryConfig> = object({
+    enabled: boolean()
 });

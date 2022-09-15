@@ -1,3 +1,5 @@
+2.3.4
+fix: Dragging freeze
 2.3.3
 feat: allowReorder support
 2.3.2

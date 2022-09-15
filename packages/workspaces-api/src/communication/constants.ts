@@ -45,7 +45,8 @@ import {
     frameInitProtocolConfigDecoder,
     shortcutClickedDataDecoder,
     shortcutConfigDecoder,
-    frameSnapshotConfigDecoder
+    frameSnapshotConfigDecoder,
+    setMaximizationBoundaryConfigDecoder
 } from "../shared/decoders";
 import { ControlOperation, StreamOperation } from "../types/protocol";
 import { WorkspaceEventType } from "../types/subscription";
@@ -67,6 +68,7 @@ type OperationsTypes = "isWindowInWorkspace" |
     "focusItem" |
     "closeItem" |
     "resizeItem" |
+    "setMaximizationBoundary" |
     "moveFrame" |
     "getFrameSnapshot" |
     "forceLoadWindow" |
@@ -155,6 +157,7 @@ export const OPERATIONS: { [key in OperationsTypes]: ControlOperation } = {
     focusItem: { name: "focusItem", argsDecoder: simpleItemConfigDecoder, resultDecoder: voidResultDecoder },
     closeItem: { name: "closeItem", argsDecoder: simpleItemConfigDecoder, resultDecoder: voidResultDecoder },
     resizeItem: { name: "resizeItem", argsDecoder: resizeItemConfigDecoder, resultDecoder: voidResultDecoder },
+    setMaximizationBoundary: { name: "setMaximizationBoundary", argsDecoder: setMaximizationBoundaryConfigDecoder, resultDecoder: voidResultDecoder },
     changeFrameState: { name: "changeFrameState", argsDecoder: frameStateConfigDecoder, resultDecoder: voidResultDecoder },
     getFrameState: { name: "getFrameState", argsDecoder: simpleItemConfigDecoder, resultDecoder: frameStateResultDecoder },
     getFrameBounds: { name: "getFrameBounds", argsDecoder: simpleItemConfigDecoder, resultDecoder: frameBoundsResultDecoder },

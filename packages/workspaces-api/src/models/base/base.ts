@@ -10,6 +10,7 @@ import { Group } from "../group";
 import { Row } from "../row";
 import { Column } from "../column";
 import { ColumnSnapshotConfig, GroupSnapshotConfig, RowSnapshotConfig } from "../../types/protocol";
+import { SetMaximizationBoundaryConfig } from "../../../temp";
 
 interface PrivateData {
     manager: PrivateDataManager;
@@ -72,7 +73,7 @@ export class Base {
 
     public getMyParent(model: AllParentTypes): AllParentTypes {
         if (model instanceof Workspace) {
-            return;
+            return model;
         }
         return (getData(this, model) as ParentPrivateData).parent;
     }
@@ -83,7 +84,7 @@ export class Base {
 
     public getMyWorkspace(model: AllParentTypes): Workspace {
         if (model instanceof Workspace) {
-            return;
+            return model;
         }
         return (getData(this, model) as ParentPrivateData).workspace;
     }
@@ -144,27 +145,19 @@ export class Base {
     }
 
     public async maximize(model: SubParentTypes): Promise<void> {
-        const controller = getData(this, model).controller;
+        const { controller, id } = getData(this, model);
 
-        await controller.maximizeItem(getData(this, model).id);
+        await controller.maximizeItem(id);
 
-        if (model.parent instanceof Workspace) {
-            await model.parent.refreshReference();
-        } else {
-            await this.getMyWorkspace(model.parent).refreshReference();
-        }
+        await this.getMyWorkspace(model.parent).refreshReference();
     }
 
     public async restore(model: SubParentTypes): Promise<void> {
-        const controller = getData(this, model).controller;
+        const { controller, id } = getData(this, model);
 
-        await controller.restoreItem(getData(this, model).id);
+        await controller.restoreItem(id);
 
-        if (model.parent instanceof Workspace) {
-            await model.parent.refreshReference();
-        } else {
-            await this.getMyWorkspace(model.parent).refreshReference();
-        }
+        await this.getMyWorkspace(model.parent).refreshReference();
     }
 
     public async close(model: SubParentTypes): Promise<void> {
@@ -174,11 +167,7 @@ export class Base {
 
         await controller.closeItem(modelData.id);
 
-        if (modelData.parent instanceof Workspace) {
-            await modelData.parent.refreshReference();
-        } else {
-            await this.getMyWorkspace(modelData.parent).refreshReference();
-        }
+        await this.getMyWorkspace(modelData.parent).refreshReference();
     }
 
     public async lockContainer(model: SubParentTypes, config?: ContainerLockConfig): Promise<void> {
@@ -188,11 +177,7 @@ export class Base {
 
         await controller.lockContainer(modelData.id, model.type, config);
 
-        if (modelData.parent instanceof Workspace) {
-            await modelData.parent.refreshReference();
-        } else {
-            await this.getMyWorkspace(modelData.parent).refreshReference();
-        }
+        await this.getMyWorkspace(modelData.parent).refreshReference();
     }
 
     public getAllowDrop(model: SubParentTypes): boolean {
@@ -337,7 +322,7 @@ export class Base {
         return (privateData.config as RowSnapshotConfig | ColumnSnapshotConfig | GroupSnapshotConfig).isMaximized;
     }
 
-    public getMaximizationBoundary(model: Column|Row):boolean{
+    public getMaximizationBoundary(model: Column | Row): boolean {
         const privateData = getData(this, model);
 
         return (privateData.config as RowSnapshotConfig | ColumnSnapshotConfig).maximizationBoundary;
@@ -345,48 +330,45 @@ export class Base {
 
     public async setHeight(model: Row, height: number): Promise<void> {
         const modelData = getData(this, model) as ParentPrivateData;
-        const { controller } = modelData;
+        const { controller, id } = modelData;
 
-        await controller.resizeItem(getData(this, model).id, {
+        await controller.resizeItem(id, {
             height
         });
 
-        if (modelData.parent instanceof Workspace) {
-            await modelData.parent.refreshReference();
-        } else {
-            await this.getMyWorkspace(modelData.parent).refreshReference();
-        }
+        await this.getMyWorkspace(modelData.parent).refreshReference();
     }
 
     public async setWidth(model: Column, width: number): Promise<void> {
         const modelData = getData(this, model) as ParentPrivateData;
-        const { controller } = modelData;
+        const { controller, id } = modelData;
 
-        await controller.resizeItem(getData(this, model).id, {
+        await controller.resizeItem(id, {
             width
         });
 
-        if (modelData.parent instanceof Workspace) {
-            await modelData.parent.refreshReference();
-        } else {
-            await this.getMyWorkspace(modelData.parent).refreshReference();
-        }
+        await this.getMyWorkspace(modelData.parent).refreshReference();
     }
 
     public async setSize(model: Group, width?: number, height?: number): Promise<void> {
         const modelData = getData(this, model) as ParentPrivateData;
-        const { controller } = modelData;
+        const { controller, id } = modelData;
 
-        await controller.resizeItem(getData(this, model).id, {
+        await controller.resizeItem(id, {
             width,
             height
         });
 
-        if (modelData.parent instanceof Workspace) {
-            await modelData.parent.refreshReference();
-        } else {
-            await this.getMyWorkspace(modelData.parent).refreshReference();
-        }
+        await this.getMyWorkspace(modelData.parent).refreshReference();
+    }
+
+    public async setMaximizationBoundary(model: Row | Column, config: SetMaximizationBoundaryConfig): Promise<void> {
+        const modelData = getData(this, model) as ParentPrivateData;
+        const { controller, id } = modelData;
+
+        await controller.setMaximizationBoundary(id, config);
+
+        await this.getMyWorkspace(modelData.parent).refreshReference();
     }
 
     private transformDefinition(type: "group" | "row" | "column", definition?: Glue42Workspaces.BoxDefinition | ParentBuilder): Glue42Workspaces.BoxDefinition {

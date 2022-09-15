@@ -35,6 +35,7 @@ import {
     FrameSnapshotArguments,
     GetWorkspacesLayoutsArguments,
     GetWorkspacesLayoutsResult,
+    SetMaximizationBoundaryArguments,
 } from "./types";
 import manager from "../manager";
 import store from "../state/store";
@@ -253,6 +254,10 @@ export class GlueFacade {
                     break;
                 case "getWorkspacesLayouts":
                     successCallback(await this.handleGetWorkspaceLayouts(args.operationArguments));
+                    break;
+                case "setMaximizationBoundary":
+                    this.handleSetMaximizationBoundary(args.operationArguments)
+                    successCallback(undefined);
                     break;
                 default:
                     errorCallback(`Invalid operation - ${((args as unknown) as { operation: string }).operation}`);
@@ -582,6 +587,10 @@ export class GlueFacade {
         return {
             workspaces: await manager.stateResolver.getAllWorkspacesLayouts(manager, operationArguments)
         }
+    }
+
+    private handleSetMaximizationBoundary(operationArguments: SetMaximizationBoundaryArguments): void {
+        manager.setMaximizationBoundary(operationArguments.itemId, operationArguments.enabled);
     }
 
     private handleCreateFrame(operationArguments: CreateFrameArguments): FrameSummary {

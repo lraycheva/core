@@ -1,3 +1,5 @@
+1.9.3
+feat: added support for setMaximizationBoundary
 1.9.2
 feat: added new locking options - allowReorder, allowWindowReorder and allowWorkspaceTabReorder
 feat: started providing frameBounds for frame and workspace closed events

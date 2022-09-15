@@ -65,7 +65,8 @@ export type WorkspacesOperationsTypes = "isWindowInWorkspace" |
     "checkStarted" |
     "getPlatformFrameId" |
     "getWorkspaceWindowsOnLayoutSaveContext" |
-    "getWorkspacesLayouts";
+    "getWorkspacesLayouts" |
+    "setMaximizationBoundary";
 
 export interface FrameQueryConfig {
     frameId?: string;
@@ -463,6 +464,11 @@ export interface ColumnDefinitionConfig {
 
 export interface GetWorkspaceWindowsOnLayoutSaveContextConfig extends RawWindowsLayoutDataRequestConfig {
     windowIds: string[];
+}
+
+export interface SetMaximizationBoundaryConfig {
+    itemId: string;
+    enabled: boolean;
 }
 
 export interface WorkspaceWindowOnSaveData {

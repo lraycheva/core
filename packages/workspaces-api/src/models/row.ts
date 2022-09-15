@@ -1,6 +1,7 @@
 import { Base } from "./base/base";
 import { Glue42Workspaces } from "../../workspaces.d";
-import { nonNegativeNumberDecoder, rowLockConfigDecoder } from "../shared/decoders";
+import { nonNegativeNumberDecoder, rowLockConfigDecoder, setMaximizationBoundaryAPIConfigDecoder } from "../shared/decoders";
+import { SetMaximizationBoundaryConfig } from "../../temp";
 
 interface PrivateData {
     base: Base;
@@ -158,6 +159,11 @@ export class Row implements Glue42Workspaces.Row {
     public async setHeight(height: number): Promise<void> {
         nonNegativeNumberDecoder.runWithException(height);
         return getBase(this).setHeight(this, height);
+    }
+
+    public async setMaximizationBoundary(config: SetMaximizationBoundaryConfig): Promise<void> {
+       const validatedConfig = setMaximizationBoundaryAPIConfigDecoder.runWithException(config);
+        return getBase(this).setMaximizationBoundary(this, validatedConfig);
     }
 
 }

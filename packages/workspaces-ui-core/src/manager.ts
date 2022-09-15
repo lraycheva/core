@@ -32,6 +32,7 @@ import { WorkspaceWrapper } from "./state/workspaceWrapper";
 import uiExecutor from "./uiExecutor";
 import { ComponentFactory } from "./types/componentFactory";
 import { PlatformCommunicator } from "./interop/platformCommunicator";
+import { WorkspaceContainerWrapper } from "./state/containerWrapper";
 
 export class WorkspacesManager {
     private _controller: LayoutController;
@@ -899,6 +900,22 @@ export class WorkspacesManager {
 
     public getWorkspaceContext(workspaceId: string): Promise<object> {
         return this._glue.contexts.get(getWorkspaceContextName(workspaceId));
+    }
+
+    public setMaximizationBoundary(itemId: string, value: boolean): void {
+        const container = store.getContainer(itemId);
+
+        if (!container) {
+            throw new Error(`Could not find container ${itemId} in frame ${this.frameId} to set the maximizationBoundary to ${value}`);
+        }
+
+        if (container.type === "stack") {
+            throw new Error(`Could not set the maximization boundary of group ${itemId} to ${value} because only rows and columns can be considered maximizationBoundaries`);
+        }
+
+        const wrapper = new WorkspaceContainerWrapper(this.stateResolver, container, this.frameId);
+
+        wrapper.maximizationBoundary = value;
     }
 
     private resizeWorkspaceItem(args: ResizeItemArguments): void {

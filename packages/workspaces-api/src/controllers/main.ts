@@ -13,6 +13,7 @@ import { GDWindow } from "../types/glue";
 import { BaseController } from "./base";
 import { UnsubscribeFunction } from "callback-registry";
 import { ShortcutsController } from "./shortcuts";
+import { SetMaximizationBoundaryConfig } from "../../temp";
 
 export class MainController implements WorkspacesController {
 
@@ -277,6 +278,10 @@ export class MainController implements WorkspacesController {
 
     public async resizeItem(itemId: string, config: Glue42Workspaces.ResizeConfig): Promise<void> {
         return await this.base.resizeItem(itemId, config);
+    }
+
+    public async setMaximizationBoundary(itemId: string, config: SetMaximizationBoundaryConfig): Promise<void> {
+        return await this.base.setMaximizationBoundary(itemId, config);
     }
 
     public async moveFrame(itemId: string, config: Glue42Workspaces.MoveConfig): Promise<void> {

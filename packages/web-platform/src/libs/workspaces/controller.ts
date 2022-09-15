@@ -3,9 +3,9 @@
 import { Glue42Web } from "@glue42/web";
 import { Glue42Workspaces } from "@glue42/workspaces-api";
 import { BridgeOperation, InternalPlatformConfig, LibController } from "../../common/types";
-import { addContainerConfigDecoder, addItemResultDecoder, addWindowConfigDecoder, bundleConfigDecoder, deleteLayoutConfigDecoder, emptyFrameDefinitionDecoder, exportedLayoutsResultDecoder, frameBoundsResultDecoder, frameHelloDecoder, frameInitProtocolConfigDecoder, frameSnapshotConfigDecoder, frameSnapshotResultDecoder, frameStateConfigDecoder, frameStateResultDecoder, frameSummariesResultDecoder, frameSummaryDecoder, frameSummaryResultDecoder, getFrameSummaryConfigDecoder, getWorkspacesLayoutsConfigDecoder, getWorkspacesLayoutsResponseDecoder, getWorkspaceWindowsOnLayoutSaveContextConfigDecoder, getWorkspaceWindowsOnLayoutSaveContextResult, isWindowInSwimlaneResultDecoder, layoutSummariesDecoder, lockContainerDecoder, lockWindowDecoder, lockWorkspaceDecoder, moveFrameConfigDecoder, moveWindowConfigDecoder, openWorkspaceConfigDecoder, pinWorkspaceDecoder, resizeItemConfigDecoder, setItemTitleConfigDecoder, setWorkspaceIconDecoder, simpleItemConfigDecoder, simpleWindowOperationSuccessResultDecoder, voidResultDecoder, workspaceCreateConfigDecoder, workspaceIconDecoder, workspaceLayoutDecoder, workspaceLayoutSaveConfigDecoder, workspaceSelectorDecoder, workspacesLayoutImportConfigDecoder, workspaceSnapshotResultDecoder, workspacesOperationDecoder, workspaceSummariesResultDecoder } from "./decoders";
+import { addContainerConfigDecoder, addItemResultDecoder, addWindowConfigDecoder, bundleConfigDecoder, deleteLayoutConfigDecoder, emptyFrameDefinitionDecoder, exportedLayoutsResultDecoder, frameBoundsResultDecoder, frameHelloDecoder, frameInitProtocolConfigDecoder, frameSnapshotConfigDecoder, frameSnapshotResultDecoder, frameStateConfigDecoder, frameStateResultDecoder, frameSummariesResultDecoder, frameSummaryDecoder, frameSummaryResultDecoder, getFrameSummaryConfigDecoder, getWorkspacesLayoutsConfigDecoder, getWorkspacesLayoutsResponseDecoder, getWorkspaceWindowsOnLayoutSaveContextConfigDecoder, getWorkspaceWindowsOnLayoutSaveContextResult, isWindowInSwimlaneResultDecoder, layoutSummariesDecoder, lockContainerDecoder, lockWindowDecoder, lockWorkspaceDecoder, moveFrameConfigDecoder, moveWindowConfigDecoder, openWorkspaceConfigDecoder, pinWorkspaceDecoder, resizeItemConfigDecoder, setItemTitleConfigDecoder, setMaximizationBoundaryConfigDecoder, setWorkspaceIconDecoder, simpleItemConfigDecoder, simpleWindowOperationSuccessResultDecoder, voidResultDecoder, workspaceCreateConfigDecoder, workspaceIconDecoder, workspaceLayoutDecoder, workspaceLayoutSaveConfigDecoder, workspaceSelectorDecoder, workspacesLayoutImportConfigDecoder, workspaceSnapshotResultDecoder, workspacesOperationDecoder, workspaceSummariesResultDecoder } from "./decoders";
 import { FramesController } from "./frames";
-import { AddContainerConfig, AddItemResult, AddWindowConfig, BundleConfig, DeleteLayoutConfig, ExportedLayoutsResult, FrameBoundsResult, FrameHello, FrameInitializationConfigProtocol, FrameSnapshotConfig, FrameSnapshotResult, FrameStateConfig, FrameStateResult, FrameSummariesResult, FrameSummaryResult, GetFrameSummaryConfig, GetWorkspacesLayoutsConfig, GetWorkspacesLayoutsResponse, GetWorkspaceWindowsOnLayoutSaveContextConfig, GetWorkspaceWindowsOnLayoutSaveContextResult, IsWindowInSwimlaneResult, LayoutSummariesResult, LayoutSummary, LockContainerConfig, LockWindowConfig, LockWorkspaceConfig, MoveFrameConfig, MoveWindowConfig, OpenWorkspaceConfig, PinWorkspaceConfig, ResizeItemConfig, SetItemTitleConfig, SetWorkspaceIconConfig, SimpleItemConfig, SimpleWindowOperationSuccessResult, WorkspaceCreateConfigProtocol, WorkspaceEventPayload, WorkspaceIconResult, WorkspaceSelector, WorkspacesLayoutImportConfig, WorkspaceSnapshotResult, WorkspacesOperationsTypes, WorkspaceStreamData, WorkspaceSummariesResult, WorkspaceSummaryResult, WorkspaceWindowOnSaveData } from "./types";
+import { AddContainerConfig, AddItemResult, AddWindowConfig, BundleConfig, DeleteLayoutConfig, ExportedLayoutsResult, FrameBoundsResult, FrameHello, FrameInitializationConfigProtocol, FrameSnapshotConfig, FrameSnapshotResult, FrameStateConfig, FrameStateResult, FrameSummariesResult, FrameSummaryResult, GetFrameSummaryConfig, GetWorkspacesLayoutsConfig, GetWorkspacesLayoutsResponse, GetWorkspaceWindowsOnLayoutSaveContextConfig, GetWorkspaceWindowsOnLayoutSaveContextResult, IsWindowInSwimlaneResult, LayoutSummariesResult, LayoutSummary, LockContainerConfig, LockWindowConfig, LockWorkspaceConfig, MoveFrameConfig, MoveWindowConfig, OpenWorkspaceConfig, PinWorkspaceConfig, ResizeItemConfig, SetItemTitleConfig, SetMaximizationBoundaryConfig, SetWorkspaceIconConfig, SimpleItemConfig, SimpleWindowOperationSuccessResult, WorkspaceCreateConfigProtocol, WorkspaceEventPayload, WorkspaceIconResult, WorkspaceSelector, WorkspacesLayoutImportConfig, WorkspaceSnapshotResult, WorkspacesOperationsTypes, WorkspaceStreamData, WorkspaceSummariesResult, WorkspaceSummaryResult, WorkspaceWindowOnSaveData } from "./types";
 import logger from "../../shared/logger";
 import { Glue42WebPlatform } from "../../../platform";
 import { GlueController } from "../../controllers/glue";
@@ -69,7 +69,8 @@ export class WorkspacesController implements LibController {
         checkStarted: { name: "checkStarted", execute: this.handleCheckStarted.bind(this) },
         getPlatformFrameId: { name: "getPlatformFrameId", execute: this.handleGetPlatformFrameId.bind(this) },
         getWorkspacesLayouts: { name: "getWorkspacesLayouts", dataDecoder: getWorkspacesLayoutsConfigDecoder, resultDecoder: getWorkspacesLayoutsResponseDecoder, execute: this.handleGetWorkspacesLayouts.bind(this) },
-        getWorkspaceWindowsOnLayoutSaveContext: { name: "getWorkspaceWindowsOnLayoutSaveContext", dataDecoder: getWorkspaceWindowsOnLayoutSaveContextConfigDecoder, resultDecoder: getWorkspaceWindowsOnLayoutSaveContextResult, execute: this.handleGetWorkspaceWindowsOnLayoutSaveContext.bind(this) }
+        getWorkspaceWindowsOnLayoutSaveContext: { name: "getWorkspaceWindowsOnLayoutSaveContext", dataDecoder: getWorkspaceWindowsOnLayoutSaveContextConfigDecoder, resultDecoder: getWorkspaceWindowsOnLayoutSaveContextResult, execute: this.handleGetWorkspaceWindowsOnLayoutSaveContext.bind(this) },
+        setMaximizationBoundary: { name: "setMaximizationBoundary", dataDecoder: setMaximizationBoundaryConfigDecoder, resultDecoder: voidResultDecoder, execute: this.handleSetMaximizationBoundary.bind(this) }
     }
 
     constructor(
@@ -736,6 +737,18 @@ export class WorkspacesController implements LibController {
         this.logger?.trace(`[${commandId}] operation GetWorkspaceWindowsOnLayoutSaveContext completed responding`);
 
         return { windowsOnSaveData };
+    }
+
+    private async handleSetMaximizationBoundary(config: SetMaximizationBoundaryConfig, commandId: string): Promise<void> {
+        this.logger?.trace(`[${commandId}] handling setMaximizationBoundary request with config ${JSON.stringify(config)}`);
+
+        const frame = await this.framesController.getFrameInstance(config);
+
+        this.logger?.trace(`[${commandId}] targeting frame ${frame.windowId}`);
+
+        await this.glueController.callFrame<SetMaximizationBoundaryConfig, void>(this.operations.setMaximizationBoundary, config, frame.windowId);
+
+        this.logger?.trace(`[${commandId}] frame ${frame.windowId} gave a success signal, responding to caller`);
     }
 
     private async changeFrameState(config: FrameStateConfig, commandId: string): Promise<void> {

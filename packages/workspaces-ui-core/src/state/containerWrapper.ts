@@ -237,6 +237,10 @@ export class WorkspaceContainerWrapper {
         return this.containerContentItem.config.workspacesConfig.maximizationBoundary ?? false;
     }
 
+    public set maximizationBoundary(value: boolean) {
+        this.containerContentItem.config.workspacesConfig.maximizationBoundary = value;
+    }
+
     public get summary(): ContainerSummary {
         const workspaceId = this.workspaceId ?? store.getByContainerId(idAsString(this.containerContentItem.config.id))?.id;
         const userFriendlyType = this.getUserFriendlyType(this.containerContentItem?.type || "workspace");

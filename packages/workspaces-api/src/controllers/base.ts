@@ -13,6 +13,7 @@ import { AllParentTypes, Child, ContainerLockConfig, SubParentTypes } from "../t
 import { PrivateDataManager } from "../shared/privateDataManager";
 import { Window } from "../models/window";
 import { UnsubscribeFunction } from "callback-registry";
+import { SetMaximizationBoundaryConfig } from "../../temp";
 
 export class BaseController {
 
@@ -238,6 +239,10 @@ export class BaseController {
 
     public async resizeItem(itemId: string, config: Glue42Workspaces.ResizeConfig): Promise<void> {
         await this.bridge.send(OPERATIONS.resizeItem.name, Object.assign({}, { itemId }, config));
+    }
+
+    public async setMaximizationBoundary(itemId: string, config: SetMaximizationBoundaryConfig): Promise<void> {
+        await this.bridge.send(OPERATIONS.setMaximizationBoundary.name, Object.assign({}, { itemId }, config));
     }
 
     public async moveFrame(itemId: string, config: Glue42Workspaces.MoveConfig): Promise<void> {

@@ -1,3 +1,5 @@
+1.13.3
+feat: added setMaximizationBoundary
 1.13.2
 chore: updated the decoders with allowReorder, allowWindowReorder and allowWorkspaceTabReorder
 feat: added frameBounds to the data provided to workspace and frame closed events

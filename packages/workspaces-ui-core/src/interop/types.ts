@@ -224,6 +224,11 @@ export interface GetWorkspacesLayoutsRequest {
     operationArguments: GetWorkspacesLayoutsArguments;
 }
 
+export interface SetMaximizationBoundaryRequest {
+    operation: "setMaximizationBoundary";
+    operationArguments: SetMaximizationBoundaryArguments;
+}
+
 //#endregion
 
 //#region Arguments
@@ -365,7 +370,7 @@ export interface LockGroupArguments {
     itemId: string;
     config?: {
         allowExtract?: boolean;
-        allowReorder?:boolean;
+        allowReorder?: boolean;
         allowDrop?: boolean;
         allowDropHeader?: boolean;
         allowDropLeft?: boolean;
@@ -433,6 +438,11 @@ export interface GetWorkspacesLayoutsArguments {
     context?: any;
 }
 
+export interface SetMaximizationBoundaryArguments {
+    itemId: string;
+    enabled: boolean; 
+}
+
 //#endregion
 
 //#region Results
@@ -498,4 +508,4 @@ export type ControlArguments = SaveLayoutRequest | DeleteLayoutRequest |
     BundleWorkspaceRequest | IsWindowInWorkspaceRequest | GetFrameSummaryRequest | MoveFrameRequest | GetFrameSnapshotRequest |
     GetSnapshotRequest | MoveWindowToRequest | GenerateLayoutRequest | PingRequest | HibernateWorkspaceRequest | ResumeWorkspaceRequest |
     LockWorkspaceRequest | LockContainerRequest | LockWindowRequest | ResizeItemRequest | PinWorkspaceRequest | UnpinWorkspaceRequest |
-    GetWorkspaceIconRequest | SetWorkspaceIconRequest | InitFrameRequest | CreateFrameRequest | InitFrameFromSnapshotRequest | GetWorkspacesLayoutsRequest;
+    GetWorkspaceIconRequest | SetWorkspaceIconRequest | InitFrameRequest | CreateFrameRequest | InitFrameFromSnapshotRequest | GetWorkspacesLayoutsRequest | SetMaximizationBoundaryRequest;

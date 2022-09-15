@@ -258,6 +258,11 @@ export interface ResizeItemConfig {
     relative?: boolean;
 }
 
+export interface SetMaximizationBoundaryConfig {
+    itemId: string;
+    enabled: boolean;
+}
+
 export interface MoveFrameConfig {
     itemId: string;
     top?: number;
