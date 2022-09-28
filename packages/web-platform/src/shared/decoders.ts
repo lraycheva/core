@@ -90,7 +90,7 @@ export const windowLayoutComponentDecoder: Decoder<Glue42Web.Layouts.WindowCompo
     state: windowComponentStateDecoder
 });
 
-export const libDomainDecoder: Decoder<LibDomains> = oneOf<"system" | "windows" | "appManager" | "layouts" | "workspaces" | "intents" | "notifications" | "extension">(
+export const libDomainDecoder: Decoder<LibDomains> = oneOf<"system" | "windows" | "appManager" | "layouts" | "workspaces" | "intents" | "notifications" | "extension" | "channels">(
     constant("system"),
     constant("windows"),
     constant("appManager"),
@@ -98,7 +98,8 @@ export const libDomainDecoder: Decoder<LibDomains> = oneOf<"system" | "windows" 
     constant("workspaces"),
     constant("intents"),
     constant("notifications"),
-    constant("extension")
+    constant("extension"),
+    constant("channels")
 );
 
 export const systemOperationTypesDecoder: Decoder<SystemOperationTypes> = oneOf<"getEnvironment" | "getBase">(

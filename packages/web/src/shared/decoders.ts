@@ -580,6 +580,14 @@ export const channelNameDecoder = (channelNames: string[]): Decoder<string> => {
     return nonEmptyStringDecoder.where(s => channelNames.includes(s), "Expected a valid channel name");
 };
 
+export const channelContextDecoder: Decoder<Glue42Web.Channels.ChannelContext> = object({
+    name: nonEmptyStringDecoder,
+    meta: object({
+        color: nonEmptyStringDecoder
+    }),
+    data: optional(anyJson()),
+});
+
 export const interopActionSettingsDecoder: Decoder<Glue42Web.Notifications.InteropActionSettings> = object({
     method: nonEmptyStringDecoder,
     arguments: optional(anyJson()),

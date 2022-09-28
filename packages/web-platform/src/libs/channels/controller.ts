@@ -2,12 +2,17 @@
 import { Glue42Web } from "@glue42/web";
 import { Glue42Core } from "@glue42/core";
 import { Glue42WebPlatform } from "../../../platform";
-import { InternalPlatformConfig, LibController } from "../../common/types";
+import { BridgeOperation, InternalPlatformConfig, LibController } from "../../common/types";
 import { GlueController } from "../../controllers/glue";
 import logger from "../../shared/logger";
 import { ChannelContextPrefix } from "../../common/constants";
+import { channelContextDecoder, channelOperationDecoder, ChannelOperationTypes } from './decoders';
 
 export class ChannelsController implements LibController {
+    private operations: { [key in ChannelOperationTypes]: BridgeOperation } = {
+        addChannel: { name: "addChannel", execute: this.addChannel.bind(this), dataDecoder: channelContextDecoder }
+    }
+
     constructor(
         private readonly glueController: GlueController
     ) { }
@@ -26,15 +31,47 @@ export class ChannelsController implements LibController {
         this.logger?.trace("initialization is completed");
     }
 
-    public async handleControl(): Promise<any> {
-        // noop
+    public async handleControl(args: any): Promise<any> {
+        const channelsData = args.data;
+
+        const commandId = args.commandId;
+
+        const operationValidation = channelOperationDecoder.run(args.operation);
+        
+        if (!operationValidation.ok) {
+            throw new Error(`This channels request cannot be completed, because the operation name did not pass validation: ${JSON.stringify(operationValidation.error)}`);
+        }
+
+        const operationName: ChannelOperationTypes = operationValidation.result;
+
+        const incomingValidation = this.operations[operationName].dataDecoder?.run(channelsData);
+        
+        if (incomingValidation && !incomingValidation.ok) {
+            throw new Error(`Channels request for ${operationName} rejected, because the provided arguments did not pass the validation: ${JSON.stringify(incomingValidation.error)}`);
+        }
+
+        this.logger?.debug(`[${commandId}] ${operationName} command is valid with data: ${JSON.stringify(channelsData)}`);
+
+        const result = await this.operations[operationName].execute(channelsData, commandId);
+
+        const resultValidation = this.operations[operationName].resultDecoder?.run(result);
+
+        if (resultValidation && !resultValidation.ok) {
+            throw new Error(`Channels request for ${operationName} could not be completed, because the operation result did not pass the validation: ${JSON.stringify(resultValidation.error)}`);
+        }
+
+        this.logger?.trace(`[${commandId}] ${operationName} command was executed successfully`);
+
+        return result;
     }
 
     private async setupChannels(channels: Glue42WebPlatform.Channels.ChannelDefinition[]): Promise<void> {
         await Promise.all(channels.map((channel) => this.addChannel(channel)));
     }
 
-    private async addChannel(info: Glue42WebPlatform.Channels.ChannelDefinition): Promise<void> {
+    private async addChannel(info: Glue42WebPlatform.Channels.ChannelDefinition, commandId?: string): Promise<void> {
+        this.trace(`[${commandId}] handling addChannel command with a valid name: ${info.name}, color: ${info.meta.color} and data: ${JSON.stringify(info.data)}`, commandId);
+        
         const context: Glue42Web.Channels.ChannelContext = {
             name: info.name,
             meta: info.meta,
@@ -43,10 +80,20 @@ export class ChannelsController implements LibController {
 
         const contextName = this.createContextName(context.name);
 
+        this.trace(`[${commandId}] setting a new channel context with name: ${contextName}`, commandId);
+
         await this.glueController.setContext(contextName, context);
+
+        this.trace(`[${commandId}] channel context with name: ${contextName} created successfully`, commandId);
     }
 
     private createContextName(channelName: string): string {
         return `${ChannelContextPrefix}${channelName}`;
+    }
+
+    private trace(msg: string, commandId?: string): void {
+        if (commandId) {
+            this.logger?.trace(msg);
+        }
     }
 }

@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Glue42Core } from "@glue42/core";
 import { Glue42Web } from "../../web";
-import { channelNameDecoder } from "../shared/decoders";
+import { channelNameDecoder, channelContextDecoder } from "../shared/decoders";
 import { LibController } from "../shared/types";
 import {
     default as CallbackRegistryFactory,
@@ -10,11 +10,15 @@ import {
     UnsubscribeFunction,
 } from "callback-registry";
 import { latestFDC3Type } from "../shared/constants";
+import { IoC } from '../shared/ioc';
+import { GlueBridge } from '../communication/bridge';
+import { operations } from './protocol';
 
 export class ChannelsController implements LibController {
     private readonly registry: CallbackRegistry = CallbackRegistryFactory();
     private logger!: Glue42Web.Logger.API;
     private contexts!: Glue42Core.Contexts.API;
+    private bridge!: GlueBridge;
     private currentChannelName: string | undefined;
     private unsubscribeFunc: (() => void) | undefined;
 
@@ -22,12 +26,14 @@ export class ChannelsController implements LibController {
     private readonly SubsKey = "subs";
     private readonly ChangedKey = "changed";
 
-    public async start(coreGlue: Glue42Core.GlueCore): Promise<void> {
+    public async start(coreGlue: Glue42Core.GlueCore, ioc: IoC): Promise<void> {
         this.logger = coreGlue.logger.subLogger("channels.controller.web");
 
         this.logger.trace("starting the web channels controller");
 
         this.contexts = coreGlue.contexts;
+
+        this.bridge = ioc.bridge;
 
         this.logger.trace("no need for platform registration, attaching the channels property to glue and returning");
 
@@ -243,7 +249,17 @@ export class ChannelsController implements LibController {
         return this.registry.add(this.ChangedKey, callback);
     }
 
-    private add(info: Glue42Web.Channels.ChannelContext): Promise<Glue42Web.Channels.ChannelContext> {
-        throw new Error("Method `add()` isn't implemented.");
+    private async add(info: Glue42Web.Channels.ChannelContext): Promise<Glue42Web.Channels.ChannelContext> {
+        const channelContext = channelContextDecoder.runWithException(info);
+
+        const channelWithSuchNameExists = this.getAllChannelNames().includes(channelContext.name);
+
+        if (channelWithSuchNameExists) {
+            throw new Error("There's an already existing channel with such name");
+        }
+
+        await this.bridge.send<Glue42Web.Channels.ChannelContext, void>("channels", operations.addChannel, channelContext);
+
+        return channelContext;
     }
 }
