@@ -90,6 +90,13 @@ describe('open()', () => {
         expect(newlyOpenedWindowContext).to.eql(context);
     });
 
+    it('Should open the window with an id containing g42 prefix.', async () => {
+
+        const newlyOpenedWindow = await glue.windows.open(gtf.windows.getWindowName(), gtf.windows.SUPPORT_DETAILS.url);
+
+        expect(newlyOpenedWindow.id.includes("g42")).to.be.true;
+    });
+
     it('Should open the window with the provided start options (bounds).', async () => {
         const [top, left, width, height] = [100, 200, 300, 400];
         const options = {

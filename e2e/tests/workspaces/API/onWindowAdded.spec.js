@@ -170,6 +170,20 @@ describe("onWindowAdded() Should", () => {
         }).catch(done);
     });
 
+    it("notify with a window with id containing the g42 prefix when a workspace is created", (done) => {
+        let workspace = undefined;
+        glue.workspaces.onWindowAdded((w) => {
+            if (w.id.includes("g42")) {
+                done();
+            }
+        }).then((unSub) => {
+            unSubFuncs.push(unSub);
+            return glue.workspaces.createWorkspace(basicConfig);
+        }).then((w) => {
+            workspace = w;
+        }).catch(done);
+    });
+
     it("notify that two windows have been added when a workspace with two windows is created", (done) => {
         let addedWindowCount = 0;
         glue.workspaces.onWindowAdded(() => {

@@ -1,12 +1,11 @@
 import GoldenLayout from "@glue42/golden-layout";
 import { Glue42Web } from "@glue42/web";
-import { generate } from "shortid";
 import { WorkspacesManager } from "../manager";
 import { EmptyVisibleWindowName } from "../utils/constants";
 import { IFrameController } from "../iframeController";
 import { LayoutStateResolver } from "../state/resolver";
 import store from "../state/store";
-import { getElementBounds, idAsString } from "../utils";
+import { generateWindowId, getElementBounds, idAsString } from "../utils";
 import createRegistry, { UnsubscribeFunction } from "callback-registry";
 import { LoadingStrategy, Window, WindowSummary, Workspace, WorkspacesSystemConfig } from "../types/internal";
 import { DelayedExecutor } from "../utils/delayedExecutor";
@@ -248,7 +247,7 @@ export class ApplicationFactory {
             newlyAddedWindow.url = url;
         }
 
-        windowId = windowId || generate();
+        windowId = windowId || generateWindowId();
 
         if (component.config.componentState?.context) {
             delete component.config.componentState.context;

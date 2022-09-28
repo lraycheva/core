@@ -1,4 +1,5 @@
 import GoldenLayout, { Container } from "@glue42/golden-layout";
+import { generate } from "shortid";
 import { ColumnItem, GroupItem, RowItem, WindowItem, WorkspaceItem } from "../types/internal";
 
 export const idAsString = (id: string | string[]) => Array.isArray(id) ? id[0] : id;
@@ -113,3 +114,7 @@ export const getRealHeight = (obj: JQuery<HTMLElement>): number => {
     clone.remove();
     return height;
 };
+
+export const generateWindowId = () => {
+    return `g42-${generate()}`;
+}

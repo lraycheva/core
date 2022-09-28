@@ -197,9 +197,11 @@ export class WindowsController implements LibController {
 
         const openBounds = await this.getStartingBounds(config, commandId);
 
+        const windowId = (config as any).options?.windowId ?? `g42-${generate()}`;
+
         const windowData: SessionWindowData = {
             name: config.name,
-            windowId: (config as any).options?.windowId ?? generate(),
+            windowId,
             initialBounds: openBounds,
             initialUrl: config.url,
             initialContext: config.options?.context

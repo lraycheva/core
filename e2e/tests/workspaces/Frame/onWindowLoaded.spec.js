@@ -435,6 +435,25 @@ describe('frame.onWindowLoaded ', () => {
                 .catch(done);
         });
 
+        it('should notify with a valid workspace window with id containing the g42 prefix when a window was loaded', (done) => {
+            const ready = gtf.waitFor(2, done);
+
+            defaultFrame.onWindowLoaded((win) => {
+                try {
+                    expect(win.id.includes("g42")).to.be.true;
+                    ready();
+                } catch (error) {
+                    done(error);
+                }
+            })
+                .then((unSub) => {
+                    unSubFuncs.push(unSub);
+                    return defaultWorkspace.addWindow(windowConfig);
+                })
+                .then(ready)
+                .catch(done);
+        });
+
         it('the provided workspace window should have correct workspace id and frame id', (done) => {
             const ready = gtf.waitFor(2, done);
 

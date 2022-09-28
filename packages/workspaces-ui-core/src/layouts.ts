@@ -367,23 +367,6 @@ export class LayoutsManager {
         addRecursive(configToPopulate);
     }
 
-    private addWindowIds(configToPopulate: GoldenLayout.Config | GoldenLayout.ItemConfig) {
-        if (!configToPopulate) {
-            return;
-        }
-        const addRecursive = (config: GoldenLayout.Config | GoldenLayout.ItemConfig | GoldenLayout.ComponentConfig) => {
-            if (config.type === "component") {
-                config.componentState.windowId = this._configFactory.getId();
-            }
-
-            if (config.type !== "component" && config.content) {
-                config.content.forEach((i) => addRecursive(i));
-            }
-        };
-
-        addRecursive(configToPopulate);
-    }
-
     private removeWorkspaceIds(configToClean: GoldenLayout.Config) {
         const removeRecursive = (config: GoldenLayout.Config | GoldenLayout.ItemConfig) => {
             if ("id" in config) {

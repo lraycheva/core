@@ -140,8 +140,10 @@ export class ApplicationsController implements LibController {
             throw new Error(`Cannot start an instance of application: ${config.name}, because it is not found.`);
         }
 
+        const id = config.id ?? `g42-${generate()}`;
+
         const instance: InstanceData = {
-            id: config.id ?? generate(),
+            id,
             applicationName: config.name
         };
 

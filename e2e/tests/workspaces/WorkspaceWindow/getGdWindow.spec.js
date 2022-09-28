@@ -63,5 +63,24 @@ describe("getGdWindow() Should", () => {
         const isPresent = gdWindows.some(w => w.id === gdWindow.id);
 
         expect(isPresent).to.be.true;
-    })
+    });
+
+    it("return a gdWindow that has an id containing the prefix g42", async () => {
+        await workspace.addWindow(windowConfig);
+
+        await workspace.refreshReference();
+
+        let windows = workspace.getAllWindows();
+        let window = windows[0];
+
+        await window.forceLoad();
+        await workspace.refreshReference();
+
+        windows = workspace.getAllWindows();
+        window = windows[0];
+
+        const gdWindow = window.getGdWindow();
+
+        expect(gdWindow.id.includes("g42")).to.be.true;
+    });
 });

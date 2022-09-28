@@ -87,6 +87,12 @@ describe("start() ", function() {
         expect(instBeforeLength + 1).to.eql(instAfterLength);
     });
 
+    it("Should create a new instance with an id containing the g42 prefix", async() => {
+        const inst = await app.start();
+
+        expect(inst.id.includes("g42")).to.be.true;
+    });
+
     it("Should start the app instance with the passed context", async() => {
         const context = { test: 42 };
 

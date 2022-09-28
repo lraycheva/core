@@ -180,6 +180,25 @@ describe('onWindowLoaded ', () => {
                 .catch(done);
         });
 
+        it('should notify with a workspace window with id containing the g42 prefix when a window was loaded', (done) => {
+            const ready = gtf.waitFor(2, done);
+
+            glue.workspaces.onWindowLoaded((win) => {
+                try {
+                    expect(win.id.includes("g42")).to.be.true;
+                    ready();
+                } catch (error) {
+                    done(error);
+                }
+            })
+                .then((unSub) => {
+                    unSubFuncs.push(unSub);
+                    return glue.workspaces.createWorkspace(basicConfig);
+                })
+                .then(ready)
+                .catch(done);
+        });
+
         it('should notify twice when the restored workspace was two windows', (done) => {
             const ready = gtf.waitFor(3, done);
 

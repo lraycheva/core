@@ -1,7 +1,7 @@
 import { Bounds } from "./types/internal";
 import callbackRegistry, { UnsubscribeFunction } from "callback-registry";
-import { generate } from "shortid";
 import { Glue42Web } from "@glue42/web";
+import { generateWindowId } from "./utils";
 const semverLte = require('semver/functions/lte');
 
 declare var window: Window & { glue42core: { platformVersion: string } };
@@ -115,7 +115,7 @@ export class IFrameController {
     }
 
     private async startCore(id: string, url: string, layoutState?: object, windowId?: string): Promise<HTMLIFrameElement> {
-        windowId = windowId || generate();
+        windowId = windowId || generateWindowId();
         if (this._idToFrame[id]) {
             return this._idToFrame[id];
         }

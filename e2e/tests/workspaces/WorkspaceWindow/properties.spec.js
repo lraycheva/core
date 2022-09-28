@@ -59,6 +59,12 @@ describe("properties: ", () => {
             expect(window.id).to.not.be.undefined;
             expect(window.id.length).to.not.eql(0);
         });
+
+        it(`Should include the g42 prefix`, async () => {
+            const window = workspace.getAllWindows()[0];
+            await window.forceLoad();
+            expect(window.id.includes("g42")).to.be.true;
+        });
     });
 
     describe("frameId: ", () => {
