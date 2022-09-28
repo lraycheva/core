@@ -73,13 +73,11 @@ const setupGlue42Enterprise = (isInBrowser = false): void => {
                     appManager: "full"
                 });
             } else {
-                const predicate = (): boolean => {
-                    const length = ((window as WindowType).glue42gd as Glue42GD).originalGlue?.instances?.length;
-
-                    return typeof length !== "undefined" && length > 0;
-                };
-
-                return waitFor<Glue42.Glue>(predicate, 300, () => (((window as WindowType).glue42gd as Glue42GD).originalGlue as Glue42GDOriginalGlue).instances[0]);
+                return waitFor<Glue42.Glue>(
+                    () => ((window as WindowType).glue42gd as Glue42GD)?.originalGlue?.calls?.initialized,
+                    300,
+                    () => ((window as WindowType).glue42gd as Glue42GD).originalGlue!.calls.promise
+                );
             }
         })
         .then((glue) => {
