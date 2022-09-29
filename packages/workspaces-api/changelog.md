@@ -1,3 +1,5 @@
+1.16.3
+feat: added frame.onFocusChanged event
 1.16.2
 feat: added the setMaximizationBoundary method
 1.16.1

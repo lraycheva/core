@@ -138,6 +138,7 @@ export interface FrameSnapshotResult {
 
 export interface FrameSummaryResult {
     id: string;
+    isFocused?: boolean;
     isInitialized?: boolean;
     initializationContext?: Glue42Workspaces.FrameInitializationContext;
 }

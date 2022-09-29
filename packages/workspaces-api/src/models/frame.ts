@@ -4,6 +4,7 @@ import { PrivateDataManager } from "../shared/privateDataManager";
 import { FrameStreamData, WorkspaceStreamData, WindowStreamData } from "../types/protocol";
 import { Glue42Workspaces } from "../../workspaces.d";
 import { FramePrivateData } from "../types/privateData";
+import { FrameFocusChangedData } from "../../temp";
 
 interface PrivateData {
     manager: PrivateDataManager;
@@ -334,5 +335,25 @@ export class Frame implements Glue42Workspaces.Frame {
         if (!this.isInitialized) {
             await callback(getData(this).summary.initializationContext);
         }
+    }
+
+    public async onFocusChanged(callback: (data: FrameFocusChangedData) => void): Promise<Glue42Workspaces.Unsubscribe> {
+        checkThrowCallback(callback);
+        const myData = getData(this);
+        const { id } = myData.summary;
+
+        const wrappedCallback = (args: FrameStreamData): void => {
+            console.log("data received", args);
+            callback({ isFocused: args.frameSummary.isFocused });
+        };
+
+        const config: SubscriptionConfig = {
+            callback: wrappedCallback,
+            action: "focus",
+            eventType: "frame",
+            scope: "frame"
+        };
+        const unsubscribe = await myData.controller.processLocalSubscription(config, id);
+        return unsubscribe;
     }
 }

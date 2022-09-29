@@ -57,7 +57,7 @@ import {
     ShortcutConfig,
     FrameSnapshotConfig,
     FrameBounds,
-    SetMaximizationBoundaryConfig
+    SetMaximizationBoundaryConfig,
 } from "../types/protocol";
 import { WorkspaceEventType, WorkspaceEventAction } from "../types/subscription";
 import { Glue42Workspaces } from "../../workspaces";
@@ -376,6 +376,7 @@ export const frameInitializationContextDecoder: Decoder<Glue42Workspaces.FrameIn
 
 export const frameSummaryDecoder: Decoder<FrameSummaryResult> = object({
     id: nonEmptyStringDecoder,
+    isFocused: optional(boolean()),
     isInitialized: optional(boolean()),
     initializationContext: optional(frameInitializationContextDecoder)
 });
@@ -598,6 +599,7 @@ export const exportedLayoutsResultDecoder: Decoder<ExportedLayoutsResult> = obje
 
 export const frameSummaryResultDecoder: Decoder<FrameSummaryResult> = object({
     id: nonEmptyStringDecoder,
+    isFocused: optional(boolean()),
     isInitialized: optional(boolean()),
     initializationContext: optional(frameInitializationContextDecoder)
 });

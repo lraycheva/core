@@ -54,3 +54,15 @@ export interface Column extends Glue42Workspaces.Column {
    */
   setMaximizationBoundary(config: SetMaximizationBoundaryConfig): Promise<void>
 }
+
+export interface FrameFocusChangedData {
+  isFocused: boolean;
+}
+
+export interface Frame extends Glue42Workspaces.Frame {
+  /**
+   * Triggered when either a window in the frame is focused or the frame itself (supported only in Glue42 Enterprise).
+   * @param data Object which specifies whether the frame has lost or got focus
+   */
+  onFocusChanged(data: FrameFocusChangedData): Promise<Glue42Workspaces.Unsubscribe>;
+}
