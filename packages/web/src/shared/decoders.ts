@@ -212,8 +212,8 @@ export const applicationDefinitionDecoder: Decoder<Glue42Web.AppManager.Definiti
     title: optional(nonEmptyStringDecoder),
     version: optional(nonEmptyStringDecoder),
     customProperties: optional(anyJson()),
-    icon: optional(nonEmptyStringDecoder),
-    caption: optional(nonEmptyStringDecoder),
+    icon: optional(string()),
+    caption: optional(string()),
     details: applicationDetailsDecoder,
     intents: optional(array(intentDefinitionDecoder)),
     hidden: optional(boolean())

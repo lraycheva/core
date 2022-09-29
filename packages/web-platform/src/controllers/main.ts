@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Glue42Web } from "@glue42/web";
+import { version } from "../../package.json";
 import { UnsubscribeFunction } from "callback-registry";
 import { CoreClientData, InternalPlatformConfig, LibController, LibDomains } from "../common/types";
 import { libDomainDecoder } from "../shared/decoders";
@@ -24,6 +25,8 @@ import { Glue42Core } from "@glue42/core";
 import { InterceptionController } from "./interception";
 
 export class PlatformController {
+
+    private _platformApi!: Glue42WebPlatform.API;
 
     private readonly controllers: { [key in LibDomains]: LibController } = {
         system: this.systemController,
@@ -67,6 +70,10 @@ export class PlatformController {
         return this.glueController.systemGlue;
     }
 
+    public get platformApi(): Glue42WebPlatform.API {
+        return this._platformApi;
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async start(config: InternalPlatformConfig): Promise<void> {
         await this.portsBridge.configure(config);
@@ -88,27 +95,21 @@ export class PlatformController {
 
         await this.serviceWorkerController.connect(config);
 
+        this._platformApi = this.buildPlatformApi();
+
         if (config.plugins) {
             await Promise.all(config.plugins.definitions.filter((def) => def.critical).map(this.startPlugin.bind(this)));
 
             config.plugins.definitions.filter((def) => !def.critical).map(this.startPlugin.bind(this));
         }
 
-        this.serviceWorkerController.notifyReady();
-
         if (config.connection.preferred) {
             await this.preferredConnectionController.start(config.connection.preferred);
         }
 
+        this.serviceWorkerController.notifyReady();
+
         this.portsBridge.start();
-    }
-
-    public async connectExtClient(client: any, port: any): Promise<void> {
-        await this.portsBridge.handleExtConnectionRequest(client, port);
-    }
-
-    public onSystemReconnect(callback: () => void): UnsubscribeFunction {
-        return this.preferredConnectionController.onReconnect(callback);
     }
 
     public getClientGlue(): Glue42Web.API {
@@ -120,6 +121,7 @@ export class PlatformController {
             const platformControls: Glue42WebPlatform.Plugins.PlatformControls = {
                 control: (args: Glue42WebPlatform.Plugins.BaseControlMessage): Promise<any> => this.handlePluginMessage(args, definition.name),
                 logger: logger.get(definition.name),
+                platformApi: this.platformApi,
                 interception: {
                     register: (request: Glue42WebPlatform.Plugins.InterceptorRegistrationRequest) => this.interceptionController.registerInterceptor(request, definition.name)
                 }
@@ -208,5 +210,27 @@ export class PlatformController {
         }
 
         return this.controllers[controlMessage.domain].handleControl(controlMessage);
+    }
+
+    private buildPlatformApi(): Glue42WebPlatform.API {
+        return {
+            version,
+            contextTrackGlue: this.ctxTrackingGlue,
+            systemGlue: this.systemGlue,
+            connectExtClient: (client: any, port: any) => {
+                return this.connectExtClient(client, port);
+            },
+            onSystemReconnect: (callback: () => void): UnsubscribeFunction => {
+                return this.onSystemReconnect(callback);
+            }
+        } as Glue42WebPlatform.API;
+    }
+
+    private async connectExtClient(client: any, port: any): Promise<void> {
+        await this.portsBridge.handleExtConnectionRequest(client, port);
+    }
+
+    private onSystemReconnect(callback: () => void): UnsubscribeFunction {
+        return this.preferredConnectionController.onReconnect(callback);
     }
 }

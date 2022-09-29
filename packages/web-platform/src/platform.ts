@@ -3,14 +3,11 @@ import { Glue42WebPlatform } from "../platform";
 import { platformConfigDecoder } from "./shared/decoders";
 import { defaultPlatformConfig } from "./common/defaultConfig";
 import deepMerge from "deepmerge";
-import { version } from "../package.json";
 import { PlatformController } from "./controllers/main";
 import { Glue42Web } from "@glue42/web";
 import { InternalPlatformConfig } from "./common/types";
-import { generate } from "shortid";
 import { nanoid } from "nanoid";
 import { SessionStorageController } from "./controllers/session";
-import { UnsubscribeFunction } from "callback-registry";
 
 export class Platform {
 
@@ -33,22 +30,8 @@ export class Platform {
         return this.controller.getClientGlue();
     }
 
-    public exposeAPI(): Glue42WebPlatform.API {
-        return {
-            version: this.version,
-            contextTrackGlue: this.controller.ctxTrackingGlue,
-            systemGlue: this.controller.systemGlue,
-            connectExtClient: (client: any, port: any) => {
-                return this.controller.connectExtClient(client, port);
-            },
-            onSystemReconnect: (callback: () => void): UnsubscribeFunction => {
-                return this.controller.onSystemReconnect(callback);
-            }
-        } as Glue42WebPlatform.API;
-    }
-
-    private get version(): string {
-        return version;
+    public getPlatformApi(): Glue42WebPlatform.API {
+        return this.controller.platformApi;
     }
 
     private checkSingleton(): void {

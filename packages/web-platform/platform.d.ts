@@ -226,6 +226,7 @@ export namespace Glue42WebPlatform {
         export interface PlatformControls {
             control: (args: BaseControlMessage) => Promise<any>;
             interception: PluginInterception;
+            platformApi: API;
             logger?: Glue42Web.Logger.API;
         }
 
