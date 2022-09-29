@@ -56,8 +56,13 @@ export class Window implements Glue42Workspaces.WorkspaceWindow {
         return getData(this).controller.checkIsWindowLoaded(this.id);
     }
 
+    public get isSelected(): boolean {
+        return getData(this).config.isSelected;
+    }
+
     public get focused(): boolean {
-        return getData(this).config.isFocused;
+        // Should return undefined in core, because focus state cannot be monitored reliably
+        return this.isLoaded ? this.getGdWindow().isFocused : false;
     }
 
     public get title(): string {

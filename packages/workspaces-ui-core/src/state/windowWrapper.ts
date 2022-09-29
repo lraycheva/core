@@ -125,7 +125,6 @@ export class WorkspaceWindowWrapper {
     private getSummaryCore(windowContentItem: GoldenLayout.Component, winId: string): WindowSummary {
         const parent = windowContentItem?.parent;
         const activeContentItem = (typeof parent?.getActiveContentItem === "function") ? parent.getActiveContentItem() : undefined;
-        const isFocused = !activeContentItem || activeContentItem.config.id === windowContentItem.config.id;
         const isLoaded = windowContentItem.config.componentState.windowId !== undefined;
         const positionIndex = this.index;
         const workspaceId = store.getByWindowId(winId)?.id;
@@ -137,8 +136,9 @@ export class WorkspaceWindowWrapper {
             parentId: idAsString(userFriendlyParent?.config?.id) ?? idAsString(windowContentItem.config.id),
             config: {
                 frameId: this.frameId,
-                isFocused,
                 isLoaded,
+                isFocused: false,
+                isSelected: this.isSelected,
                 positionIndex,
                 workspaceId,
                 windowId,

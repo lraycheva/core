@@ -15,6 +15,7 @@ describe("convertToRendererConfig() Should", () => {
         type: "window",
         config: {
             appName: mockApp,
+            isSelected: false,
             isFocused: false,
             isLoaded: false,
             isMaximized: false,

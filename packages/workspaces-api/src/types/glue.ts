@@ -20,6 +20,7 @@ export type ContextsAPI = Glue42Core.Contexts.API;
 export type GDWindow = {
     id: string;
     close(): Promise<GDWindow>;
+    isFocused?: boolean;
     moveTo(top: number, left: number): Promise<GDWindow>;
     resizeTo(width: number, height: number): Promise<GDWindow>;
     moveResize(config: Bounds): Promise<GDWindow>;

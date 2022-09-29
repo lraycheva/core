@@ -57,8 +57,9 @@ export interface WindowItem {
         appName: string;
         windowId?: string;
         isMaximized: boolean;
+        isFocused:boolean;
         isLoaded: boolean;
-        isFocused: boolean;
+        isSelected: boolean;
         workspaceId?: string;
         frameId?: string;
         positionIndex?: number;
@@ -130,8 +131,9 @@ export interface WindowSummary {
         positionIndex: number;
         windowId?: string;
         isMaximized: boolean;
+        isFocused:boolean;
         isLoaded: boolean;
-        isFocused: boolean;
+        isSelected: boolean;
         appName: string;
         url: string;
         allowExtract?: boolean;
@@ -273,6 +275,7 @@ export interface APIWIndowSettings {
     id: string | string[];
     windowId: string;
     isMaximized: boolean;
+    isSelected: boolean;
     isFocused: boolean;
     appName?: string;
     url?: string;

@@ -1,4 +1,5 @@
 1.16.3
+feat: added workspace.show/hideLoadingAnimation and window.isSelected
 feat: added frame.onFocusChanged event
 1.16.2
 feat: added the setMaximizationBoundary method

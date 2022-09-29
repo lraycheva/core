@@ -58,6 +58,7 @@ import {
     FrameSnapshotConfig,
     FrameBounds,
     SetMaximizationBoundaryConfig,
+    LoadingAnimationConfig
 } from "../types/protocol";
 import { WorkspaceEventType, WorkspaceEventAction } from "../types/subscription";
 import { Glue42Workspaces } from "../../workspaces";
@@ -89,6 +90,10 @@ export const frameStateDecoder: Decoder<"maximized" | "minimized" | "normal"> = 
     constant("maximized"),
     constant("minimized"),
     constant("normal")
+);
+
+export const loadingAnimationTypeDecoder: Decoder<"workspace"> = oneOf<"workspace">(
+    constant("workspace")
 );
 
 export const checkThrowCallback = (callback: unknown, allowUndefined?: boolean): void => {
@@ -463,13 +468,13 @@ export const baseChildSnapshotConfigDecoder: Decoder<BaseChildSnapshotConfig> = 
 
 export const parentSnapshotConfigDecoder: Decoder<ParentSnapshotConfig> = anyJson();
 
-// todo: remove optional isMaximized when fixed
 export const swimlaneWindowSnapshotConfigDecoder: Decoder<SwimlaneWindowSnapshotConfig> = intersection(
     baseChildSnapshotConfigDecoder,
     object({
         windowId: optional(nonEmptyStringDecoder),
         isMaximized: optional(boolean()),
         isFocused: boolean(),
+        isSelected: optional(boolean()),
         title: optional(string()),
         appName: optional(nonEmptyStringDecoder),
         allowExtract: optional(boolean()),
@@ -888,3 +893,8 @@ export const shortcutClickedDataDecoder: Decoder<ShortcutClickedData> = object({
 export const setMaximizationBoundaryAPIConfigDecoder: Decoder<APISetMaximizationBoundaryConfig> = object({
     enabled: boolean()
 });
+
+export const loadingAnimationConfigDecoder: Decoder<LoadingAnimationConfig> = object({
+    itemId: nonEmptyStringDecoder,
+    type: loadingAnimationTypeDecoder
+})

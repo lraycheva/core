@@ -46,7 +46,8 @@ import {
     shortcutClickedDataDecoder,
     shortcutConfigDecoder,
     frameSnapshotConfigDecoder,
-    setMaximizationBoundaryConfigDecoder
+    setMaximizationBoundaryConfigDecoder,
+    loadingAnimationConfigDecoder
 } from "../shared/decoders";
 import { ControlOperation, StreamOperation } from "../types/protocol";
 import { WorkspaceEventType } from "../types/subscription";
@@ -94,7 +95,9 @@ type OperationsTypes = "isWindowInWorkspace" |
     "createFrame" |
     "registerShortcut" |
     "unregisterShortcut" |
-    "initFrame";
+    "initFrame" |
+    "showLoadingAnimation" |
+    "hideLoadingAnimation";
 type OutgoingMethodTypes = "control" | "frameStream" | "workspaceStream" | "containerStream" | "windowStream";
 export type IncomingMethodTypes = "control";
 
@@ -180,5 +183,7 @@ export const OPERATIONS: { [key in OperationsTypes]: ControlOperation } = {
     getWorkspaceIcon: { name: "getWorkspaceIcon", argsDecoder: workspaceSelectorDecoder, resultDecoder: getWorkspaceIconResultDecoder },
     setWorkspaceIcon: { name: "setWorkspaceIcon", argsDecoder: setWorkspaceIconDecoder, resultDecoder: voidResultDecoder },
     registerShortcut: { name: "registerShortcut", argsDecoder: shortcutConfigDecoder, resultDecoder: voidResultDecoder },
-    unregisterShortcut: { name: "unregisterShortcut", argsDecoder: shortcutConfigDecoder, resultDecoder: voidResultDecoder }
+    unregisterShortcut: { name: "unregisterShortcut", argsDecoder: shortcutConfigDecoder, resultDecoder: voidResultDecoder },
+    showLoadingAnimation: { name: "showLoadingAnimation", argsDecoder: loadingAnimationConfigDecoder, resultDecoder: voidResultDecoder },
+    hideLoadingAnimation: { name: "hideLoadingAnimation", argsDecoder: loadingAnimationConfigDecoder, resultDecoder: voidResultDecoder }
 };

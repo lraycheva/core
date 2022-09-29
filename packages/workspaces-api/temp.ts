@@ -30,6 +30,16 @@ export interface Workspace extends Glue42Workspaces.Workspace {
     * @param callback Callback function to handle the event. Receives the restored window as a parameter.
     */
   onWindowRestored(callback: (window: Glue42Workspaces.WorkspaceWindow) => void): Promise<Glue42Workspaces.Unsubscribe>;
+
+  /**
+   * Shows the loading animation of the workspace (supported only in Glue42 Enterprise)
+   */
+  showLoadingAnimation(): Promise<void>;
+
+  /**
+   * Hides the loading animation of the workspace (supported only in Glue42 Enterprise)
+   */
+  hideLoadingAnimation(): Promise<void>;
 }
 
 export interface SetMaximizationBoundaryConfig {

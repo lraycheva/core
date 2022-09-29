@@ -201,11 +201,19 @@ describe("properties: ", () => {
         });
     });
 
-    describe("focused: ", () => {
+    describe("isSelected: ", () => {
         it(`Should be boolean`, () => {
             const window = workspace.getAllWindows()[0];
 
-            expect(typeof window.focused).to.eql("boolean");
+            expect(typeof window.isSelected).to.eql("boolean");
+        });
+    });
+
+    describe("focused: ", () => {
+        it(`Should be undefined`, () => {
+            const window = workspace.getAllWindows()[0];
+
+            expect(typeof window.focused).to.eql("undefined");
         });
     });
 

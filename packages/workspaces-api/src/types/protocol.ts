@@ -106,6 +106,7 @@ export interface SwimlaneWindowSnapshotConfig extends BaseChildSnapshotConfig {
     windowId?: string;
     isMaximized: boolean;
     isFocused: boolean;
+    isSelected?: boolean;
     appName?: string;
     title?: string;
     allowExtract?: boolean;
@@ -262,6 +263,11 @@ export interface ResizeItemConfig {
 export interface SetMaximizationBoundaryConfig {
     itemId: string;
     enabled: boolean;
+}
+
+export interface LoadingAnimationConfig {
+    itemId: string;
+    type: "workspace";
 }
 
 export interface MoveFrameConfig {

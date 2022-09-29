@@ -72,4 +72,6 @@ export interface WorkspacesController {
     setWorkspaceIcon(workspaceId: string, icon: string): Promise<void>;
     registerShortcut(shortcut: string, frameId: string, callback: () => void): Promise<UnsubscribeFunction>;
     setMaximizationBoundary(itemId: string, config: SetMaximizationBoundaryConfig): Promise<void>;
+    showWorkspaceLoadingAnimation(workspaceId: string): Promise<void>;
+    hideWorkspaceLoadingAnimation(workspaceId: string): Promise<void>;
 }

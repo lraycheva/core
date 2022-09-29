@@ -70,6 +70,7 @@ export interface WindowEventPayload {
             isMaximized: boolean;
             isLoaded: boolean;
             isFocused: boolean;
+            isSelected: boolean;
         };
     };
 }

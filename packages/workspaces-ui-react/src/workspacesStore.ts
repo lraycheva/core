@@ -1,4 +1,4 @@
-import { AddApplicationPopupProps, AddWorkspacePopupProps, CreateElementRequestOptions, CreateGroupRequestOptions, CreateWorkspaceContentsRequestOptions, CreateWorkspaceTabRequestOptions, ElementCreationWrapperState, RemoveRequestOptions, RemoveWorkspaceContentsRequestOptions, SaveWorkspacePopupProps } from "./types/internal";
+import { AddApplicationPopupProps, AddWorkspacePopupProps, CreateElementRequestOptions, CreateGroupRequestOptions, CreateWorkspaceContentsRequestOptions, CreateWorkspaceLoadingAnimationOptions, CreateWorkspaceTabRequestOptions, ElementCreationWrapperState, RemoveRequestOptions, RemoveWorkspaceContentsRequestOptions, SaveWorkspacePopupProps } from "./types/internal";
 
 class WorkspacesStore {
     private listeners = new Set<() => void>();
@@ -13,6 +13,7 @@ class WorkspacesStore {
         saveWorkspacePopup: undefined,
         addApplicationPopup: undefined,
         addWorkspacePopup: undefined,
+        workspaceLoadingAnimations: {}
     };
 
     public subscribe = (cb: () => void) => {
@@ -169,6 +170,25 @@ class WorkspacesStore {
         }, options.callback);
     }
 
+    public onCreateWorkspaceLoadingAnimationRequested = (options: CreateWorkspaceLoadingAnimationOptions) => {
+        if (options === this.state.workspaceLoadingAnimations[options.workspaceId] || !options) {
+            return;
+        }
+        this.setState(s => {
+            const workspaceLoadingAnimationsObj = Object.keys(s.workspaceLoadingAnimations).reduce((acc, workspaceId) => {
+                acc[workspaceId] = s.workspaceLoadingAnimations[workspaceId];
+                return acc;
+            }, {});
+
+            const previousObj = workspaceLoadingAnimationsObj[options.workspaceId] ?? {};
+            workspaceLoadingAnimationsObj[options.workspaceId] = { ...previousObj, ...options };
+            return {
+                ...s,
+                workspaceLoadingAnimations: workspaceLoadingAnimationsObj
+            }
+        });
+    }
+
     public onUpdateWorkspaceTabRequested = (options: CreateWorkspaceTabRequestOptions) => {
         if (!this.state.workspaceTabs[options.workspaceId] || !options) {
             return;
@@ -263,6 +283,25 @@ class WorkspacesStore {
             saveWorkspacePopup: undefined,
             addWorkspacePopup: undefined
         }), cb);
+    }
+
+    public onRemoveWorkspaceLoadingAnimation = (options: RemoveRequestOptions) => {
+        if (!this.state.workspaceLoadingAnimations[options.elementId]) {
+            return;
+        }
+        this.setState(s => {
+            const newLoadingAnimationElementsObj = Object.keys(s.workspaceLoadingAnimations).reduce((acc, workspaceId) => {
+                if (workspaceId != options.elementId) {
+                    acc[workspaceId] = s.workspaceLoadingAnimations[workspaceId];
+                }
+                return acc;
+            }, {});
+
+            return {
+                ...s,
+                workspaceLoadingAnimations: newLoadingAnimationElementsObj
+            }
+        });
     }
 
     private setState(cb: (ns: ElementCreationWrapperState) => ElementCreationWrapperState, afterUpdateCallback?: () => void) {

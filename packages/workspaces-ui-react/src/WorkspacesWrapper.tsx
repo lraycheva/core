@@ -46,6 +46,7 @@ const WorkspacesWrapper: React.FC<WorkspacesWrapperProps> = ({ shouldInit, glue,
             createSaveWorkspacePopup: props.onCreateSaveWorkspacePopupRequested,
             createAddApplicationPopup: props.onCreateAddApplicationPopupRequested,
             createAddWorkspacePopup: props.onCreateAddWorkspacePopupRequested,
+            createWorkspaceLoadingAnimation: props.onCreateWorkspaceLoadingAnimationRequested,
             // Update
             updateWorkspaceTabs: props.onUpdateWorkspaceTabsRequested,
             // Remove
@@ -55,6 +56,7 @@ const WorkspacesWrapper: React.FC<WorkspacesWrapperProps> = ({ shouldInit, glue,
             removeGroupTab: props.onRemoveGroupTabRequested,
             removeAfterGroupTabs: props.onRemoveAfterGroupTabsRequested,
             removeGroupHeaderButtons: props.onRemoveGroupHeaderButtonsRequested,
+            removeWorkspaceLoadingAnimation: props.onRemoveWorkspaceLoadingAnimationRequested,
             // Misc
             hideSystemPopups: props.onHideSystemPopupsRequested,
             externalPopupApplications: props.externalPopupApplications

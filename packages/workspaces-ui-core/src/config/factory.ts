@@ -79,6 +79,7 @@ export class WorkspacesConfigurationFactory {
                 isMaximized: args.isMaximized,
                 isLoaded: args.windowId !== undefined,
                 isFocused: args.isFocused,
+                isSelected: args.isSelected,
                 appName: args.appName,
                 url: args.url,
                 title: args.title,

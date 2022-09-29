@@ -1,3 +1,5 @@
+1.13.4
+feat: changed the decoders to support window.isSelected
 1.13.3
 feat: added setMaximizationBoundary
 1.13.2

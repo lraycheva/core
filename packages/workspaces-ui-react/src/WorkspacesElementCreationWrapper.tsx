@@ -162,6 +162,19 @@ const WorkspacesElementCreationWrapper: React.FC<WorkspacesProps> = ({ component
         return <Portal domNode={domNode}><AddWorkspaceCustomComponent glue={glue} {...options} /></Portal>
     }
 
+    const renderWorkspaceLoadingAnimations = () => {
+        const LoadingAnimationComponent = components?.loadingAnimation?.Workspace;
+
+        return Object.values(state.workspaceLoadingAnimations).map((g) => {
+            if (!LoadingAnimationComponent || !g.domNode) {
+                return;
+            }
+
+            const { domNode, callback, ...options } = g;
+            return <Portal key={`${options.workspaceId}-loading-animation`} domNode={domNode}><LoadingAnimationComponent  {...options} /></Portal>
+        });
+    }
+
     return (
         <div {...additionalProperties} style={{ overflow: "hidden", width: "100%", height: "100%" }}>
             {renderLogoComponent()}
@@ -174,6 +187,7 @@ const WorkspacesElementCreationWrapper: React.FC<WorkspacesProps> = ({ component
             {renderSaveWorkspacePopupComponent()}
             {renderAddApplicationPopupComponent()}
             {renderAddWorkspacePopupComponent()}
+            {renderWorkspaceLoadingAnimations()}
             <WorkspacesWrapper
                 onCreateSystemButtonsRequested={components?.header?.SystemButtonsComponent ? workspacesStore.onCreateSystemButtonsRequested : undefined}
                 onCreateWorkspaceTabRequested={components?.header?.WorkspaceTabComponent ? workspacesStore.onCreateWorkspaceTabRequested : undefined}
@@ -185,11 +199,13 @@ const WorkspacesElementCreationWrapper: React.FC<WorkspacesProps> = ({ component
                 onCreateSaveWorkspacePopupRequested={onCreateSaveWorkspaceRequested}
                 onCreateAddApplicationPopupRequested={onCreateAddApplicationRequested}
                 onCreateAddWorkspacePopupRequested={onCreateAddWorkspacePopupRequested}
+                onCreateWorkspaceLoadingAnimationRequested = {components?.loadingAnimation?.Workspace ? workspacesStore.onCreateWorkspaceLoadingAnimationRequested: undefined}
                 onUpdateWorkspaceTabsRequested={components?.header?.WorkspaceTabComponent ? workspacesStore.onUpdateWorkspaceTabRequested : undefined}
                 onRemoveWorkspaceTabsRequested={components?.header?.WorkspaceTabComponent ? workspacesStore.onRemoveWorkspaceTabRequested : undefined}
                 onRemoveWorkspaceContentsRequested={components?.WorkspaceContents ? workspacesStore.onRemoveWorkspaceContentsRequested : undefined}
                 onRemoveBeforeGroupTabsRequested={components?.containers?.group?.header?.BeforeTabs ? workspacesStore.onRemoveBeforeTabsComponentRequested : undefined}
                 onRemoveAfterGroupTabsRequested={components?.containers?.group?.header?.AfterTabs ? workspacesStore.onRemoveAfterTabsComponentRequested : undefined}
+                onRemoveWorkspaceLoadingAnimationRequested = {components?.loadingAnimation?.Workspace ? workspacesStore.onRemoveWorkspaceLoadingAnimation : undefined}
                 onHideSystemPopupsRequested={workspacesStore.onHideSystemPopups}
                 externalPopupApplications={externalPopupApplications}
                 shouldInit={shouldInit}

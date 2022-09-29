@@ -284,6 +284,14 @@ export class MainController implements WorkspacesController {
         return await this.base.setMaximizationBoundary(itemId, config);
     }
 
+    public async showWorkspaceLoadingAnimation(workspaceId: string): Promise<void> {
+        return await this.base.showWorkspaceLoadingAnimation(workspaceId);
+    }
+
+    public async hideWorkspaceLoadingAnimation(workspaceId:string): Promise<void>{
+        return await this.base.hideWorkspaceLoadingAnimation(workspaceId);
+    }
+
     public async moveFrame(itemId: string, config: Glue42Workspaces.MoveConfig): Promise<void> {
         return await this.base.moveFrame(itemId, config);
     }

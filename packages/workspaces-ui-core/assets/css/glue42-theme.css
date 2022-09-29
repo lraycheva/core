@@ -308,3 +308,14 @@
 .mid .ball + .ball {
   background: hsl(var(--t42-content-color-base), 79%);
 }
+.t42-workspace-loading-animation {
+  display: none;
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  right: 0px;
+  bottom: 0px;
+  z-index: 40;
+  background: rgb(var(--t42-bg-light));
+  height: 100%;
+}

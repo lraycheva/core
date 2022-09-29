@@ -30,6 +30,7 @@ import {
     EjectButtonProps,
     MoveAreaProps,
     WorkspaceTabComponentProps,
+    GlueWorkspaceLoadingAnimationProps
 } from './types/internal';
 import WorkspacesElementCreationWrapper from './WorkspacesElementCreationWrapper'
 import workspacesManager from './workspacesManager';
@@ -38,6 +39,7 @@ import WorkspaceTitle from './defaultComponents/workspace/WorkspaceTitle';
 import WorkspaceSaveButton from './defaultComponents/workspace/WorkspaceSaveButton';
 import WorkspaceIconButton from './defaultComponents/workspace/WorkspaceIconButton';
 import WorkspaceTabCloseButton from './defaultComponents/workspace/WorkspaceTabCloseButton';
+import GlueWorkspaceLoadingAnimation from './defaultComponents/GlueWorkspaceLoadingAnimation';
 
 export {
     SaveWorkspacePopup,
@@ -57,7 +59,8 @@ export {
     WorkspaceTitle,
     WorkspaceSaveButton,
     WorkspaceIconButton,
-    WorkspaceTabCloseButton
+    WorkspaceTabCloseButton,
+    GlueWorkspaceLoadingAnimation
 };
 export const notifyMoveAreaChanged: () => void = () => workspacesManager?.notifyMoveAreaChanged();
 export const getComponentBounds: () => Bounds = () => workspacesManager?.getComponentBounds();
@@ -81,6 +84,7 @@ export {
     AddApplicationPopupProps,
     WorkspaceContentsProps,
     MoveAreaProps,
-    WorkspaceTabComponentProps
+    WorkspaceTabComponentProps,
+    GlueWorkspaceLoadingAnimationProps
 };
 export default WorkspacesElementCreationWrapper;

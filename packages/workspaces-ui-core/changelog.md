@@ -1,3 +1,5 @@
+1.9.4
+feat: added support for window.isSelected
 1.9.3
 feat: added support for setMaximizationBoundary
 1.9.2

@@ -437,6 +437,22 @@ export class Workspace implements Glue42Workspaces.Workspace {
         await this.refreshReference();
     }
 
+    public async showLoadingAnimation(): Promise<void> {
+        if (!window.glue42gd) {
+            throw new Error("Not supported in Glue42 Core");
+        }
+
+        await getData(this).controller.showWorkspaceLoadingAnimation(this.id);
+    }
+
+    public async hideLoadingAnimation(): Promise<void> {
+        if (!window.glue42gd) {
+            throw new Error("Not supported in Glue42 Core");
+        }
+        
+        await getData(this).controller.hideWorkspaceLoadingAnimation(this.id);
+    }
+
     public async onClosed(callback: (closed: Glue42Workspaces.WorkspaceClosedData) => void): Promise<Glue42Workspaces.Unsubscribe> {
         checkThrowCallback(callback);
         const id = getData(this).id;

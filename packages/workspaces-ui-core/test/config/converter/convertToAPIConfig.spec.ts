@@ -14,6 +14,7 @@ describe("convertToAPIConfig() Should", () => {
         type: "window",
         config: {
             appName: mockApp,
+            isSelected: undefined,
             isFocused: false,
             isLoaded: false,
             isMaximized: undefined,

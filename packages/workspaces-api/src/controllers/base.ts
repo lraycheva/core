@@ -245,6 +245,14 @@ export class BaseController {
         await this.bridge.send(OPERATIONS.setMaximizationBoundary.name, Object.assign({}, { itemId }, config));
     }
 
+    public async showWorkspaceLoadingAnimation(workspaceId: string): Promise<void> {
+        await this.bridge.send(OPERATIONS.showLoadingAnimation.name, { itemId: workspaceId, type: "workspace" });
+    }
+
+    public async hideWorkspaceLoadingAnimation(workspaceId: string): Promise<void> {
+        await this.bridge.send(OPERATIONS.hideLoadingAnimation.name, { itemId: workspaceId, type: "workspace" });
+    }
+
     public async moveFrame(itemId: string, config: Glue42Workspaces.MoveConfig): Promise<void> {
         await this.bridge.send(OPERATIONS.moveFrame.name, Object.assign({}, { itemId }, config));
     }

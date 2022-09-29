@@ -426,6 +426,7 @@ export const swimlaneWindowSnapshotConfigDecoder: Decoder<SwimlaneWindowSnapshot
         windowId: optional(nonEmptyStringDecoder),
         isMaximized: optional(boolean()),
         isFocused: boolean(),
+        isSelected: optional(boolean()),
         title: optional(string()),
         appName: optional(nonEmptyStringDecoder),
         context: optional(anyJson())

@@ -169,6 +169,7 @@ export class ConfigConverter {
                 id: config.id,
                 isFocused: false,
                 isMaximized: wspsConfig.isMaximized,
+                isSelected: wspsConfig.isSelected,
                 windowId: config.componentState.windowId,
                 appName: config.componentState.appName,
                 url: config.componentState.url,
