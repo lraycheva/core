@@ -1,5 +1,6 @@
 1.9.4
 feat: added support for window.isSelected
+feat: adds g42 to all workspace windows
 1.9.3
 feat: added support for setMaximizationBoundary
 1.9.2

@@ -1,4 +1,7 @@
-1.13.4
+1.14.0
+feat: window ids now contain a g42 prefix
+feat: plugins now have access to the platform API
+feat: added support for adding channels runtime
 feat: changed the decoders to support window.isSelected
 1.13.3
 feat: added setMaximizationBoundary
