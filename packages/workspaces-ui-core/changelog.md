@@ -1,3 +1,5 @@
+1.9.5
+chore: bump due to dependencies update
 1.9.4
 feat: added support for window.isSelected
 feat: adds g42 to all workspace windows

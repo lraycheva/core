@@ -1,3 +1,5 @@
+2.8.1
+chore: bump due to dependencies update
 2.8.0
 chore: update to web@2.8.0 and platform@1.14.0
 2.7.3

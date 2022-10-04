@@ -1,6 +1,6 @@
 {
     "name": "@glue42/web",
-    "version": "2.8.0",
+    "version": "2.8.1",
     "description": "Glue42 Core client application package",
     "main": "dist/web.umd.js",
     "module": "dist/web.es.js",
@@ -35,7 +35,7 @@
     "dependencies": {
         "@glue42/core": "^5.7.8",
         "@glue42/desktop": "^5.14.0",
-        "@glue42/workspaces-api": "^1.16.3",
+        "@glue42/workspaces-api": "^1.16.4",
         "callback-registry": "^2.6.0",
         "decoder-validate": "0.0.2",
         "idb": "^5.0.4",

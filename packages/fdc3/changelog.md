@@ -1,3 +1,5 @@
+2.5.18
+chore: bump due to dependencies update
 2.5.17
 fix: fix wait for autoinjected glue factory init
 2.5.16

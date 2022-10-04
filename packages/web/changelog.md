@@ -1,3 +1,5 @@
+2.8.1
+chore: bump due to dependencies update
 2.8.0
 feat: added support for adding channels runtime
 2.7.3

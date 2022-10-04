@@ -1,3 +1,5 @@
+1.11.1
+chore: bump due to dependencies update
 1.11.0
 feat: added the option to show a custom workspace loading animation (Glue42 Enterprise only)
 1.10.3
