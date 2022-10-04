@@ -1,3 +1,5 @@
+1.14.1
+feat: added dedicated corePlus config entry and extended the plugins capabilities with registration
 1.14.0
 feat: window ids now contain a g42 prefix
 feat: plugins now have access to the platform API
