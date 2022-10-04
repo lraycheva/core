@@ -63,6 +63,7 @@ export interface InternalPlatformConfig {
     };
     serviceWorker?: Glue42WebPlatform.ServiceWorker.Config;
     workspaces?: Glue42WebPlatform.Workspaces.Config;
+    corePlus?: Glue42WebPlatform.CorePlus.Config;
     connection: Glue42WebPlatform.Connection.Config;
     environment: any;
     workspacesFrameCache: boolean;
@@ -168,4 +169,11 @@ export interface InterceptorEntry {
     domain: LibDomains;
     operation: string;
     callInterceptor: (config: Glue42WebPlatform.ControlMessage) => Promise<any>;
+}
+
+export interface PluginsConfig {
+    platformConfig: InternalPlatformConfig;
+    plugins?: Glue42WebPlatform.Plugins.PluginDefinition[];
+    api: Glue42WebPlatform.API;
+    handlePluginMessage: (args: Glue42WebPlatform.Plugins.BaseControlMessage, pluginName: string) => Promise<any>;
 }

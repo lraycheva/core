@@ -228,6 +228,11 @@ export namespace Glue42WebPlatform {
             interception: PluginInterception;
             platformApi: API;
             logger?: Glue42Web.Logger.API;
+            system: {
+                sendControl: (args: BaseControlMessage) => Promise<any>;
+                register: (name: string, version: string) => void;
+                getInfo:() => SystemInfo;
+            }
         }
 
         export interface PluginDefinition {
@@ -335,6 +340,14 @@ export namespace Glue42WebPlatform {
         }
     }
 
+    export namespace CorePlus {
+        export interface Config {
+            start: (glue: Glue42Web.API, config: any, platform: Plugins.PlatformControls) => Promise<void>;
+            config?: any;
+            critical?: boolean;
+        }
+    }
+
     export interface ControlMessage extends Plugins.BaseControlMessage {
         callerType: "plugin" | "client";
         callerId: string;
@@ -353,12 +366,27 @@ export namespace Glue42WebPlatform {
         connection?: Connection.Config;
         glue?: Glue42Web.Config;
         workspaces?: Workspaces.Config;
+        corePlus?: CorePlus.Config;
         environment?: any;
         glueFactory?: (config?: Glue42Web.Config) => Promise<Glue42Web.API>;
     }
 
     export interface API {
         version: string;
+    }
+
+    export interface SystemInfo {
+        web: {
+            version: string;
+        };
+        platform: {
+            version: string;
+            plugins: Array<{ name: string, version: string }>;
+        };
+        workspaces?: {
+            version: string;
+            frameUrl?: string;
+        };
     }
 }
 

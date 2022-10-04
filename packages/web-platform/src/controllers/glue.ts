@@ -12,6 +12,7 @@ import { waitFor } from "../shared/utils";
 import { UnsubscribeFunction } from "callback-registry";
 import { FrameSessionData } from "../libs/workspaces/types";
 import { Glue42WebPlatform } from "../../platform";
+import { version } from "../../package.json";
 
 export class GlueController {
     private _config!: InternalPlatformConfig;
@@ -27,6 +28,10 @@ export class GlueController {
         private readonly portsBridge: PortsBridge,
         private readonly sessionStorage: SessionStorageController
     ) { }
+
+    public get platformVersion(): string {
+        return version;
+    }
 
     public get clientGlue(): Glue42Web.API {
         return this._clientGlue;

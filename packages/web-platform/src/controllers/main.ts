@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Glue42Web } from "@glue42/web";
-import { version } from "../../package.json";
 import { UnsubscribeFunction } from "callback-registry";
 import { CoreClientData, InternalPlatformConfig, LibController, LibDomains } from "../common/types";
 import { libDomainDecoder } from "../shared/decoders";
@@ -23,6 +22,7 @@ import { ExtensionController } from "../libs/extension/controller";
 import { PreferredConnectionController } from "../connection/preferred";
 import { Glue42Core } from "@glue42/core";
 import { InterceptionController } from "./interception";
+import { PluginsController } from "./plugins";
 
 export class PlatformController {
 
@@ -55,7 +55,8 @@ export class PlatformController {
         private readonly serviceWorkerController: ServiceWorkerController,
         private readonly extensionController: ExtensionController,
         private readonly preferredConnectionController: PreferredConnectionController,
-        private readonly interceptionController: InterceptionController
+        private readonly interceptionController: InterceptionController,
+        private readonly pluginsController: PluginsController
     ) { }
 
     private get logger(): Glue42Web.Logger.API | undefined {
@@ -97,11 +98,14 @@ export class PlatformController {
 
         this._platformApi = this.buildPlatformApi();
 
-        if (config.plugins) {
-            await Promise.all(config.plugins.definitions.filter((def) => def.critical).map(this.startPlugin.bind(this)));
+        await this.pluginsController.start({
+            platformConfig: config,
+            plugins: config.plugins?.definitions,
+            api: this.platformApi,
+            handlePluginMessage: this.handlePluginMessage.bind(this)
+        });
 
-            config.plugins.definitions.filter((def) => !def.critical).map(this.startPlugin.bind(this));
-        }
+        await this.pluginsController.startCorePlus(config.corePlus);
 
         if (config.connection.preferred) {
             await this.preferredConnectionController.start(config.connection.preferred);
@@ -114,31 +118,6 @@ export class PlatformController {
 
     public getClientGlue(): Glue42Web.API {
         return this.glueController.clientGlue;
-    }
-
-    private async startPlugin(definition: Glue42WebPlatform.Plugins.PluginDefinition): Promise<void> {
-        try {
-            const platformControls: Glue42WebPlatform.Plugins.PlatformControls = {
-                control: (args: Glue42WebPlatform.Plugins.BaseControlMessage): Promise<any> => this.handlePluginMessage(args, definition.name),
-                logger: logger.get(definition.name),
-                platformApi: this.platformApi,
-                interception: {
-                    register: (request: Glue42WebPlatform.Plugins.InterceptorRegistrationRequest) => this.interceptionController.registerInterceptor(request, definition.name)
-                }
-            };
-
-            await definition.start(this.glueController.clientGlue, definition.config, platformControls);
-
-        } catch (error: any) {
-            const stringError = typeof error === "string" ? error : JSON.stringify(error.message);
-            const message = `Plugin: ${definition.name} threw while initiating: ${stringError}`;
-
-            if (definition.critical) {
-                throw new Error(message);
-            } else {
-                this.logger?.warn(message);
-            }
-        }
     }
 
     private handleClientMessage(args: Glue42WebPlatform.ControlMessage, caller: Glue42Web.Interop.Instance, success: (args?: Glue42WebPlatform.ControlMessage) => void, error: (error?: string | object) => void): void {
@@ -214,7 +193,7 @@ export class PlatformController {
 
     private buildPlatformApi(): Glue42WebPlatform.API {
         return {
-            version,
+            version: this.glueController.platformVersion,
             contextTrackGlue: this.ctxTrackingGlue,
             systemGlue: this.systemGlue,
             connectExtClient: (client: any, port: any) => {

@@ -28,6 +28,7 @@ import { IDBPDatabase, openDB } from "idb";
 import { dbName, dbVersion } from "../common/constants";
 import { TransactionsController } from "../controllers/transactions";
 import { InterceptionController } from "../controllers/interception";
+import { PluginsController } from "../controllers/plugins";
 
 export class IoC {
     private _gatewayInstance!: Gateway;
@@ -56,6 +57,7 @@ export class IoC {
     private _database!: IDBPDatabase<Glue42CoreDB> | undefined;
     private _transactionsController!: TransactionsController;
     private _interceptionController!: InterceptionController;
+    private _pluginsController!: PluginsController;
 
     constructor(private readonly config?: Glue42WebPlatform.Config) { }
 
@@ -92,7 +94,8 @@ export class IoC {
                 this.serviceWorkerController,
                 this.extensionController,
                 this.preferredConnectionController,
-                this.interceptionController
+                this.interceptionController,
+                this.pluginsController
             );
         }
 
@@ -300,6 +303,14 @@ export class IoC {
         }
 
         return this._interceptionController;
+    }
+
+    public get pluginsController(): PluginsController {
+        if (!this._pluginsController) {
+            this._pluginsController = new PluginsController(this.interceptionController, this.glueController);
+        }
+
+        return this._pluginsController;
     }
 
     public getDatabase(): Promise<IDBPDatabase<Glue42CoreDB>> {

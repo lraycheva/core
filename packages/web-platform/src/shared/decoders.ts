@@ -373,6 +373,12 @@ export const serviceWorkerConfigDecoder: Decoder<Glue42WebPlatform.ServiceWorker
     registrationPromise: optional(anyJson())
 });
 
+export const corePlusConfigDecoder: Decoder<Glue42WebPlatform.CorePlus.Config> = object({
+    start: anyJson(),
+    critical: optional(boolean()),
+    config: anyJson()
+})
+
 export const platformConfigDecoder: Decoder<Glue42WebPlatform.Config> = object({
     windows: optional(windowsConfigDecoder),
     applications: optional(applicationsConfigDecoder),
@@ -385,6 +391,7 @@ export const platformConfigDecoder: Decoder<Glue42WebPlatform.Config> = object({
     glue: optional(glueConfigDecoder),
     workspaces: optional(workspacesConfigDecoder),
     environment: optional(anyJson()),
+    corePlus: optional(corePlusConfigDecoder),
     glueFactory: optional(anyJson().andThen((result) => functionCheck(result, "glueFactory")))
 });
 

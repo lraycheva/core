@@ -1,3 +1,5 @@
+1.16.4
+feat: added version property to the top-level API
 1.16.3
 feat: added workspace.show/hideLoadingAnimation and window.isSelected
 feat: added frame.onFocusChanged event

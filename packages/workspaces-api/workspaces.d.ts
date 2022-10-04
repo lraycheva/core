@@ -1842,5 +1842,7 @@ export namespace Glue42Workspaces {
          */
         onWindowRemoved(callback: (removed: { windowId?: string; workspaceId: string; frameId: string }) => void): Promise<Unsubscribe>;
 
+        /** Glue42 Workspaces API version. */
+        version: string;
     }
 }
