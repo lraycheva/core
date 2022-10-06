@@ -1,3 +1,5 @@
+2.3.5
+chore: removed duplicate append invocation from the header
 2.3.4
 fix: Dragging freeze
 2.3.3

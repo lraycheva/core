@@ -1,6 +1,6 @@
 {
     "name": "@glue42/fdc3",
-    "version": "2.5.18",
+    "version": "2.5.19",
     "description": "Glue42 implementation of the FDC3 standard",
     "main": "./dist/fdc3-glue42.js",
     "module": "./dist/fdc3-glue42.js",
@@ -31,8 +31,8 @@
     "dependencies": {
         "@finos/fdc3": "^1.2.0",
         "@glue42/desktop": "^5.14.0",
-        "@glue42/web": "^2.8.1",
-        "@glue42/web-platform": "^1.14.1",
+        "@glue42/web": "^2.8.2",
+        "@glue42/web-platform": "^1.14.2",
         "nanoid": "^3.3.4"
     },
     "devDependencies": {
