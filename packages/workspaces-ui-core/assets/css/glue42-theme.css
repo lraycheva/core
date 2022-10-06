@@ -308,6 +308,67 @@
 .mid .ball + .ball {
   background: hsl(var(--t42-content-color-base), 79%);
 }
+
+.tab-item-v2 {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-top: -2px;
+}
+.tab-item-v2 .lm_tabs .lm_tab i.icon-lock-open-alt,
+.tab-item-v2 .lm_tabs .lm_close_tab {
+  position: static;
+  flex-shrink: 0;
+}
+.tab-item-v2 .lm_tabs .lm_close_tab {
+  margin-right: 6px;
+  margin-left: -6px;
+}
+.tab-item-v2 .lm_tabs .lm_tab {
+  padding: 0;
+}
+.tab-item-v2 .icon-lock-open-alt,
+.tab-item-v2 .icon-lock {
+  margin-left: auto;
+  margin-right: 10px;
+  width: auto;
+}
+.tab-item-v2 .icon-ellipsis-vert {
+  width: 0.875rem;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+}
+.lm_tab_mid .tab-item-v2,
+.lm_tab_small .tab-item-v2,
+.lm_tab_mini .tab-item-v2 {
+  justify-content: center;
+}
+.lm_tab_mid .tab-item-v2 .lm_close_tab,
+.lm_tab_small .tab-item-v2 .lm_close_tab,
+.lm_tab_mini .tab-item-v2 .lm_close_tab,
+.lm_tab_mid .tab-item-v2 .icon-lock,
+.lm_tab_small .tab-item-v2 .icon-lock,
+.lm_tab_mini .tab-item-v2 .icon-lock {
+  display: none;
+}
+#dropdown-close-btn {
+  display: block;
+}
+.allow-show-gird {
+  display: grid;
+  grid-template-columns: 50% 50%;
+  row-gap: 0.25rem;
+}
+.btn-back {
+  right: 10px;
+  z-index: 12;
+  margin-top: -4px;
+}
+.list-group {
+  box-shadow: none;
+}
+
 .t42-workspace-loading-animation {
   display: none;
   position: absolute;

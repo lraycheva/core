@@ -8,6 +8,7 @@ import workspacesManager from "./workspacesManager";
 import WorkspacesWrapper from "./WorkspacesWrapper";
 import workspacesStore from "./workspacesStore";
 import { useSyncExternalStore } from "use-sync-external-store/shim";
+import WorkspaceTabV2 from "./defaultComponents/workspace/tabV2/WorkspaceTabV2";
 
 const WorkspacesElementCreationWrapper: React.FC<WorkspacesProps> = ({ components, glue, ...additionalProperties }) => {
     const state = useSyncExternalStore<ElementCreationWrapperState>(workspacesStore.subscribe, workspacesStore.getSnapshot);
@@ -38,7 +39,10 @@ const WorkspacesElementCreationWrapper: React.FC<WorkspacesProps> = ({ component
         addApplication,
         saveWorkspace,
         addWorkspace
-    }
+    };
+
+    const workspaceTab = components?.header?.WorkspaceTabComponent ?? WorkspaceTabV2;
+
     const renderLogoComponent = () => {
         const LogoCustomElement = components?.header?.LogoComponent;
         if (!LogoCustomElement || (!state.logo || !state.logo.domNode)) {
@@ -50,7 +54,7 @@ const WorkspacesElementCreationWrapper: React.FC<WorkspacesProps> = ({ component
     }
 
     const renderWorkspaceTabs = () => {
-        const TabComponent = components?.header?.WorkspaceTabComponent;
+        const TabComponent = components?.header?.WorkspaceTabComponent ?? WorkspaceTabV2;
 
         return Object.values(state.workspaceTabs).map((g) => {
             if (!TabComponent || !g.domNode) {
@@ -190,7 +194,7 @@ const WorkspacesElementCreationWrapper: React.FC<WorkspacesProps> = ({ component
             {renderWorkspaceLoadingAnimations()}
             <WorkspacesWrapper
                 onCreateSystemButtonsRequested={components?.header?.SystemButtonsComponent ? workspacesStore.onCreateSystemButtonsRequested : undefined}
-                onCreateWorkspaceTabRequested={components?.header?.WorkspaceTabComponent ? workspacesStore.onCreateWorkspaceTabRequested : undefined}
+                onCreateWorkspaceTabRequested={workspaceTab ? workspacesStore.onCreateWorkspaceTabRequested : undefined}
                 onCreateAddWorkspaceRequested={components?.header?.AddWorkspaceComponent ? workspacesStore.onCreateAddWorkspaceRequested : undefined}
                 onCreateLogoRequested={components?.header?.LogoComponent ? workspacesStore.onCreateLogoRequested : undefined}
                 onCreateWorkspaceContentsRequested={components?.WorkspaceContents ? workspacesStore.onCreateWorkspaceContentsRequested : undefined}
@@ -200,8 +204,8 @@ const WorkspacesElementCreationWrapper: React.FC<WorkspacesProps> = ({ component
                 onCreateAddApplicationPopupRequested={onCreateAddApplicationRequested}
                 onCreateAddWorkspacePopupRequested={onCreateAddWorkspacePopupRequested}
                 onCreateWorkspaceLoadingAnimationRequested = {components?.loadingAnimation?.Workspace ? workspacesStore.onCreateWorkspaceLoadingAnimationRequested: undefined}
-                onUpdateWorkspaceTabsRequested={components?.header?.WorkspaceTabComponent ? workspacesStore.onUpdateWorkspaceTabRequested : undefined}
-                onRemoveWorkspaceTabsRequested={components?.header?.WorkspaceTabComponent ? workspacesStore.onRemoveWorkspaceTabRequested : undefined}
+                onUpdateWorkspaceTabsRequested={workspaceTab ? workspacesStore.onUpdateWorkspaceTabRequested : undefined}
+                onRemoveWorkspaceTabsRequested={workspaceTab ? workspacesStore.onRemoveWorkspaceTabRequested : undefined}
                 onRemoveWorkspaceContentsRequested={components?.WorkspaceContents ? workspacesStore.onRemoveWorkspaceContentsRequested : undefined}
                 onRemoveBeforeGroupTabsRequested={components?.containers?.group?.header?.BeforeTabs ? workspacesStore.onRemoveBeforeTabsComponentRequested : undefined}
                 onRemoveAfterGroupTabsRequested={components?.containers?.group?.header?.AfterTabs ? workspacesStore.onRemoveAfterTabsComponentRequested : undefined}

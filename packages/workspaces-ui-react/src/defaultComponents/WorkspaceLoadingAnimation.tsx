@@ -1,7 +1,7 @@
 import React from "react";
-import { GlueWorkspaceLoadingAnimationProps } from "../types/internal";
+import { WorkspaceLoadingAnimationProps } from "../types/internal";
 
-const GlueWorkspaceLoadingAnimation: React.FC<GlueWorkspaceLoadingAnimationProps> = ({ workspaceId, ...props }) => {
+const WorkspaceLoadingAnimation: React.FC<WorkspaceLoadingAnimationProps> = ({ workspaceId, ...props }) => {
     return (
         <div className="wrapper">
             <div className="inner">
@@ -17,4 +17,4 @@ const GlueWorkspaceLoadingAnimation: React.FC<GlueWorkspaceLoadingAnimationProps
     )
 };
 
-export default GlueWorkspaceLoadingAnimation;
+export default WorkspaceLoadingAnimation;

@@ -405,3 +405,53 @@ export interface LayoutRequestConfig{
     layoutType: "Global" | "Workspace";
     context?: any;
 }
+
+export interface LockWindowConfig {
+    showCloseButton?: boolean;
+    allowExtract?: boolean;
+    allowReorder?: boolean;
+}
+
+export interface LockGroupConfig {
+    allowExtract?: boolean;
+    allowReorder?: boolean;
+    allowDrop?: boolean;
+    allowDropHeader?: boolean;
+    allowDropLeft?: boolean;
+    allowDropRight?: boolean;
+    allowDropTop?: boolean;
+    allowDropBottom?: boolean;
+    showMaximizeButton?: boolean;
+    showEjectButton?: boolean;
+    showAddWindowButton?: boolean;
+}
+
+export interface LockColumnConfig {
+    allowDrop?: boolean;
+    allowSplitters?: boolean;
+}
+
+export interface LockRowConfig {
+    allowDrop?: boolean;
+    allowSplitters?: boolean;
+}
+
+export interface LockWorkspaceConfig {
+    allowSplitters?: boolean;
+    allowDrop?: boolean;
+    allowDropLeft?: boolean;
+    allowDropTop?: boolean;
+    allowDropRight?: boolean;
+    allowDropBottom?: boolean;
+    allowExtract?: boolean;
+    showCloseButton?: boolean;
+    showSaveButton?: boolean;
+    allowWorkspaceTabExtract?: boolean;
+    allowWorkspaceTabReorder?: boolean;
+    showWindowCloseButtons?: boolean;
+    allowWindowReorder?: boolean;
+    showEjectButtons?: boolean;
+    showAddWindowButtons?: boolean;
+}
+
+export type LockContainerConfig = LockColumnConfig | LockRowConfig | LockGroupConfig;

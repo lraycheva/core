@@ -1,3 +1,5 @@
+1.10.0
+feat: implemented workspace lock events
 1.9.5
 chore: bump due to dependencies update
 1.9.4

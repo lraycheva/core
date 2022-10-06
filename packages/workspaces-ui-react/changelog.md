@@ -1,3 +1,5 @@
+2.0.0
+feat: changed the default workspace tab with the newly added WorkspaceTabV2
 1.11.1
 chore: bump due to dependencies update
 1.11.0

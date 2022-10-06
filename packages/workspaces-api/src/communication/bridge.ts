@@ -36,7 +36,8 @@ export class Bridge {
             const receivedIds = {
                 frame: args.frameSummary?.id || args.windowSummary?.config.frameId,
                 workspace: args.workspaceSummary?.id || args.windowSummary?.config.workspaceId,
-                window: args.windowSummary?.config.windowId
+                container: args.containerSummary?.itemId,
+                window: args.windowSummary?.itemId
             };
 
             const shouldInvokeCallback = this.checkScopeMatch(scopeConfig, receivedIds);
@@ -187,7 +188,7 @@ export class Bridge {
         return this.transport.onInternalMethodInvoked("control", wrappedCallback)
     }
 
-    private checkScopeMatch(scope: { type: WorkspaceEventScope; id?: string }, receivedIds: { frame: string; workspace: string; window: string }): boolean {
+    private checkScopeMatch(scope: { type: WorkspaceEventScope; id?: string }, receivedIds: { frame: string; workspace: string; container: string; window: string }): boolean {
 
         if (scope.type === "global") {
             return true;
@@ -198,6 +199,10 @@ export class Bridge {
         }
 
         if (scope.type === "workspace" && scope.id === receivedIds.workspace) {
+            return true;
+        }
+
+        if (scope.type === "container" && scope.id === receivedIds.container) {
             return true;
         }
 

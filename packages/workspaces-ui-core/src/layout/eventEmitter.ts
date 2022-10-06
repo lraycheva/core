@@ -141,6 +141,22 @@ export class LayoutEventEmitter {
         return this._registry.add("content-item-removed", callback);
     }
 
+    public onWorkspaceLockConfigurationChanged(callback: (itemId: string) => void) {
+        return this._registry.add("workspace-lock-configuration-changed", callback);
+    }
+
+    public onContainerLockConfigurationChanged(callback: (item: GoldenLayout.ContentItem) => void) {
+        return this._registry.add("container-lock-configuration-changed", callback);
+    }
+
+    public onWindowLockConfigurationChanged(callback: (data: GoldenLayout.Component) => void) {
+        return this._registry.add("window-lock-configuration-changed", callback);
+    }
+
+    
+    public raiseEvent(name: "window-lock-configuration-changed", data: { item: GoldenLayout.Component }): Promise<void> | Array<Promise<void>>;
+    public raiseEvent(name: "container-lock-configuration-changed", data: { item: GoldenLayout.ContentItem }): Promise<void> | Array<Promise<void>>;
+    public raiseEvent(name: "workspace-lock-configuration-changed", data: { itemId: string }): Promise<void> | Array<Promise<void>>;
     public raiseEvent(name: "content-item-removed", data: { workspaceId: string; item: GoldenLayout.ContentItem }): Promise<void> | Array<Promise<void>>;
     public raiseEvent(name: "item-dropped", data: { item: GoldenLayout.ContentItem }): Promise<void> | Array<Promise<void>>;
     public raiseEvent(name: "container-maximized" | "container-restored", data: { container: GoldenLayout.ContentItem }): Promise<void> | Array<Promise<void>>;

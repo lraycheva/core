@@ -1,15 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import GoldenLayout, { ContentItem } from "@glue42/golden-layout";
+import GoldenLayout, { ContentItem, WorkspacesConfig } from "@glue42/golden-layout";
 import { Bounds, ContainerSummary } from "../types/internal";
 import { getElementBounds, idAsString } from "../utils";
 import { DefaultMaxSize, DefaultMinSize } from "../utils/constants";
-import { LayoutStateResolver } from "./resolver";
 import store from "./store";
-import { WorkspaceWindowWrapper } from "./windowWrapper";
+import { WorkspacesWrapperFactory } from "./factory";
+import { LayoutEventEmitter } from "../layout/eventEmitter";
 
 export class WorkspaceContainerWrapper {
     constructor(
-        private readonly stateResolver: LayoutStateResolver,
+        private readonly wrapperFactory: WorkspacesWrapperFactory,
+        private readonly layoutEventEmitter: LayoutEventEmitter,
         private readonly containerContentItem: GoldenLayout.Row | GoldenLayout.Stack | GoldenLayout.Column,
         private readonly frameId: string,
         private readonly workspaceId?: string) {
@@ -72,71 +73,71 @@ export class WorkspaceContainerWrapper {
     }
 
     public get allowDrop(): boolean {
-        return (this.containerContentItem.config.workspacesConfig as any).allowDrop ?? true;
+        return this.getLockPropertyFromConfig("allowDrop");
     }
 
     public set allowDrop(value: boolean | undefined) {
-        (this.containerContentItem.config.workspacesConfig as any).allowDrop = value;
+        this.setLockPropertyFromConfig("allowDrop", value);
 
         this.populateChildrenAllowDrop(value);
     }
 
     public get allowDropHeader(): boolean {
-        return this.containerContentItem.config.workspacesConfig.allowDropHeader ?? true;
+        return this.getLockPropertyFromConfig("allowDropHeader");
     }
 
     public set allowDropHeader(value: boolean | undefined) {
-        this.containerContentItem.config.workspacesConfig.allowDropHeader = value;
+        this.setLockPropertyFromConfig("allowDropHeader", value);
     }
 
     public get allowDropLeft(): boolean {
-        return this.containerContentItem.config.workspacesConfig.allowDropLeft ?? true;
+        return this.getLockPropertyFromConfig("allowDropLeft");
     }
 
     public set allowDropLeft(value: boolean | undefined) {
-        this.containerContentItem.config.workspacesConfig.allowDropLeft = value;
+        this.setLockPropertyFromConfig("allowDropLeft", value);
     }
 
     public get allowDropRight(): boolean {
-        return this.containerContentItem.config.workspacesConfig.allowDropRight ?? true;
+        return this.getLockPropertyFromConfig("allowDropRight");
     }
 
     public set allowDropRight(value: boolean | undefined) {
-        this.containerContentItem.config.workspacesConfig.allowDropRight = value;
+        this.setLockPropertyFromConfig("allowDropRight", value);
     }
 
     public get allowDropTop(): boolean {
-        return this.containerContentItem.config.workspacesConfig.allowDropTop ?? true;
+        return this.getLockPropertyFromConfig("allowDropTop");
     }
 
     public set allowDropTop(value: boolean | undefined) {
-        this.containerContentItem.config.workspacesConfig.allowDropTop = value;
+        this.setLockPropertyFromConfig("allowDropTop", value);
     }
 
     public get allowDropBottom(): boolean {
-        return this.containerContentItem.config.workspacesConfig.allowDropBottom ?? true;
+        return this.getLockPropertyFromConfig("allowDropBottom");
     }
 
     public set allowDropBottom(value: boolean | undefined) {
-        this.containerContentItem.config.workspacesConfig.allowDropBottom = value;
+        this.setLockPropertyFromConfig("allowDropBottom", value);
     }
 
     public get allowExtract(): boolean {
-        return (this.containerContentItem.config.workspacesConfig as any).allowExtract ?? true;
+        return this.getLockPropertyFromConfig("allowExtract");
     }
 
     public set allowExtract(value: boolean | undefined) {
-        (this.containerContentItem.config.workspacesConfig as any).allowExtract = value;
+        this.setLockPropertyFromConfig("allowExtract", value);
 
         this.populateChildrenAllowExtract(value);
     }
 
     public get allowReorder(): boolean {
-        return (this.containerContentItem.config.workspacesConfig as any).allowReorder ?? true;
+        return this.getLockPropertyFromConfig("allowReorder");
     }
 
     public set allowReorder(value: boolean | undefined) {
-        (this.containerContentItem.config.workspacesConfig as any).allowReorder = value;
+        this.setLockPropertyFromConfig("allowReorder", value); 
 
         this.populateChildrenAllowReorder(value);
     }
@@ -145,14 +146,14 @@ export class WorkspaceContainerWrapper {
         if (this.containerContentItem.config.type === "stack") {
             throw new Error(`Accessing allowSplitters of container ${this.containerContentItem.type} ${this.containerContentItem.config.id} the property is available only for rows and columns`);
         }
-        return this.containerContentItem.config.workspacesConfig.allowSplitters ?? true;
+        return this.getLockPropertyFromConfig("allowSplitters");
     }
 
     public set allowSplitters(value: boolean | undefined) {
         if (this.containerContentItem.config.type === "stack") {
             throw new Error(`Setting allowSplitters of container ${this.containerContentItem.type} ${this.containerContentItem.config.id} the property is available only for rows and columns`);
         }
-        this.containerContentItem.config.workspacesConfig.allowSplitters = value;
+        this.setLockPropertyFromConfig("allowSplitters", value);
 
         this.populateChildrenAllowSplitters(value);
     }
@@ -161,42 +162,42 @@ export class WorkspaceContainerWrapper {
         if (this.containerContentItem.config.type !== "stack") {
             throw new Error(`Accessing showMaximizeButton of container ${this.containerContentItem.type} ${this.containerContentItem.config.id} the property is available only for stacks`);
         }
-        return (this.containerContentItem.config.workspacesConfig as any).showMaximizeButton ?? true;
+        return this.getLockPropertyFromConfig("showMaximizeButton");
     }
 
     public set showMaximizeButton(value: boolean | undefined) {
         if (this.containerContentItem.config.type !== "stack") {
             throw new Error(`Setting showMaximizeButton of container ${this.containerContentItem.type} ${this.containerContentItem.config.id} the property is available only for stacks`);
         }
-        (this.containerContentItem.config.workspacesConfig as any).showMaximizeButton = value;
+        this.setLockPropertyFromConfig("showMaximizeButton", value);
     }
 
     public get showEjectButton(): boolean {
         if (this.containerContentItem.config.type !== "stack") {
             throw new Error(`Accessing showEjectButton of container ${this.containerContentItem.type} ${this.containerContentItem.config.id} the property is available only for stacks`);
         }
-        return (this.containerContentItem.config.workspacesConfig as any).showEjectButton ?? true;
+        return this.getLockPropertyFromConfig("showEjectButton");
     }
 
     public set showEjectButton(value: boolean | undefined) {
         if (this.containerContentItem.config.type !== "stack") {
             throw new Error(`Setting showEjectButton of container ${this.containerContentItem.type} ${this.containerContentItem.config.id} the property is available only for stacks`);
         }
-        (this.containerContentItem.config.workspacesConfig as any).showEjectButton = value;
+        this.setLockPropertyFromConfig("showEjectButton", value);
     }
 
     public get showAddWindowButton(): boolean {
         if (this.containerContentItem.config.type !== "stack") {
             throw new Error(`Accessing showAddWindowButton of container ${this.containerContentItem.type} ${this.containerContentItem.config.id} the property is available only for stacks`);
         }
-        return (this.containerContentItem.config.workspacesConfig as any).showAddWindowButton ?? true;
+        return this.getLockPropertyFromConfig("showAddWindowButton");
     }
 
     public set showAddWindowButton(value: boolean | undefined) {
         if (this.containerContentItem.config.type !== "stack") {
             throw new Error(`Setting showAddWindowButton of container ${this.containerContentItem.type} ${this.containerContentItem.config.id} the property is available only for stacks`);
         }
-        (this.containerContentItem.config.workspacesConfig as any).showAddWindowButton = value;
+        this.setLockPropertyFromConfig("showAddWindowButton", value);
     }
 
     public get positionIndex(): number {
@@ -213,7 +214,7 @@ export class WorkspaceContainerWrapper {
         }
 
         const workspaceId = this.workspaceId ?? store.getByContainerId(idAsString(this.containerContentItem.config.id))?.id;
-        if (workspaceId && this.stateResolver.isWorkspaceSelected(workspaceId)) {
+        if (workspaceId && this.isWorkspaceSelected(workspaceId)) {
             const bounds = getElementBounds(this.containerContentItem.element);
             (this.containerContentItem.config.workspacesConfig as any).cachedBounds = bounds;
             return bounds;
@@ -313,7 +314,7 @@ export class WorkspaceContainerWrapper {
                     return;
                 }
 
-                const wrapper = new WorkspaceContainerWrapper(this.stateResolver, c, this.frameId);
+                const wrapper = this.wrapperFactory.getContainerWrapper({ containerContentItem: c });
 
                 wrapper.allowDrop = value;
 
@@ -328,14 +329,14 @@ export class WorkspaceContainerWrapper {
         const lockChildren = (children: ContentItem[]): void => {
             children.forEach((c) => {
                 if (c.type === "component") {
-                    const windowWrapper = new WorkspaceWindowWrapper(this.stateResolver, c, this.frameId);
+                    const windowWrapper = this.wrapperFactory.getWindowWrapper({ windowContentItem: c });
 
                     windowWrapper.allowExtract = value;
                     return;
                 }
 
                 if (c.type === "stack") {
-                    const containerWrapper = new WorkspaceContainerWrapper(this.stateResolver, c, this.frameId);
+                    const containerWrapper = this.wrapperFactory.getContainerWrapper({ containerContentItem: c });
                     containerWrapper.allowExtract = value;
                 }
 
@@ -350,14 +351,14 @@ export class WorkspaceContainerWrapper {
         const lockChildren = (children: ContentItem[]): void => {
             children.forEach((c) => {
                 if (c.type === "component") {
-                    const windowWrapper = new WorkspaceWindowWrapper(this.stateResolver, c, this.frameId);
+                    const windowWrapper = this.wrapperFactory.getWindowWrapper({ windowContentItem: c });
 
                     windowWrapper.allowReorder = value;
                     return;
                 }
 
                 if (c.type === "stack") {
-                    const containerWrapper = new WorkspaceContainerWrapper(this.stateResolver, c, this.frameId);
+                    const containerWrapper = this.wrapperFactory.getContainerWrapper({ containerContentItem: c });
                     containerWrapper.allowReorder = value;
                 }
 
@@ -375,7 +376,7 @@ export class WorkspaceContainerWrapper {
                     return;
                 }
 
-                const containerWrapper = new WorkspaceContainerWrapper(this.stateResolver, c, this.frameId);
+                const containerWrapper = this.wrapperFactory.getContainerWrapper({ containerContentItem: c });
                 containerWrapper.allowSplitters = value;
 
                 lockChildren(c.contentItems);
@@ -411,5 +412,24 @@ export class WorkspaceContainerWrapper {
         const searchResult = search(config);
 
         return searchResult.find((i: GoldenLayout.ItemConfig) => i.id);
+    }
+
+    private isWorkspaceSelected(workspaceId: string) {
+        const wrapper = this.wrapperFactory.getWorkspaceWrapper({ workspaceId });
+
+        return wrapper.isSelected;
+    }
+
+    private getLockPropertyFromConfig<T extends keyof WorkspacesConfig>(propertyName: T): WorkspacesConfig[T] {
+        return this.containerContentItem.config.workspacesConfig[propertyName] ?? true as WorkspacesConfig[T];
+    }
+
+    private setLockPropertyFromConfig<T extends keyof WorkspacesConfig>(propertyName: T, value: WorkspacesConfig[T]): void {
+        const previousValue = this.getLockPropertyFromConfig(propertyName);
+        (this.containerContentItem.config.workspacesConfig[propertyName]) = value;
+        const newValue = this.getLockPropertyFromConfig(propertyName);
+        if (previousValue !== newValue) {
+            this.layoutEventEmitter.raiseEvent("container-lock-configuration-changed", { item: this.containerContentItem });
+        }
     }
 }

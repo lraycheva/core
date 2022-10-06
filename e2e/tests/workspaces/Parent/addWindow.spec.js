@@ -474,7 +474,7 @@ describe("addWindow() Should", () => {
             expect(secondWorkspace.maxHeight).to.eql(32767);
         });
 
-        it(`lock the window when the paret is a column and locking config has been passed`, async () => {
+        it(`lock the window when the paret is a column and lock config has been passed`, async () => {
             const secondWorkspace = await glue.workspaces.createWorkspace({
                 children: [
                     {
@@ -501,7 +501,7 @@ describe("addWindow() Should", () => {
             expect(window.showCloseButton).to.be.false;
         });
 
-        it(`lock the window when the paret is a group and locking config has been passed`, async () => {
+        it(`lock the window when the paret is a group and lock config has been passed`, async () => {
             const secondWorkspace = await glue.workspaces.createWorkspace({
                 children: [
                     {
@@ -528,7 +528,7 @@ describe("addWindow() Should", () => {
             expect(window.showCloseButton).to.be.false;
         });
 
-        it(`lock the window when the paret is a group with windows and locking config has been passed`, async () => {
+        it(`lock the window when the paret is a group with windows and lock config has been passed`, async () => {
             const secondWorkspace = await glue.workspaces.createWorkspace({
                 children: [
                     {
@@ -558,7 +558,7 @@ describe("addWindow() Should", () => {
             expect(window.showCloseButton).to.be.false;
         });
 
-        it(`lock the window when the parent is a row and locking config has been passed`, async () => {
+        it(`lock the window when the parent is a row and lock config has been passed`, async () => {
             const secondWorkspace = await glue.workspaces.createWorkspace({
                 children: [
                     {

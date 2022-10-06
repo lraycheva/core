@@ -94,21 +94,30 @@ export class TabObserver {
         const tabOuterWidth = $(tab).outerWidth();
         const classes = (tab as Element).classList;
 
-        if (this.isTabPinned(tab as HTMLElement)) {
+        const removeAll = () => {
             classes.remove("lm_tab_mini");
             classes.remove("lm_tab_small");
+            classes.remove("lm_tab_mid");
+        };
+
+        if (this.isTabPinned(tab as HTMLElement)) {
+            removeAll();
+        } else if (tabOuterWidth >= 35 && tabOuterWidth < 55) {
+            classes.remove("lm_tab_mini");
+            classes.remove("lm_tab_small");
+
+            classes.add("lm_tab_mid");
         } else if (tabOuterWidth >= 25 && tabOuterWidth < 35) {
-            if (classes.contains("lm_tab_mini")) {
-                classes.remove("lm_tab_mini");
-            }
+            classes.remove("lm_tab_mini");
+            classes.remove("lm_tab_mid");
+
             classes.add("lm_tab_small");
-        } else if (tabOuterWidth >= 35) {
-            classes.remove("lm_tab_small");
-            if (classes.contains("lm_tab_mini")) {
-                classes.remove("lm_tab_mini");
-            }
+        } else if (tabOuterWidth >= 55) {
+            removeAll();
         } else if (tabOuterWidth < 25) {
+            classes.remove("lm_tab_mid");
             classes.remove("lm_tab_small");
+            
             classes.add("lm_tab_mini");
         }
     }

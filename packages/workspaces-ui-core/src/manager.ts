@@ -13,10 +13,8 @@ import { LayoutStateResolver } from "./state/resolver";
 import scReader from "./config/startupReader";
 import { idAsString, getAllWindowsFromConfig, getElementBounds, getWorkspaceContextName } from "./utils";
 import { WorkspacesConfigurationFactory } from "./config/factory";
-import { WorkspacesEventEmitter } from "./eventEmitter";
 import { Glue42Web } from "@glue42/web";
 import { LockColumnArguments, LockContainerArguments, LockGroupArguments, LockRowArguments, LockWindowArguments, LockWorkspaceArguments, OpenWorkspaceArguments, ResizeItemArguments, RestoreWorkspaceConfig, WorkspaceDefinition } from "./interop/types";
-import { TitleGenerator } from "./config/titleGenerator";
 import startupReader from "./config/startupReader";
 import componentStateMonitor from "./componentStateMonitor";
 import { ConfigConverter } from "./config/converter";
@@ -28,11 +26,11 @@ import { ApplicationFactory } from "./app/factory";
 import { DelayedExecutor } from "./utils/delayedExecutor";
 import { WorkspacesSystemSettingsProvider } from "./config/system";
 import { ConstraintsValidator } from "./config/constraintsValidator";
-import { WorkspaceWrapper } from "./state/workspaceWrapper";
 import uiExecutor from "./uiExecutor";
 import { ComponentFactory } from "./types/componentFactory";
 import { PlatformCommunicator } from "./interop/platformCommunicator";
-import { WorkspaceContainerWrapper } from "./state/containerWrapper";
+import { WorkspacesWrapperFactory } from "./state/factory";
+import { WorkspacesEventBundler } from "./utils/eventBundler";
 
 export class WorkspacesManager {
     private _controller: LayoutController;
@@ -43,7 +41,7 @@ export class WorkspacesManager {
     private _stateResolver: LayoutStateResolver;
     private _isLayoutInitialized = false;
     private _initPromise = Promise.resolve();
-    private _workspacesEventEmitter = new WorkspacesEventEmitter();
+    private _workspacesEventEmitter = new WorkspacesEventBundler();
     private _initialized: boolean;
     private _glue: Glue42Web.API;
     private _configFactory: WorkspacesConfigurationFactory;
@@ -52,12 +50,13 @@ export class WorkspacesManager {
     private _context?: object;
     private _systemSettings: WorkspacesSystemSettingsProvider;
     private _platformCommunicator: PlatformCommunicator;
+    private _wrapperFactory: WorkspacesWrapperFactory;
 
     public get stateResolver(): LayoutStateResolver {
         return this._stateResolver;
     }
 
-    public get workspacesEventEmitter(): WorkspacesEventEmitter {
+    public get workspacesEventEmitter(): WorkspacesEventBundler {
         return this._workspacesEventEmitter;
     }
 
@@ -94,8 +93,9 @@ export class WorkspacesManager {
         componentStateMonitor.init(this._frameId, componentFactory);
         this._frameController = new IFrameController(glue);
         const eventEmitter = new LayoutEventEmitter(registryFactory());
-        this._stateResolver = new LayoutStateResolver(this._frameId, eventEmitter, this._frameController, converter);
-        this._controller = new LayoutController(eventEmitter, this._stateResolver, startupConfig, this._configFactory);
+        this._wrapperFactory = new WorkspacesWrapperFactory(eventEmitter, this.frameId);
+        this._stateResolver = new LayoutStateResolver(this._frameId, eventEmitter, this._frameController, converter, this._wrapperFactory);
+        this._controller = new LayoutController(eventEmitter, this._stateResolver, startupConfig, this._configFactory, this._wrapperFactory);
         this._platformCommunicator = new PlatformCommunicator(this._glue, this._frameId);
         this._systemSettings = new WorkspacesSystemSettingsProvider(this._platformCommunicator);
         this._applicationFactory = new ApplicationFactory(glue, this.stateResolver, this._frameController, this, new DelayedExecutor(), this._platformCommunicator, this._systemSettings);
@@ -136,7 +136,7 @@ export class WorkspacesManager {
 
     public async saveWorkspace(name: string, id?: string, saveContext?: boolean, metadata?: object): Promise<WorkspaceLayout> {
         const workspace = store.getById(id) || store.getActiveWorkspace();
-        const wrapper = new WorkspaceWrapper(this.stateResolver, workspace, store.getWorkspaceContentItem(workspace.id), this.frameId);
+        const wrapper = this._wrapperFactory.getWorkspaceWrapper({ workspace, workspaceId: workspace.id });
         const result = await this._layoutsManager.save({
             name,
             workspace,
@@ -297,7 +297,7 @@ export class WorkspacesManager {
         const configWithoutIsPinned = this.cleanIsPinned(config) as GoldenLayout.RowConfig | GoldenLayout.StackConfig | GoldenLayout.ColumnConfig;
         const workspace = store.getByContainerId(parentId) || store.getById(parentId);
         const workspaceContentItem = store.getWorkspaceContentItem(workspace.id);
-        const workspaceWrapper = new WorkspaceWrapper(this.stateResolver, workspace, workspaceContentItem, this.frameId);
+        const workspaceWrapper = this._wrapperFactory.getWorkspaceWrapper({ workspace, workspaceContentItem });
 
         const result = await this._controller.addContainer(configWithoutIsPinned, parentId);
 
@@ -328,7 +328,7 @@ export class WorkspacesManager {
         }
         const workspace = store.getById(parentId) || store.getByContainerId(parentId);
         const workspaceContentItem = store.getWorkspaceContentItem(workspace.id);
-        const workspaceWrapper = new WorkspaceWrapper(this.stateResolver, workspace, workspaceContentItem, this.frameId);
+        const workspaceWrapper = this._wrapperFactory.getWorkspaceWrapper({ workspace, workspaceContentItem });
 
         await this._controller.addWindow(itemConfig, parentId);
 
@@ -412,8 +412,9 @@ export class WorkspacesManager {
         if (!contentItem) {
             throw new Error(`Could not find window ${itemId} to load`);
         }
-        let { windowId } = contentItem.config.componentState;
+        let windowId = this._frameController.getWindowId(itemId);
         const workspace = store.getByWindowId(itemId);
+
         if (!this.stateResolver.isWindowLoaded(itemId) && contentItem.type === "component") {
             this._applicationFactory.start(contentItem, workspace.id);
             await this.waitForFrameLoaded(itemId);
@@ -573,7 +574,7 @@ export class WorkspacesManager {
         workspace.hibernateConfig = undefined;
 
         const workspaceContentItem = store.getWorkspaceContentItem(workspace.id);
-        const wrapper = new WorkspaceWrapper(this.stateResolver, workspace, workspaceContentItem, this.frameId);
+        const wrapper = this._wrapperFactory.getWorkspaceWrapper({ workspace, workspaceContentItem });
         if (!wrapper.isPinned) {
             uiExecutor.showSaveIcon({ workspaceTab: workspaceContentItem.tab, workspaceId: workspace.id });
         } else {
@@ -620,68 +621,82 @@ export class WorkspacesManager {
         const { allowDrop, allowExtract, allowWindowReorder, allowSplitters, showCloseButton, showSaveButton, allowWorkspaceTabReorder, showAddWindowButtons, showWindowCloseButtons, showEjectButtons } = lockConfig.config;
         const { workspaceId } = lockConfig;
 
-        if (allowDrop === false) {
-            this._controller.disableWorkspaceDrop(workspaceId, lockConfig.config);
-        } else {
-            this._controller.enableWorkspaceDrop(workspaceId, lockConfig.config);
+        try {
+            this.workspacesEventEmitter.startWorkspaceLockConfigurationChangedGrouping();
+            this.workspacesEventEmitter.startContainerLockConfigurationChangedGrouping();
+            this.workspacesEventEmitter.startWindowLockConfigurationChangedGrouping();
+
+            if (allowDrop === false) {
+                this._controller.disableWorkspaceDrop(workspaceId, lockConfig.config);
+            } else {
+                this._controller.enableWorkspaceDrop(workspaceId, lockConfig.config);
+            }
+
+            if (allowExtract === false) {
+                this._controller.disableWorkspaceExtract(workspaceId);
+            } else {
+                this._controller.enableWorkspaceExtract(workspaceId);
+            }
+
+            if (allowWindowReorder === false) {
+                this._controller.disableWorkspaceWindowReorder(workspaceId);
+            } else {
+                this._controller.enableWorkspaceWindowReorder(workspaceId);
+            }
+
+            if (allowSplitters === false) {
+                this._controller.disableSplitters(workspaceId);
+            } else {
+                this._controller.enableSplitters(workspaceId);
+            }
+
+            if (showCloseButton === false) {
+                this._controller.disableWorkspaceCloseButton(workspaceId);
+            } else {
+                this._controller.enableWorkspaceCloseButton(workspaceId);
+            }
+
+            if (showSaveButton === false) {
+                this._controller.disableWorkspaceSaveButton(workspaceId);
+            } else {
+                this._controller.enableWorkspaceSaveButton(workspaceId);
+            }
+
+            if (allowWorkspaceTabReorder === false) {
+                this._controller.disableWorkspaceReorder(workspaceId);
+            } else {
+                this._controller.enableWorkspaceReorder(workspaceId);
+            }
+
+            if (showAddWindowButtons === false) {
+                this._controller.disableWorkspaceAddWindowButtons(workspaceId);
+            } else {
+                this._controller.enableWorkspaceAddWindowButtons(workspaceId);
+            }
+
+            if (showEjectButtons === false) {
+                this._controller.disableWorkspaceEjectButtons(workspaceId);
+            } else {
+                this._controller.enableWorkspaceEjectButtons(workspaceId);
+            }
+
+            if (showWindowCloseButtons === false) {
+                this._controller.disableWorkspaceWindowCloseButtons(workspaceId);
+            } else {
+                this._controller.enableWorkspaceWindowCloseButtons(workspaceId);
+            }
+        } catch (error) {
+            throw error;
+        } finally {
+            this.workspacesEventEmitter.endWorkspaceLockConfigurationChangedGrouping();
+            this.workspacesEventEmitter.endContainerLockConfigurationChangedGrouping();
+            this.workspacesEventEmitter.endWindowLockConfigurationChangedGrouping();
         }
 
-        if (allowExtract === false) {
-            this._controller.disableWorkspaceExtract(workspaceId);
-        } else {
-            this._controller.enableWorkspaceExtract(workspaceId);
-        }
-
-        if (allowWindowReorder === false) {
-            this._controller.disableWorkspaceWindowReorder(workspaceId);
-        } else {
-            this._controller.enableWorkspaceWindowReorder(workspaceId);
-        }
-
-        if (allowSplitters === false) {
-            this._controller.disableSplitters(workspaceId);
-        } else {
-            this._controller.enableSplitters(workspaceId);
-        }
-
-        if (showCloseButton === false) {
-            this._controller.disableWorkspaceCloseButton(workspaceId);
-        } else {
-            this._controller.enableWorkspaceCloseButton(workspaceId);
-        }
-
-        if (showSaveButton === false) {
-            this._controller.disableWorkspaceSaveButton(workspaceId);
-        } else {
-            this._controller.enableWorkspaceSaveButton(workspaceId);
-        }
-
-        if (allowWorkspaceTabReorder === false) {
-            this._controller.disableWorkspaceReorder(workspaceId);
-        } else {
-            this._controller.enableWorkspaceReorder(workspaceId);
-        }
-
-        if (showAddWindowButtons === false) {
-            this._controller.disableWorkspaceAddWindowButtons(workspaceId);
-        } else {
-            this._controller.enableWorkspaceAddWindowButtons(workspaceId);
-        }
-
-        if (showEjectButtons === false) {
-            this._controller.disableWorkspaceEjectButtons(workspaceId);
-        } else {
-            this._controller.enableWorkspaceEjectButtons(workspaceId);
-        }
-
-        if (showWindowCloseButtons === false) {
-            this._controller.disableWorkspaceWindowCloseButtons(workspaceId);
-        } else {
-            this._controller.enableWorkspaceWindowCloseButtons(workspaceId);
-        }
     }
 
     public lockContainer(lockConfig: LockContainerArguments): void {
+
         if (!lockConfig.config && lockConfig.type === "column") {
             lockConfig.config = {
                 allowDrop: false,
@@ -723,17 +738,28 @@ export class WorkspacesManager {
             }
         });
 
-        switch (lockConfig.type) {
-            case "column":
-                this.handleColumnLockRequested(lockConfig);
-                break;
-            case "row":
-                this.handleRowLockRequested(lockConfig);
-                break;
-            case "group":
-                this.handleGroupLockRequested(lockConfig);
-                break;
+        try {
+            this.workspacesEventEmitter.startContainerLockConfigurationChangedGrouping();
+            this.workspacesEventEmitter.startWindowLockConfigurationChangedGrouping();
+
+            switch (lockConfig.type) {
+                case "column":
+                    this.handleColumnLockRequested(lockConfig);
+                    break;
+                case "row":
+                    this.handleRowLockRequested(lockConfig);
+                    break;
+                case "group":
+                    this.handleGroupLockRequested(lockConfig);
+                    break;
+            }
+        } catch (error) {
+            throw error;
+        } finally {
+            this.workspacesEventEmitter.endContainerLockConfigurationChangedGrouping();
+            this.workspacesEventEmitter.endWindowLockConfigurationChangedGrouping();
         }
+
     }
 
     public lockWindow(lockConfig: LockWindowArguments): void {
@@ -755,22 +781,31 @@ export class WorkspacesManager {
         const { allowExtract, allowReorder, showCloseButton } = lockConfig.config;
         const { windowPlacementId } = lockConfig;
 
-        if (allowExtract === false) {
-            this._controller.disableWindowExtract(windowPlacementId);
-        } else {
-            this._controller.enableWindowExtract(windowPlacementId, allowExtract);
-        }
+        try {
+            this.workspacesEventEmitter.startWindowLockConfigurationChangedGrouping();
 
-        if (allowReorder === false) {
-            this._controller.disableWindowReorder(windowPlacementId);
-        } else {
-            this._controller.enableWindowReorder(windowPlacementId, allowReorder);
-        }
+            if (allowExtract === false) {
+                this._controller.disableWindowExtract(windowPlacementId);
+            } else {
+                this._controller.enableWindowExtract(windowPlacementId, allowExtract);
+            }
 
-        if (showCloseButton === false) {
-            this._controller.disableWindowCloseButton(windowPlacementId);
-        } else {
-            this._controller.enableWindowCloseButton(windowPlacementId, showCloseButton);
+            if (allowReorder === false) {
+                this._controller.disableWindowReorder(windowPlacementId);
+            } else {
+                this._controller.enableWindowReorder(windowPlacementId, allowReorder);
+            }
+
+            if (showCloseButton === false) {
+                this._controller.disableWindowCloseButton(windowPlacementId);
+            } else {
+                this._controller.enableWindowCloseButton(windowPlacementId, showCloseButton);
+            }
+
+        } catch (error) {
+            throw error;
+        } finally {
+            this.workspacesEventEmitter.endWindowLockConfigurationChangedGrouping();
         }
 
         const workspace = store.getByWindowId(windowPlacementId);
@@ -864,7 +899,7 @@ export class WorkspacesManager {
 
     public setWorkspaceIcon(workspaceId: string, icon?: string): void {
         const workspaceContentItem = store.getWorkspaceContentItem(workspaceId);
-        const wrapper = new WorkspaceWrapper(this.stateResolver, store.getById(workspaceId), workspaceContentItem, this.frameId);
+        const wrapper = this._wrapperFactory.getWorkspaceWrapper({ workspaceId, workspaceContentItem });
 
         wrapper.icon = icon;
 
@@ -913,7 +948,7 @@ export class WorkspacesManager {
             throw new Error(`Could not set the maximization boundary of group ${itemId} to ${value} because only rows and columns can be considered maximizationBoundaries`);
         }
 
-        const wrapper = new WorkspaceContainerWrapper(this.stateResolver, container, this.frameId);
+        const wrapper = this._wrapperFactory.getContainerWrapper({ containerContentItem: container });
 
         wrapper.maximizationBoundary = value;
     }
@@ -1153,7 +1188,7 @@ export class WorkspacesManager {
 
         this._controller.emitter.onContentLayoutInit((layout: Workspace["layout"]) => {
             const workspace = store.getById(layout.root.config.id);
-            const wrapper = new WorkspaceWrapper(this.stateResolver, workspace, undefined, this.frameId);
+            const wrapper = this._wrapperFactory.getWorkspaceWrapper({ workspace, workspaceContentItem: undefined });
 
             if (wrapper.getMaximizedItemInRoot(layout)) {
                 this._controller.hideWorkspaceRootItem(workspace.id);
@@ -1224,7 +1259,7 @@ export class WorkspacesManager {
 
             const workspace = store.getById(contentItem.layoutManager.root.config.id);
             const workspaceContentItem = store.getWorkspaceContentItem(workspace.id);
-            const wrapper = new WorkspaceWrapper(this.stateResolver, workspace, workspaceContentItem, this.frameId);
+            const wrapper = this._wrapperFactory.getWorkspaceWrapper({ workspace, workspaceContentItem });
 
             if (wrapper.getMaximizedItemInRoot(contentItem.layoutManager) && !contentItem.parent.isRoot) {
                 this._controller.hideWorkspaceRootItem(workspace.id);
@@ -1297,6 +1332,35 @@ export class WorkspacesManager {
             if (item.type === "stack") {
                 componentStateMonitor.notifyGroupClosed(idAsString(item.config.id));
             }
+        });
+
+        this._controller.emitter.onWorkspaceLockConfigurationChanged(async (itemId) => {
+            this.workspacesEventEmitter.raiseWorkspaceEvent({
+                action: "lock-configuration-changed",
+                payload: {
+                    frameSummary: this.getFrameSummary(this.frameId),
+                    workspaceSummary: this.stateResolver.getWorkspaceSummary(itemId),
+                    frameBounds: this.stateResolver.getFrameBounds()
+                }
+            });
+        });
+
+        this._controller.emitter.onContainerLockConfigurationChanged(async (item) => {
+            this.workspacesEventEmitter.raiseContainerEvent({
+                action: "lock-configuration-changed",
+                payload: {
+                    containerSummary: this.stateResolver.getContainerSummaryByReference(item, store.getByContainerId(item.config.id)?.id)
+                }
+            });
+        });
+
+        this._controller.emitter.onWindowLockConfigurationChanged(async (item) => {
+            this.workspacesEventEmitter.raiseWindowEvent({
+                action: "lock-configuration-changed",
+                payload: {
+                    windowSummary: this.stateResolver.getWindowSummarySync(item.config.id)
+                }
+            });
         });
 
         // debouncing because there is potential for 1ms spam

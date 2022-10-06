@@ -1,17 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import GoldenLayout, { WorkspacesOptions } from "@glue42/golden-layout";
 import store from "./store";
-import { LayoutStateResolver } from "./resolver";
 import { getElementBounds, idAsString } from "../utils";
-import { Bounds, Workspace, WorkspaceOptionsWithLayoutName, WorkspaceSummary } from "../types/internal";
+import { Bounds, LockWorkspaceConfig, Workspace, WorkspaceOptionsWithLayoutName, WorkspaceSummary } from "../types/internal";
 import { DefaultMaxSize, DefaultMinSize, EmptyVisibleWindowName } from "../utils/constants";
-import { WorkspaceWindowWrapper } from "./windowWrapper";
-import { WorkspaceContainerWrapper } from "./containerWrapper";
 import componentStateMonitor from "../componentStateMonitor";
+import { WorkspacesWrapperFactory } from "./factory";
+import { LayoutEventEmitter } from "../layout/eventEmitter";
 
 export class WorkspaceWrapper {
     constructor(
-        private readonly stateResolver: LayoutStateResolver,
+        private readonly wrapperFactory: WorkspacesWrapperFactory,
+        private readonly layoutEventEmitter: LayoutEventEmitter,
         private readonly workspace: Workspace,
         private readonly workspaceContentItem: GoldenLayout.Component,
         private readonly frameId: string) {
@@ -46,7 +46,10 @@ export class WorkspaceWrapper {
             return focusedWindowId;
         }
 
-        return this.workspace.windows.filter((w) => this.stateResolver.isWindowSelected(idAsString(w.id)))[0]?.id;
+        return this.workspace.windows.filter((w) => {
+            const wrapper = this.wrapperFactory.getWindowWrapper({ itemId: w.id, workspaceId: this.workspace.id });
+            return wrapper.isSelected;
+        })[0]?.id;
     }
 
     public get isSelected(): boolean {
@@ -92,7 +95,7 @@ export class WorkspaceWrapper {
         glConfig.workspacesOptions.allowDropRight = this.allowDropRight;
         glConfig.workspacesOptions.allowDropBottom = this.allowDropBottom;
         glConfig.workspacesOptions.allowExtract = this.allowExtract;
-        glConfig.workspacesOptions.allowWindowReorder =  this.allowWindowReorder;
+        glConfig.workspacesOptions.allowWindowReorder = this.allowWindowReorder;
         glConfig.workspacesOptions.showCloseButton = this.showCloseButton;
         glConfig.workspacesOptions.showSaveButton = this.showSaveButton;
         glConfig.workspacesOptions.allowWorkspaceTabReorder = this.allowWorkspaceTabReorder;
@@ -174,10 +177,7 @@ export class WorkspaceWrapper {
     }
 
     public set allowDrop(value: boolean) {
-        if (this.workspace?.layout) {
-            this.workspace.layout.config.workspacesOptions.allowDrop = value;
-        }
-        this.workspaceContentItem.config.workspacesConfig.allowDrop = value;
+        this.setLockPropertyInConfig("allowDrop", value);
 
         this.populateChildrenAllowDrop(value);
     }
@@ -187,11 +187,7 @@ export class WorkspaceWrapper {
     }
 
     public set allowDropLeft(value: boolean) {
-        if (this.workspace?.layout) {
-            this.workspace.layout.config.workspacesOptions.allowDropLeft = value;
-        }
-
-        this.workspaceContentItem.config.workspacesConfig.allowDropLeft = value;
+        this.setLockPropertyInConfig("allowDropLeft", value);
     }
 
     public get allowDropTop(): boolean {
@@ -199,10 +195,7 @@ export class WorkspaceWrapper {
     }
 
     public set allowDropTop(value: boolean) {
-        if (this.workspace?.layout) {
-            this.workspace.layout.config.workspacesOptions.allowDropTop = value;
-        }
-        this.workspaceContentItem.config.workspacesConfig.allowDropTop = value;
+        this.setLockPropertyInConfig("allowDropTop", value);
     }
 
     public get allowDropRight(): boolean {
@@ -210,11 +203,7 @@ export class WorkspaceWrapper {
     }
 
     public set allowDropRight(value: boolean) {
-        if (this.workspace?.layout) {
-            this.workspace.layout.config.workspacesOptions.allowDropRight = value;
-        }
-
-        this.workspaceContentItem.config.workspacesConfig.allowDropRight = value;
+        this.setLockPropertyInConfig("allowDropRight", value);
     }
 
     public get allowDropBottom(): boolean {
@@ -222,10 +211,7 @@ export class WorkspaceWrapper {
     }
 
     public set allowDropBottom(value: boolean) {
-        if (this.workspace?.layout) {
-            this.workspace.layout.config.workspacesOptions.allowDropBottom = value;
-        }
-        this.workspaceContentItem.config.workspacesConfig.allowDropBottom = value;
+        this.setLockPropertyInConfig("allowDropBottom", value);
     }
 
     public get allowExtract(): boolean {
@@ -233,10 +219,7 @@ export class WorkspaceWrapper {
     }
 
     public set allowExtract(value: boolean) {
-        if (this.workspace?.layout) {
-            this.workspace.layout.config.workspacesOptions.allowExtract = value;
-        }
-        this.workspaceContentItem.config.workspacesConfig.allowExtract = value;
+        this.setLockPropertyInConfig("allowExtract", value);
 
         this.populateChildrenAllowExtract(value);
     }
@@ -246,10 +229,7 @@ export class WorkspaceWrapper {
     }
 
     public set allowWindowReorder(value: boolean) {
-        if (this.workspace?.layout) {
-            this.workspace.layout.config.workspacesOptions.allowWindowReorder = value;
-        }
-        this.workspaceContentItem.config.workspacesConfig.allowWindowReorder = value;
+        this.setLockPropertyInConfig("allowWindowReorder" as any, value);
 
         this.populateChildrenAllowReorder(value);
     }
@@ -259,10 +239,7 @@ export class WorkspaceWrapper {
     }
 
     public set allowSplitters(value: boolean) {
-        if (this.workspace?.layout) {
-            this.workspace.layout.config.workspacesOptions.allowSplitters = value;
-        }
-        this.workspaceContentItem.config.workspacesConfig.allowSplitters = value;
+        this.setLockPropertyInConfig("allowSplitters", value);
         this.populateChildrenAllowSplitters(value);
     }
 
@@ -271,10 +248,7 @@ export class WorkspaceWrapper {
     }
 
     public set showSaveButton(value: boolean) {
-        if (this.workspace?.layout) {
-            this.workspace.layout.config.workspacesOptions.showSaveButton = value;
-        }
-        this.workspaceContentItem.config.workspacesConfig.showSaveButton = value;
+        this.setLockPropertyInConfig("showSaveButton", value);
 
         componentStateMonitor.decoratedFactory.updateWorkspaceTabs({ workspaceId: this.workspace.id, showSaveButton: value });
     }
@@ -284,10 +258,7 @@ export class WorkspaceWrapper {
     }
 
     public set allowWorkspaceTabReorder(value: boolean) {
-        if (this.workspace?.layout) {
-            this.workspace.layout.config.workspacesOptions.allowWorkspaceTabReorder = value;
-        }
-        this.workspaceContentItem.config.workspacesConfig.allowWorkspaceTabReorder = value;
+        this.setLockPropertyInConfig("allowWorkspaceTabReorder", value);
     }
 
     public get showCloseButton(): boolean {
@@ -295,10 +266,7 @@ export class WorkspaceWrapper {
     }
 
     public set showCloseButton(value: boolean) {
-        if (this.workspace?.layout) {
-            this.workspace.layout.config.workspacesOptions.showCloseButton = value;
-        }
-        this.workspaceContentItem.config.workspacesConfig.showCloseButton = value;
+        this.setLockPropertyInConfig("showCloseButton", value);
 
         componentStateMonitor.decoratedFactory.updateWorkspaceTabs({ workspaceId: this.workspace.id, showCloseButton: value });
     }
@@ -308,10 +276,7 @@ export class WorkspaceWrapper {
     }
 
     public set showAddWindowButtons(value: boolean) {
-        if (this.workspace?.layout) {
-            this.workspace.layout.config.workspacesOptions.showAddWindowButtons = value;
-        }
-        this.workspaceContentItem.config.workspacesConfig.showAddWindowButtons = value;
+        this.setLockPropertyInConfig("showAddWindowButtons", value);
 
         this.populateChildrenShowAddWindowButtons(value);
     }
@@ -321,10 +286,7 @@ export class WorkspaceWrapper {
     }
 
     public set showEjectButtons(value: boolean) {
-        if (this.workspace?.layout) {
-            this.workspace.layout.config.workspacesOptions.showEjectButtons = value;
-        }
-        this.workspaceContentItem.config.workspacesConfig.showEjectButtons = value;
+        this.setLockPropertyInConfig("showEjectButtons", value);
 
         this.populateChildrenShowEjectButtons(value);
     }
@@ -334,10 +296,7 @@ export class WorkspaceWrapper {
     }
 
     public set showWindowCloseButtons(value: boolean) {
-        if (this.workspace?.layout) {
-            this.workspace.layout.config.workspacesOptions.showWindowCloseButtons = value;
-        }
-        this.workspaceContentItem.config.workspacesConfig.showWindowCloseButtons = value;
+        this.setLockPropertyInConfig("showWindowCloseButtons", value);
 
         this.populateChildrenShowWindowCloseButtons(value);
     }
@@ -403,7 +362,7 @@ export class WorkspaceWrapper {
     }
 
     public get icon(): string {
-        return this.getPropertyFromConfig<string>("icon");
+        return this.getPropertyFromConfig("icon");
     }
 
     public set icon(value: string) {
@@ -419,7 +378,7 @@ export class WorkspaceWrapper {
             return;
         }
         if (glConfig.type === "component") {
-            const summary = this.stateResolver.getWindowSummarySync(glConfig.id);
+            const summary = this.getWindowSummary(glConfig.id);
 
             glConfig.workspacesConfig = glConfig.workspacesConfig || {};
             glConfig.workspacesConfig = { ...glConfig.workspacesConfig, ...summary.config };
@@ -434,7 +393,7 @@ export class WorkspaceWrapper {
         }
 
         if (glConfig.type === "stack" || glConfig.type === "row" || glConfig.type === "column") {
-            const summary = this.stateResolver.getContainerSummary(glConfig.id);
+            const summary = this.getContainerSummary(glConfig.id);
 
             glConfig.workspacesConfig = glConfig.workspacesConfig || {};
             glConfig.workspacesConfig = { ...glConfig.workspacesConfig, ...summary.config };
@@ -455,7 +414,7 @@ export class WorkspaceWrapper {
                 return;
             }
 
-            const containerWrapper = new WorkspaceContainerWrapper(this.stateResolver, item, this.frameId, this.workspace.id);
+            const containerWrapper = this.wrapperFactory.getContainerWrapper({ containerContentItem: item, workspaceId: this.workspace.id });
             containerWrapper.allowDrop = value;
 
             item.contentItems.forEach((ci) => {
@@ -480,7 +439,7 @@ export class WorkspaceWrapper {
                 return;
             }
 
-            const containerWrapper = new WorkspaceContainerWrapper(this.stateResolver, item, this.frameId, this.workspace.id);
+            const containerWrapper = this.wrapperFactory.getContainerWrapper({ containerContentItem: item, workspaceId: this.workspace.id });
             containerWrapper.allowSplitters = value;
 
             item.contentItems.forEach((ci) => {
@@ -502,14 +461,13 @@ export class WorkspaceWrapper {
 
         const populateRecursive = (item: GoldenLayout.ContentItem): void => {
             if (item.type === "component") {
-                const windowWrapper = new WorkspaceWindowWrapper(this.stateResolver, item, this.frameId);
-
+                const windowWrapper = this.wrapperFactory.getWindowWrapper({ windowContentItem: item });
                 windowWrapper.allowExtract = value;
                 return;
             }
 
             if (item.type === "stack") {
-                const containerWrapper = new WorkspaceContainerWrapper(this.stateResolver, item, this.frameId, this.workspace.id);
+                const containerWrapper = this.wrapperFactory.getContainerWrapper({ containerContentItem: item, workspaceId: this.workspace.id });
                 containerWrapper.allowExtract = value;
             }
 
@@ -532,14 +490,14 @@ export class WorkspaceWrapper {
 
         const populateRecursive = (item: GoldenLayout.ContentItem): void => {
             if (item.type === "component") {
-                const windowWrapper = new WorkspaceWindowWrapper(this.stateResolver, item, this.frameId);
+                const windowWrapper = this.wrapperFactory.getWindowWrapper({ windowContentItem: item });
 
                 windowWrapper.allowReorder = value;
                 return;
             }
 
             if (item.type === "stack") {
-                const containerWrapper = new WorkspaceContainerWrapper(this.stateResolver, item, this.frameId, this.workspace.id);
+                const containerWrapper = this.wrapperFactory.getContainerWrapper({ containerContentItem: item, workspaceId: this.workspace.id });
                 containerWrapper.allowReorder = value;
             }
 
@@ -566,7 +524,7 @@ export class WorkspaceWrapper {
             }
 
             if (item.type === "stack") {
-                const containerWrapper = new WorkspaceContainerWrapper(this.stateResolver, item, this.frameId, this.workspace.id);
+                const containerWrapper = this.wrapperFactory.getContainerWrapper({ containerContentItem: item, workspaceId: this.workspace.id });
                 containerWrapper.showAddWindowButton = value;
             }
 
@@ -593,7 +551,7 @@ export class WorkspaceWrapper {
             }
 
             if (item.type === "stack") {
-                const containerWrapper = new WorkspaceContainerWrapper(this.stateResolver, item, this.frameId, this.workspace.id);
+                const containerWrapper = this.wrapperFactory.getContainerWrapper({ containerContentItem: item, workspaceId: this.workspace.id });
                 containerWrapper.showEjectButton = value;
             }
 
@@ -616,7 +574,7 @@ export class WorkspaceWrapper {
 
         const populateRecursive = (item: GoldenLayout.ContentItem): void => {
             if (item.type === "component") {
-                const windowWrapper = new WorkspaceWindowWrapper(this.stateResolver, item, this.frameId);
+                const windowWrapper = this.wrapperFactory.getWindowWrapper({ windowContentItem: item });
 
                 windowWrapper.showCloseButton = value;
                 return;
@@ -632,7 +590,7 @@ export class WorkspaceWrapper {
         });
     }
 
-    private getPropertyFromConfig<T>(propertyName: keyof WorkspacesOptions): T { // TODO fix typings
+    private getPropertyFromConfig<T extends keyof WorkspacesOptions>(propertyName: T): WorkspacesOptions[T] { // TODO fix typings
         let result;
         if (this.workspace?.layout) {
             result = this.workspace.layout.config.workspacesOptions[propertyName];
@@ -640,6 +598,33 @@ export class WorkspaceWrapper {
             result = (this.workspaceContentItem.config.workspacesConfig as WorkspacesOptions)[propertyName];
         }
 
-        return result as T;
+        return result as WorkspacesOptions[T];
+    }
+
+    private setPropertyInConfig<T extends keyof WorkspacesOptions>(propertyName: T, value: WorkspacesOptions[T]): void {
+        if (this.workspace?.layout) {
+            (this.workspace.layout.config.workspacesOptions[propertyName] as WorkspacesOptions[T]) = value;
+        }
+        ((this.workspaceContentItem.config.workspacesConfig as WorkspacesOptions)[propertyName] as WorkspacesOptions[T]) = value;
+    }
+
+    private setLockPropertyInConfig<T extends keyof LockWorkspaceConfig>(propertyName: T, value: LockWorkspaceConfig[T]): void {
+        const previousValue = this.getPropertyFromConfig(propertyName as any) ?? true; // TODO reorder options
+        this.setPropertyInConfig(propertyName as any, value);
+        const currentValue = this.getPropertyFromConfig(propertyName as any) ?? true; // TODO reorder options
+
+        if (previousValue !== currentValue) {
+            this.layoutEventEmitter.raiseEvent("workspace-lock-configuration-changed", { itemId: this.workspace.id });
+        }
+    }
+
+    private getWindowSummary(id: string | string[]) {
+        const wrapper = this.wrapperFactory.getWindowWrapper({ itemId: id });
+        return wrapper.summary;
+    }
+
+    private getContainerSummary(id: string | string[]) {
+        const wrapper = this.wrapperFactory.getContainerWrapper({ itemId: id, workspaceId: this.id });
+        return wrapper.summary;
     }
 }

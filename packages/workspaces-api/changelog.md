@@ -1,3 +1,5 @@
+1.17.0
+feat: added workspace lock events
 1.16.4
 feat: added version property to the top-level API
 1.16.3

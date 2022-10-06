@@ -40,6 +40,12 @@ export interface Workspace extends Glue42Workspaces.Workspace {
    * Hides the loading animation of the workspace (supported only in Glue42 Enterprise)
    */
   hideLoadingAnimation(): Promise<void>;
+
+  /**
+   * Notifies when the a change in the lock configuration of the workspace has been made
+   * @param callback Callback function to handle the event. Receives the new lock configuration as a parameter.
+   */
+  onLockConfigurationChanged(callback: (config: Glue42Workspaces.WorkspaceLockConfig) => void): Promise<Glue42Workspaces.Unsubscribe>;
 }
 
 export interface SetMaximizationBoundaryConfig {
@@ -55,6 +61,12 @@ export interface Row extends Glue42Workspaces.Row {
    * @param config Object which specifies how the maximizationBoundary behavior should be changed
    */
   setMaximizationBoundary(config: SetMaximizationBoundaryConfig): Promise<void>
+
+  /**
+   * Notifies when the a change in the lock configuration of the row has been made
+   * @param callback Callback function to handle the event. Receives the new lock configuration as a parameter
+   */
+  onLockConfigurationChanged(callback: (config: Glue42Workspaces.RowLockConfig) => void): Promise<Glue42Workspaces.Unsubscribe>
 }
 
 export interface Column extends Glue42Workspaces.Column {
@@ -63,6 +75,28 @@ export interface Column extends Glue42Workspaces.Column {
    * @param config Object which specifies how the maximizationBoundary behavior should be changed
    */
   setMaximizationBoundary(config: SetMaximizationBoundaryConfig): Promise<void>
+
+  /**
+   * Notifies when the a change in the lock configuration of the column has been made
+   * @param callback Callback function to handle the event. Receives the new lock configuration as a parameter
+   */
+  onLockConfigurationChanged(callback: (config: Glue42Workspaces.ColumnLockConfig) => void): Promise<Glue42Workspaces.Unsubscribe>
+}
+
+export interface Group extends Glue42Workspaces.Group {
+  /**
+  * Notifies when a change in the lock configuration of the group has been made
+  * @param callback Callback function to handle the event. Receives the new lock configuration as a parameter
+  */
+  onLockConfigurationChanged(callback: (config: Glue42Workspaces.GroupLockConfig) => void): Promise<Glue42Workspaces.Unsubscribe>
+}
+
+export interface WorkspaceWindow extends Glue42Workspaces.WorkspaceWindow {
+  /**
+   * Notifies when a change in the lock configuration of the workspace window has been made
+   * @param callback Callback function to handle the event. Receives the new lock configuration as a parameter
+   */
+  onLockConfigurationChanged(callback: (config: Glue42Workspaces.WorkspaceWindowLockConfig) => void): Promise<Glue42Workspaces.Unsubscribe>
 }
 
 export interface FrameFocusChangedData {

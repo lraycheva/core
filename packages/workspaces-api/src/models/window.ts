@@ -286,4 +286,25 @@ export class Window implements Glue42Workspaces.WorkspaceWindow {
         const unsubscribe = await getData(this).controller.processLocalSubscription(config, id);
         return unsubscribe;
     }
+
+    public async onLockConfigurationChanged(callback:(config:Glue42Workspaces.WorkspaceWindowLockConfig)=>void): Promise<Glue42Workspaces.Unsubscribe>{
+        checkThrowCallback(callback);
+        const id = getData(this).id;
+        const wrappedCallback = async (): Promise<void> => {
+            await this.workspace.refreshReference();
+            callback({
+                allowExtract: this.allowExtract,
+                allowReorder: this.allowReorder,
+                showCloseButton: this.showCloseButton
+            });
+        };
+        const config: SubscriptionConfig = {
+            callback: wrappedCallback,
+            action: "lock-configuration-changed",
+            eventType: "window",
+            scope: "window"
+        };
+        const unsubscribe = await getData(this).controller.processLocalSubscription(config, id);
+        return unsubscribe;
+    }
 }

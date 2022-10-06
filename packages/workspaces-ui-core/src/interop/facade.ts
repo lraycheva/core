@@ -94,7 +94,7 @@ export class GlueFacade {
         });
 
         manager.workspacesEventEmitter.onContainerEvent((action, payload) => {
-            this.publishEventData(action, payload, "box");
+            this.publishEventData(action, payload, "container");
         });
     }
 
@@ -599,7 +599,7 @@ export class GlueFacade {
         return manager.getFrameSummary(this._frameId);
     }
 
-    private publishEventData(action: EventActionType, payload: EventPayload, type: "workspace" | "frame" | "box" | "window"): void {
+    private publishEventData(action: EventActionType, payload: EventPayload, type: "workspace" | "frame" | "container" | "window"): void {
         const hasEventMethod = this._glue.agm.methods().some(m => m.name === this._workspacesEventMethod);
 
         if (hasEventMethod) {

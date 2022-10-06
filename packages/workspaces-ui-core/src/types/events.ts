@@ -4,10 +4,10 @@ export type EventType = "window" | "workspace" | "frame" | "container";
 export type EventActionType = WindowEventAction | WorkspaceEventAction | FrameEventAction | ContainerEventAction;
 export type EventArgs = WindowEventArgs | ContainerEventArgs | WorkspaceEventArgs | FrameEventArgs;
 export type EventData = FrameEventData | WorkspaceEventData | ContainerEventData | WindowEventData;
-export type WindowEventAction = "added" | "loaded" | "removed" | "focus" | "containerChanged" | "maximized" | "restored";
-export type WorkspaceEventAction = "opened" | "closing" | "closed" | "selected";
+export type WindowEventAction = "added" | "loaded" | "removed" | "focus" | "containerChanged" | "maximized" | "restored" | "lock-configuration-changed";
+export type WorkspaceEventAction = "opened" | "closing" | "closed" | "selected" | "lock-configuration-changed";
 export type FrameEventAction = "opened" | "closing" | "closed" | "focus";
-export type ContainerEventAction = "added" | "removed" | "childrenUpdate";
+export type ContainerEventAction = "added" | "removed" | "childrenUpdate" | "lock-configuration-changed";
 export type EventPayload = WindowEventPayload | ContainerEventPayload | WorkspaceEventPayload | FrameEventPayload;
 
 export interface WindowEventArgs {

@@ -1,13 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import GoldenLayout from "@glue42/golden-layout";
-import { Bounds, WindowSummary } from "../types/internal";
+import { LayoutEventEmitter } from "../layout/eventEmitter";
+import { Bounds, LockWindowConfig, WindowSummary } from "../types/internal";
 import { getElementBounds, idAsString } from "../utils";
-import { LayoutStateResolver } from "./resolver";
+import { WorkspacesWrapperFactory } from "./factory";
 import store from "./store";
 
 export class WorkspaceWindowWrapper {
     constructor(
-        private readonly stateResolver: LayoutStateResolver,
+        private readonly wrapperFactory: WorkspacesWrapperFactory,
+        private readonly layoutEventEmitter: LayoutEventEmitter,
         private readonly windowContentItem: GoldenLayout.Component,
         private readonly frameId: string) {
     }
@@ -45,27 +47,27 @@ export class WorkspaceWindowWrapper {
     }
 
     public get allowExtract(): boolean | undefined {
-        return this.windowContentItem.config.workspacesConfig.allowExtract ?? true;
+        return this.getLockPropertyFromConfig("allowExtract");
     }
 
     public set allowExtract(value: boolean | undefined) {
-        this.windowContentItem.config.workspacesConfig.allowExtract = value;
+        this.setLockPropertyInConfig("allowExtract", value);
     }
 
     public get allowReorder(): boolean | undefined {
-        return this.windowContentItem.config.workspacesConfig.allowReorder ?? true;
+        return this.getLockPropertyFromConfig("allowReorder");
     }
 
     public set allowReorder(value: boolean | undefined) {
-        this.windowContentItem.config.workspacesConfig.allowReorder = value;
+        this.setLockPropertyInConfig("allowReorder", value);
     }
 
     public get showCloseButton(): boolean | undefined {
-        return this.windowContentItem.config.workspacesConfig.showCloseButton ?? true;
+        return this.getLockPropertyFromConfig("showCloseButton");
     }
 
     public set showCloseButton(value: boolean | undefined) {
-        this.windowContentItem.config.workspacesConfig.showCloseButton = value;
+        this.setLockPropertyInConfig("showCloseButton", value);
     }
 
     public get isMaximized(): boolean {
@@ -105,7 +107,7 @@ export class WorkspaceWindowWrapper {
         }
 
         const workspaceId = store.getByWindowId(idAsString(this.windowContentItem.config.id))?.id;
-        if (workspaceId && this.stateResolver.isWorkspaceSelected(workspaceId)) {
+        if (workspaceId && this.isWorkspaceSelected(workspaceId)) {
             const bounds = getElementBounds(this.windowContentItem.element);
 
             (this.windowContentItem.config.workspacesConfig as any).cachedBounds = bounds;
@@ -169,5 +171,33 @@ export class WorkspaceWindowWrapper {
         }
 
         return contentItem.parent as any;
+    }
+
+    private isWorkspaceSelected(workspaceId: string) {
+        const wrapper = this.wrapperFactory.getWorkspaceWrapper({ workspaceId });
+
+        return wrapper.isSelected;
+    }
+
+    private getPropertyFromConfig<T extends keyof GoldenLayout.WorkspacesConfig>(propertyName: T): GoldenLayout.WorkspacesConfig[T] {
+        return (this.windowContentItem?.config?.workspacesConfig ?? {})[propertyName];
+    }
+
+    private getLockPropertyFromConfig<T extends keyof LockWindowConfig>(propertyName: T): LockWindowConfig[T] {
+        return this.getPropertyFromConfig(propertyName as any) ?? true as any; // TODO allowReorder
+    }
+
+    private setPropertyInConfig<T extends keyof GoldenLayout.WorkspacesConfig>(propertyName: T, value: GoldenLayout.WorkspacesConfig[T]) {
+        (this.windowContentItem.config.workspacesConfig[propertyName] as any) = value as any;
+    }
+
+    private setLockPropertyInConfig<T extends keyof LockWindowConfig>(propertyName: T, value: LockWindowConfig[T]) {
+        const previousValue = this.getLockPropertyFromConfig(propertyName as any); // TODO allowReorder
+        this.setPropertyInConfig(propertyName as any, value);
+        const newValue = this.getLockPropertyFromConfig(propertyName as any);
+
+        if (previousValue !== newValue) {
+            this.layoutEventEmitter.raiseEvent("window-lock-configuration-changed", { item: this.windowContentItem });
+        }
     }
 }

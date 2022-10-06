@@ -114,6 +114,13 @@ export class IFrameController {
         return !!this._idToFrame[id];
     }
 
+    public getWindowId(id: string): string {
+        if (!this.hasFrame(id)) {
+            return undefined;
+        }
+        return this._idToFrame[id].name.split("#wsp")[0];
+    }
+
     private async startCore(id: string, url: string, layoutState?: object, windowId?: string): Promise<HTMLIFrameElement> {
         windowId = windowId || generateWindowId();
         if (this._idToFrame[id]) {

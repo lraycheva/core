@@ -835,7 +835,7 @@ d='M224 448v-96h64v96l-32 64zM336 224v-160c48 0 80-32 80-64v0 0h-320c0 32 32 64 
         });
     });
 
-    describe('locking Should', () => {
+    describe('lock Should', () => {
         it("create a workspace in a locked state when constraints are passed in the config object", async () => {
             const workspace = await glue.workspaces.createWorkspace({
                 children: [{

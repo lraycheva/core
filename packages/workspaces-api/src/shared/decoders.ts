@@ -406,7 +406,7 @@ export const streamRequestArgumentsDecoder: Decoder<{ type: WorkspaceEventType; 
     branch: nonEmptyStringDecoder
 });
 
-export const workspaceEventActionDecoder: Decoder<WorkspaceEventAction> = oneOf<"opened" | "closing" | "closed" | "focus" | "added" | "loaded" | "removed" | "childrenUpdate" | "containerChange" | "maximized" | "restored" | "minimized" | "normal" | "selected">(
+export const workspaceEventActionDecoder: Decoder<WorkspaceEventAction> = oneOf<"opened" | "closing" | "closed" | "focus" | "added" | "loaded" | "removed" | "childrenUpdate" | "containerChange" | "maximized" | "restored" | "minimized" | "normal" | "selected" |"lock-configuration-changed">(
     constant("opened"),
     constant("closing"),
     constant("closed"),
@@ -420,7 +420,8 @@ export const workspaceEventActionDecoder: Decoder<WorkspaceEventAction> = oneOf<
     constant("restored"),
     constant("minimized"),
     constant("normal"),
-    constant("selected")
+    constant("selected"),
+    constant("lock-configuration-changed")
 );
 
 export const workspaceConfigResultDecoder: Decoder<WorkspaceConfigResult> = object({

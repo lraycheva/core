@@ -541,7 +541,6 @@ lm.utils.copy(lm.controls.Header.prototype, {
 			}
 
 			tabElement.css({ 'z-index': 'auto', 'margin-left': '' });
-			this.tabsContainer.append(tabElement);
 		}
 
 	},

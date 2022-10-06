@@ -122,7 +122,7 @@ describe("init() Should ", () => {
         });
     });
 
-    describe("locking", () => {
+    describe("lock", () => {
         ["showSaveButton",
             "showCloseButton",
             "allowExtract",

@@ -8,7 +8,7 @@ export class WorkspacesLocker {
     public applyLockConfiguration(workspacesConfig: WorkspaceItem, snapshot: WorkspaceItem): Promise<void> {
         const traverse = async (item: WorkspaceItem | GroupItem | ColumnItem | RowItem | WindowItem, snapshotItem: WorkspaceItem | GroupItem | ColumnItem | RowItem | WindowItem): Promise<void> => {
             if (item.type === "window") {
-                if (this.doesWindowContainLockingProperties(item)) {
+                if (this.doesWindowContainLockProperties(item)) {
                     this.manager.lockWindow({
                         windowPlacementId: snapshotItem.id,
                         config: item.config
@@ -17,7 +17,7 @@ export class WorkspacesLocker {
                 return;
             } else if (item.type === "group" || item.type === "row" || item.type === "column") {
 
-                if (this.doesContainerContainLockingProperties(item)) {
+                if (this.doesContainerContainLockProperties(item)) {
                     this.manager.lockContainer({
                         itemId: snapshotItem.id,
                         type: item.type,
@@ -25,7 +25,7 @@ export class WorkspacesLocker {
                     });
                 }
             } else {
-                if (this.doesWorkspaceContainLockingProperties(item)) {
+                if (this.doesWorkspaceContainLockProperties(item)) {
                     this.manager.lockWorkspace({
                         workspaceId: snapshot.id,
                         config: item.config
@@ -47,7 +47,7 @@ export class WorkspacesLocker {
             id: windowSummary.itemId,
             type: "window"
         };
-        if (this.doesWindowContainLockingProperties(item)) {
+        if (this.doesWindowContainLockProperties(item)) {
             this.manager.lockWindow({
                 windowPlacementId: windowSummary.itemId,
                 config: windowSummary.config
@@ -59,7 +59,7 @@ export class WorkspacesLocker {
         const snapshot = this.getItemFromWorkspace(workspace, itemId);
         const traverse = (item: WorkspaceItem | GroupItem | ColumnItem | RowItem | WindowItem, snapshotItem: WorkspaceItem | GroupItem | ColumnItem | RowItem | WindowItem): void => {
             if (item.type === "window") {
-                if (this.doesWindowContainLockingProperties(item)) {
+                if (this.doesWindowContainLockProperties(item)) {
                     this.manager.lockWindow({
                         windowPlacementId: snapshotItem.id,
                         config: item.config
@@ -67,7 +67,7 @@ export class WorkspacesLocker {
                 }
                 return;
             } else if (item.type === "group" || item.type === "row" || item.type === "column") {
-                if (this.doesContainerContainLockingProperties(item)) {
+                if (this.doesContainerContainLockProperties(item)) {
                     this.manager.lockContainer({
                         itemId: snapshotItem.id,
                         type: item.type,
@@ -75,7 +75,7 @@ export class WorkspacesLocker {
                     });
                 }
             } else {
-                if (this.doesWorkspaceContainLockingProperties(item)) {
+                if (this.doesWorkspaceContainLockProperties(item)) {
                     this.manager.lockWorkspace({
                         workspaceId: item.id,
                         config: item.config
@@ -91,43 +91,43 @@ export class WorkspacesLocker {
         return traverse(definition, snapshot);
     }
 
-    private doesWindowContainLockingProperties(window: WindowItem): boolean {
-        return this.isLockingPropertySet(window.config?.showCloseButton) || this.isLockingPropertySet(window.config?.allowExtract) || this.isLockingPropertySet(window.config?.allowReorder) ;
+    private doesWindowContainLockProperties(window: WindowItem): boolean {
+        return this.isLockPropertySet(window.config?.showCloseButton) || this.isLockPropertySet(window.config?.allowExtract) || this.isLockPropertySet(window.config?.allowReorder) ;
     }
 
-    private doesContainerContainLockingProperties(container: ColumnItem | RowItem | GroupItem): boolean {
-        return this.isLockingPropertySet(container.config?.allowDrop) ||
-            this.isLockingPropertySet(container.config?.allowDropHeader) ||
-            this.isLockingPropertySet(container.config?.allowDropLeft) ||
-            this.isLockingPropertySet(container.config?.allowDropRight) ||
-            this.isLockingPropertySet(container.config?.allowDropTop) ||
-            this.isLockingPropertySet(container.config?.allowDropBottom) ||
-            this.isLockingPropertySet(container.config?.allowExtract) ||
-            this.isLockingPropertySet(container.config?.allowReorder) ||
-            this.isLockingPropertySet(container.config?.showExtractButton) ||
-            this.isLockingPropertySet(container.config?.showMaximizeButton) ||
-            this.isLockingPropertySet(container.config?.showAddWindowButton) ||
-            this.isLockingPropertySet(container.config?.allowSplitters);
+    private doesContainerContainLockProperties(container: ColumnItem | RowItem | GroupItem): boolean {
+        return this.isLockPropertySet(container.config?.allowDrop) ||
+            this.isLockPropertySet(container.config?.allowDropHeader) ||
+            this.isLockPropertySet(container.config?.allowDropLeft) ||
+            this.isLockPropertySet(container.config?.allowDropRight) ||
+            this.isLockPropertySet(container.config?.allowDropTop) ||
+            this.isLockPropertySet(container.config?.allowDropBottom) ||
+            this.isLockPropertySet(container.config?.allowExtract) ||
+            this.isLockPropertySet(container.config?.allowReorder) ||
+            this.isLockPropertySet(container.config?.showExtractButton) ||
+            this.isLockPropertySet(container.config?.showMaximizeButton) ||
+            this.isLockPropertySet(container.config?.showAddWindowButton) ||
+            this.isLockPropertySet(container.config?.allowSplitters);
     }
 
-    private doesWorkspaceContainLockingProperties(workspace: WorkspaceItem): boolean {
-        return this.isLockingPropertySet(workspace.config?.allowDrop) ||
-            this.isLockingPropertySet(workspace.config?.allowDropLeft) ||
-            this.isLockingPropertySet(workspace.config?.allowDropTop) ||
-            this.isLockingPropertySet(workspace.config?.allowDropRight) ||
-            this.isLockingPropertySet(workspace.config?.allowDropBottom) ||
-            this.isLockingPropertySet(workspace.config?.allowExtract) ||
-            this.isLockingPropertySet(workspace.config?.allowWindowReorder) ||
-            this.isLockingPropertySet(workspace.config?.showExtractButtons) ||
-            this.isLockingPropertySet(workspace.config?.showWindowCloseButtons) ||
-            this.isLockingPropertySet(workspace.config?.showAddWindowButtons) ||
-            this.isLockingPropertySet(workspace.config?.showSaveButton) ||
-            this.isLockingPropertySet(workspace.config?.allowWorkspaceTabReorder)||
-            this.isLockingPropertySet(workspace.config?.showCloseButton) ||
-            this.isLockingPropertySet(workspace.config?.allowSplitters);
+    private doesWorkspaceContainLockProperties(workspace: WorkspaceItem): boolean {
+        return this.isLockPropertySet(workspace.config?.allowDrop) ||
+            this.isLockPropertySet(workspace.config?.allowDropLeft) ||
+            this.isLockPropertySet(workspace.config?.allowDropTop) ||
+            this.isLockPropertySet(workspace.config?.allowDropRight) ||
+            this.isLockPropertySet(workspace.config?.allowDropBottom) ||
+            this.isLockPropertySet(workspace.config?.allowExtract) ||
+            this.isLockPropertySet(workspace.config?.allowWindowReorder) ||
+            this.isLockPropertySet(workspace.config?.showExtractButtons) ||
+            this.isLockPropertySet(workspace.config?.showWindowCloseButtons) ||
+            this.isLockPropertySet(workspace.config?.showAddWindowButtons) ||
+            this.isLockPropertySet(workspace.config?.showSaveButton) ||
+            this.isLockPropertySet(workspace.config?.allowWorkspaceTabReorder)||
+            this.isLockPropertySet(workspace.config?.showCloseButton) ||
+            this.isLockPropertySet(workspace.config?.allowSplitters);
     }
 
-    private isLockingPropertySet(value: boolean): boolean {
+    private isLockPropertySet(value: boolean): boolean {
         return typeof value === "boolean";
     }
 

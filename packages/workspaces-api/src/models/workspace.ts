@@ -596,4 +596,40 @@ export class Workspace implements Glue42Workspaces.Workspace {
         const unsubscribe = await getData(this).controller.processLocalSubscription(config, id);
         return unsubscribe;
     }
+
+    public async onLockConfigurationChanged(callback: (config: Glue42Workspaces.WorkspaceLockConfig) => void): Promise<Glue42Workspaces.Unsubscribe> {
+        checkThrowCallback(callback);
+        const id = getData(this).id;
+        const wrappedCallback = async (payload: WorkspaceStreamData): Promise<void> => {
+            await this.refreshReference();
+            callback({
+                allowDrop: this.allowDrop,
+                allowDropLeft: this.allowDropLeft,
+                allowDropTop: this.allowDropTop,
+                allowDropRight: this.allowDropRight,
+                allowDropBottom: this.allowDropBottom,
+                allowExtract: this.allowExtract,
+                allowSplitters: this.allowSplitters,
+                allowWindowReorder: this.allowWindowReorder,
+                allowWorkspaceTabExtract: this.allowWorkspaceTabExtract,
+                allowWorkspaceTabReorder: this.allowWorkspaceTabReorder,
+                showAddWindowButtons: this.showAddWindowButtons,
+                showCloseButton: this.showCloseButton,
+                showEjectButtons: this.showEjectButtons,
+                showSaveButton: this.showSaveButton,
+                showWindowCloseButtons: this.showWindowCloseButtons
+            });
+        };
+
+        const config: SubscriptionConfig = {
+            action: "lock-configuration-changed",
+            eventType: "workspace",
+            scope: "workspace",
+            scopeId: id,
+            callback: wrappedCallback
+        };
+
+        const unsubscribe = await getData(this).controller.processLocalSubscription(config, id);
+        return unsubscribe;
+    }
 }

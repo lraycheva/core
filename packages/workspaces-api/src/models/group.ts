@@ -1,6 +1,7 @@
 import { Base } from "./base/base";
 import { Glue42Workspaces } from "../../workspaces.d";
-import { elementResizeConfigDecoder, groupLockConfigDecoder } from "../shared/decoders";
+import { checkThrowCallback, elementResizeConfigDecoder, groupLockConfigDecoder } from "../shared/decoders";
+import { SubscriptionConfig } from "../types/subscription";
 
 interface PrivateData {
     base: Base;
@@ -193,6 +194,35 @@ export class Group implements Glue42Workspaces.Group {
 
 
         return getBase(this).setSize(this, config.width, config.height);
+    }
+
+    public async onLockConfigurationChanged(callback: (config: Glue42Workspaces.GroupLockConfig) => void): Promise<Glue42Workspaces.Unsubscribe> {
+        checkThrowCallback(callback);
+        const id = getBase(this).getId(this);
+        const wrappedCallback = async (): Promise<void> => {
+            await this.workspace.refreshReference();
+            callback({
+                allowDrop: this.allowDrop,
+                allowDropHeader: this.allowDropHeader,
+                allowDropLeft: this.allowDropLeft,
+                allowDropTop: this.allowDropTop,
+                allowDropRight: this.allowDropRight,
+                allowDropBottom:this.allowDropBottom,
+                allowExtract: this.allowExtract,
+                allowReorder: this.allowReorder,
+                showAddWindowButton: this.showAddWindowButton,
+                showEjectButton: this.showEjectButton,
+                showMaximizeButton: this.showMaximizeButton
+            });
+        };
+        const config: SubscriptionConfig = {
+            callback: wrappedCallback,
+            action: "lock-configuration-changed",
+            eventType: "container",
+            scope: "container"
+        };
+        const unsubscribe = await getBase(this).processLocalSubscription(this, config);
+        return unsubscribe;
     }
 
 }

@@ -1,3 +1,5 @@
+1.14.2
+feat: added workspace lock events
 1.14.1
 feat: added dedicated corePlus config entry and extended the plugins capabilities with registration
 1.14.0

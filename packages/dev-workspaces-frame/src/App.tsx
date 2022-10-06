@@ -1,9 +1,12 @@
-import React, { useContext } from 'react';
+import { useContext } from 'react';
 import Workspaces from "@glue42/workspaces-ui-react";
 import "@glue42/workspaces-ui-react/dist/styles/popups.css";
 import "@glue42/workspaces-ui-react/dist/styles/goldenlayout-base.css";
 import "@glue42/workspaces-ui-react/dist/styles/glue42-theme.css";
 import "./index.css";
+import "@glue42/theme/dist/components/icons.css";
+import "@glue42/theme/dist/components/buttons.css";
+import "@glue42/theme/dist/components/forms.css";
 import { GlueContext } from '@glue42/react-hooks';
 // import { Glue42Workspaces } from '@glue42/workspaces-api';
 // import { Glue42Web } from "@glue42/web";

@@ -629,8 +629,8 @@ describe('restoreWorkspace() Should', function () {
         });
     });
 
-    describe('locking Should', () => {
-        const lockingConfig = {
+    describe('lock Should', () => {
+        const lockConfig = {
             children: [
                 {
                     type: "row",
@@ -691,7 +691,7 @@ describe('restoreWorkspace() Should', function () {
         it("restore the workspace with all constraints when the workspace was saved in a locked state", async () => {
             let workspace;
 
-            workspace = await glue.workspaces.createWorkspace(lockingConfig);
+            workspace = await glue.workspaces.createWorkspace(lockConfig);
             await workspace.lock();
             await workspace.saveLayout(lockedLayoutName, { saveContext: false });
 
@@ -712,7 +712,7 @@ describe('restoreWorkspace() Should', function () {
         it("restore the workspace with containers with constraints when a group was saved in a locked state", async () => {
             let workspace;
 
-            workspace = await glue.workspaces.createWorkspace(lockingConfig);
+            workspace = await glue.workspaces.createWorkspace(lockConfig);
             const groups = workspace.getAllGroups();
 
             await Promise.all(groups.map((group) => group.lock()));
@@ -736,7 +736,7 @@ describe('restoreWorkspace() Should', function () {
         it("restore the workspace with containers with constraints when a row was saved in a locked state", async () => {
             let workspace;
 
-            workspace = await glue.workspaces.createWorkspace(lockingConfig);
+            workspace = await glue.workspaces.createWorkspace(lockConfig);
             const rows = workspace.getAllRows();
 
             await Promise.all(rows.map((row) => row.lock()));
@@ -755,7 +755,7 @@ describe('restoreWorkspace() Should', function () {
         it("restore the workspace with containers with constraints when a column was saved in a locked state", async () => {
             let workspace;
 
-            workspace = await glue.workspaces.createWorkspace(lockingConfig);
+            workspace = await glue.workspaces.createWorkspace(lockConfig);
             const columns = workspace.getAllColumns();
 
             await Promise.all(columns.map((column) => column.lock()));
@@ -774,7 +774,7 @@ describe('restoreWorkspace() Should', function () {
         it("restore the workspace with windows with constraints when the windows were saved in a locked state", async () => {
             let workspace;
 
-            workspace = await glue.workspaces.createWorkspace(lockingConfig);
+            workspace = await glue.workspaces.createWorkspace(lockConfig);
             const windows = workspace.getAllWindows();
 
             await Promise.all(windows.map((window) => window.lock()));
@@ -795,7 +795,7 @@ describe('restoreWorkspace() Should', function () {
         it("restore the workspace with the correct container overrides when the workspace was locked and the groups were overriding the lock", async () => {
             let workspace;
 
-            workspace = await glue.workspaces.createWorkspace(lockingConfig);
+            workspace = await glue.workspaces.createWorkspace(lockConfig);
             const groups = workspace.getAllGroups();
 
             await workspace.lock();
@@ -824,7 +824,7 @@ describe('restoreWorkspace() Should', function () {
         it("restore the workspace with the correct container overrides when the workspace was locked and the columns were overriding the lock", async () => {
             let workspace;
 
-            workspace = await glue.workspaces.createWorkspace(lockingConfig);
+            workspace = await glue.workspaces.createWorkspace(lockConfig);
             const columns = workspace.getAllColumns();
 
             await workspace.lock();
@@ -847,7 +847,7 @@ describe('restoreWorkspace() Should', function () {
         it("restore the workspace with the correct container overrides when the workspace was locked and the rows were overriding the lock", async () => {
             let workspace;
 
-            workspace = await glue.workspaces.createWorkspace(lockingConfig);
+            workspace = await glue.workspaces.createWorkspace(lockConfig);
             const rows = workspace.getAllRows();
 
             await workspace.lock();
@@ -870,7 +870,7 @@ describe('restoreWorkspace() Should', function () {
         it("restore the workspace with the correct window overrides when the workspace was locked and some of the windows were overriding the lock", async () => {
             let workspace;
 
-            workspace = await glue.workspaces.createWorkspace(lockingConfig);
+            workspace = await glue.workspaces.createWorkspace(lockConfig);
             const windows = workspace.getAllWindows();
 
             await workspace.lock();
@@ -896,7 +896,7 @@ describe('restoreWorkspace() Should', function () {
         it("restore the workspace with the correct window overrides when the parent group was locked and some of the windows were overriding the lock", async () => {
             let workspace;
 
-            workspace = await glue.workspaces.createWorkspace(lockingConfig);
+            workspace = await glue.workspaces.createWorkspace(lockConfig);
             const windows = workspace.getAllWindows();
 
             await Promise.all(workspace.getAllGroups().map(g => g.lock()));

@@ -17,6 +17,7 @@ import { WorkspaceWrapper } from "../state/workspaceWrapper";
 import { WorkspaceWindowWrapper } from "../state/windowWrapper";
 import uiExecutor from "../uiExecutor";
 import { LockGroupArguments } from "../interop/types";
+import { WorkspacesWrapperFactory } from "../state/factory";
 
 export class LayoutController {
     private readonly _maximizedId = "__glMaximised";
@@ -32,16 +33,19 @@ export class LayoutController {
     private readonly _configFactory: WorkspacesConfigurationFactory;
     private _showLoadingIndicator: boolean;
     private _tabObserver: TabObserver;
+    private _wrapperFactory: WorkspacesWrapperFactory;
 
     constructor(emitter: LayoutEventEmitter,
         stateResolver: LayoutStateResolver,
         options: StartupConfig,
-        configFactory: WorkspacesConfigurationFactory
+        configFactory: WorkspacesConfigurationFactory,
+        wrapperFactory: WorkspacesWrapperFactory
     ) {
         this._options = options;
         this._emitter = emitter;
         this._stateResolver = stateResolver;
         this._configFactory = configFactory;
+        this._wrapperFactory = wrapperFactory;
     }
 
     public get emitter(): LayoutEventEmitter {
@@ -101,7 +105,7 @@ export class LayoutController {
         const emptyVisibleWindow: GoldenLayout.ContentItem = this.getImmediateChildEmptyWindow(contentItem);
 
         const workspaceContentItem = store.getWorkspaceContentItem(workspace.id);
-        const workspaceWrapper = new WorkspaceWrapper(this._stateResolver, workspace, workspaceContentItem, this._frameId);
+        const workspaceWrapper = this._wrapperFactory.getWorkspaceWrapper({ workspace, workspaceContentItem });
 
         if (config.type === "component") {
             this.applyLockConfig(config, contentItem, workspaceWrapper, parentId === workspace.id);
@@ -202,7 +206,7 @@ export class LayoutController {
             const allItems = [...getAllItemsFromConfig(config.content), config];
 
             const workspaceContentItem = store.getWorkspaceContentItem(workspace.id);
-            const workspaceWrapper = new WorkspaceWrapper(this._stateResolver, workspace, workspaceContentItem, this._frameId);
+            const workspaceWrapper = this._wrapperFactory.getWorkspaceWrapper({ workspace, workspaceContentItem });
 
             allItems.forEach((item: GoldenLayout.ItemConfig) => {
                 this.applyLockConfig(item, contentItem, workspaceWrapper, parentId === workspace.id);
@@ -265,7 +269,7 @@ export class LayoutController {
         const workspace = store.getById(workspaceId);
 
         const contentConfigs = workspace.layout.root.contentItems.map((ci) => {
-            return this._stateResolver.getContainerConfig(ci.config.id);
+            return this._wrapperFactory.getContainerWrapper({ itemId: ci.config.id })?.config;
         });
 
         const oldChild = workspace.layout.root.contentItems[0];
@@ -323,7 +327,7 @@ export class LayoutController {
         await this.initWorkspaceContents(id, config, false);
 
         const workspaceContentItem = store.getWorkspaceContentItem(id);
-        const wrapper = new WorkspaceWrapper(this._stateResolver, store.getById(id), workspaceContentItem, this._frameId);
+        const wrapper = this._wrapperFactory.getWorkspaceWrapper({ workspaceId: id, workspaceContentItem });
 
         if (wrapper.showCloseButton === false) {
             uiExecutor.hideWorkspaceCloseButton({ workspaceTab: workspaceContentItem.tab });
@@ -636,7 +640,7 @@ export class LayoutController {
     public enableWorkspaceDrop(workspaceId: string, workspaceDropOptions: WorkspaceDropOptions): void {
         const workspaceContentItem = store.getWorkspaceContentItem(workspaceId);
         const workspace = store.getById(workspaceId);
-        const wrapper = new WorkspaceWrapper(this._stateResolver, workspace, workspaceContentItem, this._frameId);
+        const wrapper = this._wrapperFactory.getWorkspaceWrapper({ workspace, workspaceContentItem });
 
         wrapper.allowDrop = workspaceDropOptions.allowDrop;
         wrapper.allowDropLeft = workspaceDropOptions.allowDropLeft;
@@ -648,7 +652,7 @@ export class LayoutController {
     public disableWorkspaceDrop(workspaceId: string, workspaceDropOptions: WorkspaceDropOptions): void {
         const workspaceContentItem = store.getWorkspaceContentItem(workspaceId);
         const workspace = store.getById(workspaceId);
-        const wrapper = new WorkspaceWrapper(this._stateResolver, workspace, workspaceContentItem, this._frameId);
+        const wrapper = this._wrapperFactory.getWorkspaceWrapper({ workspace, workspaceContentItem });
 
         wrapper.allowDropLeft = workspaceDropOptions.allowDropLeft;
         wrapper.allowDropTop = workspaceDropOptions.allowDropTop;
@@ -659,7 +663,7 @@ export class LayoutController {
     public enableWorkspaceSaveButton(workspaceId: string): void {
         const workspace = store.getById(workspaceId);
         const workspaceContentItem = store.getWorkspaceContentItem(workspaceId);
-        const wrapper = new WorkspaceWrapper(this._stateResolver, workspace, workspaceContentItem, this._frameId);
+        const wrapper = this._wrapperFactory.getWorkspaceWrapper({ workspace, workspaceContentItem });
 
         wrapper.showSaveButton = true;
         if (!wrapper.isPinned) {
@@ -670,7 +674,7 @@ export class LayoutController {
     public disableWorkspaceSaveButton(workspaceId: string): void {
         const workspace = store.getById(workspaceId);
         const workspaceContentItem = store.getWorkspaceContentItem(workspaceId);
-        const wrapper = new WorkspaceWrapper(this._stateResolver, workspace, workspaceContentItem, this._frameId);
+        const wrapper = this._wrapperFactory.getWorkspaceWrapper({ workspace, workspaceContentItem });
 
         wrapper.showSaveButton = false;
         uiExecutor.hideWorkspaceSaveButton({ workspaceTab: workspaceContentItem.tab });
@@ -679,7 +683,7 @@ export class LayoutController {
     public enableWorkspaceReorder(workspaceId: string): void {
         const workspace = store.getById(workspaceId);
         const workspaceContentItem = store.getWorkspaceContentItem(workspaceId);
-        const wrapper = new WorkspaceWrapper(this._stateResolver, workspace, workspaceContentItem, this._frameId);
+        const wrapper = this._wrapperFactory.getWorkspaceWrapper({ workspace, workspaceContentItem });
 
         wrapper.allowWorkspaceTabReorder = true;
     }
@@ -687,7 +691,7 @@ export class LayoutController {
     public disableWorkspaceReorder(workspaceId: string): void {
         const workspace = store.getById(workspaceId);
         const workspaceContentItem = store.getWorkspaceContentItem(workspaceId);
-        const wrapper = new WorkspaceWrapper(this._stateResolver, workspace, workspaceContentItem, this._frameId);
+        const wrapper = this._wrapperFactory.getWorkspaceWrapper({ workspace, workspaceContentItem });
 
         wrapper.allowWorkspaceTabReorder = false;
     }
@@ -695,7 +699,7 @@ export class LayoutController {
     public enableWorkspaceCloseButton(workspaceId: string): void {
         const workspace = store.getById(workspaceId);
         const workspaceContentItem = store.getWorkspaceContentItem(workspaceId);
-        const wrapper = new WorkspaceWrapper(this._stateResolver, workspace, workspaceContentItem, this._frameId);
+        const wrapper = this._wrapperFactory.getWorkspaceWrapper({ workspace, workspaceContentItem });
 
         wrapper.showCloseButton = true;
         if (!wrapper.isPinned) {
@@ -706,7 +710,7 @@ export class LayoutController {
     public disableWorkspaceCloseButton(workspaceId: string): void {
         const workspace = store.getById(workspaceId);
         const workspaceContentItem = store.getWorkspaceContentItem(workspaceId);
-        const wrapper = new WorkspaceWrapper(this._stateResolver, workspace, workspaceContentItem, this._frameId);
+        const wrapper = this._wrapperFactory.getWorkspaceWrapper({ workspace, workspaceContentItem });
 
         wrapper.showCloseButton = false;
         uiExecutor.hideWorkspaceCloseButton({ workspaceTab: workspaceContentItem.tab });
@@ -715,7 +719,7 @@ export class LayoutController {
     public enableSplitters(workspaceId: string): void {
         const workspace = store.getById(workspaceId);
         const workspaceContentItem = store.getWorkspaceContentItem(workspaceId);
-        const wrapper = new WorkspaceWrapper(this._stateResolver, workspace, workspaceContentItem, this._frameId);
+        const wrapper = this._wrapperFactory.getWorkspaceWrapper({ workspace, workspaceContentItem });
 
         wrapper.allowSplitters = true;
     }
@@ -723,7 +727,7 @@ export class LayoutController {
     public disableSplitters(workspaceId: string): void {
         const workspace = store.getById(workspaceId);
         const workspaceContentItem = store.getWorkspaceContentItem(workspaceId);
-        const wrapper = new WorkspaceWrapper(this._stateResolver, workspace, workspaceContentItem, this._frameId);
+        const wrapper = this._wrapperFactory.getWorkspaceWrapper({ workspace, workspaceContentItem });
 
         wrapper.allowSplitters = false;
     }
@@ -731,7 +735,7 @@ export class LayoutController {
     public enableWorkspaceExtract(workspaceId: string): void {
         const workspace = store.getById(workspaceId);
         const workspaceContentItem = store.getWorkspaceContentItem(workspaceId);
-        const wrapper = new WorkspaceWrapper(this._stateResolver, workspace, workspaceContentItem, this._frameId);
+        const wrapper = this._wrapperFactory.getWorkspaceWrapper({ workspace, workspaceContentItem });
 
         wrapper.allowExtract = true;
     }
@@ -739,7 +743,7 @@ export class LayoutController {
     public disableWorkspaceExtract(workspaceId: string): void {
         const workspace = store.getById(workspaceId);
         const workspaceContentItem = store.getWorkspaceContentItem(workspaceId);
-        const wrapper = new WorkspaceWrapper(this._stateResolver, workspace, workspaceContentItem, this._frameId);
+        const wrapper = this._wrapperFactory.getWorkspaceWrapper({ workspace, workspaceContentItem });
 
         wrapper.allowExtract = false;
     }
@@ -747,7 +751,7 @@ export class LayoutController {
     public enableWorkspaceWindowReorder(workspaceId: string): void {
         const workspace = store.getById(workspaceId);
         const workspaceContentItem = store.getWorkspaceContentItem(workspaceId);
-        const wrapper = new WorkspaceWrapper(this._stateResolver, workspace, workspaceContentItem, this._frameId);
+        const wrapper = this._wrapperFactory.getWorkspaceWrapper({ workspace, workspaceContentItem });
 
         wrapper.allowWindowReorder = true;
     }
@@ -755,7 +759,7 @@ export class LayoutController {
     public disableWorkspaceWindowReorder(workspaceId: string): void {
         const workspace = store.getById(workspaceId);
         const workspaceContentItem = store.getWorkspaceContentItem(workspaceId);
-        const wrapper = new WorkspaceWrapper(this._stateResolver, workspace, workspaceContentItem, this._frameId);
+        const wrapper = this._wrapperFactory.getWorkspaceWrapper({ workspace, workspaceContentItem });
 
         wrapper.allowWindowReorder = false;
     }
@@ -763,7 +767,7 @@ export class LayoutController {
     public enableWorkspaceWindowCloseButtons(workspaceId: string): void {
         const workspace = store.getById(workspaceId);
         const workspaceContentItem = store.getWorkspaceContentItem(workspaceId);
-        const wrapper = new WorkspaceWrapper(this._stateResolver, workspace, workspaceContentItem, this._frameId);
+        const wrapper = this._wrapperFactory.getWorkspaceWrapper({ workspace, workspaceContentItem });
 
         wrapper.showWindowCloseButtons = true;
         uiExecutor.showWindowCloseButtons(workspaceId);
@@ -772,7 +776,7 @@ export class LayoutController {
     public disableWorkspaceWindowCloseButtons(workspaceId: string): void {
         const workspace = store.getById(workspaceId);
         const workspaceContentItem = store.getWorkspaceContentItem(workspaceId);
-        const wrapper = new WorkspaceWrapper(this._stateResolver, workspace, workspaceContentItem, this._frameId);
+        const wrapper = this._wrapperFactory.getWorkspaceWrapper({ workspace, workspaceContentItem });
 
         wrapper.showWindowCloseButtons = false;
         uiExecutor.hideWindowCloseButtons(workspaceId);
@@ -781,7 +785,7 @@ export class LayoutController {
     public enableWorkspaceEjectButtons(workspaceId: string): void {
         const workspace = store.getById(workspaceId);
         const workspaceContentItem = store.getWorkspaceContentItem(workspaceId);
-        const wrapper = new WorkspaceWrapper(this._stateResolver, workspace, workspaceContentItem, this._frameId);
+        const wrapper = this._wrapperFactory.getWorkspaceWrapper({ workspace, workspaceContentItem });
 
         wrapper.showEjectButtons = true;
         uiExecutor.showEjectButtons(workspaceId);
@@ -790,7 +794,7 @@ export class LayoutController {
     public disableWorkspaceEjectButtons(workspaceId: string): void {
         const workspace = store.getById(workspaceId);
         const workspaceContentItem = store.getWorkspaceContentItem(workspaceId);
-        const wrapper = new WorkspaceWrapper(this._stateResolver, workspace, workspaceContentItem, this._frameId);
+        const wrapper = this._wrapperFactory.getWorkspaceWrapper({ workspace, workspaceContentItem });
 
         wrapper.showEjectButtons = false;
         uiExecutor.hideEjectButtons(workspaceId);
@@ -799,7 +803,7 @@ export class LayoutController {
     public enableWorkspaceAddWindowButtons(workspaceId: string): void {
         const workspace = store.getById(workspaceId);
         const workspaceContentItem = store.getWorkspaceContentItem(workspaceId);
-        const wrapper = new WorkspaceWrapper(this._stateResolver, workspace, workspaceContentItem, this._frameId);
+        const wrapper = this._wrapperFactory.getWorkspaceWrapper({ workspace, workspaceContentItem });
 
         wrapper.showAddWindowButtons = true;
         uiExecutor.showAddWindowButtons(workspaceId);
@@ -808,7 +812,7 @@ export class LayoutController {
     public disableWorkspaceAddWindowButtons(workspaceId: string): void {
         const workspace = store.getById(workspaceId);
         const workspaceContentItem = store.getWorkspaceContentItem(workspaceId);
-        const wrapper = new WorkspaceWrapper(this._stateResolver, workspace, workspaceContentItem, this._frameId);
+        const wrapper = this._wrapperFactory.getWorkspaceWrapper({ workspace, workspaceContentItem });
 
         wrapper.showAddWindowButtons = false;
         uiExecutor.hideAddWindowButtons(workspaceId);
@@ -816,41 +820,41 @@ export class LayoutController {
 
     public enableWindowExtract(windowId: string, value: boolean | undefined): void {
         const windowContentItem = store.getWindowContentItem(windowId);
-        const wrapper = new WorkspaceWindowWrapper(this._stateResolver, windowContentItem, this._frameId);
+        const wrapper = this._wrapperFactory.getWindowWrapper({ windowContentItem });
 
         wrapper.allowExtract = value;
     }
 
     public disableWindowExtract(windowId: string): void {
         const windowContentItem = store.getWindowContentItem(windowId);
-        const wrapper = new WorkspaceWindowWrapper(this._stateResolver, windowContentItem, this._frameId);
+        const wrapper = this._wrapperFactory.getWindowWrapper({ windowContentItem });
 
         wrapper.allowExtract = false;
     }
 
     public enableWindowReorder(windowId: string, value: boolean | undefined): void {
         const windowContentItem = store.getWindowContentItem(windowId);
-        const wrapper = new WorkspaceWindowWrapper(this._stateResolver, windowContentItem, this._frameId);
+        const wrapper = this._wrapperFactory.getWindowWrapper({ windowContentItem });
 
         wrapper.allowReorder = value;
     }
 
     public disableWindowReorder(windowId: string): void {
         const windowContentItem = store.getWindowContentItem(windowId);
-        const wrapper = new WorkspaceWindowWrapper(this._stateResolver, windowContentItem, this._frameId);
+        const wrapper = this._wrapperFactory.getWindowWrapper({ windowContentItem });
 
         wrapper.allowReorder = false;
     }
 
     public enableWindowCloseButton(windowId: string, value: boolean | undefined): void {
         const windowContentItem = store.getWindowContentItem(windowId);
-        const wrapper = new WorkspaceWindowWrapper(this._stateResolver, windowContentItem, this._frameId);
+        const wrapper = this._wrapperFactory.getWindowWrapper({ windowContentItem });
 
         wrapper.showCloseButton = value;
 
         const workspace = store.getByWindowId(windowId);
         const workspaceContentItem = store.getWorkspaceContentItem(workspace.id);
-        const workspaceWrapper = new WorkspaceWrapper(this._stateResolver, workspace, workspaceContentItem, this._frameId);
+        const workspaceWrapper = this._wrapperFactory.getWorkspaceWrapper({ workspace, workspaceContentItem });
         if (workspaceWrapper.showCloseButton) {
             uiExecutor.showWindowCloseButton(windowId);
         }
@@ -858,7 +862,7 @@ export class LayoutController {
 
     public disableWindowCloseButton(windowId: string): void {
         const windowContentItem = store.getWindowContentItem(windowId);
-        const wrapper = new WorkspaceWindowWrapper(this._stateResolver, windowContentItem, this._frameId);
+        const wrapper = this._wrapperFactory.getWindowWrapper({ windowContentItem });
 
         wrapper.showCloseButton = false;
 
@@ -866,101 +870,101 @@ export class LayoutController {
     }
 
     public enableColumnDrop(itemId: string, allowDrop: boolean): void {
-        const containerContenteItem = store.getContainer(itemId);
+        const containerContentItem = store.getContainer(itemId);
 
-        if (containerContenteItem.type !== "column") {
-            throw new Error(`Expected item with type column but received ${containerContenteItem.type} ${itemId}`);
+        if (containerContentItem.type !== "column") {
+            throw new Error(`Expected item with type column but received ${containerContentItem.type} ${itemId}`);
         }
 
-        const wrapper = new WorkspaceContainerWrapper(this._stateResolver, containerContenteItem, this._frameId);
+        const wrapper = this._wrapperFactory.getContainerWrapper({ containerContentItem });
         wrapper.allowDrop = allowDrop;
     }
 
     public disableColumnDrop(itemId: string): void {
-        const containerContenteItem = store.getContainer(itemId);
+        const containerContentItem = store.getContainer(itemId);
 
-        if (containerContenteItem.type !== "column") {
-            throw new Error(`Expected item with type column but received ${containerContenteItem.type} ${itemId}`);
+        if (containerContentItem.type !== "column") {
+            throw new Error(`Expected item with type column but received ${containerContentItem.type} ${itemId}`);
         }
 
-        const wrapper = new WorkspaceContainerWrapper(this._stateResolver, containerContenteItem, this._frameId);
+        const wrapper = this._wrapperFactory.getContainerWrapper({ containerContentItem });
         wrapper.allowDrop = false;
     }
 
     public enableRowDrop(itemId: string, allowDrop: boolean): void {
-        const containerContenteItem = store.getContainer(itemId);
+        const containerContentItem = store.getContainer(itemId);
 
-        if (containerContenteItem.type !== "row") {
-            throw new Error(`Expected item with type row but received ${containerContenteItem.type} ${itemId}`);
+        if (containerContentItem.type !== "row") {
+            throw new Error(`Expected item with type row but received ${containerContentItem.type} ${itemId}`);
         }
 
-        const wrapper = new WorkspaceContainerWrapper(this._stateResolver, containerContenteItem, this._frameId);
+        const wrapper = this._wrapperFactory.getContainerWrapper({ containerContentItem });
         wrapper.allowDrop = allowDrop;
     }
 
     public disableRowDrop(itemId: string): void {
-        const containerContenteItem = store.getContainer(itemId);
+        const containerContentItem = store.getContainer(itemId);
 
-        if (containerContenteItem.type !== "row") {
-            throw new Error(`Expected item with type row but received ${containerContenteItem.type} ${itemId}`);
+        if (containerContentItem.type !== "row") {
+            throw new Error(`Expected item with type row but received ${containerContentItem.type} ${itemId}`);
         }
 
-        const wrapper = new WorkspaceContainerWrapper(this._stateResolver, containerContenteItem, this._frameId);
+        const wrapper = this._wrapperFactory.getContainerWrapper({ containerContentItem });
         wrapper.allowDrop = false;
     }
 
     public enableColumnSplitters(itemId: string, allowSplitters: boolean): void {
-        const containerContenteItem = store.getContainer(itemId);
+        const containerContentItem = store.getContainer(itemId);
 
-        if (containerContenteItem.type !== "column") {
-            throw new Error(`Expected item with type column but received ${containerContenteItem.type} ${itemId}`);
+        if (containerContentItem.type !== "column") {
+            throw new Error(`Expected item with type column but received ${containerContentItem.type} ${itemId}`);
         }
 
-        const wrapper = new WorkspaceContainerWrapper(this._stateResolver, containerContenteItem, this._frameId);
+        const wrapper = this._wrapperFactory.getContainerWrapper({ containerContentItem });
         wrapper.allowSplitters = allowSplitters;
     }
 
     public disableColumnSplitters(itemId: string): void {
-        const containerContenteItem = store.getContainer(itemId);
+        const containerContentItem = store.getContainer(itemId);
 
-        if (containerContenteItem.type !== "column") {
-            throw new Error(`Expected item with type column but received ${containerContenteItem.type} ${itemId}`);
+        if (containerContentItem.type !== "column") {
+            throw new Error(`Expected item with type column but received ${containerContentItem.type} ${itemId}`);
         }
 
-        const wrapper = new WorkspaceContainerWrapper(this._stateResolver, containerContenteItem, this._frameId);
+        const wrapper = this._wrapperFactory.getContainerWrapper({ containerContentItem });
         wrapper.allowSplitters = false;
     }
 
     public enableRowSplitters(itemId: string, allowSplitters: boolean): void {
-        const containerContenteItem = store.getContainer(itemId);
+        const containerContentItem = store.getContainer(itemId);
 
-        if (containerContenteItem.type !== "row") {
-            throw new Error(`Expected item with type row but received ${containerContenteItem.type} ${itemId}`);
+        if (containerContentItem.type !== "row") {
+            throw new Error(`Expected item with type row but received ${containerContentItem.type} ${itemId}`);
         }
 
-        const wrapper = new WorkspaceContainerWrapper(this._stateResolver, containerContenteItem, this._frameId);
+        const wrapper = this._wrapperFactory.getContainerWrapper({ containerContentItem });
         wrapper.allowSplitters = allowSplitters;
     }
 
     public disableRowSplitters(itemId: string): void {
-        const containerContenteItem = store.getContainer(itemId);
+        const containerContentItem = store.getContainer(itemId);
 
-        if (containerContenteItem.type !== "row") {
-            throw new Error(`Expected item with type row but received ${containerContenteItem.type} ${itemId}`);
+        if (containerContentItem.type !== "row") {
+            throw new Error(`Expected item with type row but received ${containerContentItem.type} ${itemId}`);
         }
 
-        const wrapper = new WorkspaceContainerWrapper(this._stateResolver, containerContenteItem, this._frameId);
+        const wrapper = this._wrapperFactory.getContainerWrapper({ containerContentItem });
         wrapper.allowSplitters = false;
     }
 
     public enableGroupDrop(itemId: string, groupDropOptions: LockGroupArguments["config"]): void {
-        const containerContenteItem = store.getContainer(itemId);
+        const containerContentItem = store.getContainer(itemId);
 
-        if (containerContenteItem.type !== "stack") {
-            throw new Error(`Expected item with type stack but received ${containerContenteItem.type} ${itemId}`);
+        if (containerContentItem.type !== "stack") {
+            throw new Error(`Expected item with type stack but received ${containerContentItem.type} ${itemId}`);
         }
 
-        const wrapper = new WorkspaceContainerWrapper(this._stateResolver, containerContenteItem, this._frameId);
+        const wrapper = this._wrapperFactory.getContainerWrapper({ containerContentItem });
         wrapper.allowDrop = groupDropOptions.allowDrop;
         wrapper.allowDropHeader = groupDropOptions.allowDropHeader;
         wrapper.allowDropLeft = groupDropOptions.allowDropLeft;
@@ -970,13 +974,13 @@ export class LayoutController {
     }
 
     public disableGroupDrop(itemId: string, groupDropOptions: LockGroupArguments["config"]): void {
-        const containerContenteItem = store.getContainer(itemId);
+        const containerContentItem = store.getContainer(itemId);
 
-        if (containerContenteItem.type !== "stack") {
-            throw new Error(`Expected item with type stack but received ${containerContenteItem.type} ${itemId}`);
+        if (containerContentItem.type !== "stack") {
+            throw new Error(`Expected item with type stack but received ${containerContentItem.type} ${itemId}`);
         }
 
-        const wrapper = new WorkspaceContainerWrapper(this._stateResolver, containerContenteItem, this._frameId);
+        const wrapper = this._wrapperFactory.getContainerWrapper({ containerContentItem });
         wrapper.allowDrop = false;
         wrapper.allowDropHeader = groupDropOptions.allowDropHeader;
         wrapper.allowDropLeft = groupDropOptions.allowDropLeft;
@@ -986,112 +990,113 @@ export class LayoutController {
     }
 
     public enableGroupMaximizeButton(itemId: string, showMaximizeButton: boolean): void {
-        const containerContenteItem = store.getContainer(itemId);
+        const containerContentItem = store.getContainer(itemId);
 
-        if (containerContenteItem.type !== "stack") {
-            throw new Error(`Expected item with type stack but received ${containerContenteItem.type} ${itemId}`);
+        if (containerContentItem.type !== "stack") {
+            throw new Error(`Expected item with type stack but received ${containerContentItem.type} ${itemId}`);
         }
 
-        const wrapper = new WorkspaceContainerWrapper(this._stateResolver, containerContenteItem, this._frameId);
+        const wrapper = this._wrapperFactory.getContainerWrapper({ containerContentItem });
         wrapper.showMaximizeButton = showMaximizeButton;
         uiExecutor.showMaximizeButton(itemId);
     }
     public disableGroupMaximizeButton(itemId: string): void {
-        const containerContenteItem = store.getContainer(itemId);
+        const containerContentItem = store.getContainer(itemId);
 
-        if (containerContenteItem.type !== "stack") {
-            throw new Error(`Expected item with type stack but received ${containerContenteItem.type} ${itemId}`);
+        if (containerContentItem.type !== "stack") {
+            throw new Error(`Expected item with type stack but received ${containerContentItem.type} ${itemId}`);
         }
 
-        const wrapper = new WorkspaceContainerWrapper(this._stateResolver, containerContenteItem, this._frameId);
+        const wrapper = this._wrapperFactory.getContainerWrapper({ containerContentItem });
         wrapper.showMaximizeButton = false;
         uiExecutor.hideMaximizeButton(itemId);
     }
     public enableGroupEjectButton(itemId: string, showEjectButton: boolean): void {
-        const containerContenteItem = store.getContainer(itemId);
+        const containerContentItem = store.getContainer(itemId);
 
-        if (containerContenteItem.type !== "stack") {
-            throw new Error(`Expected item with type stack but received ${containerContenteItem.type} ${itemId}`);
+        if (containerContentItem.type !== "stack") {
+            throw new Error(`Expected item with type stack but received ${containerContentItem.type} ${itemId}`);
         }
 
-        const wrapper = new WorkspaceContainerWrapper(this._stateResolver, containerContenteItem, this._frameId);
+        const wrapper = this._wrapperFactory.getContainerWrapper({ containerContentItem });
         wrapper.showEjectButton = showEjectButton;
         uiExecutor.showEjectButton(itemId);
     }
     public disableGroupEjectButton(itemId: string): void {
-        const containerContenteItem = store.getContainer(itemId);
+        const containerContentItem = store.getContainer(itemId);
 
-        if (containerContenteItem.type !== "stack") {
-            throw new Error(`Expected item with type stack but received ${containerContenteItem.type} ${itemId}`);
+        if (containerContentItem.type !== "stack") {
+            throw new Error(`Expected item with type stack but received ${containerContentItem.type} ${itemId}`);
         }
 
-        const wrapper = new WorkspaceContainerWrapper(this._stateResolver, containerContenteItem, this._frameId);
+        const wrapper = this._wrapperFactory.getContainerWrapper({ containerContentItem });
         wrapper.showEjectButton = false;
         uiExecutor.hideEjectButton(itemId);
     }
 
     public enableGroupAddWindowButton(itemId: string, showAddWindowButton: boolean): void {
-        const containerContenteItem = store.getContainer(itemId);
+        const containerContentItem = store.getContainer(itemId);
 
-        if (containerContenteItem.type !== "stack") {
-            throw new Error(`Expected item with type stack but received ${containerContenteItem.type} ${itemId}`);
+        if (containerContentItem.type !== "stack") {
+            throw new Error(`Expected item with type stack but received ${containerContentItem.type} ${itemId}`);
         }
 
-        const wrapper = new WorkspaceContainerWrapper(this._stateResolver, containerContenteItem, this._frameId);
+        const wrapper = this._wrapperFactory.getContainerWrapper({ containerContentItem });
         wrapper.showAddWindowButton = showAddWindowButton;
         uiExecutor.showAddWindowButton(itemId);
     }
 
     public disableGroupAddWindowButton(itemId: string): void {
-        const containerContenteItem = store.getContainer(itemId);
+        const containerContentItem = store.getContainer(itemId);
 
-        if (containerContenteItem.type !== "stack") {
-            throw new Error(`Expected item with type stack but received ${containerContenteItem.type} ${itemId}`);
+        if (containerContentItem.type !== "stack") {
+            throw new Error(`Expected item with type stack but received ${containerContentItem.type} ${itemId}`);
         }
 
-        const wrapper = new WorkspaceContainerWrapper(this._stateResolver, containerContenteItem, this._frameId);
+        const wrapper = this._wrapperFactory.getContainerWrapper({ containerContentItem });
         wrapper.showAddWindowButton = false;
         uiExecutor.hideAddWindowButton(itemId);
     }
     public enableGroupExtract(itemId: string, allowExtract: boolean): void {
-        const containerContenteItem = store.getContainer(itemId);
+        const containerContentItem = store.getContainer(itemId);
 
-        if (containerContenteItem.type !== "stack") {
-            throw new Error(`Expected item with type stack but received ${containerContenteItem.type} ${itemId}`);
+        if (containerContentItem.type !== "stack") {
+            throw new Error(`Expected item with type stack but received ${containerContentItem.type} ${itemId}`);
         }
 
-        const wrapper = new WorkspaceContainerWrapper(this._stateResolver, containerContenteItem, this._frameId);
+        const wrapper = this._wrapperFactory.getContainerWrapper({ containerContentItem });
         wrapper.allowExtract = allowExtract;
     }
     public disableGroupExtract(itemId: string): void {
-        const containerContenteItem = store.getContainer(itemId);
+        const containerContentItem = store.getContainer(itemId);
 
-        if (containerContenteItem.type !== "stack") {
-            throw new Error(`Expected item with type stack but received ${containerContenteItem.type} ${itemId}`);
+        if (containerContentItem.type !== "stack") {
+            throw new Error(`Expected item with type stack but received ${containerContentItem.type} ${itemId}`);
         }
 
-        const wrapper = new WorkspaceContainerWrapper(this._stateResolver, containerContenteItem, this._frameId);
+        const wrapper = this._wrapperFactory.getContainerWrapper({ containerContentItem });
         wrapper.allowExtract = false;
     }
 
     public enableGroupReorder(itemId: string, allowReorder: boolean): void {
-        const containerContenteItem = store.getContainer(itemId);
+        const containerContentItem = store.getContainer(itemId);
 
-        if (containerContenteItem.type !== "stack") {
-            throw new Error(`Expected item with type stack but received ${containerContenteItem.type} ${itemId}`);
+        if (containerContentItem.type !== "stack") {
+            throw new Error(`Expected item with type stack but received ${containerContentItem.type} ${itemId}`);
         }
 
-        const wrapper = new WorkspaceContainerWrapper(this._stateResolver, containerContenteItem, this._frameId);
+        const wrapper = this._wrapperFactory.getContainerWrapper({ containerContentItem });
         wrapper.allowReorder = allowReorder;
     }
     public disableGroupReorder(itemId: string): void {
-        const containerContenteItem = store.getContainer(itemId);
+        const containerContentItem = store.getContainer(itemId);
 
-        if (containerContenteItem.type !== "stack") {
-            throw new Error(`Expected item with type stack but received ${containerContenteItem.type} ${itemId}`);
+        if (containerContentItem.type !== "stack") {
+            throw new Error(`Expected item with type stack but received ${containerContentItem.type} ${itemId}`);
         }
 
-        const wrapper = new WorkspaceContainerWrapper(this._stateResolver, containerContenteItem, this._frameId);
+        const wrapper = this._wrapperFactory.getContainerWrapper({ containerContentItem });
+
         wrapper.allowReorder = false;
     }
 
@@ -1145,7 +1150,7 @@ export class LayoutController {
     public togglePinWorkspace(workspaceId: string): void {
         const workspace = store.getById(workspaceId);
         const workspaceContentItem = store.getWorkspaceContentItem(workspaceId);
-        const workspaceWrapper = new WorkspaceWrapper(this._stateResolver, workspace, workspaceContentItem, this._frameId);
+        const workspaceWrapper = this._wrapperFactory.getWorkspaceWrapper({ workspace, workspaceContentItem });
 
         if (workspaceWrapper.isPinned) {
             this.unpinWorkspace(workspaceId);
@@ -1156,7 +1161,7 @@ export class LayoutController {
 
     public pinWorkspace(workspaceId: string, icon: string): void {
         const workspaceContentItem = store.getWorkspaceContentItem(workspaceId);
-        const wrapper = new WorkspaceWrapper(this._stateResolver, store.getById(workspaceId), workspaceContentItem, this._frameId);
+        const wrapper = this._wrapperFactory.getWorkspaceWrapper({ workspaceId, workspaceContentItem });
 
         const iconToUse = icon || wrapper.icon;
 
@@ -1180,7 +1185,7 @@ export class LayoutController {
 
     public unpinWorkspace(workspaceId: string): void {
         const workspaceContentItem = store.getWorkspaceContentItem(workspaceId);
-        const wrapper = new WorkspaceWrapper(this._stateResolver, store.getById(workspaceId), workspaceContentItem, this._frameId);
+        const wrapper = this._wrapperFactory.getWorkspaceWrapper({ workspaceId, workspaceContentItem });
         workspaceContentItem.tab.unpin();
 
         if (wrapper.showSaveButton) {
@@ -1499,7 +1504,7 @@ export class LayoutController {
         });
 
         layout.on("stackCreated", (stack: GoldenLayout.Stack) => {
-            const wrapper = new WorkspaceContainerWrapper(this._stateResolver, stack, this._frameId);
+            const wrapper = this._wrapperFactory.getContainerWrapper({containerContentItem: stack});
             const addWindowButton = document.createElement("li");
             addWindowButton.classList.add("lm_add_button");
 
@@ -1627,8 +1632,7 @@ export class LayoutController {
             if (!tab.contentItem.isComponent) {
                 return;
             }
-
-            const wrapper = new WorkspaceWindowWrapper(this._stateResolver, tab.contentItem, this._frameId);
+            const wrapper = this._wrapperFactory.getWindowWrapper({ windowContentItem: tab.contentItem });
 
             if ((layout.config.workspacesOptions as any).showWindowCloseButtons === false && wrapper.showCloseButton !== true) {
                 uiExecutor.hideWindowCloseButton(tab.contentItem);
@@ -1696,7 +1700,7 @@ export class LayoutController {
                 const stack = store.workspaceLayout.root.getItemsByType("stack")[0] as GoldenLayout.Stack;
                 const tabs = stack.header.tabs as GoldenLayout.Tab[];
                 tabs.forEach((tab) => {
-                    const wrapper = new WorkspaceWrapper(this._stateResolver, undefined, tab.contentItem as GoldenLayout.Component, this._frameId);
+                    const wrapper = this._wrapperFactory.getWorkspaceWrapper({ workspace: undefined, workspaceContentItem: tab.contentItem as GoldenLayout.Component });
                     if (wrapper.isPinned) {
                         uiExecutor.replaceWorkspaceSaveButtonWithIcon({ workspaceTab: tab, icon: wrapper.icon });
                         uiExecutor.waitForTransition(tab.element[0]).then(() => {
@@ -1820,7 +1824,7 @@ export class LayoutController {
                 this.refreshTabSizeClass(tab);
 
                 const workspace = store.getById(tab.contentItem.config.id);
-                const wrapper = new WorkspaceWrapper(this._stateResolver, workspace, tab.contentItem as GoldenLayout.Component, this._frameId);
+                const wrapper = this._wrapperFactory.getWorkspaceWrapper({ workspace, workspaceContentItem: tab.contentItem as GoldenLayout.Component });
 
                 if (wrapper.showSaveButton === false) {
                     uiExecutor.hideWorkspaceSaveButton({ workspaceTab: tab });

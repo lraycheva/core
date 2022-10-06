@@ -1,6 +1,7 @@
 import { Base } from "./base/base";
 import { Glue42Workspaces } from "../../workspaces.d";
-import { nonNegativeNumberDecoder, rowLockConfigDecoder, setMaximizationBoundaryAPIConfigDecoder } from "../shared/decoders";
+import { checkThrowCallback, nonNegativeNumberDecoder, rowLockConfigDecoder, setMaximizationBoundaryAPIConfigDecoder } from "../shared/decoders";
+import { SubscriptionConfig } from "../types/subscription";
 import { SetMaximizationBoundaryConfig } from "../../temp";
 
 interface PrivateData {
@@ -161,6 +162,26 @@ export class Row implements Glue42Workspaces.Row {
         return getBase(this).setHeight(this, height);
     }
 
+
+    public async onLockConfigurationChanged(callback: (config: Glue42Workspaces.RowLockConfig) => void): Promise<Glue42Workspaces.Unsubscribe> {
+        checkThrowCallback(callback);
+        const id = getBase(this).getId(this);
+        const wrappedCallback = async (): Promise<void> => {
+            await this.workspace.refreshReference();
+            callback({
+                allowDrop: this.allowDrop,
+                allowSplitters: this.allowSplitters
+            });
+        };
+        const config: SubscriptionConfig = {
+            callback: wrappedCallback,
+            action: "lock-configuration-changed",
+            eventType: "container",
+            scope: "container"
+        };
+        const unsubscribe = await getBase(this).processLocalSubscription(this, config);
+        return unsubscribe;
+    }
     public async setMaximizationBoundary(config: SetMaximizationBoundaryConfig): Promise<void> {
        const validatedConfig = setMaximizationBoundaryAPIConfigDecoder.runWithException(config);
         return getBase(this).setMaximizationBoundary(this, validatedConfig);

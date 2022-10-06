@@ -10,12 +10,14 @@ import { WorkspaceContainerWrapper } from "./containerWrapper";
 import { DefaultMaxSize, DefaultMinSize } from "../utils/constants";
 import { ConfigConverter } from "../config/converter";
 import { WorkspacesManager } from "../manager";
+import { WorkspacesWrapperFactory } from "./factory";
 
 export class LayoutStateResolver {
     constructor(private readonly _frameId: string,
         private readonly _layoutEventEmitter: LayoutEventEmitter,
         private readonly frameController: IFrameController,
-        private readonly converter: ConfigConverter) { }
+        private readonly converter: ConfigConverter,
+        private readonly wrapperFactory: WorkspacesWrapperFactory) { }
 
     public async getWindowSummary(windowId: string | string[]): Promise<WindowSummary> {
         windowId = Array.isArray(windowId) ? windowId[0] : windowId;
@@ -24,7 +26,7 @@ export class LayoutStateResolver {
             await this.waitForWindowContentItem(windowId);
             windowContentItem = store.getWindowContentItem(windowId);
         }
-        const wrapper = new WorkspaceWindowWrapper(this, windowContentItem, this._frameId);
+        const wrapper = this.wrapperFactory.getWindowWrapper({ windowContentItem });
         return wrapper.summary;
     }
 
@@ -32,7 +34,7 @@ export class LayoutStateResolver {
         windowId = Array.isArray(windowId) ? windowId[0] : windowId;
         const windowContentItem = contentItem || store.getWindowContentItem(windowId);
 
-        const wrapper = new WorkspaceWindowWrapper(this, windowContentItem, this._frameId);
+        const wrapper = this.wrapperFactory.getWindowWrapper({ windowContentItem });
         return wrapper.summary;
     }
 
@@ -42,7 +44,7 @@ export class LayoutStateResolver {
         if (!workspace) {
             throw new Error(`Could find workspace to remove with id ${workspaceId}`);
         }
-        const wrapper = new WorkspaceWrapper(this, workspace, store.getWorkspaceContentItem(workspace.id), this._frameId);
+        const wrapper = this.wrapperFactory.getWorkspaceWrapper({ workspace, workspaceId: workspace.id });
 
         return wrapper.config;
     }
@@ -86,10 +88,7 @@ export class LayoutStateResolver {
     }
 
     public getWorkspaceSummary(workspaceId: string): WorkspaceSummary {
-        const wrapper = new WorkspaceWrapper(this,
-            store.getById(workspaceId),
-            store.getWorkspaceContentItem(workspaceId),
-            this._frameId);
+        const wrapper = this.wrapperFactory.getWorkspaceWrapper({ workspaceId });
 
         return wrapper.summary;
     }
@@ -97,7 +96,7 @@ export class LayoutStateResolver {
     public isWindowMaximized(id: string | string[]): boolean {
         const placementId = idAsString(id);
         const windowContentItem = store.getWindowContentItem(placementId);
-        const wrapper = new WorkspaceWindowWrapper(this, windowContentItem, this._frameId);
+        const wrapper = this.wrapperFactory.getWindowWrapper({ windowContentItem });
 
         return wrapper.isMaximized;
     }
@@ -124,15 +123,7 @@ export class LayoutStateResolver {
     public isWindowSelected(id: string | string[]): boolean {
         const placementId = idAsString(id);
         const windowContentItem = store.getWindowContentItem(placementId);
-        const wrapper = new WorkspaceWindowWrapper(this, windowContentItem, this._frameId);
-        return wrapper.isSelected;
-    }
-
-    public isWorkspaceSelected(id: string): boolean {
-        const workspace = store.getById(id);
-        const workspaceContentItem = store.getWorkspaceContentItem(id);
-        const wrapper = new WorkspaceWrapper(this, workspace, workspaceContentItem, this._frameId);
-
+        const wrapper = this.wrapperFactory.getWindowWrapper({ windowContentItem });
         return wrapper.isSelected;
     }
 
@@ -143,7 +134,7 @@ export class LayoutStateResolver {
         }
 
         const workspaceItem = store.getWorkspaceContentItem(workspace.id);
-        const wrapper = new WorkspaceWrapper(this, workspace, workspaceItem, this._frameId);
+        const wrapper = this.wrapperFactory.getWorkspaceWrapper({ workspace, workspaceId: workspace.id });
 
         return wrapper.isHibernated;
     }
@@ -151,7 +142,7 @@ export class LayoutStateResolver {
     public getContainerSummary(containerId: string | string[]): ContainerSummary {
         containerId = idAsString(containerId);
         const contentItem = store.getContainer(containerId);
-        const wrapper = new WorkspaceContainerWrapper(this, contentItem, this._frameId);
+        const wrapper = this.wrapperFactory.getContainerWrapper({ containerContentItem: contentItem });
 
         return wrapper.summary;
     }
@@ -161,16 +152,9 @@ export class LayoutStateResolver {
             throw new Error(`Tried to get container summary from item ${item.type} ${item.config.id}`);
         }
 
-        const wrapper = new WorkspaceContainerWrapper(this, item, this._frameId, workspaceId);
+        const wrapper = this.wrapperFactory.getContainerWrapper({ containerContentItem: item, workspaceId });
 
         return wrapper.summary;
-    }
-
-    public getContainerConfig(containerId: string | string[]): GoldenLayout.ItemConfig {
-        const contentItem = store.getContainer(containerId);
-        const wrapper = new WorkspaceContainerWrapper(this, contentItem, this._frameId);
-
-        return wrapper.config;
     }
 
     public isWindowInWorkspace(windowId: string): boolean {
@@ -244,7 +228,7 @@ export class LayoutStateResolver {
 
     public getFrameConstraints(): Constraints {
         const workspaceWrappers = store.workspaceIds.map((wId) => {
-            return new WorkspaceWrapper(this, store.getById(wId), store.getWorkspaceContentItem(wId), this._frameId);
+            return this.wrapperFactory.getWorkspaceWrapper({ workspaceId: wId });
         });
 
         const result = workspaceWrappers.reduce((acc, ww) => {
@@ -274,14 +258,14 @@ export class LayoutStateResolver {
     }
 
     public getWorkspaceIcon(workspaceId: string): string {
-        const wrapper = new WorkspaceWrapper(this, store.getById(workspaceId), store.getWorkspaceContentItem(workspaceId), this._frameId);
+        const wrapper = this.wrapperFactory.getWorkspaceWrapper({ workspaceId });
 
         return wrapper.icon;
     }
 
     public getWorkspaceTitles(): string[] {
         return store.workspaceIds.map((wid) => {
-            const wrapper = new WorkspaceWrapper(this, store.getById(wid), store.getWorkspaceContentItem(wid), this._frameId);
+            const wrapper = this.wrapperFactory.getWorkspaceWrapper({ workspaceId: wid });
 
             return wrapper.title;
         });

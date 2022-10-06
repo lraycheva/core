@@ -10,6 +10,7 @@ import { Group } from "../group";
 import { Row } from "../row";
 import { Column } from "../column";
 import { ColumnSnapshotConfig, GroupSnapshotConfig, RowSnapshotConfig } from "../../types/protocol";
+import { SubscriptionConfig } from "../../types/subscription";
 import { SetMaximizationBoundaryConfig } from "../../../temp";
 
 interface PrivateData {
@@ -369,6 +370,10 @@ export class Base {
         await controller.setMaximizationBoundary(id, config);
 
         await this.getMyWorkspace(modelData.parent).refreshReference();
+    }
+
+    public async processLocalSubscription(model: SubParentTypes, subscriptionConfig: SubscriptionConfig): Promise<Glue42Workspaces.Unsubscribe> {
+        return getData(this, model).controller.processLocalSubscription(subscriptionConfig, this.getId(model))
     }
 
     private transformDefinition(type: "group" | "row" | "column", definition?: Glue42Workspaces.BoxDefinition | ParentBuilder): Glue42Workspaces.BoxDefinition {
