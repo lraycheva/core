@@ -1,4 +1,5 @@
 1.17.1
+feat: optimized the performance of glue.workspaces.getMyWorkspace()
 chore: removed unnecessary console.log
 1.17.0
 feat: added workspace lock events

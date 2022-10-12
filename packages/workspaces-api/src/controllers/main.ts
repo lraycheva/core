@@ -110,6 +110,14 @@ export class MainController implements WorkspacesController {
         return this.base.fetchWorkspace(workspaceId);
     }
 
+    public async getWorkspaceByWindowId(itemId: string): Promise<Workspace> {
+        if(!window.glue42gd){
+            // workspace-ui-core doesn't accept an itemId for getWorkspaceSnapshot, but GD does and getWorkspaceSnapshot is significantly faster
+            return (await this.getWorkspaces((wsp) => !!wsp.getWindow((w) => w.id === itemId)))[0];
+        }
+        return this.base.fetchWorkspace(itemId);
+    }
+
     public transformStreamPayloadToWorkspace(payload: WorkspaceStreamData): Promise<Workspace> {
         return this.base.transformStreamPayloadToWorkspace(payload);
     }
@@ -288,7 +296,7 @@ export class MainController implements WorkspacesController {
         return await this.base.showWorkspaceLoadingAnimation(workspaceId);
     }
 
-    public async hideWorkspaceLoadingAnimation(workspaceId:string): Promise<void>{
+    public async hideWorkspaceLoadingAnimation(workspaceId: string): Promise<void> {
         return await this.base.hideWorkspaceLoadingAnimation(workspaceId);
     }
 

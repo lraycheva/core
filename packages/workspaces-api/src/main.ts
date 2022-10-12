@@ -73,7 +73,7 @@ export const composeAPI = (glue: any, ioc: IoC): API => {
             throw new Error("Cannot fetch your workspace, because this window is not in a workspace");
         }
 
-        return (await controller.getWorkspaces((wsp) => !!wsp.getWindow((w) => w.id === myId)))[0];
+        return await controller.getWorkspaceByWindowId(myId);
     };
 
     const getWorkspace = async (predicate: (workspace: Glue42Workspaces.Workspace) => boolean): Promise<Glue42Workspaces.Workspace> => {

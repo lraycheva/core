@@ -21,6 +21,7 @@ export interface WorkspacesController {
     getFrame(selector: { windowId?: string; predicate?: (frame: Glue42Workspaces.Frame) => boolean }): Promise<Glue42Workspaces.Frame>;
     getFrames(predicate?: (frame: Glue42Workspaces.Frame) => boolean): Promise<Glue42Workspaces.Frame[]>;
     getWorkspaceById(workspaceId: string): Promise<Glue42Workspaces.Workspace>;
+    getWorkspaceByWindowId(itemId: string): Promise<Glue42Workspaces.Workspace>;
     transformStreamPayloadToWorkspace(payload: WorkspaceStreamData): Promise<Glue42Workspaces.Workspace>;
     getWorkspace(predicate: (workspace: Glue42Workspaces.Workspace) => boolean): Promise<Glue42Workspaces.Workspace>;
     getWorkspaces(predicate?: (workspace: Glue42Workspaces.Workspace) => boolean): Promise<Glue42Workspaces.Workspace[]>;

@@ -181,9 +181,9 @@ export class BaseController {
         return workspace;
     }
 
-    public async fetchWorkspace(workspaceId: string): Promise<Workspace> {
+    public async fetchWorkspace(itemId: string): Promise<Workspace> {
 
-        const snapshot = await this.bridge.send<WorkspaceSnapshotResult>(OPERATIONS.getWorkspaceSnapshot.name, { itemId: workspaceId });
+        const snapshot = await this.bridge.send<WorkspaceSnapshotResult>(OPERATIONS.getWorkspaceSnapshot.name, { itemId });
 
         const frameConfig: FrameCreateConfig = {
             summary: snapshot.frameSummary
