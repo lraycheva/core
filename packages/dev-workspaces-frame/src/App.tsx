@@ -1,4 +1,4 @@
-import { useContext } from 'react';
+// import { useContext } from 'react';
 import Workspaces from "@glue42/workspaces-ui-react";
 import "@glue42/workspaces-ui-react/dist/styles/popups.css";
 import "@glue42/workspaces-ui-react/dist/styles/goldenlayout-base.css";
@@ -7,13 +7,13 @@ import "./index.css";
 import "@glue42/theme/dist/components/icons.css";
 import "@glue42/theme/dist/components/buttons.css";
 import "@glue42/theme/dist/components/forms.css";
-import { GlueContext } from '@glue42/react-hooks';
+// import { GlueContext } from '@glue42/react-hooks';
 // import { Glue42Workspaces } from '@glue42/workspaces-api';
 // import { Glue42Web } from "@glue42/web";
 // import { Glue42 } from "@glue42/desktop";
 
 const App = () => {
-    (window as any).glue = useContext(GlueContext);
+    // (window as any).glue = useContext(GlueContext);
     return (
         <Workspaces />
     );

@@ -1,3 +1,5 @@
+1.17.1
+chore: removed unnecessary console.log
 1.17.0
 feat: added workspace lock events
 1.16.4

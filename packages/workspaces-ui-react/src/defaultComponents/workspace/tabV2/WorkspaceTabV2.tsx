@@ -1,4 +1,4 @@
-import React, { Fragment, useCallback, useEffect, useState } from "react";
+import React, { Fragment, useCallback, useContext, useEffect, useState } from "react";
 import WorkspaceTabOptionsButton from "./OptionsButton";
 import LockedIcon from "./LockedIcon";
 import { Workspace, WorkspaceLockConfig } from "./types";
@@ -6,14 +6,19 @@ import { WorkspaceTabComponentProps } from "../../../types/internal";
 import WorkspaceIconButton from "../WorkspaceIconButton";
 import WorkspaceTitle from "../WorkspaceTitle";
 import WorkspaceTabCloseButton from "../WorkspaceTabCloseButton";
+import { GlueContext } from "@glue42/react-hooks";
 
 
 const WorkspaceTabV2: React.FC<WorkspaceTabComponentProps> = ({ isPinned, title, onCloseClick, onSaveClick, icon, showSaveButton, showCloseButton, workspaceId }) => {
     const [lockConfig, setLockConfig] = useState<WorkspaceLockConfig>({});
+    const glue = (window as any).glue || useContext(GlueContext); 
     useEffect(() => {
         let unsub = () => { };
         let mounted = true;
-        (window as any).glue.workspaces.getWorkspaceById(workspaceId).then((workspace: Workspace) => {
+        if (!glue) {
+            throw new Error("The glue object should either be attached to the window or passed in the context");
+        }
+        glue.workspaces.getWorkspaceById(workspaceId).then((workspace: Workspace) => {
             if (mounted) {
                 setLockConfig({
                     allowDrop: workspace.allowDrop,
@@ -48,13 +53,16 @@ const WorkspaceTabV2: React.FC<WorkspaceTabComponentProps> = ({ isPinned, title,
             mounted = false;
             unsub();
         }
-    }, [workspaceId]);
+    }, [workspaceId, glue]);
 
     const closeWorkspace = useCallback(() => {
-        (window as any).glue.workspaces.getWorkspaceById(workspaceId).then((w: Workspace) => {
+        if (!glue) {
+            throw new Error("The glue object should either be attached to the window or passed in the context");
+        }
+        glue.workspaces.getWorkspaceById(workspaceId).then((w: Workspace) => {
             return w.close();
         });
-    }, [workspaceId]);
+    }, [workspaceId, glue]);
 
     const isLocked = useCallback(() => {
         const lockConfigCopy = { ...lockConfig };

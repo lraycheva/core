@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useRef } from "react";
+import { GlueContext } from "@glue42/react-hooks";
+import React, { useCallback, useContext, useEffect, useRef } from "react";
 import { Size } from "../../../types/internal";
 import LockOption from "./LockOption";
 import { Workspace, WorkspaceLockConfig } from "./types";
@@ -12,13 +13,17 @@ interface LockOptionsProps {
 }
 
 const LockOptions: React.FC<LockOptionsProps> = ({ workspaceId, lockConfig, onBackClick, resizePopup, showBackButton }) => {
+    const glue = (window as any).glue || useContext(GlueContext);
     const allowOptionsNameMap = (k: string) => k.replace("allow", "").replace(/([A-Z][a-z])/g, ' $1').trim();
     const showOptionsNameMap = (k: string) => k.replace("show", "").replace(/([A-Z][a-z])/g, ' $1').replace("Buttons", "").replace("Button", "").trim();
 
     const generateOptions = useCallback((filter: (key: keyof WorkspaceLockConfig) => boolean, nameMap: (key: string) => string) => Object.keys(lockConfig).filter(filter).map((key, i) => {
         const typedKey = key as keyof WorkspaceLockConfig;
         const onChange = (newValue: boolean) => {
-            (window as any).glue.workspaces.getWorkspaceById(workspaceId).then((workspace: Workspace) => {
+            if (!glue) {
+                throw new Error("The glue object should either be attached to the window or passed in the context");
+            }
+            glue.workspaces.getWorkspaceById(workspaceId).then((workspace: Workspace) => {
                 return workspace.lock({
                     ...lockConfig,
                     [key]: !newValue
@@ -27,7 +32,7 @@ const LockOptions: React.FC<LockOptionsProps> = ({ workspaceId, lockConfig, onBa
         }
 
         return <LockOption key={nameMap(key)} name={nameMap(key)} value={!lockConfig[typedKey]} onChange={onChange} />
-    }), [workspaceId, lockConfig]);
+    }), [workspaceId, lockConfig, glue]);
 
     const coreCompatibleFilter = (constraint: keyof WorkspaceLockConfig) => {
         if (!window.glue42gd && (constraint === "allowDrop" || constraint === "allowWorkspaceTabExtract")) {
@@ -55,7 +60,10 @@ const LockOptions: React.FC<LockOptionsProps> = ({ workspaceId, lockConfig, onBa
     }, [resizePopup, lockConfig]);
 
     const toggleAll = (newValue: boolean) => {
-        (window as any).glue.workspaces.getWorkspaceById(workspaceId).then((workspace: Workspace) => {
+        if (!glue) {
+            throw new Error("The glue object should either be attached to the window or passed in the context");
+        }
+        glue.workspaces.getWorkspaceById(workspaceId).then((workspace: Workspace) => {
             const newLockConfig = Object.keys(lockConfig).reduce((acc, key) => {
                 acc[key] = !newValue
                 return acc;

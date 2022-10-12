@@ -1,3 +1,5 @@
+2.0.1
+bugfix: started searching for the glue object in workspace tab v2 in the context as well
 2.0.0
 feat: changed the default workspace tab with the newly added WorkspaceTabV2
 1.11.1

@@ -343,7 +343,6 @@ export class Frame implements Glue42Workspaces.Frame {
         const { id } = myData.summary;
 
         const wrappedCallback = (args: FrameStreamData): void => {
-            console.log("data received", args);
             callback({ isFocused: args.frameSummary.isFocused });
         };
 

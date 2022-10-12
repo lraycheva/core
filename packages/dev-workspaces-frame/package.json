@@ -5,7 +5,7 @@
   "homepage": "./",
   "dependencies": {
     "@glue42/desktop": "^5.14.0",
-    "@glue42/react-hooks": "1.2.7",
+    "@glue42/react-hooks": "2.8.0",
     "@glue42/theme": "^4.0.5",
     "@glue42/web": "^2.8.2",
     "@glue42/web-platform": "^1.14.2",
