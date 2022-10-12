@@ -40,6 +40,7 @@ import WorkspaceSaveButton from './defaultComponents/workspace/WorkspaceSaveButt
 import WorkspaceIconButton from './defaultComponents/workspace/WorkspaceIconButton';
 import WorkspaceTabCloseButton from './defaultComponents/workspace/WorkspaceTabCloseButton';
 import WorkspaceLoadingAnimation from './defaultComponents/WorkspaceLoadingAnimation';
+import WorkspaceTabV2 from './defaultComponents/workspace/tabV2/WorkspaceTabV2';
 
 export {
     SaveWorkspacePopup,
@@ -60,7 +61,8 @@ export {
     WorkspaceSaveButton,
     WorkspaceIconButton,
     WorkspaceTabCloseButton,
-    WorkspaceLoadingAnimation
+    WorkspaceLoadingAnimation,
+    WorkspaceTabV2
 };
 export const notifyMoveAreaChanged: () => void = () => workspacesManager?.notifyMoveAreaChanged();
 export const getComponentBounds: () => Bounds = () => workspacesManager?.getComponentBounds();
