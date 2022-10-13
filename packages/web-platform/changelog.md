@@ -1,3 +1,5 @@
+1.14.3
+chore: bump due to dependencies update
 1.14.2
 feat: added workspace lock events
 1.14.1
