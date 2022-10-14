@@ -924,6 +924,7 @@
     const allParentDecoder = oneOf(constant("workspace"), constant("row"), constant("column"), constant("group"));
     const subParentDecoder = oneOf(constant("row"), constant("column"), constant("group"));
     const frameStateDecoder = oneOf(constant("maximized"), constant("minimized"), constant("normal"));
+    const loadingAnimationTypeDecoder = oneOf(constant("workspace"));
     const checkThrowCallback = (callback, allowUndefined) => {
         const argumentType = typeof callback;
         if (allowUndefined && argumentType !== "function" && argumentType !== "undefined") {
@@ -945,6 +946,7 @@
         minHeight: optional(number()),
         maxHeight: optional(number()),
         allowExtract: optional(boolean()),
+        allowReorder: optional(boolean()),
         showCloseButton: optional(boolean())
     });
     const groupDefinitionConfigDecoder = object({
@@ -953,6 +955,7 @@
         minHeight: optional(number()),
         maxHeight: optional(number()),
         allowExtract: optional(boolean()),
+        allowReorder: optional(boolean()),
         allowDrop: optional(boolean()),
         allowDropHeader: optional(boolean()),
         allowDropLeft: optional(boolean()),
@@ -968,14 +971,16 @@
         maxHeight: optional(number()),
         allowDrop: optional(boolean()),
         allowSplitters: optional(boolean()),
-        isPinned: optional(boolean())
+        isPinned: optional(boolean()),
+        maximizationBoundary: optional(boolean())
     });
     const columnDefinitionConfigDecoder = object({
         minWidth: optional(number()),
         maxWidth: optional(number()),
         allowDrop: optional(boolean()),
         allowSplitters: optional(boolean()),
-        isPinned: optional(boolean())
+        isPinned: optional(boolean()),
+        maximizationBoundary: optional(boolean())
     });
     const swimlaneWindowDefinitionDecoder = object({
         type: optional(constant("window")),
@@ -1019,7 +1024,8 @@
             top: optional(number()),
             width: optional(nonNegativeNumberDecoder),
             height: optional(nonNegativeNumberDecoder)
-        }))
+        })),
+        frameId: optional(nonEmptyStringDecoder)
     });
     const loadingStrategyDecoder = oneOf(constant("direct"), constant("delayed"), constant("lazy"));
     const restoreWorkspaceConfigDecoder = optional(object({
@@ -1029,6 +1035,7 @@
         title: optional(nonEmptyStringDecoder),
         reuseWorkspaceId: optional(nonEmptyStringDecoder),
         frameId: optional(nonEmptyStringDecoder),
+        applicationName: optional(nonEmptyStringDecoder),
         lockdown: optional(boolean()),
         activateFrame: optional(boolean()),
         newFrame: optional(oneOf(newFrameConfigDecoder, boolean())),
@@ -1044,7 +1051,7 @@
         restoreOptions: optional(restoreWorkspaceConfigDecoder)
     });
     const workspaceDefinitionDecoder = object({
-        children: optional(array(oneOf(swimlaneWindowDefinitionDecoder, parentDefinitionDecoder))),
+        children: optional(array(oneOf(swimlaneWindowDefinitionDecoder, strictParentDefinitionDecoder))),
         context: optional(anyJson()),
         config: optional(object({
             title: optional(nonEmptyStringDecoder),
@@ -1059,7 +1066,10 @@
             allowDropRight: optional(boolean()),
             allowDropBottom: optional(boolean()),
             allowExtract: optional(boolean()),
+            allowWindowReorder: optional(boolean()),
             showSaveButton: optional(boolean()),
+            allowWorkspaceTabReorder: optional(boolean()),
+            allowWorkspaceTabExtract: optional(boolean()),
             showCloseButton: optional(boolean()),
             allowSplitters: optional(boolean()),
             showWindowCloseButtons: optional(boolean()),
@@ -1072,6 +1082,7 @@
         })),
         frame: optional(object({
             reuseFrameId: optional(nonEmptyStringDecoder),
+            applicationName: optional(nonEmptyStringDecoder),
             newFrame: optional(oneOf(boolean(), newFrameConfigDecoder))
         }))
     });
@@ -1083,6 +1094,7 @@
         restoreOptions: optional(restoreWorkspaceConfigDecoder)
     });
     const emptyFrameDefinitionDecoder = optional(object({
+        applicationName: optional(string()),
         frameConfig: optional(newFrameConfigDecoder),
         context: optional(object())
     }));
@@ -1110,6 +1122,7 @@
     });
     const frameSummaryDecoder = object({
         id: nonEmptyStringDecoder,
+        isFocused: optional(boolean()),
         isInitialized: optional(boolean()),
         initializationContext: optional(frameInitializationContextDecoder)
     });
@@ -1125,7 +1138,7 @@
         type: eventTypeDecoder,
         branch: nonEmptyStringDecoder
     });
-    const workspaceEventActionDecoder = oneOf(constant("opened"), constant("closing"), constant("closed"), constant("focus"), constant("added"), constant("loaded"), constant("removed"), constant("childrenUpdate"), constant("containerChange"), constant("maximized"), constant("minimized"), constant("normal"), constant("selected"));
+    const workspaceEventActionDecoder = oneOf(constant("opened"), constant("closing"), constant("closed"), constant("focus"), constant("added"), constant("loaded"), constant("removed"), constant("childrenUpdate"), constant("containerChange"), constant("maximized"), constant("restored"), constant("minimized"), constant("normal"), constant("selected"), constant("lock-configuration-changed"));
     const workspaceConfigResultDecoder = object({
         frameId: nonEmptyStringDecoder,
         title: nonEmptyStringDecoder,
@@ -1136,9 +1149,12 @@
         isSelected: optional(boolean()),
         allowDrop: optional(boolean()),
         allowExtract: optional(boolean()),
+        allowWindowReorder: optional(boolean()),
         allowSplitters: optional(boolean()),
         showCloseButton: optional(boolean()),
         showSaveButton: optional(boolean()),
+        allowWorkspaceTabReorder: optional(boolean()),
+        allowWorkspaceTabExtract: optional(boolean()),
         allowDropLeft: optional(boolean()),
         allowDropTop: optional(boolean()),
         allowDropRight: optional(boolean()),
@@ -1168,16 +1184,19 @@
         windowId: optional(nonEmptyStringDecoder),
         isMaximized: optional(boolean()),
         isFocused: boolean(),
+        isSelected: optional(boolean()),
         title: optional(string()),
         appName: optional(nonEmptyStringDecoder),
         allowExtract: optional(boolean()),
+        allowReorder: optional(boolean()),
         showCloseButton: optional(boolean()),
         minWidth: optional(number()),
-        minHeigth: optional(number()),
+        minHeight: optional(number()),
         maxWidth: optional(number()),
         maxHeight: optional(number()),
         widthInPx: optional(number()),
-        heightInPx: optional(number())
+        heightInPx: optional(number()),
+        context: optional(anyJson())
     }));
     const customWorkspaceSubParentSnapshotDecoder = object({
         id: optional(nonEmptyStringDecoder),
@@ -1196,18 +1215,22 @@
         id: nonEmptyStringDecoder,
         config: workspaceConfigResultDecoder,
         children: array(childSnapshotResultDecoder),
-        frameSummary: frameSummaryDecoder
+        frameSummary: frameSummaryDecoder,
+        context: optional(anyJson())
     });
     const windowLayoutItemDecoder = object({
         type: constant("window"),
         config: object({
             appName: nonEmptyStringDecoder,
+            windowId: optional(nonEmptyStringDecoder),
+            context: optional(anyJson()),
             url: optional(nonEmptyStringDecoder),
             title: optional(string()),
             allowExtract: optional(boolean()),
+            allowReorder: optional(boolean()),
             showCloseButton: optional(boolean()),
             minWidth: optional(number()),
-            minHeigth: optional(number()),
+            minHeight: optional(number()),
             maxWidth: optional(number()),
             maxHeight: optional(number()),
             isMaximized: optional(boolean())
@@ -1234,6 +1257,7 @@
         metadata: optional(anyJson()),
         components: array(object({
             type: constant("Workspace"),
+            application: optional(string()),
             state: object({
                 config: anyJson(),
                 context: anyJson(),
@@ -1250,6 +1274,7 @@
     });
     const frameSummaryResultDecoder = object({
         id: nonEmptyStringDecoder,
+        isFocused: optional(boolean()),
         isInitialized: optional(boolean()),
         initializationContext: optional(frameInitializationContextDecoder)
     });
@@ -1269,7 +1294,8 @@
         workspaces: array(workspaceSnapshotResultDecoder)
     });
     const layoutSummaryDecoder = object({
-        name: nonEmptyStringDecoder
+        name: nonEmptyStringDecoder,
+        applicationName: optional(string())
     });
     const layoutSummariesDecoder = object({
         summaries: array(layoutSummaryDecoder)
@@ -1281,13 +1307,14 @@
     const frameStateResultDecoder = object({
         state: frameStateDecoder
     });
+    const frameBoundsDecoder = object({
+        top: number(),
+        left: number(),
+        width: nonNegativeNumberDecoder,
+        height: nonNegativeNumberDecoder
+    });
     const frameBoundsResultDecoder = object({
-        bounds: object({
-            top: number(),
-            left: number(),
-            width: nonNegativeNumberDecoder,
-            height: nonNegativeNumberDecoder
-        })
+        bounds: frameBoundsDecoder
     });
     const getWorkspaceIconResultDecoder = object({
         icon: optional(nonEmptyStringDecoder)
@@ -1305,6 +1332,10 @@
     const simpleItemConfigDecoder = object({
         itemId: nonEmptyStringDecoder
     });
+    const frameSnapshotConfigDecoder = object({
+        itemId: nonEmptyStringDecoder,
+        excludeIds: optional(boolean())
+    });
     const frameStateConfigDecoder = object({
         frameId: nonEmptyStringDecoder,
         requestedState: frameStateDecoder
@@ -1318,6 +1349,10 @@
         containerId: nonEmptyStringDecoder
     });
     const resizeItemConfigDecoder = intersection(simpleItemConfigDecoder, resizeConfigDecoder);
+    const setMaximizationBoundaryConfigDecoder = object({
+        itemId: nonEmptyStringDecoder,
+        enabled: boolean()
+    });
     const moveFrameConfigDecoder = intersection(simpleItemConfigDecoder, moveConfigDecoder);
     const simpleParentDecoder = object({
         id: nonEmptyStringDecoder,
@@ -1349,12 +1384,14 @@
         config: parentSnapshotConfigDecoder
     });
     const frameStreamDataDecoder = object({
-        frameSummary: frameSummaryDecoder
+        frameSummary: frameSummaryDecoder,
+        frameBounds: optional(frameBoundsDecoder)
     });
     const workspaceStreamDataDecoder = object({
         workspaceSummary: workspaceSummaryResultDecoder,
         frameSummary: frameSummaryDecoder,
-        workspaceSnapshot: optional(workspaceSnapshotResultDecoder)
+        workspaceSnapshot: optional(workspaceSnapshotResultDecoder),
+        frameBounds: optional(frameBoundsDecoder)
     });
     const containerStreamDataDecoder = object({
         containerSummary: containerSummaryResultDecoder
@@ -1379,9 +1416,12 @@
         allowDropRight: optional(boolean()),
         allowDropBottom: optional(boolean()),
         allowExtract: optional(boolean()),
+        allowWindowReorder: optional(boolean()),
         allowSplitters: optional(boolean()),
         showCloseButton: optional(boolean()),
         showSaveButton: optional(boolean()),
+        allowWorkspaceTabReorder: optional(boolean()),
+        allowWorkspaceTabExtract: optional(boolean()),
         showWindowCloseButtons: optional(boolean()),
         showAddWindowButtons: optional(boolean()),
         showEjectButtons: optional(boolean()),
@@ -1392,6 +1432,7 @@
     });
     const windowLockConfigDecoder = object({
         allowExtract: optional(boolean()),
+        allowReorder: optional(boolean()),
         showCloseButton: optional(boolean())
     });
     const elementResizeConfigDecoder = object({
@@ -1412,6 +1453,7 @@
     });
     const groupLockConfigDecoder = object({
         allowExtract: optional(boolean()),
+        allowReorder: optional(boolean()),
         allowDrop: optional(boolean()),
         allowDropLeft: optional(boolean()),
         allowDropRight: optional(boolean()),
@@ -1449,21 +1491,42 @@
     const workspacePinOptionsDecoder = optional(object({
         icon: optional(nonEmptyStringDecoder)
     }));
+    const shortcutConfigDecoder = object({
+        shortcut: nonEmptyStringDecoder,
+        frameId: nonEmptyStringDecoder
+    });
+    const shortcutClickedDataDecoder = object({
+        shortcut: nonEmptyStringDecoder,
+        frameId: nonEmptyStringDecoder
+    });
+    const setMaximizationBoundaryAPIConfigDecoder = object({
+        enabled: boolean()
+    });
+    const loadingAnimationConfigDecoder = object({
+        itemId: nonEmptyStringDecoder,
+        type: loadingAnimationTypeDecoder
+    });
 
     const webPlatformMethodName = "T42.Web.Platform.Control";
     const webPlatformWspStreamName = "T42.Web.Platform.WSP.Stream";
-    const METHODS = {
+    const OUTGOING_METHODS = {
         control: { name: "T42.Workspaces.Control", isStream: false },
         frameStream: { name: "T42.Workspaces.Stream.Frame", isStream: true },
         workspaceStream: { name: "T42.Workspaces.Stream.Workspace", isStream: true },
         containerStream: { name: "T42.Workspaces.Stream.Container", isStream: true },
         windowStream: { name: "T42.Workspaces.Stream.Window", isStream: true }
     };
+    const INCOMING_METHODS = {
+        control: { name: "T42.Workspaces.Client.Control", isStream: false },
+    };
     const STREAMS = {
         frame: { name: "T42.Workspaces.Stream.Frame", payloadDecoder: frameStreamDataDecoder },
         workspace: { name: "T42.Workspaces.Stream.Workspace", payloadDecoder: workspaceStreamDataDecoder },
         container: { name: "T42.Workspaces.Stream.Container", payloadDecoder: containerStreamDataDecoder },
         window: { name: "T42.Workspaces.Stream.Window", payloadDecoder: windowStreamDataDecoder }
+    };
+    const CLIENT_OPERATIONS = {
+        shortcutClicked: { name: "shortcutClicked", argsDecoder: shortcutClickedDataDecoder, resultDecoder: voidResultDecoder },
     };
     const OPERATIONS = {
         ping: { name: "ping", resultDecoder: pingResultDecoder },
@@ -1486,11 +1549,12 @@
         focusItem: { name: "focusItem", argsDecoder: simpleItemConfigDecoder, resultDecoder: voidResultDecoder },
         closeItem: { name: "closeItem", argsDecoder: simpleItemConfigDecoder, resultDecoder: voidResultDecoder },
         resizeItem: { name: "resizeItem", argsDecoder: resizeItemConfigDecoder, resultDecoder: voidResultDecoder },
+        setMaximizationBoundary: { name: "setMaximizationBoundary", argsDecoder: setMaximizationBoundaryConfigDecoder, resultDecoder: voidResultDecoder },
         changeFrameState: { name: "changeFrameState", argsDecoder: frameStateConfigDecoder, resultDecoder: voidResultDecoder },
         getFrameState: { name: "getFrameState", argsDecoder: simpleItemConfigDecoder, resultDecoder: frameStateResultDecoder },
         getFrameBounds: { name: "getFrameBounds", argsDecoder: simpleItemConfigDecoder, resultDecoder: frameBoundsResultDecoder },
         moveFrame: { name: "moveFrame", argsDecoder: moveFrameConfigDecoder, resultDecoder: voidResultDecoder },
-        getFrameSnapshot: { name: "getFrameSnapshot", argsDecoder: simpleItemConfigDecoder, resultDecoder: frameSnapshotResultDecoder },
+        getFrameSnapshot: { name: "getFrameSnapshot", argsDecoder: frameSnapshotConfigDecoder, resultDecoder: frameSnapshotResultDecoder },
         forceLoadWindow: { name: "forceLoadWindow", argsDecoder: simpleItemConfigDecoder, resultDecoder: simpleWindowOperationSuccessResultDecoder },
         ejectWindow: { name: "ejectWindow", argsDecoder: simpleItemConfigDecoder, resultDecoder: simpleWindowOperationSuccessResultDecoder },
         setItemTitle: { name: "setItemTitle", argsDecoder: setItemTitleConfigDecoder, resultDecoder: voidResultDecoder },
@@ -1506,14 +1570,28 @@
         pinWorkspace: { name: "pinWorkspace", argsDecoder: pinWorkspaceDecoder, resultDecoder: voidResultDecoder },
         unpinWorkspace: { name: "unpinWorkspace", argsDecoder: workspaceSelectorDecoder, resultDecoder: voidResultDecoder },
         getWorkspaceIcon: { name: "getWorkspaceIcon", argsDecoder: workspaceSelectorDecoder, resultDecoder: getWorkspaceIconResultDecoder },
-        setWorkspaceIcon: { name: "setWorkspaceIcon", argsDecoder: setWorkspaceIconDecoder, resultDecoder: voidResultDecoder }
+        setWorkspaceIcon: { name: "setWorkspaceIcon", argsDecoder: setWorkspaceIconDecoder, resultDecoder: voidResultDecoder },
+        registerShortcut: { name: "registerShortcut", argsDecoder: shortcutConfigDecoder, resultDecoder: voidResultDecoder },
+        unregisterShortcut: { name: "unregisterShortcut", argsDecoder: shortcutConfigDecoder, resultDecoder: voidResultDecoder },
+        showLoadingAnimation: { name: "showLoadingAnimation", argsDecoder: loadingAnimationConfigDecoder, resultDecoder: voidResultDecoder },
+        hideLoadingAnimation: { name: "hideLoadingAnimation", argsDecoder: loadingAnimationConfigDecoder, resultDecoder: voidResultDecoder }
     };
+
+    class PromiseWrapper {
+        constructor() {
+            this.promise = new Promise((res, rej) => {
+                this.resolve = res;
+                this.reject = rej;
+            });
+        }
+    }
 
     class Bridge {
         constructor(transport, registry) {
             this.transport = transport;
             this.registry = registry;
             this.activeSubscriptions = [];
+            this.pendingSubScriptions = [];
         }
         createCoreEventSubscription() {
             return __awaiter(this, void 0, void 0, function* () {
@@ -1525,7 +1603,7 @@
             const scope = config.scope;
             const scopeId = config.scopeId;
             return this.registry.add(registryKey, (args) => {
-                var _a, _b, _c, _d, _e;
+                var _a, _b, _c, _d, _e, _f;
                 const scopeConfig = {
                     type: scope,
                     id: scopeId
@@ -1533,7 +1611,8 @@
                 const receivedIds = {
                     frame: ((_a = args.frameSummary) === null || _a === void 0 ? void 0 : _a.id) || ((_b = args.windowSummary) === null || _b === void 0 ? void 0 : _b.config.frameId),
                     workspace: ((_c = args.workspaceSummary) === null || _c === void 0 ? void 0 : _c.id) || ((_d = args.windowSummary) === null || _d === void 0 ? void 0 : _d.config.workspaceId),
-                    window: (_e = args.windowSummary) === null || _e === void 0 ? void 0 : _e.config.windowId
+                    container: (_e = args.containerSummary) === null || _e === void 0 ? void 0 : _e.itemId,
+                    window: (_f = args.windowSummary) === null || _f === void 0 ? void 0 : _f.itemId
                 };
                 const shouldInvokeCallback = this.checkScopeMatch(scopeConfig, receivedIds);
                 if (!shouldInvokeCallback) {
@@ -1556,10 +1635,10 @@
                         throw new Error(`Unexpected internal outgoing validation error: ${error.message}, for input: ${JSON.stringify(error.input)}, for operation ${operationName}`);
                     }
                 }
-                let operationResult;
                 try {
-                    const operationResultRaw = yield this.transport.transmitControl(operationDefinition.name, operationArgs);
-                    operationResult = operationDefinition.resultDecoder.runWithException(operationResultRaw);
+                    const operationResult = yield this.transport.transmitControl(operationDefinition.name, operationArgs);
+                    operationDefinition.resultDecoder.runWithException(operationResult);
+                    return operationResult;
                 }
                 catch (error) {
                     if (error.kind) {
@@ -1567,40 +1646,61 @@
                     }
                     throw new Error(error.message);
                 }
-                return operationResult;
             });
         }
         subscribe(config) {
             return __awaiter(this, void 0, void 0, function* () {
+                const pendingSub = this.getPendingSubscription(config);
+                if (pendingSub) {
+                    yield pendingSub.promise;
+                }
                 let activeSub = this.getActiveSubscription(config);
                 const registryKey = this.getRegistryKey(config);
                 if (!activeSub) {
-                    const stream = STREAMS[config.eventType];
-                    const gdSub = yield this.transport.subscribe(stream.name, this.getBranchKey(config), config.eventType);
-                    gdSub.onData((streamData) => {
-                        const data = streamData.data;
-                        const requestedArgumentsResult = streamRequestArgumentsDecoder.run(streamData.requestArguments);
-                        const actionResult = workspaceEventActionDecoder.run(data.action);
-                        if (!requestedArgumentsResult.ok || !actionResult.ok) {
-                            return;
-                        }
-                        const streamType = requestedArgumentsResult.result.type;
-                        const branch = requestedArgumentsResult.result.branch;
-                        const validatedPayload = STREAMS[streamType].payloadDecoder.run(data.payload);
-                        if (!validatedPayload.ok) {
-                            return;
-                        }
-                        const keyToExecute = `${streamType}-${branch}-${actionResult.result}`;
-                        this.registry.execute(keyToExecute, validatedPayload.result);
-                    });
-                    activeSub = {
+                    const pendingPromise = new PromiseWrapper();
+                    const pendingSubscription = {
                         streamType: config.eventType,
                         level: config.scope,
                         levelId: config.scopeId,
-                        callbacksCount: 0,
-                        gdSub
+                        promise: pendingPromise.promise
                     };
-                    this.activeSubscriptions.push(activeSub);
+                    this.pendingSubScriptions.push(pendingSubscription);
+                    try {
+                        const stream = STREAMS[config.eventType];
+                        const gdSub = yield this.transport.subscribe(stream.name, this.getBranchKey(config), config.eventType);
+                        gdSub.onData((streamData) => {
+                            const data = streamData.data;
+                            const requestedArgumentsResult = streamRequestArgumentsDecoder.run(streamData.requestArguments);
+                            const actionResult = workspaceEventActionDecoder.run(data.action);
+                            if (!requestedArgumentsResult.ok || !actionResult.ok) {
+                                return;
+                            }
+                            const streamType = requestedArgumentsResult.result.type;
+                            const branch = requestedArgumentsResult.result.branch;
+                            const keyToExecute = `${streamType}-${branch}-${actionResult.result}`;
+                            const validatedPayload = STREAMS[streamType].payloadDecoder.run(data.payload);
+                            if (!validatedPayload.ok) {
+                                return;
+                            }
+                            this.registry.execute(keyToExecute, validatedPayload.result);
+                        });
+                        activeSub = {
+                            streamType: config.eventType,
+                            level: config.scope,
+                            levelId: config.scopeId,
+                            callbacksCount: 0,
+                            gdSub
+                        };
+                        this.activeSubscriptions.push(activeSub);
+                        pendingPromise.resolve();
+                    }
+                    catch (error) {
+                        pendingPromise.reject(error);
+                        throw error;
+                    }
+                    finally {
+                        this.removePendingSubscription(pendingSubscription);
+                    }
                 }
                 const unsubscribe = this.registry.add(registryKey, config.callback);
                 ++activeSub.callbacksCount;
@@ -1614,6 +1714,26 @@
                 };
             });
         }
+        onOperation(callback) {
+            const wrappedCallback = (payload, caller) => {
+                const operationName = payload.operation;
+                const operationArgs = payload.data;
+                const operationDefinition = Object.values(CLIENT_OPERATIONS).find((operation) => operation.name === operationName);
+                if (!operationDefinition) {
+                    throw new Error(`Cannot find definition for operation name: ${operationName}`);
+                }
+                if (operationDefinition.argsDecoder) {
+                    try {
+                        operationDefinition.argsDecoder.runWithException(operationArgs);
+                    }
+                    catch (error) {
+                        throw new Error(`Unexpected internal outgoing validation error: ${error.message}, for input: ${JSON.stringify(error.input)}, for operation ${operationName}`);
+                    }
+                }
+                callback(payload, caller);
+            };
+            return this.transport.onInternalMethodInvoked("control", wrappedCallback);
+        }
         checkScopeMatch(scope, receivedIds) {
             if (scope.type === "global") {
                 return true;
@@ -1622,6 +1742,9 @@
                 return true;
             }
             if (scope.type === "workspace" && scope.id === receivedIds.workspace) {
+                return true;
+            }
+            if (scope.type === "container" && scope.id === receivedIds.container) {
                 return true;
             }
             if (scope.type === "window" && scope.id === receivedIds.window) {
@@ -1653,6 +1776,18 @@
                 .find((activeSub) => activeSub.streamType === config.eventType &&
                 activeSub.level === config.scope &&
                 activeSub.levelId === config.scopeId);
+        }
+        getPendingSubscription(config) {
+            return this.pendingSubScriptions
+                .find((activeSub) => activeSub.streamType === config.eventType &&
+                activeSub.level === config.scope &&
+                activeSub.levelId === config.scopeId);
+        }
+        removePendingSubscription(pendingSubscription) {
+            const index = this.pendingSubScriptions.indexOf(pendingSubscription);
+            if (index >= 0) {
+                this.pendingSubScriptions.splice(index, 1);
+            }
         }
     }
 
@@ -1688,22 +1823,27 @@
     };
 
     class InteropTransport {
-        constructor(agm) {
+        constructor(agm, registry) {
             this.agm = agm;
+            this.registry = registry;
             this.defaultTransportTimeout = 30000;
             this.coreEventMethodInitiated = false;
         }
         initiate(actualWindowId) {
             return __awaiter(this, void 0, void 0, function* () {
                 if (window.glue42gd) {
-                    yield Promise.all(Object.values(METHODS).map((method) => {
+                    yield Promise.all(Object.values(OUTGOING_METHODS).map((method) => {
                         return this.verifyMethodLive(method.name);
+                    }));
+                    yield Promise.all(Object.keys(INCOMING_METHODS).map((method) => {
+                        return this.registerMethod(method);
                     }));
                     return;
                 }
+                const systemId = window.glue42core.communicationId;
                 yield Promise.all([
-                    this.verifyMethodLive(this.decorateCommunicationId(webPlatformMethodName)),
-                    this.verifyMethodLive(this.decorateCommunicationId(webPlatformWspStreamName))
+                    this.verifyMethodLive(webPlatformMethodName, systemId),
+                    this.verifyMethodLive(webPlatformWspStreamName, systemId)
                 ]);
                 yield this.transmitControl("frameHello", { windowId: actualWindowId });
             });
@@ -1716,7 +1856,8 @@
         }
         subscribePlatform(eventCallback) {
             this.coreEventMethodInitiated = true;
-            this.corePlatformSubPromise = this.agm.subscribe(this.decorateCommunicationId(webPlatformWspStreamName));
+            const systemId = window.glue42core.communicationId;
+            this.corePlatformSubPromise = this.agm.subscribe(webPlatformWspStreamName, systemId ? { target: { instance: systemId } } : undefined);
             this.corePlatformSubPromise
                 .then((sub) => {
                 sub.onData((data) => eventCallback(data.data));
@@ -1742,11 +1883,12 @@
         transmitControl(operation, operationArguments) {
             return __awaiter(this, void 0, void 0, function* () {
                 const invocationArguments = window.glue42gd ? { operation, operationArguments } : { operation, domain: "workspaces", data: operationArguments };
-                const methodName = window.glue42gd ? METHODS.control.name : this.decorateCommunicationId(webPlatformMethodName);
+                const methodName = window.glue42gd ? OUTGOING_METHODS.control.name : webPlatformMethodName;
+                const platformTarget = window.glue42gd ? undefined : window.glue42core.communicationId;
                 let invocationResult;
                 const baseErrorMessage = `Internal Workspaces Communication Error. Attempted operation: ${JSON.stringify(invocationArguments)}. `;
                 try {
-                    invocationResult = yield this.agm.invoke(methodName, invocationArguments, "best", { methodResponseTimeoutMs: this.defaultTransportTimeout });
+                    invocationResult = yield this.agm.invoke(methodName, invocationArguments, platformTarget ? { instance: platformTarget } : "best", { methodResponseTimeoutMs: this.defaultTransportTimeout });
                     if (!invocationResult) {
                         throw new Error("Received unsupported result from GD - empty result");
                     }
@@ -1764,36 +1906,42 @@
                 return invocationResult.all_return_values[0].returned;
             });
         }
-        verifyMethodLive(name) {
+        onInternalMethodInvoked(key, callback) {
+            return this.registry.add(key, callback);
+        }
+        verifyMethodLive(name, systemId) {
             return promisePlus(() => {
                 return new Promise((resolve) => {
-                    const hasMethod = this.agm.methods().some((method) => method.name === name);
+                    const hasMethod = this.agm.methods().some((method) => {
+                        const nameMatch = method.name === name;
+                        const serverMatch = systemId ?
+                            method.getServers().some((server) => server.instance === systemId) :
+                            true;
+                        return nameMatch && serverMatch;
+                    });
                     if (hasMethod) {
                         resolve();
                         return;
                     }
-                    let unsubscribe = this.agm.methodAdded((method) => {
-                        if (method.name !== name) {
-                            return;
+                    const unSub = this.agm.serverMethodAdded((data) => {
+                        const method = data.method;
+                        const server = data.server;
+                        const serverMatch = systemId ?
+                            server.instance === systemId :
+                            true;
+                        if (method.name === name && serverMatch) {
+                            unSub();
+                            resolve();
                         }
-                        if (unsubscribe) {
-                            unsubscribe();
-                            unsubscribe = null;
-                        }
-                        else {
-                            setTimeout(() => {
-                                if (unsubscribe) {
-                                    unsubscribe();
-                                }
-                            }, 0);
-                        }
-                        resolve();
                     });
                 });
             }, 15000, "Timeout waiting for the Workspaces communication channels");
         }
-        decorateCommunicationId(base) {
-            return `${base}.${window.glue42core.communicationId}`;
+        registerMethod(key) {
+            const method = INCOMING_METHODS[key];
+            return this.agm.register(method.name, (args, caller) => {
+                this.registry.execute(key, args, caller);
+            });
         }
     }
 
@@ -1989,6 +2137,9 @@
         get isMaximized() {
             return getBase(this).getIsMaximized(this);
         }
+        get maximizationBoundary() {
+            return getBase(this).getMaximizationBoundary(this);
+        }
         addWindow(definition) {
             return getBase(this).addWindow(this, definition, "row");
         }
@@ -2044,6 +2195,33 @@
             return __awaiter(this, void 0, void 0, function* () {
                 nonNegativeNumberDecoder.runWithException(height);
                 return getBase(this).setHeight(this, height);
+            });
+        }
+        onLockConfigurationChanged(callback) {
+            return __awaiter(this, void 0, void 0, function* () {
+                checkThrowCallback(callback);
+                const id = getBase(this).getId(this);
+                const wrappedCallback = () => __awaiter(this, void 0, void 0, function* () {
+                    yield this.workspace.refreshReference();
+                    callback({
+                        allowDrop: this.allowDrop,
+                        allowSplitters: this.allowSplitters
+                    });
+                });
+                const config = {
+                    callback: wrappedCallback,
+                    action: "lock-configuration-changed",
+                    eventType: "container",
+                    scope: "container"
+                };
+                const unsubscribe = yield getBase(this).processLocalSubscription(this, config);
+                return unsubscribe;
+            });
+        }
+        setMaximizationBoundary(config) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const validatedConfig = setMaximizationBoundaryAPIConfigDecoder.runWithException(config);
+                return getBase(this).setMaximizationBoundary(this, validatedConfig);
             });
         }
     }
@@ -2113,6 +2291,9 @@
         get isMaximized() {
             return getBase$1(this).getIsMaximized(this);
         }
+        get maximizationBoundary() {
+            return getBase$1(this).getMaximizationBoundary(this);
+        }
         addWindow(definition) {
             return getBase$1(this).addWindow(this, definition, "column");
         }
@@ -2170,6 +2351,33 @@
                 return getBase$1(this).setWidth(this, width);
             });
         }
+        onLockConfigurationChanged(callback) {
+            return __awaiter(this, void 0, void 0, function* () {
+                checkThrowCallback(callback);
+                const id = getBase$1(this).getId(this);
+                const wrappedCallback = () => __awaiter(this, void 0, void 0, function* () {
+                    yield this.workspace.refreshReference();
+                    callback({
+                        allowDrop: this.allowDrop,
+                        allowSplitters: this.allowSplitters
+                    });
+                });
+                const config = {
+                    callback: wrappedCallback,
+                    action: "lock-configuration-changed",
+                    eventType: "container",
+                    scope: "container"
+                };
+                const unsubscribe = yield getBase$1(this).processLocalSubscription(this, config);
+                return unsubscribe;
+            });
+        }
+        setMaximizationBoundary(config) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const validatedConfig = setMaximizationBoundaryAPIConfigDecoder.runWithException(config);
+                return getBase$1(this).setMaximizationBoundary(this, validatedConfig);
+            });
+        }
     }
 
     const privateData$4 = new WeakMap();
@@ -2209,6 +2417,9 @@
         }
         get allowExtract() {
             return getBase$2(this).getAllowExtract(this);
+        }
+        get allowReorder() {
+            return getBase$2(this).getAllowReorder(this);
         }
         get allowDropLeft() {
             return getBase$2(this).getAllowDropLeft(this);
@@ -2299,6 +2510,7 @@
                     allowDropTop: this.allowDropTop,
                     allowDropBottom: this.allowDropBottom,
                     allowExtract: this.allowExtract,
+                    allowReorder: this.allowReorder,
                     showAddWindowButton: this.showAddWindowButton,
                     showEjectButton: this.showEjectButton,
                     showMaximizeButton: this.showMaximizeButton
@@ -2318,6 +2530,36 @@
                     throw new Error("Expected either width or height to be passed.");
                 }
                 return getBase$2(this).setSize(this, config.width, config.height);
+            });
+        }
+        onLockConfigurationChanged(callback) {
+            return __awaiter(this, void 0, void 0, function* () {
+                checkThrowCallback(callback);
+                const id = getBase$2(this).getId(this);
+                const wrappedCallback = () => __awaiter(this, void 0, void 0, function* () {
+                    yield this.workspace.refreshReference();
+                    callback({
+                        allowDrop: this.allowDrop,
+                        allowDropHeader: this.allowDropHeader,
+                        allowDropLeft: this.allowDropLeft,
+                        allowDropTop: this.allowDropTop,
+                        allowDropRight: this.allowDropRight,
+                        allowDropBottom: this.allowDropBottom,
+                        allowExtract: this.allowExtract,
+                        allowReorder: this.allowReorder,
+                        showAddWindowButton: this.showAddWindowButton,
+                        showEjectButton: this.showEjectButton,
+                        showMaximizeButton: this.showMaximizeButton
+                    });
+                });
+                const config = {
+                    callback: wrappedCallback,
+                    action: "lock-configuration-changed",
+                    eventType: "container",
+                    scope: "container"
+                };
+                const unsubscribe = yield getBase$2(this).processLocalSubscription(this, config);
+                return unsubscribe;
             });
         }
     }
@@ -2381,11 +2623,20 @@
         get allowExtract() {
             return getData(this).config.allowExtract;
         }
+        get allowWindowReorder() {
+            return getData(this).config.allowWindowReorder;
+        }
         get showCloseButton() {
             return getData(this).config.showCloseButton;
         }
         get showSaveButton() {
             return getData(this).config.showSaveButton;
+        }
+        get allowWorkspaceTabReorder() {
+            return getData(this).config.allowWorkspaceTabReorder;
+        }
+        get allowWorkspaceTabExtract() {
+            return getData(this).config.allowWorkspaceTabExtract;
         }
         get minWidth() {
             return getData(this).config.minWidth;
@@ -2641,9 +2892,12 @@
                         allowDropRight: this.allowDropRight,
                         allowDropBottom: this.allowDropBottom,
                         allowExtract: this.allowExtract,
+                        allowWindowReorder: this.allowWindowReorder,
                         allowSplitters: this.allowSplitters,
                         showCloseButton: this.showCloseButton,
                         showSaveButton: this.showSaveButton,
+                        allowWorkspaceTabReorder: this.allowWorkspaceTabReorder,
+                        allowWorkspaceTabExtract: this.allowWorkspaceTabExtract,
                         showAddWindowButtons: this.showAddWindowButtons,
                         showEjectButtons: this.showEjectButtons,
                         showWindowCloseButtons: this.showWindowCloseButtons
@@ -2671,12 +2925,28 @@
                 yield this.refreshReference();
             });
         }
+        showLoadingAnimation() {
+            return __awaiter(this, void 0, void 0, function* () {
+                if (!window.glue42gd) {
+                    throw new Error("Not supported in Glue42 Core");
+                }
+                yield getData(this).controller.showWorkspaceLoadingAnimation(this.id);
+            });
+        }
+        hideLoadingAnimation() {
+            return __awaiter(this, void 0, void 0, function* () {
+                if (!window.glue42gd) {
+                    throw new Error("Not supported in Glue42 Core");
+                }
+                yield getData(this).controller.hideWorkspaceLoadingAnimation(this.id);
+            });
+        }
         onClosed(callback) {
             return __awaiter(this, void 0, void 0, function* () {
                 checkThrowCallback(callback);
                 const id = getData(this).id;
-                const wrappedCallback = () => __awaiter(this, void 0, void 0, function* () {
-                    callback();
+                const wrappedCallback = (payload) => __awaiter(this, void 0, void 0, function* () {
+                    callback({ frameId: payload.frameSummary.id, workspaceId: payload.workspaceSummary.id, frameBounds: payload.frameBounds });
                 });
                 const config = {
                     action: "closed",
@@ -2697,7 +2967,7 @@
                     yield this.refreshReference();
                     const windowParent = this.getBox((parent) => parent.id === payload.windowSummary.parentId);
                     const foundWindow = windowParent.children.find((child) => {
-                        return child.type === "window" && child.positionIndex === payload.windowSummary.config.positionIndex;
+                        return child.type === "window" && child.elementId === payload.windowSummary.itemId;
                     });
                     callback(foundWindow);
                 });
@@ -2754,6 +3024,87 @@
                 return unsubscribe;
             });
         }
+        onWindowMaximized(callback) {
+            return __awaiter(this, void 0, void 0, function* () {
+                checkThrowCallback(callback);
+                const id = getData(this).id;
+                const wrappedCallback = (payload) => __awaiter(this, void 0, void 0, function* () {
+                    yield this.refreshReference();
+                    const windowParent = this.getBox((parent) => parent.id === payload.windowSummary.parentId);
+                    const foundWindow = windowParent.children.find((child) => {
+                        return child.type === "window" && child.elementId === payload.windowSummary.itemId;
+                    });
+                    callback(foundWindow);
+                });
+                const config = {
+                    action: "maximized",
+                    eventType: "window",
+                    scope: "workspace",
+                    scopeId: id,
+                    callback: wrappedCallback
+                };
+                const unsubscribe = yield getData(this).controller.processLocalSubscription(config, id);
+                return unsubscribe;
+            });
+        }
+        onWindowRestored(callback) {
+            return __awaiter(this, void 0, void 0, function* () {
+                checkThrowCallback(callback);
+                const id = getData(this).id;
+                const wrappedCallback = (payload) => __awaiter(this, void 0, void 0, function* () {
+                    yield this.refreshReference();
+                    const windowParent = this.getBox((parent) => parent.id === payload.windowSummary.parentId);
+                    const foundWindow = windowParent.children.find((child) => {
+                        return child.type === "window" && child.elementId === payload.windowSummary.itemId;
+                    });
+                    callback(foundWindow);
+                });
+                const config = {
+                    action: "restored",
+                    eventType: "window",
+                    scope: "workspace",
+                    scopeId: id,
+                    callback: wrappedCallback
+                };
+                const unsubscribe = yield getData(this).controller.processLocalSubscription(config, id);
+                return unsubscribe;
+            });
+        }
+        onLockConfigurationChanged(callback) {
+            return __awaiter(this, void 0, void 0, function* () {
+                checkThrowCallback(callback);
+                const id = getData(this).id;
+                const wrappedCallback = (payload) => __awaiter(this, void 0, void 0, function* () {
+                    yield this.refreshReference();
+                    callback({
+                        allowDrop: this.allowDrop,
+                        allowDropLeft: this.allowDropLeft,
+                        allowDropTop: this.allowDropTop,
+                        allowDropRight: this.allowDropRight,
+                        allowDropBottom: this.allowDropBottom,
+                        allowExtract: this.allowExtract,
+                        allowSplitters: this.allowSplitters,
+                        allowWindowReorder: this.allowWindowReorder,
+                        allowWorkspaceTabExtract: this.allowWorkspaceTabExtract,
+                        allowWorkspaceTabReorder: this.allowWorkspaceTabReorder,
+                        showAddWindowButtons: this.showAddWindowButtons,
+                        showCloseButton: this.showCloseButton,
+                        showEjectButtons: this.showEjectButtons,
+                        showSaveButton: this.showSaveButton,
+                        showWindowCloseButtons: this.showWindowCloseButtons
+                    });
+                });
+                const config = {
+                    action: "lock-configuration-changed",
+                    eventType: "workspace",
+                    scope: "workspace",
+                    scopeId: id,
+                    callback: wrappedCallback
+                };
+                const unsubscribe = yield getData(this).controller.processLocalSubscription(config, id);
+                return unsubscribe;
+            });
+        }
     }
 
     const data$1 = new WeakMap();
@@ -2788,14 +3139,20 @@
         get isLoaded() {
             return getData$1(this).controller.checkIsWindowLoaded(this.id);
         }
+        get isSelected() {
+            return getData$1(this).config.isSelected;
+        }
         get focused() {
-            return getData$1(this).config.isFocused;
+            return this.isLoaded ? this.getGdWindow().isFocused : false;
         }
         get title() {
             return getData$1(this).config.title;
         }
         get allowExtract() {
             return getData$1(this).config.allowExtract;
+        }
+        get allowReorder() {
+            return getData$1(this).config.allowReorder;
         }
         get showCloseButton() {
             return getData$1(this).config.showCloseButton;
@@ -2927,6 +3284,7 @@
                 if (typeof config === "function") {
                     const currentLockConfig = {
                         allowExtract: this.allowExtract,
+                        allowReorder: this.allowReorder,
                         showCloseButton: this.showCloseButton
                     };
                     lockConfigResult = config(currentLockConfig);
@@ -2974,6 +3332,28 @@
                 return unsubscribe;
             });
         }
+        onLockConfigurationChanged(callback) {
+            return __awaiter(this, void 0, void 0, function* () {
+                checkThrowCallback(callback);
+                const id = getData$1(this).id;
+                const wrappedCallback = () => __awaiter(this, void 0, void 0, function* () {
+                    yield this.workspace.refreshReference();
+                    callback({
+                        allowExtract: this.allowExtract,
+                        allowReorder: this.allowReorder,
+                        showCloseButton: this.showCloseButton
+                    });
+                });
+                const config = {
+                    callback: wrappedCallback,
+                    action: "lock-configuration-changed",
+                    eventType: "window",
+                    scope: "window"
+                };
+                const unsubscribe = yield getData$1(this).controller.processLocalSubscription(config, id);
+                return unsubscribe;
+            });
+        }
     }
 
     const data$2 = new WeakMap();
@@ -2983,6 +3363,15 @@
     class Frame {
         constructor(dataManager) {
             data$2.set(this, { manager: dataManager });
+        }
+        registerShortcut(shortcut, callback) {
+            return __awaiter(this, void 0, void 0, function* () {
+                nonEmptyStringDecoder.runWithException(shortcut);
+                checkThrowCallback(callback);
+                const myId = getData$2(this).summary.id;
+                const unsubscribe = yield getData$2(this).controller.registerShortcut(shortcut, myId, callback);
+                return unsubscribe;
+            });
         }
         get id() {
             return getData$2(this).summary.id;
@@ -3095,7 +3484,7 @@
                 checkThrowCallback(callback);
                 const myId = getData$2(this).summary.id;
                 const wrappedCallback = (payload) => {
-                    callback({ frameId: payload.frameSummary.id });
+                    callback({ frameId: payload.frameSummary.id, frameBounds: payload.frameBounds });
                 };
                 const config = {
                     callback: wrappedCallback,
@@ -3199,7 +3588,7 @@
                 checkThrowCallback(callback);
                 const myId = getData$2(this).summary.id;
                 const wrappedCallback = (payload) => {
-                    callback({ frameId: payload.frameSummary.id, workspaceId: payload.workspaceSummary.id });
+                    callback({ frameId: payload.frameSummary.id, workspaceId: payload.workspaceSummary.id, frameBounds: payload.frameBounds });
                 };
                 const config = {
                     callback: wrappedCallback,
@@ -3275,6 +3664,24 @@
                 if (!this.isInitialized) {
                     yield callback(getData$2(this).summary.initializationContext);
                 }
+            });
+        }
+        onFocusChanged(callback) {
+            return __awaiter(this, void 0, void 0, function* () {
+                checkThrowCallback(callback);
+                const myData = getData$2(this);
+                const { id } = myData.summary;
+                const wrappedCallback = (args) => {
+                    callback({ isFocused: args.frameSummary.isFocused });
+                };
+                const config = {
+                    callback: wrappedCallback,
+                    action: "focus",
+                    eventType: "frame",
+                    scope: "frame"
+                };
+                const unsubscribe = yield myData.controller.processLocalSubscription(config, id);
+                return unsubscribe;
             });
         }
     }
@@ -3398,7 +3805,7 @@
         }
         getMyParent(model) {
             if (model instanceof Workspace) {
-                return;
+                return model;
             }
             return getData$3(this, model).parent;
         }
@@ -3407,7 +3814,7 @@
         }
         getMyWorkspace(model) {
             if (model instanceof Workspace) {
-                return;
+                return model;
             }
             return getData$3(this, model).workspace;
         }
@@ -3458,26 +3865,16 @@
         }
         maximize(model) {
             return __awaiter(this, void 0, void 0, function* () {
-                const controller = getData$3(this, model).controller;
-                yield controller.maximizeItem(getData$3(this, model).id);
-                if (model.parent instanceof Workspace) {
-                    yield model.parent.refreshReference();
-                }
-                else {
-                    yield this.getMyWorkspace(model.parent).refreshReference();
-                }
+                const { controller, id } = getData$3(this, model);
+                yield controller.maximizeItem(id);
+                yield this.getMyWorkspace(model.parent).refreshReference();
             });
         }
         restore(model) {
             return __awaiter(this, void 0, void 0, function* () {
-                const controller = getData$3(this, model).controller;
-                yield controller.restoreItem(getData$3(this, model).id);
-                if (model.parent instanceof Workspace) {
-                    yield model.parent.refreshReference();
-                }
-                else {
-                    yield this.getMyWorkspace(model.parent).refreshReference();
-                }
+                const { controller, id } = getData$3(this, model);
+                yield controller.restoreItem(id);
+                yield this.getMyWorkspace(model.parent).refreshReference();
             });
         }
         close(model) {
@@ -3485,12 +3882,7 @@
                 const modelData = getData$3(this, model);
                 const controller = getData$3(this, model).controller;
                 yield controller.closeItem(modelData.id);
-                if (modelData.parent instanceof Workspace) {
-                    yield modelData.parent.refreshReference();
-                }
-                else {
-                    yield this.getMyWorkspace(modelData.parent).refreshReference();
-                }
+                yield this.getMyWorkspace(modelData.parent).refreshReference();
             });
         }
         lockContainer(model, config) {
@@ -3498,12 +3890,7 @@
                 const modelData = getData$3(this, model);
                 const controller = getData$3(this, model).controller;
                 yield controller.lockContainer(modelData.id, model.type, config);
-                if (modelData.parent instanceof Workspace) {
-                    yield modelData.parent.refreshReference();
-                }
-                else {
-                    yield this.getMyWorkspace(modelData.parent).refreshReference();
-                }
+                yield this.getMyWorkspace(modelData.parent).refreshReference();
             });
         }
         getAllowDrop(model) {
@@ -3554,9 +3941,16 @@
         getAllowExtract(model) {
             const privateData = getData$3(this, model);
             if (privateData.type !== "group") {
-                throw new Error(`Cannot get allow extract from private data${privateData.type} with config ${privateData.type !== "workspace" ? privateData.config.type : ""}`);
+                throw new Error(`Cannot get allow extract from private data ${privateData.type} with config ${privateData.type !== "workspace" ? privateData.config.type : ""}`);
             }
             return privateData.config.allowExtract;
+        }
+        getAllowReorder(model) {
+            const privateData = getData$3(this, model);
+            if (privateData.type !== "group") {
+                throw new Error(`Cannot get allow extract from private data ${privateData.type} with config ${privateData.type !== "workspace" ? privateData.config.type : ""}`);
+            }
+            return privateData.config.allowReorder;
         }
         getShowMaximizeButton(model) {
             const privateData = getData$3(this, model);
@@ -3611,50 +4005,52 @@
             const privateData = getData$3(this, model);
             return privateData.config.isMaximized;
         }
+        getMaximizationBoundary(model) {
+            const privateData = getData$3(this, model);
+            return privateData.config.maximizationBoundary;
+        }
         setHeight(model, height) {
             return __awaiter(this, void 0, void 0, function* () {
                 const modelData = getData$3(this, model);
-                const { controller } = modelData;
-                yield controller.resizeItem(getData$3(this, model).id, {
+                const { controller, id } = modelData;
+                yield controller.resizeItem(id, {
                     height
                 });
-                if (modelData.parent instanceof Workspace) {
-                    yield modelData.parent.refreshReference();
-                }
-                else {
-                    yield this.getMyWorkspace(modelData.parent).refreshReference();
-                }
+                yield this.getMyWorkspace(modelData.parent).refreshReference();
             });
         }
         setWidth(model, width) {
             return __awaiter(this, void 0, void 0, function* () {
                 const modelData = getData$3(this, model);
-                const { controller } = modelData;
-                yield controller.resizeItem(getData$3(this, model).id, {
+                const { controller, id } = modelData;
+                yield controller.resizeItem(id, {
                     width
                 });
-                if (modelData.parent instanceof Workspace) {
-                    yield modelData.parent.refreshReference();
-                }
-                else {
-                    yield this.getMyWorkspace(modelData.parent).refreshReference();
-                }
+                yield this.getMyWorkspace(modelData.parent).refreshReference();
             });
         }
         setSize(model, width, height) {
             return __awaiter(this, void 0, void 0, function* () {
                 const modelData = getData$3(this, model);
-                const { controller } = modelData;
-                yield controller.resizeItem(getData$3(this, model).id, {
+                const { controller, id } = modelData;
+                yield controller.resizeItem(id, {
                     width,
                     height
                 });
-                if (modelData.parent instanceof Workspace) {
-                    yield modelData.parent.refreshReference();
-                }
-                else {
-                    yield this.getMyWorkspace(modelData.parent).refreshReference();
-                }
+                yield this.getMyWorkspace(modelData.parent).refreshReference();
+            });
+        }
+        setMaximizationBoundary(model, config) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const modelData = getData$3(this, model);
+                const { controller, id } = modelData;
+                yield controller.setMaximizationBoundary(id, config);
+                yield this.getMyWorkspace(modelData.parent).refreshReference();
+            });
+        }
+        processLocalSubscription(model, subscriptionConfig) {
+            return __awaiter(this, void 0, void 0, function* () {
+                return getData$3(this, model).controller.processLocalSubscription(subscriptionConfig, this.getId(model));
             });
         }
         transformDefinition(type, definition) {
@@ -3810,9 +4206,9 @@
                 return workspace;
             });
         }
-        fetchWorkspace(workspaceId) {
+        fetchWorkspace(itemId) {
             return __awaiter(this, void 0, void 0, function* () {
-                const snapshot = yield this.bridge.send(OPERATIONS.getWorkspaceSnapshot.name, { itemId: workspaceId });
+                const snapshot = yield this.bridge.send(OPERATIONS.getWorkspaceSnapshot.name, { itemId });
                 const frameConfig = {
                     summary: snapshot.frameSummary
                 };
@@ -3865,6 +4261,21 @@
         resizeItem(itemId, config) {
             return __awaiter(this, void 0, void 0, function* () {
                 yield this.bridge.send(OPERATIONS.resizeItem.name, Object.assign({}, { itemId }, config));
+            });
+        }
+        setMaximizationBoundary(itemId, config) {
+            return __awaiter(this, void 0, void 0, function* () {
+                yield this.bridge.send(OPERATIONS.setMaximizationBoundary.name, Object.assign({}, { itemId }, config));
+            });
+        }
+        showWorkspaceLoadingAnimation(workspaceId) {
+            return __awaiter(this, void 0, void 0, function* () {
+                yield this.bridge.send(OPERATIONS.showLoadingAnimation.name, { itemId: workspaceId, type: "workspace" });
+            });
+        }
+        hideWorkspaceLoadingAnimation(workspaceId) {
+            return __awaiter(this, void 0, void 0, function* () {
+                yield this.bridge.send(OPERATIONS.hideLoadingAnimation.name, { itemId: workspaceId, type: "workspace" });
             });
         }
         moveFrame(itemId, config) {
@@ -4056,9 +4467,10 @@
     }
 
     class MainController {
-        constructor(bridge, base) {
+        constructor(bridge, base, shortcutsController) {
             this.bridge = bridge;
             this.base = base;
+            this.shortcutsController = shortcutsController;
         }
         checkIsWindowLoaded(windowId) {
             return this.base.checkIsWindowLoaded(windowId);
@@ -4136,6 +4548,14 @@
         }
         getWorkspaceById(workspaceId) {
             return this.base.fetchWorkspace(workspaceId);
+        }
+        getWorkspaceByWindowId(itemId) {
+            return __awaiter(this, void 0, void 0, function* () {
+                if (!window.glue42gd) {
+                    return (yield this.getWorkspaces((wsp) => !!wsp.getWindow((w) => w.id === itemId)))[0];
+                }
+                return this.base.fetchWorkspace(itemId);
+            });
         }
         transformStreamPayloadToWorkspace(payload) {
             return this.base.transformStreamPayloadToWorkspace(payload);
@@ -4302,6 +4722,21 @@
                 return yield this.base.resizeItem(itemId, config);
             });
         }
+        setMaximizationBoundary(itemId, config) {
+            return __awaiter(this, void 0, void 0, function* () {
+                return yield this.base.setMaximizationBoundary(itemId, config);
+            });
+        }
+        showWorkspaceLoadingAnimation(workspaceId) {
+            return __awaiter(this, void 0, void 0, function* () {
+                return yield this.base.showWorkspaceLoadingAnimation(workspaceId);
+            });
+        }
+        hideWorkspaceLoadingAnimation(workspaceId) {
+            return __awaiter(this, void 0, void 0, function* () {
+                return yield this.base.hideWorkspaceLoadingAnimation(workspaceId);
+            });
+        }
         moveFrame(itemId, config) {
             return __awaiter(this, void 0, void 0, function* () {
                 return yield this.base.moveFrame(itemId, config);
@@ -4395,6 +4830,9 @@
                 };
             });
         }
+        registerShortcut(shortcut, frameId, callback) {
+            return this.shortcutsController.registerShortcut(shortcut, frameId, callback);
+        }
         handleCoreLocalSubscription(config, levelId) {
             return __awaiter(this, void 0, void 0, function* () {
                 yield this.bridge.createCoreEventSubscription();
@@ -4469,6 +4907,29 @@
         }
     }
 
+    class ShortcutsController {
+        constructor(bridge) {
+            this.bridge = bridge;
+            this._shortcuts = lib();
+            this.bridge.onOperation((payload, caller) => {
+                if (payload.operation === CLIENT_OPERATIONS.shortcutClicked.name) {
+                    const data = payload.data;
+                    this._shortcuts.execute(`${data.frameId}-${data.shortcut}`);
+                }
+            });
+        }
+        registerShortcut(shortcut, frameId, callback) {
+            return __awaiter(this, void 0, void 0, function* () {
+                yield this.bridge.send(OPERATIONS.registerShortcut.name, { shortcut, frameId });
+                const un = this._shortcuts.add(`${frameId}-${shortcut}`, callback);
+                return () => {
+                    un();
+                    this.bridge.send(OPERATIONS.unregisterShortcut.name, { shortcut, frameId });
+                };
+            });
+        }
+    }
+
     class IoC {
         constructor(agm, windows, layouts, contexts) {
             this.agm = agm;
@@ -4484,9 +4945,15 @@
         }
         get controller() {
             if (!this._controllerInstance) {
-                this._controllerInstance = new MainController(this.bridge, this.baseController);
+                this._controllerInstance = new MainController(this.bridge, this.baseController, this.shortcutsController);
             }
             return this._controllerInstance;
+        }
+        get shortcutsController() {
+            if (!this._shortcutsController) {
+                this._shortcutsController = new ShortcutsController(this.bridge);
+            }
+            return this._shortcutsController;
         }
         get bridge() {
             if (!this._bridgeInstance) {
@@ -4496,7 +4963,7 @@
         }
         get transport() {
             if (!this._transportInstance) {
-                this._transportInstance = new InteropTransport(this.agm);
+                this._transportInstance = new InteropTransport(this.agm, lib());
             }
             return this._transportInstance;
         }
@@ -4623,6 +5090,8 @@
         }
     }
 
+    var version = "1.17.1";
+
     const composeAPI = (glue, ioc) => {
         const controller = ioc.controller;
         const inWorkspace = () => {
@@ -4667,7 +5136,7 @@
             if (!isInSwimlane) {
                 throw new Error("Cannot fetch your workspace, because this window is not in a workspace");
             }
-            return (yield controller.getWorkspaces((wsp) => !!wsp.getWindow((w) => w.id === myId)))[0];
+            return yield controller.getWorkspaceByWindowId(myId);
         });
         const getWorkspace = (predicate) => __awaiter(void 0, void 0, void 0, function* () {
             checkThrowCallback(predicate);
@@ -4750,7 +5219,7 @@
         const onFrameClosed = (callback) => __awaiter(void 0, void 0, void 0, function* () {
             checkThrowCallback(callback);
             const wrappedCallback = (payload) => {
-                callback({ frameId: payload.frameSummary.id });
+                callback({ frameId: payload.frameSummary.id, frameBounds: payload.frameBounds });
             };
             const unsubscribe = yield controller.processGlobalSubscription(wrappedCallback, "frame", "closed");
             return unsubscribe;
@@ -4767,7 +5236,7 @@
         const onWorkspaceClosed = (callback) => __awaiter(void 0, void 0, void 0, function* () {
             checkThrowCallback(callback);
             const wrappedCallback = (payload) => {
-                callback({ frameId: payload.frameSummary.id, workspaceId: payload.workspaceSummary.id });
+                callback({ frameId: payload.frameSummary.id, workspaceId: payload.workspaceSummary.id, frameBounds: payload.frameBounds });
             };
             const unsubscribe = yield controller.processGlobalSubscription(wrappedCallback, "workspace", "closed");
             return unsubscribe;
@@ -4783,7 +5252,7 @@
                 const workspaceConfig = { frame, snapshot };
                 const workspace = ioc.getModel("workspace", workspaceConfig);
                 const windowParent = workspace.getBox((parent) => parent.id === payload.windowSummary.parentId);
-                const foundWindow = windowParent.children.find((child) => child.type === "window" && child.positionIndex === payload.windowSummary.config.positionIndex);
+                const foundWindow = windowParent.children.find((child) => child.type === "window" && child.elementId === payload.windowSummary.itemId);
                 callback(foundWindow);
             });
             const unsubscribe = yield controller.processGlobalSubscription(wrappedCallback, "window", "added");
@@ -4812,6 +5281,40 @@
                 callback({ windowId, workspaceId, frameId });
             };
             const unsubscribe = yield controller.processGlobalSubscription(wrappedCallback, "window", "removed");
+            return unsubscribe;
+        });
+        const onWindowMaximized = (callback) => __awaiter(void 0, void 0, void 0, function* () {
+            checkThrowCallback(callback);
+            const wrappedCallback = (payload) => __awaiter(void 0, void 0, void 0, function* () {
+                const snapshot = (yield controller.getSnapshot(payload.windowSummary.config.workspaceId, "workspace"));
+                const frameConfig = {
+                    summary: snapshot.frameSummary
+                };
+                const frame = ioc.getModel("frame", frameConfig);
+                const workspaceConfig = { frame, snapshot };
+                const workspace = ioc.getModel("workspace", workspaceConfig);
+                const windowParent = workspace.getBox((parent) => parent.id === payload.windowSummary.parentId);
+                const foundWindow = windowParent.children.find((child) => child.type === "window" && child.elementId === payload.windowSummary.itemId);
+                callback(foundWindow);
+            });
+            const unsubscribe = yield controller.processGlobalSubscription(wrappedCallback, "window", "maximized");
+            return unsubscribe;
+        });
+        const onWindowRestored = (callback) => __awaiter(void 0, void 0, void 0, function* () {
+            checkThrowCallback(callback);
+            const wrappedCallback = (payload) => __awaiter(void 0, void 0, void 0, function* () {
+                const snapshot = (yield controller.getSnapshot(payload.windowSummary.config.workspaceId, "workspace"));
+                const frameConfig = {
+                    summary: snapshot.frameSummary
+                };
+                const frame = ioc.getModel("frame", frameConfig);
+                const workspaceConfig = { frame, snapshot };
+                const workspace = ioc.getModel("workspace", workspaceConfig);
+                const windowParent = workspace.getBox((parent) => parent.id === payload.windowSummary.parentId);
+                const foundWindow = windowParent.children.find((child) => child.type === "window" && child.elementId === payload.windowSummary.itemId);
+                callback(foundWindow);
+            });
+            const unsubscribe = yield controller.processGlobalSubscription(wrappedCallback, "window", "restored");
             return unsubscribe;
         });
         const waitForFrame = (id) => __awaiter(void 0, void 0, void 0, function* () {
@@ -4861,6 +5364,9 @@
             onWindowAdded,
             onWindowLoaded,
             onWindowRemoved,
+            onWindowMaximized,
+            onWindowRestored,
+            version
         };
     };
 

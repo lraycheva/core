@@ -106,14 +106,14 @@
     };
 
     const enterprise = (config) => {
-        var _a, _b;
+        var _a, _b, _c;
         const enterpriseConfig = {
             windows: true,
             layouts: "full",
             appManager: "full",
             channels: true,
-            libraries: config.libraries,
-            logger: (_b = (_a = config === null || config === void 0 ? void 0 : config.systemLogger) === null || _a === void 0 ? void 0 : _a.level) !== null && _b !== void 0 ? _b : "warn"
+            libraries: (_a = config === null || config === void 0 ? void 0 : config.libraries) !== null && _a !== void 0 ? _a : [],
+            logger: (_c = (_b = config === null || config === void 0 ? void 0 : config.systemLogger) === null || _b === void 0 ? void 0 : _b.level) !== null && _c !== void 0 ? _c : "warn"
         };
         return window.Glue(enterpriseConfig);
     };
@@ -916,9 +916,15 @@
     const libDomainDecoder = oneOf(constant("system"), constant("windows"), constant("appManager"), constant("layouts"), constant("intents"), constant("notifications"), constant("channels"), constant("extension"));
     const windowOperationTypesDecoder = oneOf(constant("openWindow"), constant("windowHello"), constant("windowAdded"), constant("windowRemoved"), constant("getBounds"), constant("getFrameBounds"), constant("getUrl"), constant("moveResize"), constant("focus"), constant("close"), constant("getTitle"), constant("setTitle"));
     const appManagerOperationTypesDecoder = oneOf(constant("appHello"), constant("appDirectoryStateChange"), constant("instanceStarted"), constant("instanceStopped"), constant("applicationStart"), constant("instanceStop"), constant("clear"));
-    const layoutsOperationTypesDecoder = oneOf(constant("layoutAdded"), constant("layoutChanged"), constant("layoutRemoved"), constant("get"), constant("getAll"), constant("export"), constant("import"), constant("remove"));
+    const layoutsOperationTypesDecoder = oneOf(constant("layoutAdded"), constant("layoutChanged"), constant("layoutRemoved"), constant("get"), constant("getAll"), constant("export"), constant("import"), constant("remove"), constant("clientSaveRequest"), constant("getGlobalPermissionState"), constant("checkGlobalActivated"), constant("requestGlobalPermission"));
     const notificationsOperationTypesDecoder = oneOf(constant("raiseNotification"), constant("requestPermission"), constant("notificationShow"), constant("notificationClick"), constant("getPermission"));
     const windowRelativeDirectionDecoder = oneOf(constant("top"), constant("left"), constant("right"), constant("bottom"));
+    const windowBoundsDecoder = object({
+        top: number(),
+        left: number(),
+        width: nonNegativeNumberDecoder,
+        height: nonNegativeNumberDecoder
+    });
     const windowOpenSettingsDecoder = optional(object({
         top: optional(number()),
         left: optional(number()),
@@ -1028,8 +1034,8 @@
         title: optional(nonEmptyStringDecoder),
         version: optional(nonEmptyStringDecoder),
         customProperties: optional(anyJson()),
-        icon: optional(nonEmptyStringDecoder),
-        caption: optional(nonEmptyStringDecoder),
+        icon: optional(string()),
+        caption: optional(string()),
         details: applicationDetailsDecoder,
         intents: optional(array(intentDefinitionDecoder)),
         hidden: optional(boolean())
@@ -1090,18 +1096,29 @@
     });
     const layoutTypeDecoder = oneOf(constant("Global"), constant("Activity"), constant("ApplicationDefault"), constant("Swimlane"), constant("Workspace"));
     const componentTypeDecoder = oneOf(constant("application"), constant("activity"));
-    const windowLayoutComponentDecoder = object({
-        type: nonEmptyStringDecoder.where((s) => s === "window", "Expected a value of window"),
-        componentType: optional(componentTypeDecoder),
-        state: object({
-            name: anyJson(),
-            context: anyJson(),
-            url: nonEmptyStringDecoder,
-            bounds: anyJson(),
-            id: nonEmptyStringDecoder,
-            parentId: optional(nonEmptyStringDecoder),
-            main: boolean()
+    const windowComponentStateDecoder = object({
+        context: optional(anyJson()),
+        bounds: windowBoundsDecoder,
+        createArgs: object({
+            name: optional(nonEmptyStringDecoder),
+            url: optional(nonEmptyStringDecoder),
+            context: optional(anyJson())
+        }),
+        windowState: optional(nonEmptyStringDecoder),
+        restoreState: optional(nonEmptyStringDecoder),
+        instanceId: nonEmptyStringDecoder,
+        isCollapsed: optional(boolean()),
+        isSticky: optional(boolean()),
+        restoreSettings: object({
+            groupId: optional(nonEmptyStringDecoder),
+            groupZOrder: optional(number())
         })
+    });
+    const windowLayoutComponentDecoder = object({
+        type: constant("window"),
+        componentType: optional(componentTypeDecoder),
+        application: nonEmptyStringDecoder,
+        state: windowComponentStateDecoder
     });
     const windowLayoutItemDecoder = object({
         type: constant("window"),
@@ -1110,6 +1127,7 @@
             url: optional(nonEmptyStringDecoder),
             title: optional(string()),
             allowExtract: optional(boolean()),
+            allowReorder: optional(boolean()),
             showCloseButton: optional(boolean()),
             isMaximized: optional(boolean())
         })
@@ -1129,31 +1147,50 @@
         config: anyJson(),
         children: array(oneOf(columnLayoutItemDecoder, groupLayoutItemDecoder, windowLayoutItemDecoder, lazy(() => rowLayoutItemDecoder)))
     });
+    const workspaceLayoutComponentStateDecoder = object({
+        config: anyJson(),
+        context: anyJson(),
+        children: array(oneOf(rowLayoutItemDecoder, columnLayoutItemDecoder, groupLayoutItemDecoder, windowLayoutItemDecoder))
+    });
     const workspaceLayoutComponentDecoder = object({
         type: constant("Workspace"),
-        state: object({
-            config: anyJson(),
-            context: anyJson(),
-            children: array(oneOf(rowLayoutItemDecoder, columnLayoutItemDecoder, groupLayoutItemDecoder, windowLayoutItemDecoder))
-        })
+        application: optional(nonEmptyStringDecoder),
+        state: workspaceLayoutComponentStateDecoder
+    });
+    const workspaceFrameComponentStateDecoder = object({
+        bounds: windowBoundsDecoder,
+        instanceId: nonEmptyStringDecoder,
+        selectedWorkspace: nonNegativeNumberDecoder,
+        workspaces: array(workspaceLayoutComponentStateDecoder),
+        windowState: optional(nonEmptyStringDecoder),
+        restoreState: optional(nonEmptyStringDecoder)
+    });
+    const workspaceFrameComponentDecoder = object({
+        type: constant("workspaceFrame"),
+        application: nonEmptyStringDecoder,
+        componentType: optional(componentTypeDecoder),
+        state: workspaceFrameComponentStateDecoder
     });
     const glueLayoutDecoder = object({
         name: nonEmptyStringDecoder,
         type: layoutTypeDecoder,
-        components: array(oneOf(windowLayoutComponentDecoder, workspaceLayoutComponentDecoder)),
-        version: optional(nonEmptyStringDecoder),
+        components: array(oneOf(windowLayoutComponentDecoder, workspaceLayoutComponentDecoder, workspaceFrameComponentDecoder)),
         context: optional(anyJson()),
         metadata: optional(anyJson())
     });
     const newLayoutOptionsDecoder = object({
         name: nonEmptyStringDecoder,
         context: optional(anyJson()),
-        metadata: optional(anyJson())
+        metadata: optional(anyJson()),
+        instances: optional(array(nonEmptyStringDecoder)),
+        ignoreInstances: optional(array(nonEmptyStringDecoder))
     });
     const restoreOptionsDecoder = object({
         name: nonEmptyStringDecoder,
         context: optional(anyJson()),
-        closeRunningInstance: optional(boolean())
+        closeRunningInstance: optional(boolean()),
+        closeMe: optional(boolean()),
+        timeout: optional(nonNegativeNumberDecoder)
     });
     const layoutSummaryDecoder = object({
         name: nonEmptyStringDecoder,
@@ -1164,6 +1201,12 @@
     const simpleLayoutConfigDecoder = object({
         name: nonEmptyStringDecoder,
         type: layoutTypeDecoder
+    });
+    const saveLayoutConfigDecoder = object({
+        layout: newLayoutOptionsDecoder
+    });
+    const restoreLayoutConfigDecoder = object({
+        layout: restoreOptionsDecoder
     });
     const getAllLayoutsConfigDecoder = object({
         type: layoutTypeDecoder
@@ -1179,7 +1222,7 @@
     const allLayoutsSummariesResultDecoder = object({
         summaries: array(layoutSummaryDecoder)
     });
-    const simpleLayoutResult = object({
+    const simpleLayoutResultDecoder = object({
         layout: glueLayoutDecoder
     });
     const optionalSimpleLayoutResult = object({
@@ -1244,6 +1287,13 @@
     const channelNameDecoder = (channelNames) => {
         return nonEmptyStringDecoder.where(s => channelNames.includes(s), "Expected a valid channel name");
     };
+    const channelContextDecoder = object({
+        name: nonEmptyStringDecoder,
+        meta: object({
+            color: nonEmptyStringDecoder
+        }),
+        data: optional(anyJson()),
+    });
     const interopActionSettingsDecoder = object({
         method: nonEmptyStringDecoder,
         arguments: optional(anyJson()),
@@ -1303,6 +1353,20 @@
         definition: notificationDefinitionDecoder,
         action: optional(string()),
         id: optional(nonEmptyStringDecoder)
+    });
+    const platformSaveRequestConfigDecoder = object({
+        layoutType: oneOf(constant("Global"), constant("Workspace")),
+        layoutName: nonEmptyStringDecoder,
+        context: optional(anyJson())
+    });
+    const saveRequestClientResponseDecoder = object({
+        windowContext: optional(anyJson()),
+    });
+    const permissionStateResultDecoder = object({
+        state: oneOf(constant("prompt"), constant("denied"), constant("granted"))
+    });
+    const simpleAvailabilityResultDecoder = object({
+        isAvailable: boolean()
     });
 
     const operations = {
@@ -1523,7 +1587,12 @@
         }
         focus() {
             return __awaiter$1(this, void 0, void 0, function* () {
-                yield this._bridge.send("windows", operations.focus, { windowId: this.id });
+                if (this.name === "Platform") {
+                    window.open(undefined, this.id);
+                }
+                else {
+                    yield this._bridge.send("windows", operations.focus, { windowId: this.id });
+                }
                 return this.me;
             });
         }
@@ -1839,12 +1908,13 @@
             return __awaiter$1(this, void 0, void 0, function* () {
                 this.controllers = controllers;
                 yield Promise.all([
-                    this.checkWaitMethod(this.decorateCommunicationId(GlueWebPlatformControlName)),
-                    this.checkWaitMethod(this.decorateCommunicationId(GlueWebPlatformStreamName))
+                    this.checkWaitMethod(GlueWebPlatformControlName),
+                    this.checkWaitMethod(GlueWebPlatformStreamName)
                 ]);
+                const systemId = this.communicationId;
                 const [sub] = yield Promise.all([
-                    this.coreGlue.interop.subscribe(this.decorateCommunicationId(GlueWebPlatformStreamName)),
-                    this.coreGlue.interop.registerAsync(this.decorateCommunicationId(GlueClientControlName), (args, _, success, error) => this.passMessageController(args, success, error))
+                    this.coreGlue.interop.subscribe(GlueWebPlatformStreamName, systemId ? { target: { instance: this.communicationId } } : undefined),
+                    this.coreGlue.interop.registerAsync(GlueClientControlName, (args, _, success, error) => this.passMessageController(args, success, error))
                 ]);
                 this.sub = sub;
                 this.sub.onData((pkg) => this.passMessageController(pkg.data));
@@ -1870,12 +1940,12 @@
                         throw new Error(`Unexpected internal outgoing validation error: ${error.message}, for operation: ${operation.name} and input: ${JSON.stringify(error.input)}`);
                     }
                 }
-                let operationResult;
                 try {
-                    operationResult = yield this.transmitMessage(domain, operation, operationData, options);
+                    const operationResult = yield this.transmitMessage(domain, operation, operationData, options);
                     if (operation.resultDecoder) {
-                        operationResult = operation.resultDecoder.runWithException(operationResult);
+                        operation.resultDecoder.runWithException(operationResult);
                     }
+                    return operationResult;
                 }
                 catch (error) {
                     if (error.kind) {
@@ -1883,17 +1953,27 @@
                     }
                     throw new Error(error.message);
                 }
-                return operationResult;
             });
         }
         checkWaitMethod(name) {
             return PromisePlus((resolve) => {
-                const hasMethod = this.coreGlue.interop.methods().some((method) => method.name === name);
+                const hasMethod = this.coreGlue.interop.methods().some((method) => {
+                    const nameMatch = method.name === name;
+                    const serverMatch = this.communicationId ?
+                        method.getServers().some((server) => server.instance === this.communicationId) :
+                        true;
+                    return nameMatch && serverMatch;
+                });
                 if (hasMethod) {
                     return resolve();
                 }
-                const unSub = this.coreGlue.interop.methodAdded((method) => {
-                    if (method.name === name) {
+                const unSub = this.coreGlue.interop.serverMethodAdded((data) => {
+                    const method = data.method;
+                    const server = data.server;
+                    const serverMatch = this.communicationId ?
+                        server.instance === this.communicationId :
+                        true;
+                    if (method.name === name && serverMatch) {
                         unSub();
                         resolve();
                     }
@@ -1928,8 +2008,9 @@
                 const messageData = { domain, data, operation: operation.name };
                 let invocationResult;
                 const baseErrorMessage = `Internal Platform Communication Error. Attempted operation: ${JSON.stringify(operation.name)} with data: ${JSON.stringify(data)}. `;
+                const systemId = this.communicationId;
                 try {
-                    invocationResult = yield this.coreGlue.interop.invoke(this.decorateCommunicationId(GlueWebPlatformControlName), messageData, undefined, options);
+                    invocationResult = yield this.coreGlue.interop.invoke(GlueWebPlatformControlName, messageData, systemId ? { instance: this.communicationId } : undefined, options);
                     if (!invocationResult) {
                         throw new Error("Received unsupported result from the platform - empty result");
                     }
@@ -1946,9 +2027,6 @@
                 }
                 return invocationResult.all_return_values[0].returned;
             });
-        }
-        decorateCommunicationId(base) {
-            return `${base}.${this.communicationId}`;
         }
     }
 
@@ -2005,9 +2083,15 @@
             });
         }
         onInstanceStarted(callback) {
+            if (typeof callback !== "function") {
+                throw new Error("onInstanceStarted requires a single argument of type function");
+            }
             return this.registry.add("instance-started", callback, this.instances);
         }
         onInstanceStopped(callback) {
+            if (typeof callback !== "function") {
+                throw new Error("onInstanceStopped requires a single argument of type function");
+            }
             return this.registry.add("instance-stopped", callback);
         }
         startApplication(appName, context, options) {
@@ -2064,12 +2148,21 @@
             });
         }
         onAppAdded(callback) {
+            if (typeof callback !== "function") {
+                throw new Error("onAppAdded requires a single argument of type function");
+            }
             return this.registry.add("application-added", callback, this.applications);
         }
         onAppRemoved(callback) {
+            if (typeof callback !== "function") {
+                throw new Error("onAppRemoved requires a single argument of type function");
+            }
             return this.registry.add("application-removed", callback);
         }
         onAppChanged(callback) {
+            if (typeof callback !== "function") {
+                throw new Error("onAppChanged requires a single argument of type function");
+            }
             return this.registry.add("application-changed", callback);
         }
         handleApplicationAddedMessage(appData) {
@@ -2276,7 +2369,7 @@
             if (typeof callback !== "function") {
                 throw new Error("OnInstanceStarted requires a single argument of type function");
             }
-            this.controller.onInstanceStarted((instance) => {
+            return this.controller.onInstanceStarted((instance) => {
                 if (instance.application.name === this.data.name) {
                     callback(instance);
                 }
@@ -2286,7 +2379,7 @@
             if (typeof callback !== "function") {
                 throw new Error("OnInstanceStarted requires a single argument of type function");
             }
-            this.controller.onInstanceStopped((instance) => {
+            return this.controller.onInstanceStopped((instance) => {
                 if (instance.application.name === this.data.name) {
                     callback(instance);
                 }
@@ -2307,11 +2400,18 @@
         getAll: { name: "getAll", dataDecoder: getAllLayoutsConfigDecoder, resultDecoder: allLayoutsSummariesResultDecoder },
         export: { name: "export", dataDecoder: getAllLayoutsConfigDecoder, resultDecoder: allLayoutsFullConfigDecoder },
         import: { name: "import", dataDecoder: layoutsImportConfigDecoder },
-        remove: { name: "remove", dataDecoder: simpleLayoutConfigDecoder }
+        remove: { name: "remove", dataDecoder: simpleLayoutConfigDecoder },
+        save: { name: "save", dataDecoder: saveLayoutConfigDecoder, resultDecoder: simpleLayoutResultDecoder },
+        restore: { name: "restore", dataDecoder: restoreLayoutConfigDecoder },
+        clientSaveRequest: { name: "clientSaveRequest", dataDecoder: platformSaveRequestConfigDecoder, resultDecoder: saveRequestClientResponseDecoder },
+        getGlobalPermissionState: { name: "getGlobalPermissionState", resultDecoder: permissionStateResultDecoder },
+        requestGlobalPermission: { name: "requestGlobalPermission", resultDecoder: simpleAvailabilityResultDecoder },
+        checkGlobalActivated: { name: "checkGlobalActivated", resultDecoder: simpleAvailabilityResultDecoder }
     };
 
     class LayoutsController {
         constructor() {
+            this.defaultLayoutRestoreTimeoutMS = 120000;
             this.registry = lib();
         }
         start(coreGlue, ioc) {
@@ -2319,6 +2419,7 @@
                 this.logger = coreGlue.logger.subLogger("layouts.controller.web");
                 this.logger.trace("starting the web layouts controller");
                 this.bridge = ioc.bridge;
+                this.windowsController = ioc.windowsController;
                 this.addOperationsExecutors();
                 const api = this.toApi();
                 this.logger.trace("no need for platform registration, attaching the layouts property to glue and returning");
@@ -2350,7 +2451,11 @@
                 remove: this.remove.bind(this),
                 onAdded: this.onAdded.bind(this),
                 onChanged: this.onChanged.bind(this),
-                onRemoved: this.onRemoved.bind(this)
+                onRemoved: this.onRemoved.bind(this),
+                onSaveRequested: this.subscribeOnSaveRequested.bind(this),
+                getMultiScreenPermissionState: this.getGlobalPermissionState.bind(this),
+                requestMultiScreenPermission: this.requestGlobalPermission.bind(this),
+                getGlobalTypeState: this.checkGlobalActivated.bind(this)
             };
             return Object.freeze(api);
         }
@@ -2358,6 +2463,7 @@
             operations$2.layoutAdded.execute = this.handleOnAdded.bind(this);
             operations$2.layoutChanged.execute = this.handleOnChanged.bind(this);
             operations$2.layoutRemoved.execute = this.handleOnRemoved.bind(this);
+            operations$2.clientSaveRequest.execute = this.handleSaveRequest.bind(this);
         }
         get(name, type) {
             return __awaiter$1(this, void 0, void 0, function* () {
@@ -2376,10 +2482,8 @@
         }
         export(type) {
             return __awaiter$1(this, void 0, void 0, function* () {
-                if (type) {
-                    layoutTypeDecoder.runWithException(type);
-                }
-                const result = yield this.bridge.send("layouts", operations$2.export, { type: "Workspace" });
+                layoutTypeDecoder.runWithException(type);
+                const result = yield this.bridge.send("layouts", operations$2.export, { type });
                 return result.layouts;
             });
         }
@@ -2399,19 +2503,22 @@
                     }
                     return soFar;
                 }, { valid: [] });
-                yield this.bridge.send("layouts", operations$2.import, { layouts: parseResult.valid, mode });
+                const layoutsToImport = layouts.filter((layout) => parseResult.valid.some((validLayout) => validLayout.name === layout.name));
+                yield this.bridge.send("layouts", operations$2.import, { layouts: layoutsToImport, mode });
             });
         }
         save(layout) {
             return __awaiter$1(this, void 0, void 0, function* () {
                 newLayoutOptionsDecoder.runWithException(layout);
-                throw new Error("Save is not supported in Core at the moment");
+                const saveResult = yield this.bridge.send("layouts", operations$2.save, { layout });
+                return saveResult.layout;
             });
         }
         restore(options) {
             return __awaiter$1(this, void 0, void 0, function* () {
                 restoreOptionsDecoder.runWithException(options);
-                throw new Error("Restore is not supported in Core at the moment");
+                const invocationTimeout = options.timeout ? options.timeout * 2 : this.defaultLayoutRestoreTimeoutMS;
+                yield this.bridge.send("layouts", operations$2.restore, { layout: options }, { methodResponseTimeoutMs: invocationTimeout });
             });
         }
         remove(type, name) {
@@ -2421,8 +2528,53 @@
                 yield this.bridge.send("layouts", operations$2.remove, { type, name });
             });
         }
+        handleSaveRequest(config) {
+            return __awaiter$1(this, void 0, void 0, function* () {
+                const response = {};
+                if (this.saveRequestSubscription) {
+                    try {
+                        const onSaveRequestResponse = this.saveRequestSubscription(config);
+                        response.windowContext = onSaveRequestResponse === null || onSaveRequestResponse === void 0 ? void 0 : onSaveRequestResponse.windowContext;
+                    }
+                    catch (error) {
+                        this.logger.warn(`An error was thrown by the onSaveRequested callback, ignoring the callback: ${JSON.stringify(error)}`);
+                    }
+                }
+                return response;
+            });
+        }
+        getGlobalPermissionState() {
+            return __awaiter$1(this, void 0, void 0, function* () {
+                const requestResult = yield this.bridge.send("layouts", operations$2.getGlobalPermissionState, undefined);
+                return requestResult;
+            });
+        }
+        requestGlobalPermission() {
+            return __awaiter$1(this, void 0, void 0, function* () {
+                const currentState = (yield this.getGlobalPermissionState()).state;
+                if (currentState === "denied") {
+                    return { permissionGranted: false };
+                }
+                if (currentState === "granted") {
+                    return { permissionGranted: true };
+                }
+                const myWindow = this.windowsController.my();
+                if (myWindow.name !== "Platform") {
+                    throw new Error("Cannot request permission for multi-window placement from any app other than the Platform.");
+                }
+                const requestResult = yield this.bridge.send("layouts", operations$2.requestGlobalPermission, undefined, { methodResponseTimeoutMs: 180000 });
+                return { permissionGranted: requestResult.isAvailable };
+            });
+        }
+        checkGlobalActivated() {
+            return __awaiter$1(this, void 0, void 0, function* () {
+                const requestResult = yield this.bridge.send("layouts", operations$2.checkGlobalActivated, undefined);
+                return { activated: requestResult.isAvailable };
+            });
+        }
         onAdded(callback) {
-            this.export().then((layouts) => layouts.forEach((layout) => callback(layout))).catch(() => { });
+            this.export("Global").then((layouts) => layouts.forEach((layout) => callback(layout))).catch(() => { });
+            this.export("Workspace").then((layouts) => layouts.forEach((layout) => callback(layout))).catch(() => { });
             return this.registry.add(operations$2.layoutAdded.name, callback);
         }
         onChanged(callback) {
@@ -2430,6 +2582,18 @@
         }
         onRemoved(callback) {
             return this.registry.add(operations$2.layoutRemoved.name, callback);
+        }
+        subscribeOnSaveRequested(callback) {
+            if (typeof callback !== "function") {
+                throw new Error("Cannot subscribe to onSaveRequested, because the provided argument is not a valid callback function.");
+            }
+            if (this.saveRequestSubscription) {
+                throw new Error("Cannot subscribe to onSaveRequested, because this client has already subscribed and only one subscription is supported. Consider unsubscribing from the initial one.");
+            }
+            this.saveRequestSubscription = callback;
+            return () => {
+                delete this.saveRequestSubscription;
+            };
         }
         handleOnAdded(layout) {
             return __awaiter$1(this, void 0, void 0, function* () {
@@ -2594,11 +2758,11 @@
         shuffled: getShuffled
     };
 
-    var crypto = typeof window === 'object' && (window.crypto || window.msCrypto); // IE 11 uses window.msCrypto
+    var crypto$1 = typeof window === 'object' && (window.crypto || window.msCrypto); // IE 11 uses window.msCrypto
 
     var randomByte;
 
-    if (!crypto || !crypto.getRandomValues) {
+    if (!crypto$1 || !crypto$1.getRandomValues) {
         randomByte = function(size) {
             var bytes = [];
             for (var i = 0; i < size; i++) {
@@ -2608,7 +2772,7 @@
         };
     } else {
         randomByte = function(size) {
-            return crypto.getRandomValues(new Uint8Array(size));
+            return crypto$1.getRandomValues(new Uint8Array(size));
         };
     }
 
@@ -2967,7 +3131,7 @@
             if (typeof handler !== "function") {
                 throw new Error("Cannot add intent listener, because the provided handler is not a function!");
             }
-            let subscribed = true;
+            let registerPromise;
             const intentName = typeof intent === "string" ? intent : intent.intent;
             const methodName = `${this.GlueWebIntentsPrefix}${intentName}`;
             const alreadyRegistered = this.myIntents.has(intentName);
@@ -2977,14 +3141,10 @@
             this.myIntents.add(intentName);
             const result = {
                 unsubscribe: () => {
-                    subscribed = false;
-                    try {
-                        this.interop.unregister(methodName);
-                        this.myIntents.delete(intentName);
-                    }
-                    catch (error) {
-                        this.logger.trace(`Unsubscribed intent listener, but ${methodName} unregistration failed!`);
-                    }
+                    this.myIntents.delete(intentName);
+                    registerPromise
+                        .then(() => this.interop.unregister(methodName))
+                        .catch((err) => this.logger.trace(`Unregistration of a method with name ${methodName} failed with reason: ${err}`));
                 }
             };
             let intentFlag = {};
@@ -2992,10 +3152,14 @@
                 const rest = __rest$1(intent, ["intent"]);
                 intentFlag = rest;
             }
-            this.interop.register({ name: methodName, flags: { intent: intentFlag } }, (args) => {
-                if (subscribed) {
+            registerPromise = this.interop.register({ name: methodName, flags: { intent: intentFlag } }, (args) => {
+                if (this.myIntents.has(intentName)) {
                     return handler(args);
                 }
+            });
+            registerPromise.catch(err => {
+                this.myIntents.delete(intentName);
+                this.logger.warn(`Registration of a method with name ${methodName} failed with reason: ${err}`);
             });
             return result;
         }
@@ -3023,6 +3187,24 @@
         }
     }
 
+    const Glue42CoreMessageTypes = {
+        platformUnload: { name: "platformUnload" },
+        transportSwitchRequest: { name: "transportSwitchRequest" },
+        transportSwitchResponse: { name: "transportSwitchResponse" },
+        getCurrentTransport: { name: "getCurrentTransport" },
+        getCurrentTransportResponse: { name: "getCurrentTransportResponse" },
+        checkPreferredLogic: { name: "checkPreferredLogic" },
+        checkPreferredConnection: { name: "checkPreferredConnection" },
+        checkPreferredLogicResponse: { name: "checkPreferredLogicResponse" },
+        checkPreferredConnectionResponse: { name: "checkPreferredConnectionResponse" }
+    };
+    const webPlatformTransportName = "web-platform";
+    const latestFDC3Type = "latest_fdc3_type";
+
+    const operations$5 = {
+        addChannel: { name: "addChannel", dataDecoder: channelContextDecoder },
+    };
+
     class ChannelsController {
         constructor() {
             this.registry = lib();
@@ -3030,11 +3212,12 @@
             this.SubsKey = "subs";
             this.ChangedKey = "changed";
         }
-        start(coreGlue) {
+        start(coreGlue, ioc) {
             return __awaiter$1(this, void 0, void 0, function* () {
                 this.logger = coreGlue.logger.subLogger("channels.controller.web");
                 this.logger.trace("starting the web channels controller");
                 this.contexts = coreGlue.contexts;
+                this.bridge = ioc.bridge;
                 this.logger.trace("no need for platform registration, attaching the channels property to glue and returning");
                 const api = this.toApi();
                 coreGlue.channels = api;
@@ -3118,6 +3301,7 @@
         updateData(name, data) {
             return __awaiter$1(this, void 0, void 0, function* () {
                 const contextName = this.createContextName(name);
+                const fdc3Type = this.getFDC3Type(data);
                 if (this.contexts.setPathSupported) {
                     const pathValues = Object.keys(data).map((key) => {
                         return {
@@ -3125,12 +3309,28 @@
                             value: data[key]
                         };
                     });
+                    if (fdc3Type) {
+                        pathValues.push({ path: latestFDC3Type, value: fdc3Type });
+                    }
                     yield this.contexts.setPaths(contextName, pathValues);
                 }
                 else {
+                    if (fdc3Type) {
+                        data[latestFDC3Type] = fdc3Type;
+                    }
                     yield this.contexts.update(contextName, { data });
                 }
             });
+        }
+        getFDC3Type(data) {
+            const fdc3PropsArr = Object.keys(data).filter((key) => key.indexOf("fdc3_") === 0);
+            if (fdc3PropsArr.length === 0) {
+                return;
+            }
+            if (fdc3PropsArr.length > 1) {
+                throw new Error("FDC3 does not support updating of multiple context keys");
+            }
+            return fdc3PropsArr[0].split("_").slice(1).join("_");
         }
         subscribe(callback) {
             if (typeof callback !== "function") {
@@ -3177,6 +3377,10 @@
                 channelNameDecoder(channelNames).runWithException(name);
                 const contextName = this.createContextName(name);
                 const channelContext = yield this.contexts.get(contextName);
+                if (channelContext.latest_fdc3_type) {
+                    const rest = __rest$1(channelContext, ["latest_fdc3_type"]);
+                    return Object.assign({}, rest);
+                }
                 return channelContext;
             });
         }
@@ -3190,11 +3394,19 @@
             return this.registry.add(this.ChangedKey, callback);
         }
         add(info) {
-            throw new Error("Method `add()` isn't implemented.");
+            return __awaiter$1(this, void 0, void 0, function* () {
+                const channelContext = channelContextDecoder.runWithException(info);
+                const channelWithSuchNameExists = this.getAllChannelNames().includes(channelContext.name);
+                if (channelWithSuchNameExists) {
+                    throw new Error("There's an already existing channel with such name");
+                }
+                yield this.bridge.send("channels", operations$5.addChannel, channelContext);
+                return channelContext;
+            });
         }
     }
 
-    const operations$5 = {
+    const operations$6 = {
         getEnvironment: { name: "getEnvironment", resultDecoder: anyDecoder },
         getBase: { name: "getBase", resultDecoder: anyDecoder }
     };
@@ -3212,8 +3424,8 @@
         }
         setEnvironment() {
             return __awaiter$1(this, void 0, void 0, function* () {
-                const environment = yield this.bridge.send("system", operations$5.getEnvironment, undefined);
-                const base = yield this.bridge.send("system", operations$5.getBase, undefined);
+                const environment = yield this.bridge.send("system", operations$6.getEnvironment, undefined);
+                const base = yield this.bridge.send("system", operations$6.getBase, undefined);
                 const glue42core = Object.assign({}, window.glue42core, base, { environment });
                 window.glue42core = Object.freeze(glue42core);
             });
@@ -3247,7 +3459,7 @@
         })
     });
 
-    const operations$6 = {
+    const operations$7 = {
         clientHello: { name: "clientHello", resultDecoder: extensionConfigDecoder }
     };
 
@@ -3297,7 +3509,7 @@
         registerWithPlatform() {
             return __awaiter$1(this, void 0, void 0, function* () {
                 this.logger.trace("registering with the platform");
-                this.config = yield this.bridge.send("extension", operations$6.clientHello, { windowId: this.windowId });
+                this.config = yield this.bridge.send("extension", operations$7.clientHello, { windowId: this.windowId });
                 this.logger.trace("the platform responded to the hello message with a valid extension config");
             });
         }
@@ -3371,19 +3583,6 @@
             window.dispatchEvent(event);
         }
     }
-
-    const Glue42CoreMessageTypes = {
-        platformUnload: { name: "platformUnload" },
-        transportSwitchRequest: { name: "transportSwitchRequest" },
-        transportSwitchResponse: { name: "transportSwitchResponse" },
-        getCurrentTransport: { name: "getCurrentTransport" },
-        getCurrentTransportResponse: { name: "getCurrentTransportResponse" },
-        checkPreferredLogic: { name: "checkPreferredLogic" },
-        checkPreferredConnection: { name: "checkPreferredConnection" },
-        checkPreferredLogicResponse: { name: "checkPreferredLogicResponse" },
-        checkPreferredConnectionResponse: { name: "checkPreferredConnectionResponse" }
-    };
-    const webPlatformTransportName = "web-platform";
 
     class PreferredConnectionController {
         constructor(coreGlue) {
@@ -3572,8 +3771,7 @@
     }
 
     class IoC {
-        constructor(coreGlue) {
-            this.coreGlue = coreGlue;
+        constructor() {
             this.controllers = {
                 windows: this.windowsController,
                 appManager: this.appManagerController,
@@ -3584,12 +3782,6 @@
                 system: this.systemController,
                 extension: this.extensionController
             };
-            this._publicWindowId = coreGlue.connection.transport.publicWindowId;
-            this._actualWindowId = coreGlue.interop.instance.windowId;
-            this._communicationId = this.coreGlue.connection.transport.communicationId || window.glue42core.communicationId;
-            if (!this._communicationId) {
-                throw new Error("Cannot configure the Glue Bridge, because no communication id was provided.");
-            }
         }
         get communicationId() {
             return this._communicationId;
@@ -3659,18 +3851,24 @@
         }
         get bridge() {
             if (!this._bridgeInstance) {
-                this._bridgeInstance = new GlueBridge(this.coreGlue, this.communicationId);
+                this._bridgeInstance = new GlueBridge(this._coreGlue, this.communicationId);
             }
             return this._bridgeInstance;
         }
         get preferredConnectionController() {
             if (!this._preferredConnectionController) {
-                this._preferredConnectionController = new PreferredConnectionController(this.coreGlue);
+                this._preferredConnectionController = new PreferredConnectionController(this._coreGlue);
             }
             return this._preferredConnectionController;
         }
         get config() {
             return this._webConfig;
+        }
+        defineGlue(coreGlue) {
+            this._coreGlue = coreGlue;
+            this._publicWindowId = coreGlue.connection.transport.publicWindowId;
+            this._actualWindowId = coreGlue.interop.instance.windowId;
+            this._communicationId = coreGlue.connection.transport.communicationId || window.glue42core.communicationId;
         }
         defineConfig(config) {
             this._webConfig = config;
@@ -3698,18 +3896,19 @@
         }
     }
 
-    var version$1 = "2.6.1";
+    var version$1 = "2.8.3";
 
     const createFactoryFunction = (coreFactoryFunction) => {
         return (userConfig) => __awaiter$1(void 0, void 0, void 0, function* () {
-            const config = parseConfig(userConfig);
             if (window.glue42gd) {
-                return enterprise(config);
+                return enterprise(userConfig);
             }
+            const ioc = new IoC();
+            const config = parseConfig(userConfig);
             checkSingleton();
             const glue = yield PromiseWrap(() => coreFactoryFunction(config, { version: version$1 }), 30000, "Glue Web initialization timed out, because core didn't resolve");
             const logger = glue.logger.subLogger("web.main.controller");
-            const ioc = new IoC(glue);
+            ioc.defineGlue(glue);
             yield ioc.preferredConnectionController.start(config);
             yield ioc.bridge.start(ioc.controllers);
             ioc.defineConfig(config);
@@ -5265,14 +5464,14 @@
         shuffled: getShuffled$1
     };
 
-    var crypto$1 = typeof window === 'object' && (window.crypto || window.msCrypto); // IE 11 uses window.msCrypto
+    var crypto$1$1 = typeof window === 'object' && (window.crypto || window.msCrypto); // IE 11 uses window.msCrypto
 
     function randomByte$1() {
-        if (!crypto$1 || !crypto$1.getRandomValues) {
+        if (!crypto$1$1 || !crypto$1$1.getRandomValues) {
             return Math.floor(Math.random() * 256) & 0x30;
         }
         var dest = new Uint8Array(1);
-        crypto$1.getRandomValues(dest);
+        crypto$1$1.getRandomValues(dest);
         return dest[0] & 0x30;
     }
 
@@ -5793,6 +5992,7 @@
                             }
                             else if (config.provider) {
                                 authentication.provider = config.provider;
+                                authentication.providerContext = config.providerContext;
                             }
                             else {
                                 throw new Error("invalid auth message" + JSON.stringify(config));
@@ -6083,6 +6283,7 @@
             this.extContentConnecting = false;
             this.extContentConnected = false;
             this.parentInExtMode = false;
+            this.webNamespace = "g42_core_web";
             this.parentPingTimeout = 5000;
             this.connectionRequestTimeout = 7000;
             this.defaultTargetString = "*";
@@ -6260,8 +6461,9 @@
                     }
                     if (data.type === _this.messages.gatewayInternalConnect.name && data.success) {
                         _this.publicWindowId = _this.settings.windowId;
-                        if (_this.identity) {
+                        if (_this.identity && _this.publicWindowId) {
                             _this.identity.windowId = _this.publicWindowId;
+                            _this.identity.instance = _this.publicWindowId;
                         }
                         resolve();
                     }
@@ -6442,6 +6644,7 @@
         };
         WebPlatformTransport.prototype.handleAcceptanceOfMyRequest = function (data) {
             var _this = this;
+            var _a, _b, _c;
             this.logger.debug("handling a connection accepted signal targeted at me.");
             this.isPreferredActivated = data.isPreferredActivated;
             if (this.extContentConnecting) {
@@ -6455,7 +6658,11 @@
                 this.parentType === "top" ? data.parentWindowId :
                     window.name.substring(0, window.name.indexOf("#wsp"));
             if (this.identity && this.parentType !== "top") {
-                this.identity.windowId = this.publicWindowId;
+                this.identity.windowId = (_a = this.identity.windowId) !== null && _a !== void 0 ? _a : this.publicWindowId;
+                this.identity.instance = (_b = this.identity.instance) !== null && _b !== void 0 ? _b : this.publicWindowId;
+            }
+            if (this.identity && this.parentType === "top") {
+                this.identity.instance = (_c = this.identity.instance) !== null && _c !== void 0 ? _c : shortid$1();
             }
             if (this.identity && data.appName) {
                 this.identity.application = data.appName;
@@ -6587,9 +6794,6 @@
                     }
                 }
             };
-            if (this.parent) {
-                this.parent.postMessage(message, this.defaultTargetString);
-            }
             if (this.extContentConnected) {
                 return window.postMessage({ glue42ExtOut: message }, this.defaultTargetString);
             }
@@ -7264,7 +7468,7 @@
         }
     };
 
-    var version$2 = "5.7.1";
+    var version$2 = "5.7.8";
 
     function prepareConfig (configuration, ext, glue42gd) {
         var _a, _b, _c, _d;
@@ -8286,21 +8490,24 @@
                             _i = 0;
                             _e.label = 3;
                         case 3:
-                            if (!(_i < _b.length)) return [3, 6];
+                            if (!(_i < _b.length)) return [3, 7];
                             ctxName = _b[_i];
                             if (typeof this._contextsTempCache[ctxName] !== "object" || Object.keys(this._contextsTempCache[ctxName]).length === 0) {
-                                return [3, 5];
+                                return [3, 6];
                             }
                             lastKnownData = this._contextsTempCache[ctxName];
                             this._logger.info("Re-announcing known context: " + ctxName);
-                            return [4, this.update(ctxName, lastKnownData)];
+                            return [4, this.flushQueue()];
                         case 4:
                             _e.sent();
-                            _e.label = 5;
+                            return [4, this.update(ctxName, lastKnownData)];
                         case 5:
+                            _e.sent();
+                            _e.label = 6;
+                        case 6:
                             _i++;
                             return [3, 3];
-                        case 6:
+                        case 7:
                             this._contextsTempCache = {};
                             this._logger.info("Contexts are re-announced");
                             return [2];
@@ -11231,11 +11438,39 @@
             }
             return glue;
         }
+        function registerInstanceIfNeeded() {
+            return __awaiter$1$1(this, void 0, void 0, function () {
+                var RegisterInstanceMethodName, isMethodAvailable, error_1, typedError;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            RegisterInstanceMethodName = "T42.ACS.RegisterInstance";
+                            if (!(Utils.isNode() && typeof process.env._GD_STARTING_CONTEXT_ === "undefined" && typeof (userConfig === null || userConfig === void 0 ? void 0 : userConfig.application) !== "undefined")) return [3, 4];
+                            isMethodAvailable = _interop.methods({ name: RegisterInstanceMethodName }).length > 0;
+                            if (!isMethodAvailable) return [3, 4];
+                            _a.label = 1;
+                        case 1:
+                            _a.trys.push([1, 3, , 4]);
+                            return [4, _interop.invoke(RegisterInstanceMethodName, { appName: userConfig === null || userConfig === void 0 ? void 0 : userConfig.application, pid: process.pid })];
+                        case 2:
+                            _a.sent();
+                            return [3, 4];
+                        case 3:
+                            error_1 = _a.sent();
+                            typedError = error_1;
+                            _logger.error("Cannot register as an instance: " + JSON.stringify(typedError.message));
+                            return [3, 4];
+                        case 4: return [2];
+                    }
+                });
+            });
+        }
         return preloadPromise
             .then(setupLogger)
             .then(setupConnection)
             .then(function () { return Promise.all([setupMetrics(), setupInterop(), setupContexts(), setupBus()]); })
             .then(function () { return _interop.readyPromise; })
+            .then(function () { return registerInstanceIfNeeded(); })
             .then(function () {
             return setupExternalLibs(internalConfig.libs || []);
         })
@@ -11289,14 +11524,15 @@
     const GlueWebPlatformStreamName$1 = "T42.Web.Platform.Stream";
     const GlueClientControlName$1 = "T42.Web.Client.Control";
     const GlueWebPlatformWorkspacesStreamName = "T42.Web.Platform.WSP.Stream";
-    const GlueWorkspaceFrameClientControlName = "T42.Web.Workspaces.Control";
-    const GlueWorkspacesEventsReceiverName = "T42.Web.Workspaces.Events";
+    const GlueWorkspaceFrameClientControlName = "T42.Workspaces.Control";
+    const GlueWorkspacesEventsReceiverName = "T42.Workspaces.Events";
     const GlueWebIntentsPrefix = "Tick42.FDC3.Intents.";
     const ChannelContextPrefix = "___channel___";
     const dbName = "glue42core";
     const serviceWorkerBroadcastChannelName = "glue42-core-worker";
     const dbVersion = 2;
     const webPlatformTransportName$1 = "web-platform";
+    const defaultNoAppWindowComponentAppName = "no-app-window";
 
     const defaultPlatformConfig = {
         windows: {
@@ -11329,8 +11565,7 @@
         connection: {},
         glue: {},
         environment: {},
-        workspacesFrameCache: true,
-        communicationId: ""
+        workspacesFrameCache: true
     };
     const defaultFetchTimeoutMs = 3000;
     const defaultOpenerTimeoutMs = 1000;
@@ -14093,6 +14328,12 @@
     const nonNegativeNumberDecoder$1 = number$1().where((num) => num >= 0, "Expected a non-negative number");
     const nonEmptyStringDecoder$1 = string$1().where((s) => s.length > 0, "Expected a non-empty string");
     const anyDecoder$1 = anyJson$1();
+    const windowBoundsDecoder$1 = object$1({
+        top: number$1(),
+        left: number$1(),
+        width: nonNegativeNumberDecoder$1,
+        height: nonNegativeNumberDecoder$1
+    });
     const windowRelativeDirectionDecoder$1 = oneOf$1(constant$1("top"), constant$1("left"), constant$1("right"), constant$1("bottom"));
     const logLevelDecoder = oneOf$1(constant$1("trace"), constant$1("debug"), constant$1("info"), constant$1("warn"), constant$1("error"));
     const channelMetaDecoder = anyJson$1().where((meta) => typeof meta["color"] === "string" && meta["color"].length > 0, "Expected color to be a non-empty string");
@@ -14110,29 +14351,43 @@
         context: optional$1(anyJson$1()),
         metadata: optional$1(anyJson$1())
     });
-    const windowLayoutComponentDecoder$1 = object$1({
-        type: constant$1("window"),
-        componentType: componentTypeDecoder$1,
-        state: object$1({
-            name: anyJson$1(),
-            context: anyJson$1(),
-            url: nonEmptyStringDecoder$1,
-            bounds: anyJson$1(),
-            id: nonEmptyStringDecoder$1,
-            parentId: optional$1(nonEmptyStringDecoder$1),
-            main: boolean$1()
+    const windowComponentStateDecoder$1 = object$1({
+        context: optional$1(anyJson$1()),
+        bounds: windowBoundsDecoder$1,
+        createArgs: object$1({
+            name: optional$1(nonEmptyStringDecoder$1),
+            url: optional$1(nonEmptyStringDecoder$1),
+            context: optional$1(anyJson$1())
+        }),
+        windowState: optional$1(nonEmptyStringDecoder$1),
+        restoreState: optional$1(nonEmptyStringDecoder$1),
+        instanceId: nonEmptyStringDecoder$1,
+        isCollapsed: optional$1(boolean$1()),
+        isSticky: optional$1(boolean$1()),
+        restoreSettings: object$1({
+            groupId: optional$1(nonEmptyStringDecoder$1),
+            groupZOrder: optional$1(number$1())
         })
     });
-    const libDomainDecoder$1 = oneOf$1(constant$1("system"), constant$1("windows"), constant$1("appManager"), constant$1("layouts"), constant$1("workspaces"), constant$1("intents"), constant$1("notifications"), constant$1("extension"));
+    const windowLayoutComponentDecoder$1 = object$1({
+        type: constant$1("window"),
+        componentType: optional$1(componentTypeDecoder$1),
+        application: nonEmptyStringDecoder$1,
+        state: windowComponentStateDecoder$1
+    });
+    const libDomainDecoder$1 = oneOf$1(constant$1("system"), constant$1("windows"), constant$1("appManager"), constant$1("layouts"), constant$1("workspaces"), constant$1("intents"), constant$1("notifications"), constant$1("extension"), constant$1("channels"));
     const systemOperationTypesDecoder = oneOf$1(constant$1("getEnvironment"), constant$1("getBase"));
     const windowLayoutItemDecoder$1 = object$1({
         type: constant$1("window"),
         config: object$1({
             appName: nonEmptyStringDecoder$1,
+            windowId: optional$1(nonEmptyStringDecoder$1),
+            context: optional$1(anyJson$1()),
             url: optional$1(nonEmptyStringDecoder$1),
             title: optional$1(string$1()),
             showCloseButton: optional$1(boolean$1()),
             allowExtract: optional$1(boolean$1()),
+            allowReorder: optional$1(boolean$1()),
             isMaximized: optional$1(boolean$1())
         })
     });
@@ -14151,18 +14406,34 @@
         config: anyJson$1(),
         children: array$1(oneOf$1(columnLayoutItemDecoder$1, groupLayoutItemDecoder$1, windowLayoutItemDecoder$1, lazy$1(() => rowLayoutItemDecoder$1)))
     });
+    const workspaceLayoutComponentStateDecoder$1 = object$1({
+        config: anyJson$1(),
+        context: anyJson$1(),
+        children: array$1(oneOf$1(rowLayoutItemDecoder$1, columnLayoutItemDecoder$1, groupLayoutItemDecoder$1, windowLayoutItemDecoder$1))
+    });
     const workspaceLayoutComponentDecoder$1 = object$1({
         type: constant$1("Workspace"),
-        state: object$1({
-            config: anyJson$1(),
-            context: anyJson$1(),
-            children: array$1(oneOf$1(rowLayoutItemDecoder$1, columnLayoutItemDecoder$1, groupLayoutItemDecoder$1, windowLayoutItemDecoder$1))
-        })
+        application: optional$1(string$1()),
+        state: workspaceLayoutComponentStateDecoder$1
+    });
+    const workspaceFrameComponentStateDecoder$1 = object$1({
+        bounds: windowBoundsDecoder$1,
+        instanceId: nonEmptyStringDecoder$1,
+        selectedWorkspace: nonNegativeNumberDecoder$1,
+        workspaces: array$1(workspaceLayoutComponentStateDecoder$1),
+        windowState: optional$1(nonEmptyStringDecoder$1),
+        restoreState: optional$1(nonEmptyStringDecoder$1)
+    });
+    const workspaceFrameComponentDecoder$1 = object$1({
+        type: constant$1("workspaceFrame"),
+        application: nonEmptyStringDecoder$1,
+        componentType: optional$1(componentTypeDecoder$1),
+        state: workspaceFrameComponentStateDecoder$1
     });
     const glueLayoutDecoder$1 = object$1({
         name: nonEmptyStringDecoder$1,
         type: layoutTypeDecoder$1,
-        components: array$1(oneOf$1(windowLayoutComponentDecoder$1, workspaceLayoutComponentDecoder$1)),
+        components: array$1(oneOf$1(windowLayoutComponentDecoder$1, workspaceLayoutComponentDecoder$1, workspaceFrameComponentDecoder$1)),
         context: optional$1(anyJson$1()),
         metadata: optional$1(anyJson$1())
     });
@@ -14185,8 +14456,8 @@
         title: optional$1(nonEmptyStringDecoder$1),
         version: optional$1(nonEmptyStringDecoder$1),
         customProperties: optional$1(anyJson$1()),
-        icon: optional$1(nonEmptyStringDecoder$1),
-        caption: optional$1(nonEmptyStringDecoder$1),
+        icon: optional$1(string$1()),
+        caption: optional$1(string$1()),
         details: applicationDetailsDecoder$1,
         intents: optional$1(array$1(intentDefinitionDecoder$1)),
         hidden: optional$1(boolean$1())
@@ -14288,6 +14559,7 @@
             password: optional$1(nonEmptyStringDecoder$1),
             sessionId: optional$1(nonEmptyStringDecoder$1),
             provider: optional$1(nonEmptyStringDecoder$1),
+            providerContext: optional$1(anyJson$1()),
             token: optional$1(nonEmptyStringDecoder$1),
             gatewayToken: optional$1(nonEmptyStringDecoder$1),
             flowName: optional$1(constant$1("sspi")),
@@ -14301,16 +14573,16 @@
     });
     const windowsConfigDecoder = object$1({
         windowResponseTimeoutMs: optional$1(nonNegativeNumberDecoder$1),
-        defaultWindowOpenBounds: optional$1(object$1({
-            top: number$1(),
-            left: number$1(),
-            width: nonNegativeNumberDecoder$1,
-            height: nonNegativeNumberDecoder$1
-        }))
+        defaultWindowOpenBounds: optional$1(windowBoundsDecoder$1)
     });
     const serviceWorkerConfigDecoder = object$1({
         url: optional$1(nonEmptyStringDecoder$1),
         registrationPromise: optional$1(anyJson$1())
+    });
+    const corePlusConfigDecoder = object$1({
+        start: anyJson$1(),
+        critical: optional$1(boolean$1()),
+        config: anyJson$1()
     });
     const platformConfigDecoder = object$1({
         windows: optional$1(windowsConfigDecoder),
@@ -14324,6 +14596,7 @@
         glue: optional$1(glueConfigDecoder),
         workspaces: optional$1(workspacesConfigDecoder),
         environment: optional$1(anyJson$1()),
+        corePlus: optional$1(corePlusConfigDecoder),
         glueFactory: optional$1(anyJson$1().andThen((result) => functionCheck(result, "glueFactory")))
     });
     const windowOpenSettingsDecoder$1 = object$1({
@@ -14334,6 +14607,13 @@
         context: optional$1(anyJson$1()),
         relativeTo: optional$1(nonEmptyStringDecoder$1),
         relativeDirection: optional$1(windowRelativeDirectionDecoder$1)
+    });
+    const interceptorRegistrationRequestDecoder = object$1({
+        callInterceptor: anyJson$1().andThen((result) => functionCheck(result, "callInterceptor")),
+        interceptions: array$1(object$1({
+            domain: libDomainDecoder$1,
+            operation: nonEmptyStringDecoder$1
+        }))
     });
 
     class PlatformLogger {
@@ -14672,7 +14952,7 @@
     var shortid$2 = lib$3;
 
     class PlatformController {
-        constructor(systemController, glueController, windowsController, applicationsController, layoutsController, workspacesController, intentsController, channelsController, notificationsController, portsBridge, stateController, serviceWorkerController, extensionController, preferredConnectionController) {
+        constructor(systemController, glueController, windowsController, applicationsController, layoutsController, workspacesController, intentsController, channelsController, notificationsController, portsBridge, stateController, serviceWorkerController, extensionController, preferredConnectionController, interceptionController, pluginsController) {
             this.systemController = systemController;
             this.glueController = glueController;
             this.windowsController = windowsController;
@@ -14687,6 +14967,8 @@
             this.serviceWorkerController = serviceWorkerController;
             this.extensionController = extensionController;
             this.preferredConnectionController = preferredConnectionController;
+            this.interceptionController = interceptionController;
+            this.pluginsController = pluginsController;
             this.controllers = {
                 system: this.systemController,
                 windows: this.windowsController,
@@ -14708,104 +14990,76 @@
         get systemGlue() {
             return this.glueController.systemGlue;
         }
+        get platformApi() {
+            return this._platformApi;
+        }
         start(config) {
-            var _a;
+            var _a, _b;
             return __awaiter(this, void 0, void 0, function* () {
                 yield this.portsBridge.configure(config);
                 this.portsBridge.onClientUnloaded(this.handleClientUnloaded.bind(this));
                 yield this.glueController.start(config);
                 yield Promise.all([
-                    this.glueController.createPlatformSystemMethod(this.handleControlMessage.bind(this)),
+                    this.glueController.createPlatformSystemMethod(this.handleClientMessage.bind(this)),
                     this.glueController.createPlatformSystemStream()
                 ]);
                 this.stateController.start();
                 yield Promise.all(Object.values(this.controllers).map((controller) => controller.start(config)));
                 yield this.glueController.initClientGlue(config === null || config === void 0 ? void 0 : config.glue, config === null || config === void 0 ? void 0 : config.glueFactory, (_a = config === null || config === void 0 ? void 0 : config.workspaces) === null || _a === void 0 ? void 0 : _a.isFrame);
                 yield this.serviceWorkerController.connect(config);
-                if (config.plugins) {
-                    yield Promise.all(config.plugins.definitions.filter((def) => def.critical).map(this.startPlugin.bind(this)));
-                    config.plugins.definitions.filter((def) => !def.critical).map(this.startPlugin.bind(this));
-                }
-                this.serviceWorkerController.notifyReady();
+                this._platformApi = this.buildPlatformApi();
+                yield this.pluginsController.start({
+                    platformConfig: config,
+                    plugins: (_b = config.plugins) === null || _b === void 0 ? void 0 : _b.definitions,
+                    api: this.platformApi,
+                    handlePluginMessage: this.handlePluginMessage.bind(this)
+                });
+                yield this.pluginsController.startCorePlus(config.corePlus);
                 if (config.connection.preferred) {
                     yield this.preferredConnectionController.start(config.connection.preferred);
                 }
+                this.serviceWorkerController.notifyReady();
                 this.portsBridge.start();
             });
-        }
-        connectExtClient(client, port) {
-            return __awaiter(this, void 0, void 0, function* () {
-                yield this.portsBridge.handleExtConnectionRequest(client, port);
-            });
-        }
-        onSystemReconnect(callback) {
-            return this.preferredConnectionController.onReconnect(callback);
         }
         getClientGlue() {
             return this.glueController.clientGlue;
         }
-        startPlugin(definition) {
-            var _a;
-            return __awaiter(this, void 0, void 0, function* () {
-                try {
-                    const platformControls = {
-                        control: (args) => this.handlePluginMessage(args, definition.name),
-                        logger: logger.get(definition.name)
-                    };
-                    yield definition.start(this.glueController.clientGlue, definition.config, platformControls);
-                }
-                catch (error) {
-                    const stringError = typeof error === "string" ? error : JSON.stringify(error.message);
-                    const message = `Plugin: ${definition.name} threw while initiating: ${stringError}`;
-                    if (definition.critical) {
-                        throw new Error(message);
-                    }
-                    else {
-                        (_a = this.logger) === null || _a === void 0 ? void 0 : _a.warn(message);
-                    }
-                }
-            });
-        }
-        handleControlMessage(args, caller, success, error) {
-            var _a, _b;
-            const decodeResult = libDomainDecoder$1.run(args.domain);
-            if (!decodeResult.ok) {
-                const errString = JSON.stringify(decodeResult.error);
-                (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`rejecting execution of a command, because of a domain validation error: ${errString}`);
-                return error(`Cannot execute this platform control, because of domain validation error: ${errString}`);
-            }
-            const domain = decodeResult.result;
-            args.commandId = shortid$2.generate();
-            (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace(`[${args.commandId}] received a command for a valid domain: ${domain} from window ${caller.windowId} and interop id ${caller.instance}, forwarding to the appropriate controller`);
-            this.controllers[domain]
-                .handleControl(args)
-                .then((result) => {
-                var _a;
-                success(result);
-                (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${args.commandId}] this command was executed successfully, sending the result to the caller.`);
-            })
-                .catch((err) => {
-                var _a;
-                const stringError = typeof err === "string" ? err : JSON.stringify(err.message);
-                (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${args.commandId}] this command's execution was rejected, reason: ${stringError}`);
-                error(`The platform rejected operation ${args.operation} for domain: ${domain} with reason: ${stringError}`);
-            });
+        handleClientMessage(args, caller, success, error) {
+            this.processControllerCommand(args, "client", caller.instance)
+                .then((result) => success(result))
+                .catch((err) => error(err));
         }
         handlePluginMessage(args, pluginName) {
-            var _a, _b, _c;
+            return __awaiter(this, void 0, void 0, function* () {
+                return this.processControllerCommand(args, "plugin", pluginName);
+            });
+        }
+        processControllerCommand(args, callerType, callerId) {
+            var _a, _b, _c, _d;
             return __awaiter(this, void 0, void 0, function* () {
                 const decodeResult = libDomainDecoder$1.run(args.domain);
                 if (!decodeResult.ok) {
                     const errString = JSON.stringify(decodeResult.error);
-                    (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`rejecting execution of a command issued by plugin: ${pluginName}, because of a domain validation error: ${errString}`);
+                    (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`rejecting execution of a command issued by a ${callerType}: ${callerId}, because of a domain validation error: ${errString}`);
                     throw new Error(`Cannot execute this platform control, because of domain validation error: ${errString}`);
                 }
                 const domain = decodeResult.result;
-                args.commandId = shortid$2.generate();
-                (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace(`[${args.commandId}] received a command issued by plugin: ${pluginName} for a valid domain: ${domain}, forwarding to the appropriate controller`);
-                const result = yield this.controllers[domain].handleControl(args);
-                (_c = this.logger) === null || _c === void 0 ? void 0 : _c.trace(`[${args.commandId}] this command was executed successfully, sending the result to the caller.`);
-                return result;
+                const controlMessage = Object.assign({}, args, {
+                    commandId: shortid$2.generate(),
+                    callerId, callerType
+                });
+                (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace(`[${controlMessage.commandId}] received a command for a valid domain: ${domain} from ${callerType}: ${callerId}, forwarding to the appropriate controller`);
+                try {
+                    const result = yield this.executeCommand(controlMessage);
+                    (_c = this.logger) === null || _c === void 0 ? void 0 : _c.trace(`[${controlMessage.commandId}] this command was executed successfully, sending the result to the caller.`);
+                    return result;
+                }
+                catch (error) {
+                    const stringError = typeof error === "string" ? error : JSON.stringify(error.message);
+                    (_d = this.logger) === null || _d === void 0 ? void 0 : _d.trace(`[${controlMessage.commandId}] this command's execution was rejected, reason: ${stringError}`);
+                    throw new Error(`The platform rejected operation ${controlMessage.operation} for domain: ${domain} with reason: ${stringError}`);
+                }
             });
         }
         handleClientUnloaded(client) {
@@ -14822,6 +15076,36 @@
                     (_b = this.logger) === null || _b === void 0 ? void 0 : _b.error(`${controllerName} controller threw when handling unloaded client ${client.windowId} with error message: ${stringError}`);
                 }
             });
+        }
+        executeCommand(controlMessage) {
+            var _a, _b;
+            const interceptor = this.interceptionController.getOperationInterceptor({ domain: controlMessage.domain, operation: controlMessage.operation });
+            if (interceptor && !((_a = controlMessage.settings) === null || _a === void 0 ? void 0 : _a.skipInterception)) {
+                (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace(`[${controlMessage.commandId}] The operation is being intercepted and executed by: ${interceptor.name}`);
+                return interceptor.intercept(controlMessage);
+            }
+            return this.controllers[controlMessage.domain].handleControl(controlMessage);
+        }
+        buildPlatformApi() {
+            return {
+                version: this.glueController.platformVersion,
+                contextTrackGlue: this.ctxTrackingGlue,
+                systemGlue: this.systemGlue,
+                connectExtClient: (client, port) => {
+                    return this.connectExtClient(client, port);
+                },
+                onSystemReconnect: (callback) => {
+                    return this.onSystemReconnect(callback);
+                }
+            };
+        }
+        connectExtClient(client, port) {
+            return __awaiter(this, void 0, void 0, function* () {
+                yield this.portsBridge.handleExtConnectionRequest(client, port);
+            });
+        }
+        onSystemReconnect(callback) {
+            return this.preferredConnectionController.onReconnect(callback);
         }
     }
 
@@ -14957,7 +15241,20 @@
 
     var cjs = deepmerge_1;
 
-    var version$4 = "1.12.1";
+    let nanoid = (size = 21) =>
+      crypto.getRandomValues(new Uint8Array(size)).reduce((id, byte) => {
+        byte &= 63;
+        if (byte < 36) {
+          id += byte.toString(36);
+        } else if (byte < 62) {
+          id += (byte - 26).toString(36).toUpperCase();
+        } else if (byte > 62) {
+          id += '-';
+        } else {
+          id += '_';
+        }
+        return id
+      }, '');
 
     class Platform {
         constructor(controller, session, config) {
@@ -14974,21 +15271,8 @@
         getClientGlue() {
             return this.controller.getClientGlue();
         }
-        exposeAPI() {
-            return {
-                version: this.version,
-                contextTrackGlue: this.controller.ctxTrackingGlue,
-                systemGlue: this.controller.systemGlue,
-                connectExtClient: (client, port) => {
-                    return this.controller.connectExtClient(client, port);
-                },
-                onSystemReconnect: (callback) => {
-                    return this.controller.onSystemReconnect(callback);
-                }
-            };
-        }
-        get version() {
-            return version$4;
+        getPlatformApi() {
+            return this.controller.platformApi;
         }
         checkSingleton() {
             const glue42CoreNamespace = window.glue42core;
@@ -15004,19 +15288,19 @@
             let systemSettings = this.session.getSystemSettings();
             if (!systemSettings) {
                 systemSettings = {
-                    communicationId: shortid$2.generate()
+                    systemInstanceId: nanoid(),
+                    ctxTrackInstanceId: nanoid()
                 };
+                this.session.saveSystemSettings(systemSettings);
             }
-            this.session.saveSystemSettings(systemSettings);
             this.platformConfig.workspacesFrameCache = typeof ((_a = config.workspaces) === null || _a === void 0 ? void 0 : _a.frameCache) === "boolean" ? (_b = config.workspaces) === null || _b === void 0 ? void 0 : _b.frameCache : true;
-            this.platformConfig.communicationId = systemSettings.communicationId;
             this.transferPromiseObjects(verifiedConfig);
             const glue42core = {
                 platformStarted: true,
                 isPlatformFrame: !!((_c = config === null || config === void 0 ? void 0 : config.workspaces) === null || _c === void 0 ? void 0 : _c.isFrame),
                 environment: Object.assign({}, this.platformConfig.environment, { extension: undefined }),
                 workspacesFrameCache: this.platformConfig.workspacesFrameCache,
-                communicationId: this.platformConfig.communicationId
+                communicationId: systemSettings.systemInstanceId
             };
             window.glue42core = glue42core;
         }
@@ -17126,6 +17410,7 @@
                             }
                             else if (config.provider) {
                                 authentication.provider = config.provider;
+                                authentication.providerContext = config.providerContext;
                             }
                             else {
                                 throw new Error("invalid auth message" + JSON.stringify(config));
@@ -17416,6 +17701,7 @@
             this.extContentConnecting = false;
             this.extContentConnected = false;
             this.parentInExtMode = false;
+            this.webNamespace = "g42_core_web";
             this.parentPingTimeout = 5000;
             this.connectionRequestTimeout = 7000;
             this.defaultTargetString = "*";
@@ -17593,8 +17879,9 @@
                     }
                     if (data.type === _this.messages.gatewayInternalConnect.name && data.success) {
                         _this.publicWindowId = _this.settings.windowId;
-                        if (_this.identity) {
+                        if (_this.identity && _this.publicWindowId) {
                             _this.identity.windowId = _this.publicWindowId;
+                            _this.identity.instance = _this.publicWindowId;
                         }
                         resolve();
                     }
@@ -17775,6 +18062,7 @@
         };
         WebPlatformTransport.prototype.handleAcceptanceOfMyRequest = function (data) {
             var _this = this;
+            var _a, _b, _c;
             this.logger.debug("handling a connection accepted signal targeted at me.");
             this.isPreferredActivated = data.isPreferredActivated;
             if (this.extContentConnecting) {
@@ -17788,7 +18076,11 @@
                 this.parentType === "top" ? data.parentWindowId :
                     window.name.substring(0, window.name.indexOf("#wsp"));
             if (this.identity && this.parentType !== "top") {
-                this.identity.windowId = this.publicWindowId;
+                this.identity.windowId = (_a = this.identity.windowId) !== null && _a !== void 0 ? _a : this.publicWindowId;
+                this.identity.instance = (_b = this.identity.instance) !== null && _b !== void 0 ? _b : this.publicWindowId;
+            }
+            if (this.identity && this.parentType === "top") {
+                this.identity.instance = (_c = this.identity.instance) !== null && _c !== void 0 ? _c : shortid$3();
             }
             if (this.identity && data.appName) {
                 this.identity.application = data.appName;
@@ -17920,9 +18212,6 @@
                     }
                 }
             };
-            if (this.parent) {
-                this.parent.postMessage(message, this.defaultTargetString);
-            }
             if (this.extContentConnected) {
                 return window.postMessage({ glue42ExtOut: message }, this.defaultTargetString);
             }
@@ -18597,7 +18886,7 @@
         }
     };
 
-    var version$5 = "5.7.1";
+    var version$4 = "5.7.8";
 
     function prepareConfig$1 (configuration, ext, glue42gd) {
         var _a, _b, _c, _d;
@@ -18676,7 +18965,7 @@
                 process: pid,
                 region: region,
                 environment: environment,
-                api: ext.version || version$5
+                api: ext.version || version$4
             };
             if (configuration.identity) {
                 identity = Object.assign(identity, configuration.identity);
@@ -18785,7 +19074,7 @@
             connection: connection,
             metrics: (_c = configuration.metrics) !== null && _c !== void 0 ? _c : true,
             contexts: getContexts(),
-            version: ext.version || version$5,
+            version: ext.version || version$4,
             libs: (_d = ext.libs) !== null && _d !== void 0 ? _d : [],
             customLogger: configuration.customLogger
         };
@@ -19627,21 +19916,24 @@
                             _i = 0;
                             _e.label = 3;
                         case 3:
-                            if (!(_i < _b.length)) return [3, 6];
+                            if (!(_i < _b.length)) return [3, 7];
                             ctxName = _b[_i];
                             if (typeof this._contextsTempCache[ctxName] !== "object" || Object.keys(this._contextsTempCache[ctxName]).length === 0) {
-                                return [3, 5];
+                                return [3, 6];
                             }
                             lastKnownData = this._contextsTempCache[ctxName];
                             this._logger.info("Re-announcing known context: " + ctxName);
-                            return [4, this.update(ctxName, lastKnownData)];
+                            return [4, this.flushQueue()];
                         case 4:
                             _e.sent();
-                            _e.label = 5;
+                            return [4, this.update(ctxName, lastKnownData)];
                         case 5:
+                            _e.sent();
+                            _e.label = 6;
+                        case 6:
                             _i++;
                             return [3, 3];
-                        case 6:
+                        case 7:
                             this._contextsTempCache = {};
                             this._logger.info("Contexts are re-announced");
                             return [2];
@@ -22489,7 +22781,7 @@
                 _interop.invoke("T42.ACS.Feedback", feedbackInfo, "best");
             };
             var info = {
-                coreVersion: version$5,
+                coreVersion: version$4,
                 version: internalConfig.version
             };
             glueInitTimer.stop();
@@ -22572,11 +22864,39 @@
             }
             return glue;
         }
+        function registerInstanceIfNeeded() {
+            return __awaiter$2(this, void 0, void 0, function () {
+                var RegisterInstanceMethodName, isMethodAvailable, error_1, typedError;
+                return __generator$1(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            RegisterInstanceMethodName = "T42.ACS.RegisterInstance";
+                            if (!(Utils$1.isNode() && typeof process.env._GD_STARTING_CONTEXT_ === "undefined" && typeof (userConfig === null || userConfig === void 0 ? void 0 : userConfig.application) !== "undefined")) return [3, 4];
+                            isMethodAvailable = _interop.methods({ name: RegisterInstanceMethodName }).length > 0;
+                            if (!isMethodAvailable) return [3, 4];
+                            _a.label = 1;
+                        case 1:
+                            _a.trys.push([1, 3, , 4]);
+                            return [4, _interop.invoke(RegisterInstanceMethodName, { appName: userConfig === null || userConfig === void 0 ? void 0 : userConfig.application, pid: process.pid })];
+                        case 2:
+                            _a.sent();
+                            return [3, 4];
+                        case 3:
+                            error_1 = _a.sent();
+                            typedError = error_1;
+                            _logger.error("Cannot register as an instance: " + JSON.stringify(typedError.message));
+                            return [3, 4];
+                        case 4: return [2];
+                    }
+                });
+            });
+        }
         return preloadPromise
             .then(setupLogger)
             .then(setupConnection)
             .then(function () { return Promise.all([setupMetrics(), setupInterop(), setupContexts(), setupBus()]); })
             .then(function () { return _interop.readyPromise; })
+            .then(function () { return registerInstanceIfNeeded(); })
             .then(function () {
             return setupExternalLibs(internalConfig.libs || []);
         })
@@ -22592,7 +22912,7 @@
     if (typeof window !== "undefined") {
         window.GlueCore = GlueCore$1;
     }
-    GlueCore$1.version = version$5;
+    GlueCore$1.version = version$4;
     GlueCore$1.default = GlueCore$1;
 
     const PromiseWrap$1 = (promise, timeoutMilliseconds, timeoutMessage) => {
@@ -26257,10 +26577,15 @@
     };
     const wait = (ms) => new Promise((resolve) => setTimeout(() => resolve(), ms));
 
+    var version$5 = "1.14.3";
+
     class GlueController {
         constructor(portsBridge, sessionStorage) {
             this.portsBridge = portsBridge;
             this.sessionStorage = sessionStorage;
+        }
+        get platformVersion() {
+            return version$5;
         }
         get clientGlue() {
             return this._clientGlue;
@@ -26277,19 +26602,14 @@
         start(config) {
             return __awaiter(this, void 0, void 0, function* () {
                 this._config = config;
+                const systemSettings = this.sessionStorage.getSystemSettings();
+                if (!systemSettings) {
+                    throw new Error("Cannot initiate the glue controller, because the system settings are not defined");
+                }
+                this._systemSettings = systemSettings;
                 this._systemGlue = yield this.initSystemGlue(config.glue);
                 logger.setLogger(this._systemGlue.logger);
                 this._contextsTrackingGlue = yield this.setUpCtxTracking(config);
-            });
-        }
-        setUpCtxTracking(config) {
-            return __awaiter(this, void 0, void 0, function* () {
-                if (this._config.connection.preferred) {
-                    return yield this.initContextsTrackingGlue({
-                        reAnnounceKnownContexts: true,
-                        trackAllContexts: true
-                    }, config);
-                }
             });
         }
         initClientGlue(config, factory, isWorkspaceFrame) {
@@ -26307,22 +26627,22 @@
         }
         createPlatformSystemMethod(handler) {
             return __awaiter(this, void 0, void 0, function* () {
-                yield this.createMethodAsync(this.decorateCommunicationId(GlueWebPlatformControlName$1), handler);
+                yield this.createMethodAsync(GlueWebPlatformControlName$1, handler);
             });
         }
         createPlatformSystemStream() {
             return __awaiter(this, void 0, void 0, function* () {
-                this._systemStream = yield this.createStream(this.decorateCommunicationId(GlueWebPlatformStreamName$1));
+                this._systemStream = yield this.createStream(GlueWebPlatformStreamName$1);
             });
         }
         createWorkspacesStream() {
             return __awaiter(this, void 0, void 0, function* () {
-                this._workspacesStream = yield this.createStream(this.decorateCommunicationId(GlueWebPlatformWorkspacesStreamName));
+                this._workspacesStream = yield this.createStream(GlueWebPlatformWorkspacesStreamName);
             });
         }
         createWorkspacesEventsReceiver(callback) {
             return __awaiter(this, void 0, void 0, function* () {
-                yield this._systemGlue.interop.register(this.decorateCommunicationId(GlueWorkspacesEventsReceiverName), (args) => callback(args));
+                yield this._systemGlue.interop.register(GlueWorkspacesEventsReceiverName, (args) => callback(args));
             });
         }
         pushSystemMessage(domain, operation, data) {
@@ -26347,7 +26667,7 @@
                         throw new Error(`${baseErrorMessage} OutBound validation failed: ${JSON.stringify(decodeResult.error)}`);
                     }
                 }
-                const methodName = this.decorateCommunicationId(GlueWorkspaceFrameClientControlName);
+                const methodName = GlueWorkspaceFrameClientControlName;
                 const result = yield this.transmitMessage(methodName, messageData, baseErrorMessage, { windowId }, { methodResponseTimeoutMs: 30000, waitTimeoutMs: 30000 });
                 if (operationDefinition.resultDecoder) {
                     const decodeResult = operationDefinition.resultDecoder.run(result);
@@ -26358,22 +26678,22 @@
                 return result;
             });
         }
-        callWindow(operationDefinition, data, windowId) {
+        callWindow(domain, operationDefinition, data, windowId) {
             return __awaiter(this, void 0, void 0, function* () {
                 const operation = operationDefinition.name;
-                const messageData = { domain: "windows", operation, data };
-                const baseErrorMessage = `Internal Platform->Window Communication Error. Attempted calling client window: ${windowId} for operation ${operation}. `;
+                const messageData = { domain, operation, data };
+                const baseErrorMessage = `Internal Platform-> ${domain} Domain Communication Error. Attempted calling client window: ${windowId} for operation ${operation}. `;
                 if (operationDefinition.dataDecoder) {
                     const decodeResult = operationDefinition.dataDecoder.run(messageData.data);
                     if (!decodeResult.ok) {
                         throw new Error(`${baseErrorMessage} OutBound validation failed: ${JSON.stringify(decodeResult.error)}`);
                     }
                 }
-                const result = yield this.transmitMessage(this.decorateCommunicationId(GlueClientControlName$1), messageData, baseErrorMessage, { windowId }, { methodResponseTimeoutMs: 30000, waitTimeoutMs: 30000 });
+                const result = yield this.transmitMessage(GlueClientControlName$1, messageData, baseErrorMessage, { windowId }, { methodResponseTimeoutMs: 30000, waitTimeoutMs: 30000 });
                 if (operationDefinition.resultDecoder) {
                     const decodeResult = operationDefinition.resultDecoder.run(result);
                     if (!decodeResult.ok) {
-                        throw new Error(`${baseErrorMessage} Result validation failed: ${JSON.stringify(decodeResult.error)}`);
+                        throw new Error(`${baseErrorMessage} Result validation failed when calling window: ${windowId} for operation ${operation}: ${JSON.stringify(decodeResult.error)}`);
                     }
                 }
                 return result;
@@ -26443,8 +26763,21 @@
                     contexts: {
                         reAnnounceKnownContexts: false,
                         trackAllContexts: false
+                    },
+                    identity: {
+                        instance: this._systemSettings.systemInstanceId
                     }
                 });
+            });
+        }
+        setUpCtxTracking(config) {
+            return __awaiter(this, void 0, void 0, function* () {
+                if (this._config.connection.preferred) {
+                    return yield this.initContextsTrackingGlue({
+                        reAnnounceKnownContexts: true,
+                        trackAllContexts: true
+                    }, config);
+                }
             });
         }
         initContextsTrackingGlue(contextsSettings, config) {
@@ -26455,25 +26788,32 @@
                     application: "Platform-Contexts-Track",
                     gateway: { webPlatform: { port } },
                     logger: (_c = (_b = (_a = config === null || config === void 0 ? void 0 : config.glue) === null || _a === void 0 ? void 0 : _a.systemLogger) === null || _b === void 0 ? void 0 : _b.level) !== null && _c !== void 0 ? _c : "warn",
-                    contexts: contextsSettings
+                    contexts: contextsSettings,
+                    identity: {
+                        instance: this._systemSettings.ctxTrackInstanceId
+                    }
                 });
             });
         }
         registerClientWindow(isWorkspaceFrame) {
             if (isWorkspaceFrame) {
                 const platformFrame = this.sessionStorage.getPlatformFrame();
-                this._platformClientWindowId = platformFrame ? platformFrame.windowId : shortid$2.generate();
+                this._platformClientWindowId = platformFrame ? platformFrame.windowId :
+                    window.name ? window.name : shortid$2.generate();
                 if (!platformFrame) {
-                    const platformFrameData = { windowId: this._platformClientWindowId, active: true, isPlatform: true };
+                    const platformFrameData = { windowId: this.platformWindowId, active: true, isPlatform: true };
                     this.sessionStorage.saveFrameData(platformFrameData);
                 }
+                window.name = this.platformWindowId;
                 return;
             }
             const platformWindowData = this.sessionStorage.getWindowDataByName("Platform");
-            this._platformClientWindowId = platformWindowData ? platformWindowData.windowId : shortid$2.generate();
+            this._platformClientWindowId = platformWindowData ? platformWindowData.windowId :
+                window.name ? window.name : shortid$2.generate();
             if (!platformWindowData) {
                 this.sessionStorage.saveWindowData({ name: "Platform", windowId: this.platformWindowId });
             }
+            window.name = this.platformWindowId;
         }
         createMethodAsync(name, handler) {
             return __awaiter(this, void 0, void 0, function* () {
@@ -26506,9 +26846,6 @@
                 }
                 return invocationResult.all_return_values[0].returned;
             });
-        }
-        decorateCommunicationId(base) {
-            return `${base}.${this._config.communicationId}`;
         }
     }
 
@@ -26636,6 +26973,7 @@
             this.ioc = ioc;
             this.registry = lib$5();
             this.allPorts = {};
+            this.allClients = [];
             this.unLoadStarted = false;
             this.isPreferredActivated = false;
             this.transactionsController = this.ioc.transactionsController;
@@ -26645,7 +26983,11 @@
         }
         configure(config) {
             return __awaiter(this, void 0, void 0, function* () {
-                this.communicationId = config.communicationId;
+                const systemSettings = this.sessionStorage.getSystemSettings();
+                if (!systemSettings) {
+                    throw new Error("Cannot initiate the platform port bridge, because the system settings are not defined");
+                }
+                this._communicationId = systemSettings.systemInstanceId;
                 yield this.gateway.start(config === null || config === void 0 ? void 0 : config.gateway);
                 this.setUpGenericMessageHandler();
                 this.setUpUnload();
@@ -26749,6 +27091,17 @@
                 }
             });
         }
+        removeGwClient(windowId) {
+            const foundClient = this.allClients.find((client) => client.bridgeInstanceId === windowId);
+            if (!foundClient) {
+                return;
+            }
+            this.allClients = this.allClients.filter((client) => client.bridgeInstanceId !== windowId);
+            foundClient.client.disconnect();
+            if (this.allPorts[foundClient.clientId]) {
+                delete this.allPorts[foundClient.clientId];
+            }
+        }
         setUpUnload() {
             window.addEventListener("unload", () => {
                 this.unLoadStarted = true;
@@ -26786,8 +27139,9 @@
             var _a;
             return __awaiter(this, void 0, void 0, function* () {
                 const channel = this.ioc.createMessageChannel();
-                const gwClient = yield this.gateway.connectClient(channel.port1, this.removeClient.bind(this));
-                this.setupGwClientPort({ client: gwClient, clientId: clientId, clientPort: channel.port1 });
+                const client = yield this.gateway.connectClient(channel.port1, this.removeClient.bind(this));
+                this.setupGwClientPort({ client, clientId, clientPort: channel.port1 });
+                this.allClients.push({ client, bridgeInstanceId, clientId });
                 const foundData = this.sessionStorage.getBridgeInstanceData(bridgeInstanceId);
                 const appName = foundData === null || foundData === void 0 ? void 0 : foundData.appName;
                 const myWindowId = (_a = this.sessionStorage.getWindowDataByName("Platform")) === null || _a === void 0 ? void 0 : _a.windowId;
@@ -26795,7 +27149,7 @@
                     glue42core: {
                         type: Glue42CoreMessageTypes$1.connectionAccepted.name,
                         port: channel.port2,
-                        communicationId: this.communicationId,
+                        communicationId: this._communicationId,
                         isPreferredActivated: this.isPreferredActivated,
                         parentWindowId: myWindowId,
                         appName, clientId, clientType
@@ -26843,7 +27197,10 @@
                 const data = (_a = event.data) === null || _a === void 0 ? void 0 : _a.glue42core;
                 if (data && (data.type === Glue42CoreMessageTypes$1.clientUnload.name || data.type === Glue42CoreMessageTypes$1.gatewayDisconnect.name)) {
                     this.removeClient(data.data.clientId, false, data.type === Glue42CoreMessageTypes$1.gatewayDisconnect.name);
-                    config.client.disconnect();
+                    if (this.allClients.some((client) => client.clientId === data.data.clientId)) {
+                        this.allClients = this.allClients.filter((client) => client.clientId !== data.data.clientId);
+                        config.client.disconnect();
+                    }
                     return;
                 }
                 if (data && data.type === Glue42CoreMessageTypes$1.transportSwitchResponse.name) {
@@ -26921,20 +27278,10 @@
     });
     const windowBoundsResultDecoder$1 = object$1({
         windowId: nonEmptyStringDecoder$1,
-        bounds: object$1({
-            top: number$1(),
-            left: number$1(),
-            width: nonNegativeNumberDecoder$1,
-            height: nonNegativeNumberDecoder$1
-        })
+        bounds: windowBoundsDecoder$1
     });
     const frameWindowBoundsResultDecoder$1 = object$1({
-        bounds: object$1({
-            top: number$1(),
-            left: number$1(),
-            width: nonNegativeNumberDecoder$1,
-            height: nonNegativeNumberDecoder$1
-        })
+        bounds: windowBoundsDecoder$1
     });
     const windowUrlResultDecoder$1 = object$1({
         windowId: nonEmptyStringDecoder$1,
@@ -26953,7 +27300,7 @@
         title: string$1()
     });
 
-    const workspacesOperationDecoder = oneOf$1(constant$1("isWindowInWorkspace"), constant$1("createWorkspace"), constant$1("createFrame"), constant$1("initFrame"), constant$1("getAllFramesSummaries"), constant$1("getFrameSummary"), constant$1("getAllWorkspacesSummaries"), constant$1("getWorkspaceSnapshot"), constant$1("getAllLayoutsSummaries"), constant$1("openWorkspace"), constant$1("deleteLayout"), constant$1("saveLayout"), constant$1("importLayout"), constant$1("exportAllLayouts"), constant$1("restoreItem"), constant$1("maximizeItem"), constant$1("focusItem"), constant$1("closeItem"), constant$1("resizeItem"), constant$1("moveFrame"), constant$1("getFrameSnapshot"), constant$1("forceLoadWindow"), constant$1("ejectWindow"), constant$1("setItemTitle"), constant$1("moveWindowTo"), constant$1("addWindow"), constant$1("addContainer"), constant$1("bundleWorkspace"), constant$1("changeFrameState"), constant$1("getFrameState"), constant$1("getFrameBounds"), constant$1("frameHello"), constant$1("hibernateWorkspace"), constant$1("resumeWorkspace"), constant$1("getWorkspacesConfig"), constant$1("lockWorkspace"), constant$1("lockContainer"), constant$1("lockWindow"), constant$1("pinWorkspace"), constant$1("unpinWorkspace"), constant$1("getWorkspaceIcon"), constant$1("setWorkspaceIcon"));
+    const workspacesOperationDecoder = oneOf$1(constant$1("isWindowInWorkspace"), constant$1("createWorkspace"), constant$1("createFrame"), constant$1("initFrame"), constant$1("getAllFramesSummaries"), constant$1("getFrameSummary"), constant$1("getAllWorkspacesSummaries"), constant$1("getWorkspaceSnapshot"), constant$1("getAllLayoutsSummaries"), constant$1("openWorkspace"), constant$1("deleteLayout"), constant$1("saveLayout"), constant$1("importLayout"), constant$1("exportAllLayouts"), constant$1("restoreItem"), constant$1("maximizeItem"), constant$1("focusItem"), constant$1("closeItem"), constant$1("resizeItem"), constant$1("moveFrame"), constant$1("getFrameSnapshot"), constant$1("forceLoadWindow"), constant$1("ejectWindow"), constant$1("setItemTitle"), constant$1("moveWindowTo"), constant$1("addWindow"), constant$1("addContainer"), constant$1("bundleWorkspace"), constant$1("changeFrameState"), constant$1("getFrameState"), constant$1("getFrameBounds"), constant$1("frameHello"), constant$1("hibernateWorkspace"), constant$1("resumeWorkspace"), constant$1("getWorkspacesConfig"), constant$1("lockWorkspace"), constant$1("lockContainer"), constant$1("lockWindow"), constant$1("pinWorkspace"), constant$1("unpinWorkspace"), constant$1("getWorkspaceIcon"), constant$1("setWorkspaceIcon"), constant$1("checkStarted"), constant$1("getPlatformFrameId"), constant$1("getWorkspaceWindowsOnLayoutSaveContext"), constant$1("getWorkspacesLayouts"), constant$1("setMaximizationBoundary"));
     const frameHelloDecoder = object$1({
         windowId: optional$1(nonEmptyStringDecoder$1)
     });
@@ -27000,6 +27347,7 @@
         minHeight: optional$1(number$1()),
         maxHeight: optional$1(number$1()),
         allowExtract: optional$1(boolean$1()),
+        allowReorder: optional$1(boolean$1()),
         allowDrop: optional$1(boolean$1()),
         allowDropHeader: optional$1(boolean$1()),
         allowDropLeft: optional$1(boolean$1()),
@@ -27015,14 +27363,16 @@
         maxHeight: optional$1(number$1()),
         allowDrop: optional$1(boolean$1()),
         allowSplitters: optional$1(boolean$1()),
-        isPinned: optional$1(boolean$1())
+        isPinned: optional$1(boolean$1()),
+        maximizationBoundary: optional$1(boolean$1())
     });
     const columnDefinitionConfigDecoder = object$1({
         minWidth: optional$1(number$1()),
         maxWidth: optional$1(number$1()),
         allowDrop: optional$1(boolean$1()),
         allowSplitters: optional$1(boolean$1()),
-        isPinned: optional$1(boolean$1())
+        isPinned: optional$1(boolean$1()),
+        maximizationBoundary: optional$1(boolean$1())
     });
     const strictColumnDefinitionDecoder = object$1({
         type: constant$1("column"),
@@ -27047,7 +27397,8 @@
             top: optional$1(number$1()),
             width: optional$1(nonNegativeNumberDecoder$1),
             height: optional$1(nonNegativeNumberDecoder$1)
-        }))
+        })),
+        frameId: optional$1(nonEmptyStringDecoder$1)
     });
     const loadStrategyDecoder = oneOf$1(constant$1("direct"), constant$1("delayed"), constant$1("lazy"));
     const restoreWorkspaceConfigDecoder = object$1({
@@ -27086,7 +27437,10 @@
             allowDropRight: optional$1(boolean$1()),
             allowDropBottom: optional$1(boolean$1()),
             allowExtract: optional$1(boolean$1()),
+            allowWindowReorder: optional$1(boolean$1()),
             showSaveButton: optional$1(boolean$1()),
+            allowWorkspaceTabReorder: optional$1(boolean$1()),
+            allowWorkspaceTabExtract: optional$1(boolean$1()),
             showCloseButton: optional$1(boolean$1()),
             allowSplitters: optional$1(boolean$1()),
             positionIndex: optional$1(nonNegativeNumberDecoder$1)
@@ -27132,7 +27486,7 @@
         type: eventTypeDecoder,
         branch: nonEmptyStringDecoder$1
     });
-    const workspaceEventActionDecoder = oneOf$1(constant$1("opened"), constant$1("closing"), constant$1("closed"), constant$1("focus"), constant$1("added"), constant$1("loaded"), constant$1("removed"), constant$1("childrenUpdate"), constant$1("containerChange"), constant$1("maximized"), constant$1("minimized"), constant$1("normal"), constant$1("selected"));
+    const workspaceEventActionDecoder = oneOf$1(constant$1("opened"), constant$1("closing"), constant$1("closed"), constant$1("focus"), constant$1("added"), constant$1("loaded"), constant$1("removed"), constant$1("childrenUpdate"), constant$1("containerChange"), constant$1("maximized"), constant$1("restored"), constant$1("minimized"), constant$1("normal"), constant$1("selected"));
     const workspaceConfigResultDecoder = object$1({
         frameId: nonEmptyStringDecoder$1,
         title: nonEmptyStringDecoder$1,
@@ -27144,9 +27498,11 @@
         lastActive: number$1(),
         allowDrop: optional$1(boolean$1()),
         allowExtract: optional$1(boolean$1()),
+        allowWindowReorder: optional$1(boolean$1()),
         allowSplitters: optional$1(boolean$1()),
         showCloseButton: optional$1(boolean$1()),
         showSaveButton: optional$1(boolean$1()),
+        allowWorkspaceTabReorder: optional$1(boolean$1()),
         allowDropLeft: optional$1(boolean$1()),
         allowDropTop: optional$1(boolean$1()),
         allowDropRight: optional$1(boolean$1()),
@@ -27171,11 +27527,13 @@
         windowId: optional$1(nonEmptyStringDecoder$1),
         isMaximized: optional$1(boolean$1()),
         isFocused: boolean$1(),
+        isSelected: optional$1(boolean$1()),
         title: optional$1(string$1()),
-        appName: optional$1(nonEmptyStringDecoder$1)
+        appName: optional$1(nonEmptyStringDecoder$1),
+        context: optional$1(anyJson$1())
     }));
     const childSnapshotResultDecoder = object$1({
-        id: nonEmptyStringDecoder$1,
+        id: optional$1(nonEmptyStringDecoder$1),
         config: oneOf$1(parentSnapshotConfigDecoder, swimlaneWindowSnapshotConfigDecoder),
         children: optional$1(lazy$1(() => array$1(childSnapshotResultDecoder))),
         type: oneOf$1(constant$1("window"), constant$1("row"), constant$1("column"), constant$1("group"))
@@ -27184,7 +27542,8 @@
         id: nonEmptyStringDecoder$1,
         config: workspaceConfigResultDecoder,
         children: array$1(childSnapshotResultDecoder),
-        frameSummary: frameSummaryDecoder
+        frameSummary: frameSummaryDecoder,
+        context: optional$1(anyJson$1())
     });
     const customWorkspaceChildSnapshotDecoder = object$1({
         id: nonEmptyStringDecoder$1,
@@ -27213,6 +27572,7 @@
         metadata: optional$1(anyJson$1()),
         components: array$1(object$1({
             type: constant$1("Workspace"),
+            application: optional$1(nonEmptyStringDecoder$1),
             state: object$1({
                 config: anyJson$1(),
                 context: anyJson$1(),
@@ -27258,13 +27618,14 @@
     const frameStateResultDecoder = object$1({
         state: frameStateDecoder
     });
+    const frameBoundsDecoder = object$1({
+        top: number$1(),
+        left: number$1(),
+        width: nonNegativeNumberDecoder$1,
+        height: nonNegativeNumberDecoder$1
+    });
     const frameBoundsResultDecoder = object$1({
-        bounds: object$1({
-            top: nonNegativeNumberDecoder$1,
-            left: nonNegativeNumberDecoder$1,
-            width: nonNegativeNumberDecoder$1,
-            height: nonNegativeNumberDecoder$1
-        })
+        bounds: frameBoundsDecoder
     });
     const resizeConfigDecoder = object$1({
         width: optional$1(nonNegativeNumberDecoder$1),
@@ -27278,6 +27639,10 @@
     });
     const simpleItemConfigDecoder = object$1({
         itemId: nonEmptyStringDecoder$1
+    });
+    const frameSnapshotConfigDecoder = object$1({
+        itemId: nonEmptyStringDecoder$1,
+        excludeIds: optional$1(boolean$1())
     });
     const frameStateConfigDecoder = object$1({
         frameId: nonEmptyStringDecoder$1,
@@ -27326,11 +27691,13 @@
         config: parentSnapshotConfigDecoder
     });
     const frameStreamDataDecoder = object$1({
-        frameSummary: frameSummaryDecoder
+        frameSummary: frameSummaryDecoder,
+        frameBounds: optional$1(frameBoundsDecoder)
     });
     const workspaceStreamDataDecoder = object$1({
         workspaceSummary: workspaceSummaryResultDecoder,
-        frameSummary: frameSummaryDecoder
+        frameSummary: frameSummaryDecoder,
+        frameBounds: optional$1(frameBoundsDecoder)
     });
     const containerStreamDataDecoder = object$1({
         containerSummary: containerSummaryResultDecoder
@@ -27356,9 +27723,11 @@
             allowDropRight: optional$1(boolean$1()),
             allowDropBottom: optional$1(boolean$1()),
             allowExtract: optional$1(boolean$1()),
+            allowWindowReorder: optional$1(boolean$1()),
             allowSplitters: optional$1(boolean$1()),
             showCloseButton: optional$1(boolean$1()),
             showSaveButton: optional$1(boolean$1()),
+            allowWorkspaceTabReorder: optional$1(boolean$1()),
             showWindowCloseButtons: optional$1(boolean$1()),
             showEjectButtons: optional$1(boolean$1()),
             showAddWindowButtons: optional$1(boolean$1())
@@ -27368,6 +27737,7 @@
         windowPlacementId: nonEmptyStringDecoder$1,
         config: optional$1(object$1({
             allowExtract: optional$1(boolean$1()),
+            allowReorder: optional$1(boolean$1()),
             showCloseButton: optional$1(boolean$1())
         }))
     });
@@ -27392,6 +27762,7 @@
         type: constant$1("group"),
         config: optional$1(object$1({
             allowExtract: optional$1(boolean$1()),
+            allowReorder: optional$1(boolean$1()),
             allowDrop: optional$1(boolean$1()),
             allowDropHeader: optional$1(boolean$1()),
             allowDropLeft: optional$1(boolean$1()),
@@ -27426,6 +27797,34 @@
     const frameInitProtocolConfigDecoder = object$1({
         frameId: nonEmptyStringDecoder$1,
         workspaces: array$1(oneOf$1(workspaceDefinitionDecoder, restoreWorkspaceDefinitionDecoder))
+    });
+    const getWorkspaceWindowsOnLayoutSaveContextConfigDecoder = object$1({
+        layoutType: oneOf$1(constant$1("Global"), constant$1("Workspace")),
+        layoutName: nonEmptyStringDecoder$1,
+        windowIds: array$1(nonEmptyStringDecoder$1),
+        context: optional$1(anyJson$1()),
+        instances: optional$1(array$1(nonEmptyStringDecoder$1)),
+        ignoreInstances: optional$1(array$1(nonEmptyStringDecoder$1))
+    });
+    const setMaximizationBoundaryConfigDecoder = object$1({
+        itemId: nonEmptyStringDecoder$1,
+        enabled: boolean$1()
+    });
+    const workspaceWindowOnSaveDataDecoder = object$1({
+        windowId: nonEmptyStringDecoder$1,
+        windowContext: optional$1(anyJson$1())
+    });
+    const getWorkspaceWindowsOnLayoutSaveContextResult = object$1({
+        windowsOnSaveData: array$1(workspaceWindowOnSaveDataDecoder)
+    });
+    const getWorkspacesLayoutsConfigDecoder = object$1({
+        frameId: nonEmptyStringDecoder$1,
+        layoutName: nonEmptyStringDecoder$1,
+        layoutType: oneOf$1(constant$1("Global"), constant$1("Workspace")),
+        context: optional$1(anyJson$1())
+    });
+    const getWorkspacesLayoutsResponseDecoder = object$1({
+        workspaces: array$1(workspaceSnapshotResultDecoder)
     });
 
     class WindowsController$1 {
@@ -27524,7 +27923,8 @@
         }
         handleWorkspaceClientRemoval(client) {
             return __awaiter(this, void 0, void 0, function* () {
-                return this.cleanUpWindow(client.windowId);
+                this.cleanUpWindow(client.windowId);
+                this.ioc.portsBridge.removeGwClient(client.windowId);
             });
         }
         handleClientUnloaded(windowId, win) {
@@ -27553,6 +27953,7 @@
                 (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${commandId}] handling workspace window registration with id: ${data.windowId} and name: ${data.name}`);
                 this.sessionController.saveWindowData({ windowId: data.windowId, name: data.name });
                 this.sessionController.saveWorkspaceClient({ windowId: data.windowId, frameId: data.frameId, initialTitle: data.title });
+                this.sessionController.saveNonGlue({ windowId: data.windowId });
                 if (data.context) {
                     yield this.glueController.setWindowStartContext(data.windowId, data.context);
                 }
@@ -27566,26 +27967,30 @@
             this.glueController.pushSystemMessage("windows", operation, data);
         }
         openWindow(config, commandId) {
-            var _a, _b, _c, _d, _e, _f;
+            var _a, _b, _c, _d, _e, _f, _g;
             return __awaiter(this, void 0, void 0, function* () {
                 const nameExists = this.sessionController.getWindowDataByName(config.name);
                 if (nameExists) {
                     throw new Error(`Cannot open a window with name: ${config.name}, because a window with that name already exists.`);
                 }
                 (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${commandId}] handling open command with a valid name: ${config.name}, url: ${config.url} and options: ${JSON.stringify(config.options)}`);
+                const openBounds = yield this.getStartingBounds(config, commandId);
+                const windowId = (_c = (_b = config.options) === null || _b === void 0 ? void 0 : _b.windowId) !== null && _c !== void 0 ? _c : `g42-${shortid$2.generate()}`;
                 const windowData = {
                     name: config.name,
-                    windowId: (_c = (_b = config.options) === null || _b === void 0 ? void 0 : _b.windowId) !== null && _c !== void 0 ? _c : shortid$2.generate()
+                    windowId,
+                    initialBounds: openBounds,
+                    initialUrl: config.url,
+                    initialContext: (_d = config.options) === null || _d === void 0 ? void 0 : _d.context
                 };
-                const openBounds = yield this.getStartingBounds(config, commandId);
                 const options = `left=${openBounds.left},top=${openBounds.top},width=${openBounds.width},height=${openBounds.height}`;
-                (_d = this.logger) === null || _d === void 0 ? void 0 : _d.trace(`[${commandId}] calling native window open with bounds: ${options}`);
+                (_e = this.logger) === null || _e === void 0 ? void 0 : _e.trace(`[${commandId}] calling native window open with bounds: ${options}`);
                 const childWindow = window.open(config.url, windowData.windowId, options);
                 if (!childWindow) {
                     throw new Error(`Cannot open window with url: ${config.url} and name: ${config.name}. The most likely reason is that the user has not approved popups or has a blocker.`);
                 }
-                yield this.processNewWindow(windowData, (_e = config.options) === null || _e === void 0 ? void 0 : _e.context, childWindow);
-                (_f = this.logger) === null || _f === void 0 ? void 0 : _f.trace(`[${commandId}] the new window is opened, saved in session, state and announced, responding to the caller`);
+                yield this.processNewWindow(windowData, (_f = config.options) === null || _f === void 0 ? void 0 : _f.context, childWindow);
+                (_g = this.logger) === null || _g === void 0 ? void 0 : _g.trace(`[${commandId}] the new window is opened, saved in session, state and announced, responding to the caller`);
                 return windowData;
             });
         }
@@ -27595,11 +28000,12 @@
                 (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${commandId}] handling a hello message from a real windowId: ${client.windowId}`);
                 if (client.windowId) {
                     this.stateController.remove(client.windowId);
+                    this.sessionController.removeNonGlue({ windowId: client.windowId });
                     const workspaceClient = this.sessionController.getWorkspaceClientById(client.windowId);
                     if (workspaceClient && workspaceClient.initialTitle) {
                         const windowId = client.windowId;
                         const title = workspaceClient.initialTitle;
-                        PromiseWrap$1(() => this.glueController.callWindow(this.operations.setTitle, { windowId, title }, windowId), this.clientResponseTimeoutMs)
+                        PromiseWrap$1(() => this.glueController.callWindow("windows", this.operations.setTitle, { windowId, title }, windowId), this.clientResponseTimeoutMs)
                             .catch((err) => { var _a; return (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${commandId}] error while setting the workspace window title: ${err.message}`); });
                     }
                 }
@@ -27617,7 +28023,7 @@
             }
             (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${commandId}] handling a get url request for window ${data.windowId}`);
             const timeoutMessage = `Cannot get the url of window: ${data.windowId}, because it is either a non-glue window or it hasn't initiated it's glue yet`;
-            return PromiseWrap$1(() => this.glueController.callWindow(this.operations.getUrl, data, data.windowId), this.clientResponseTimeoutMs, timeoutMessage);
+            return PromiseWrap$1(() => this.glueController.callWindow("windows", this.operations.getUrl, data, data.windowId), this.clientResponseTimeoutMs, timeoutMessage);
         }
         handleGetTitle(data, commandId) {
             var _a;
@@ -27627,7 +28033,7 @@
             }
             (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${commandId}] handling a get title request for window ${data.windowId}`);
             const timeoutMessage = `Cannot get the title of window: ${data.windowId}, because it is either a non-glue window or it hasn't initiated it's glue yet`;
-            return PromiseWrap$1(() => this.glueController.callWindow(this.operations.getTitle, data, data.windowId), this.clientResponseTimeoutMs, timeoutMessage);
+            return PromiseWrap$1(() => this.glueController.callWindow("windows", this.operations.getTitle, data, data.windowId), this.clientResponseTimeoutMs, timeoutMessage);
         }
         handleSetTitle(data, commandId) {
             var _a;
@@ -27642,25 +28048,28 @@
                 }
                 (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${commandId}] handling a set title request for window ${data.windowId} and title: ${data.title}`);
                 const timeoutMessage = `Cannot set the title of window: ${data.windowId}, because it is either a non-glue window or it hasn't initiated it's glue yet`;
-                yield PromiseWrap$1(() => this.glueController.callWindow(this.operations.setTitle, data, data.windowId), this.clientResponseTimeoutMs, timeoutMessage);
+                yield PromiseWrap$1(() => this.glueController.callWindow("windows", this.operations.setTitle, data, data.windowId), this.clientResponseTimeoutMs, timeoutMessage);
             });
         }
         handleMoveResize(data, commandId) {
             var _a;
-            const workspaceClient = this.sessionController.getWorkspaceClientById(data.windowId);
-            if (workspaceClient) {
-                throw new Error(`Cannot move resize window id ${data.windowId}, because it is in a workspace. Consider using the workspaces API to get more control`);
-            }
-            const windowData = this.sessionController.getWindowDataById(data.windowId);
-            if (!windowData) {
-                throw new Error(`Cannot move resize window: ${data.windowId}, because it is does not exist for the platform`);
-            }
-            if (windowData.name === "Platform") {
-                throw new Error("Move-resizing the main application is not allowed");
-            }
-            (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${commandId}] handling a move resize request for window ${data.windowId} and data: ${JSON.stringify(data)}`);
-            const timeoutMessage = `Cannot move resize window: ${data.windowId}, because it is either a non-glue window or it hasn't initiated it's glue yet`;
-            return PromiseWrap$1(() => this.glueController.callWindow(this.operations.moveResize, data, data.windowId), this.clientResponseTimeoutMs, timeoutMessage);
+            return __awaiter(this, void 0, void 0, function* () {
+                const workspaceClient = this.sessionController.getWorkspaceClientById(data.windowId);
+                if (workspaceClient) {
+                    throw new Error(`Cannot move resize window id ${data.windowId}, because it is in a workspace. Consider using the workspaces API to get more control`);
+                }
+                const windowData = this.sessionController.getWindowDataById(data.windowId);
+                if (!windowData) {
+                    throw new Error(`Cannot move resize window: ${data.windowId}, because it is does not exist for the platform`);
+                }
+                if (windowData.name === "Platform") {
+                    throw new Error("Move-resizing the main application is not allowed");
+                }
+                (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${commandId}] handling a move resize request for window ${data.windowId} and data: ${JSON.stringify(data)}`);
+                const timeoutMessage = `Cannot move resize window: ${data.windowId}, because it is either a non-glue window or it hasn't initiated it's glue yet`;
+                yield PromiseWrap$1(() => this.glueController.callWindow("windows", this.operations.moveResize, data, data.windowId), this.clientResponseTimeoutMs, timeoutMessage);
+                yield this.pause(500);
+            });
         }
         handleGetBounds(data, commandId) {
             var _a;
@@ -27674,7 +28083,7 @@
             }
             (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${commandId}] handling a get bounds request for window ${data.windowId}`);
             const timeoutMessage = `Cannot get the bounds of window: ${data.windowId}, because it is either a non-glue window or it hasn't initiated it's glue yet`;
-            return PromiseWrap$1(() => this.glueController.callWindow(this.operations.getBounds, data, data.windowId), this.clientResponseTimeoutMs, timeoutMessage);
+            return PromiseWrap$1(() => this.glueController.callWindow("windows", this.operations.getBounds, data, data.windowId), this.clientResponseTimeoutMs, timeoutMessage);
         }
         handleFocus(data, commandId) {
             var _a;
@@ -27687,20 +28096,23 @@
                 if (!windowData) {
                     throw new Error(`Cannot focus window: ${data.windowId}, because it is not known by the platform`);
                 }
-                if (windowData.name === "Platform") {
-                    throw new Error("Focusing the main application is not allowed");
-                }
                 (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${commandId}] handling a focus request for window ${data.windowId}`);
                 window.open(undefined, windowData.windowId);
             });
         }
         handleClose(data, commandId) {
-            var _a, _b, _c, _d;
+            var _a, _b, _c, _d, _e;
             return __awaiter(this, void 0, void 0, function* () {
                 const workspaceClient = this.sessionController.getWorkspaceClientById(data.windowId);
                 if (workspaceClient) {
                     (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${commandId}] this window is detected as a workspace window, closing via the workspaces controller`);
                     yield this.ioc.workspacesController.closeItem({ itemId: data.windowId }, commandId);
+                    return;
+                }
+                const applicationInstance = this.sessionController.getInstanceData(data.windowId);
+                if (applicationInstance) {
+                    (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace(`[${commandId}] this window is detected as an application instance, closing via the appManager controller`);
+                    yield this.ioc.applicationsController.handleInstanceStop({ id: data.windowId }, commandId);
                     return;
                 }
                 const windowData = this.sessionController.getWindowDataById(data.windowId);
@@ -27710,10 +28122,10 @@
                 if (windowData.name === "Platform") {
                     throw new Error("Closing the main application is not allowed");
                 }
-                (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace(`[${commandId}] handling a close request for window ${data.windowId}`);
-                (_c = window.open(undefined, windowData.windowId)) === null || _c === void 0 ? void 0 : _c.close();
+                (_c = this.logger) === null || _c === void 0 ? void 0 : _c.trace(`[${commandId}] handling a close request for window ${data.windowId}`);
+                (_d = window.open(undefined, windowData.windowId)) === null || _d === void 0 ? void 0 : _d.close();
                 this.cleanUpWindow(windowData.windowId);
-                (_d = this.logger) === null || _d === void 0 ? void 0 : _d.trace(`[${commandId}] window ${data.windowId} has been closed, removed from session, state and announced`);
+                (_e = this.logger) === null || _e === void 0 ? void 0 : _e.trace(`[${commandId}] window ${data.windowId} has been closed, removed from session, state and announced`);
             });
         }
         getStartingBounds(config, commandId) {
@@ -27745,6 +28157,9 @@
                 }
             });
         }
+        pause(ms) {
+            return new Promise((resolve) => setTimeout(resolve, ms));
+        }
     }
 
     class SessionStorageController {
@@ -27756,7 +28171,8 @@
             this.workspaceWindowsNamespace = "g42_core_workspace_clients";
             this.workspaceFramesNamespace = "g42_core_workspace_frames";
             this.workspaceHibernationNamespace = "g42_core_workspace_hibernation";
-            this.layoutNamespace = "g42_core_layouts";
+            this.globalLayoutsNamespace = "g42_core_layouts_global";
+            this.workspaceLayoutsNamespace = "g42_core_layouts_workspace";
             this.appDefsNamespace = "g42_core_app_definitions";
             this.appDefsInmemoryNamespace = "g42_core_app_definitions_inmemory";
             this.extNotificationsNamespace = "g42_ext_notifications";
@@ -27769,7 +28185,8 @@
                 this.nonGlueNamespace,
                 this.workspaceWindowsNamespace,
                 this.workspaceFramesNamespace,
-                this.layoutNamespace,
+                this.globalLayoutsNamespace,
+                this.workspaceLayoutsNamespace,
                 this.appDefsNamespace,
                 this.workspaceHibernationNamespace,
                 this.appDefsInmemoryNamespace,
@@ -27837,12 +28254,14 @@
             }
             return app;
         }
-        getLayoutSnapshot() {
-            const snapsString = JSON.parse(this.sessionStorage.getItem(this.layoutNamespace));
+        getLayoutSnapshot(type) {
+            const namespace = type === "Global" ? this.globalLayoutsNamespace : this.workspaceLayoutsNamespace;
+            const snapsString = JSON.parse(this.sessionStorage.getItem(namespace));
             return { layouts: snapsString };
         }
-        saveLayoutSnapshot(snapshot) {
-            this.sessionStorage.setItem(this.layoutNamespace, JSON.stringify(snapshot.layouts));
+        saveLayoutSnapshot(snapshot, type) {
+            const namespace = type === "Global" ? this.globalLayoutsNamespace : this.workspaceLayoutsNamespace;
+            this.sessionStorage.setItem(namespace, JSON.stringify(snapshot.layouts));
         }
         saveFrameData(frameData) {
             const allData = JSON.parse(this.sessionStorage.getItem(this.workspaceFramesNamespace));
@@ -27996,7 +28415,7 @@
                 (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`did not save this data: ${JSON.stringify(data)}, because an entry with this name already exists`);
                 return;
             }
-            (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace(`saving window with id: ${data.windowId} and name: ${window.name}`);
+            (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace(`saving window with id: ${data.windowId} and name: ${data.name}`);
             allData.push(data);
             this.sessionStorage.setItem(this.windowsNamespace, JSON.stringify(allData));
         }
@@ -28246,8 +28665,11 @@
             (_c = this.logger) === null || _c === void 0 ? void 0 : _c.trace(`${windowId} detected as not closed, skipping instance closed procedure`);
         }
         unregisterWorkspaceApp(config) {
-            this.processInstanceClosed(config.windowId);
-            this.ioc.windowsController.cleanUpWindow(config.windowId);
+            return __awaiter(this, void 0, void 0, function* () {
+                this.processInstanceClosed(config.windowId);
+                this.ioc.windowsController.cleanUpWindow(config.windowId);
+                this.ioc.portsBridge.removeGwClient(config.windowId);
+            });
         }
         handleApplicationStart(config, commandId) {
             var _a, _b, _c, _d, _e, _f, _g, _h;
@@ -28257,8 +28679,9 @@
                 if (!appDefinition) {
                     throw new Error(`Cannot start an instance of application: ${config.name}, because it is not found.`);
                 }
+                const id = (_b = config.id) !== null && _b !== void 0 ? _b : `g42-${shortid$2.generate()}`;
                 const instance = {
-                    id: (_b = config.id) !== null && _b !== void 0 ? _b : shortid$2.generate(),
+                    id,
                     applicationName: config.name
                 };
                 const openBounds = yield this.getStartingBounds(appDefinition.createOptions, config, commandId);
@@ -28271,27 +28694,27 @@
                     throw new Error(`Cannot an instance with url: ${appDefinition.createOptions.url} for application: ${config.name}. The most likely reason is that the user has not approved popups or has a blocker.`);
                 }
                 this.sessionStorage.saveBridgeInstanceData({ windowId: instance.id, appName: instance.applicationName });
+                const processConfig = {
+                    data: instance,
+                    context: config.context
+                };
+                yield this.processNewInstance(processConfig);
                 (_d = this.logger) === null || _d === void 0 ? void 0 : _d.trace(`[${commandId}] the new window has been opened successfully with id: ${instance.id}, checking for AGM ready and notifying windows`);
                 if (config.waitForAGMReady) {
                     (_e = this.logger) === null || _e === void 0 ? void 0 : _e.trace(`[${commandId}] wait for AGM is set, configuring the lock`);
                     this.setLock(instance.id);
                 }
-                yield this.notifyWindows(instance, config.context, childWindow);
+                yield this.notifyWindows(appDefinition.createOptions.url, instance, openBounds, config.context, childWindow);
                 if (this.locks[instance.id]) {
                     try {
                         yield PromiseWrap$1(() => { var _a; return (_a = this.locks[instance.id]) === null || _a === void 0 ? void 0 : _a.keyOne; }, this.applicationStartTimeoutMs);
                     }
                     catch (error) {
+                        delete this.locks[instance.id];
                         throw new Error(`Application start for ${config.name} timed out waiting for client to initialize Glue`);
                     }
                 }
                 (_f = this.logger) === null || _f === void 0 ? void 0 : _f.trace(`[${commandId}] the windows controller has been successfully notified`);
-                const processConfig = {
-                    data: instance,
-                    monitorState: config.waitForAGMReady ? undefined : { child: childWindow },
-                    context: config.context
-                };
-                yield this.processNewInstance(processConfig);
                 (_g = this.logger) === null || _g === void 0 ? void 0 : _g.trace(`[${commandId}] the new instance with id ${instance.id} has been saved, announced and context set, lifting key two and responding to caller`);
                 (_h = this.locks[instance.id]) === null || _h === void 0 ? void 0 : _h.openKeyTwo();
                 return instance;
@@ -28303,15 +28726,19 @@
             }
             const instanceData = this.sessionStorage.getInstanceData(selfWindowId);
             if (instanceData) {
+                delete this.locks[instanceData.id];
                 this.sessionStorage.removeInstance(instanceData.id);
                 this.emitStreamData("instanceStopped", instanceData);
             }
         }
-        notifyWindows(instance, context, child) {
+        notifyWindows(url, instance, initialBounds, context, child) {
             return __awaiter(this, void 0, void 0, function* () {
                 const windowData = {
                     windowId: instance.id,
-                    name: `${instance.applicationName}_${instance.id}`
+                    name: `${instance.applicationName}_${instance.id}`,
+                    initialUrl: url,
+                    initialContext: context,
+                    initialBounds
                 };
                 yield this.ioc.windowsController.processNewWindow(windowData, context, child);
             });
@@ -28339,7 +28766,7 @@
                     if (foundApp && foundApp.title) {
                         const windowId = helloMsg.windowId;
                         const title = foundApp.title;
-                        PromiseWrap$1(() => this.glueController.callWindow(this.ioc.windowsController.setTitleOperation, { windowId, title }, windowId), 20000)
+                        PromiseWrap$1(() => this.glueController.callWindow("windows", this.ioc.windowsController.setTitleOperation, { windowId, title }, windowId), 20000)
                             .catch((err) => { var _a; return (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${commandId}] error while setting the application instance title: ${err.message}`); });
                     }
                 }
@@ -28365,9 +28792,6 @@
                 const windowData = this.sessionStorage.getWindowDataById(inst.id);
                 if (!windowData) {
                     throw new Error(`Cannot close instance: ${inst.id}, because it's window is not known by the platform`);
-                }
-                if (windowData.name === "Platform") {
-                    throw new Error("Closing the main application is not allowed");
                 }
                 (_c = window.open(undefined, windowData.windowId)) === null || _c === void 0 ? void 0 : _c.close();
                 this.processInstanceClosed(inst.id);
@@ -28443,6 +28867,9 @@
                     throw new Error(`Cannot register application with config: ${JSON.stringify(data)}, because no app name was found`);
                 }
                 const allAppDefinitions = yield this.appDirectory.getAll();
+                if (data.appName === defaultNoAppWindowComponentAppName) {
+                    return yield this.ioc.windowsController.registerWorkspaceWindow(data, commandId);
+                }
                 if (!allAppDefinitions.some((app) => app.name === data.appName)) {
                     throw new Error(`Cannot register application with config: ${JSON.stringify(data)}, because no app with this name name was found`);
                 }
@@ -28464,9 +28891,6 @@
                     yield this.glueController.setInstanceStartContext(config.data.id, config.context);
                 }
                 this.sessionStorage.saveInstanceData(config.data);
-                if (config.monitorState) {
-                    this.stateController.add(config.monitorState.child, config.data.id);
-                }
                 this.emitStreamData("instanceStarted", config.data);
             });
         }
@@ -28500,52 +28924,105 @@
         }
     }
 
-    const layoutTypeDecoder$2 = oneOf$1(constant$1("Global"), constant$1("Workspace"));
-    const layoutDecoder = object$1({
+    const layoutsOperationTypesDecoder$1 = oneOf$1(constant$1("get"), constant$1("getAll"), constant$1("export"), constant$1("import"), constant$1("remove"), constant$1("save"), constant$1("restore"), constant$1("getRawWindowsLayoutData"), constant$1("clientSaveRequest"), constant$1("getGlobalPermissionState"), constant$1("checkGlobalActivated"), constant$1("requestGlobalPermission"));
+    const newLayoutOptionsDecoder$1 = object$1({
         name: nonEmptyStringDecoder$1,
-        type: layoutTypeDecoder$2,
         context: optional$1(anyJson$1()),
         metadata: optional$1(anyJson$1()),
-        components: array$1(oneOf$1(workspaceLayoutComponentDecoder$1, windowLayoutComponentDecoder$1))
+        instances: optional$1(array$1(nonEmptyStringDecoder$1)),
+        ignoreInstances: optional$1(array$1(nonEmptyStringDecoder$1))
     });
-    const layoutsOperationTypesDecoder$1 = oneOf$1(constant$1("get"), constant$1("getAll"), constant$1("export"), constant$1("import"), constant$1("remove"));
+    const restoreOptionsDecoder$1 = object$1({
+        name: nonEmptyStringDecoder$1,
+        context: optional$1(anyJson$1()),
+        closeRunningInstance: optional$1(boolean$1()),
+        closeMe: optional$1(boolean$1()),
+        timeout: optional$1(nonNegativeNumberDecoder$1)
+    });
     const simpleLayoutConfigDecoder$1 = object$1({
         name: nonEmptyStringDecoder$1,
-        type: layoutTypeDecoder$2
+        type: layoutTypeDecoder$1
     });
     const getAllLayoutsConfigDecoder$1 = object$1({
-        type: layoutTypeDecoder$2
+        type: layoutTypeDecoder$1
+    });
+    const saveLayoutConfigDecoder$1 = object$1({
+        layout: newLayoutOptionsDecoder$1
+    });
+    const restoreLayoutConfigDecoder$1 = object$1({
+        layout: restoreOptionsDecoder$1
     });
     const allLayoutsFullConfigDecoder$1 = object$1({
-        layouts: array$1(layoutDecoder)
+        layouts: array$1(glueLayoutDecoder$1)
     });
     const importModeDecoder$1 = oneOf$1(constant$1("replace"), constant$1("merge"));
     const layoutsImportConfigDecoder$1 = object$1({
-        layouts: array$1(layoutDecoder),
+        layouts: array$1(glueLayoutDecoder$1),
         mode: importModeDecoder$1
     });
     const allLayoutsSummariesResultDecoder$1 = object$1({
         summaries: array$1(layoutSummaryDecoder$1)
     });
-    const simpleLayoutResult$1 = object$1({
-        layout: layoutDecoder
+    const simpleLayoutResult = object$1({
+        layout: glueLayoutDecoder$1
     });
     const optionalSimpleLayoutResult$1 = object$1({
-        layout: optional$1(layoutDecoder)
+        layout: optional$1(glueLayoutDecoder$1)
+    });
+    const rawWindowsLayoutDataRequestConfigDecoder = object$1({
+        layoutType: oneOf$1(constant$1("Global"), constant$1("Workspace")),
+        layoutName: nonEmptyStringDecoder$1,
+        context: optional$1(anyJson$1()),
+        instances: optional$1(array$1(nonEmptyStringDecoder$1)),
+        ignoreInstances: optional$1(array$1(nonEmptyStringDecoder$1))
+    });
+    const saveRequestClientResponseDecoder$1 = object$1({
+        windowContext: optional$1(anyJson$1()),
+    });
+    const fullSaveRequestResponseDecoder = object$1({
+        bounds: windowBoundsDecoder$1,
+        windowContext: optional$1(anyJson$1()),
+        url: nonEmptyStringDecoder$1,
+        name: nonEmptyStringDecoder$1,
+        application: nonEmptyStringDecoder$1,
+        windowId: nonEmptyStringDecoder$1,
+        initialContext: optional$1(anyJson$1())
+    });
+    const workspaceWindowRawLayoutDataDecoder = object$1({
+        windowContext: optional$1(anyJson$1()),
+        windowId: nonEmptyStringDecoder$1,
+        frameId: nonEmptyStringDecoder$1
+    });
+    const windowsRawLayoutDataDecoder = object$1({
+        windows: array$1(fullSaveRequestResponseDecoder)
+    });
+    const permissionStateResultDecoder$1 = object$1({
+        state: oneOf$1(constant$1("prompt"), constant$1("denied"), constant$1("granted"))
+    });
+    const simpleAvailabilityResultDecoder$1 = object$1({
+        isAvailable: boolean$1()
     });
 
     class LayoutsController$1 {
-        constructor(glueController, idbStore, sessionStore) {
+        constructor(glueController, idbStore, sessionStore, windowsController) {
             this.glueController = glueController;
             this.idbStore = idbStore;
             this.sessionStore = sessionStore;
+            this.windowsController = windowsController;
             this.started = false;
             this.operations = {
                 get: { name: "get", dataDecoder: simpleLayoutConfigDecoder$1, resultDecoder: optionalSimpleLayoutResult$1, execute: this.handleGetLayout.bind(this) },
                 getAll: { name: "getAll", dataDecoder: getAllLayoutsConfigDecoder$1, resultDecoder: allLayoutsSummariesResultDecoder$1, execute: this.handleGetAll.bind(this) },
                 export: { name: "export", dataDecoder: getAllLayoutsConfigDecoder$1, resultDecoder: allLayoutsFullConfigDecoder$1, execute: this.handleExport.bind(this) },
                 import: { name: "import", dataDecoder: layoutsImportConfigDecoder$1, execute: this.handleImport.bind(this) },
-                remove: { name: "remove", dataDecoder: simpleLayoutConfigDecoder$1, execute: this.handleRemove.bind(this) }
+                remove: { name: "remove", dataDecoder: simpleLayoutConfigDecoder$1, execute: this.handleRemove.bind(this) },
+                save: { name: "save", dataDecoder: saveLayoutConfigDecoder$1, execute: this.handleSave.bind(this) },
+                restore: { name: "restore", dataDecoder: restoreLayoutConfigDecoder$1, execute: this.handleRestore.bind(this) },
+                getRawWindowsLayoutData: { name: "getRawWindowsLayoutData", dataDecoder: rawWindowsLayoutDataRequestConfigDecoder, resultDecoder: windowsRawLayoutDataDecoder, execute: this.handleGetRawWindowsLayoutData.bind(this) },
+                clientSaveRequest: { name: "clientSaveRequest", dataDecoder: rawWindowsLayoutDataRequestConfigDecoder, resultDecoder: saveRequestClientResponseDecoder$1, execute: () => __awaiter(this, void 0, void 0, function* () { }) },
+                getGlobalPermissionState: { name: "getGlobalPermissionState", resultDecoder: permissionStateResultDecoder$1, execute: this.handleGetGlobalPermissionState.bind(this) },
+                requestGlobalPermission: { name: "requestGlobalPermission", resultDecoder: simpleAvailabilityResultDecoder$1, execute: this.handleRequestGlobalPermission.bind(this) },
+                checkGlobalActivated: { name: "checkGlobalActivated", resultDecoder: simpleAvailabilityResultDecoder$1, execute: this.handleCheckGlobalActivated.bind(this) }
             };
         }
         get logger() {
@@ -28557,7 +29034,10 @@
                 this.config = config.layouts;
                 (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`initializing with mode: ${this.config.mode}`);
                 if (this.config.local && this.config.local.length) {
-                    yield this.mergeImport(this.config.local);
+                    yield Promise.all([
+                        this.mergeImport(this.config.local.filter((layout) => layout.type === "Global"), "Global"),
+                        this.mergeImport(this.config.local.filter((layout) => layout.type === "Workspace"), "Workspace")
+                    ]);
                 }
                 this.started = true;
                 (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace("initialization is completed");
@@ -28588,6 +29068,20 @@
                 return result;
             });
         }
+        handleSave(config, commandId) {
+            var _a;
+            return __awaiter(this, void 0, void 0, function* () {
+                (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${commandId}] handling save layout with config: ${JSON.stringify(config)}`);
+                throw new Error("This Web Platform cannot save Global Layouts.");
+            });
+        }
+        handleRestore(config, commandId) {
+            var _a;
+            return __awaiter(this, void 0, void 0, function* () {
+                (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${commandId}] handling restore layout with config: ${JSON.stringify(config)}`);
+                throw new Error(`This Web Platform cannot restore Global Layouts.`);
+            });
+        }
         handleGetAll(config, commandId) {
             var _a, _b;
             return __awaiter(this, void 0, void 0, function* () {
@@ -28615,18 +29109,16 @@
             });
         }
         handleImport(config, commandId) {
-            var _a, _b, _c, _d;
+            var _a, _b, _c;
             return __awaiter(this, void 0, void 0, function* () {
                 (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${commandId}] handling mass import request for layout names: ${config.layouts.map((l) => l.name).join(", ")}`);
-                if (config.mode === "merge") {
-                    (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace(`[${commandId}] importing the layouts in merge mode`);
-                    yield this.mergeImport(config.layouts);
-                }
-                else {
-                    (_c = this.logger) === null || _c === void 0 ? void 0 : _c.trace(`[${commandId}] importing the layouts in replace mode`);
-                    yield this.replaceImport(config.layouts);
-                }
-                (_d = this.logger) === null || _d === void 0 ? void 0 : _d.trace(`[${commandId}] mass import completed, responding to caller`);
+                const importExecution = config.mode === "merge" ? this.mergeImport.bind(this) : this.replaceImport.bind(this);
+                (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace(`[${commandId}] importing the layouts in ${config.mode} mode`);
+                yield Promise.all([
+                    importExecution(config.layouts.filter((layout) => layout.type === "Global"), "Global"),
+                    importExecution(config.layouts.filter((layout) => layout.type === "Workspace"), "Workspace")
+                ]);
+                (_c = this.logger) === null || _c === void 0 ? void 0 : _c.trace(`[${commandId}] mass import completed, responding to caller`);
             });
         }
         handleRemove(config, commandId) {
@@ -28652,15 +29144,115 @@
                 return { layout };
             });
         }
+        handleGetRawWindowsLayoutData(config, commandId) {
+            var _a, _b, _c;
+            return __awaiter(this, void 0, void 0, function* () {
+                (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${commandId}] handling send save requests for layout: ${config.layoutName} to instances: ${(_b = config.instances) === null || _b === void 0 ? void 0 : _b.join(", ")}`);
+                const glueWindowsRawData = yield Promise.all(this.getEligibleGlueWindows(config.instances, config.ignoreInstances).map((glueWindow) => this.buildRawGlueWindowData(glueWindow, config, commandId)));
+                const nonGlueWindowsRawData = yield Promise.all(this.getEligibleNonGlueWindows(config.instances, config.ignoreInstances).map((glueWindow) => this.buildRawNonGlueWindowData(glueWindow, config, commandId)));
+                const result = {
+                    windows: [...glueWindowsRawData, ...nonGlueWindowsRawData]
+                };
+                (_c = this.logger) === null || _c === void 0 ? void 0 : _c.trace(`[${commandId}] request completed, responding to the caller`);
+                return result;
+            });
+        }
+        buildRawGlueWindowData(windowData, requestConfig, commandId) {
+            var _a;
+            return __awaiter(this, void 0, void 0, function* () {
+                const timeoutMessage = `Cannot fetch the layout save data from: ${windowData.name} with id: ${windowData.windowId}`;
+                if (!windowData.initialUrl) {
+                    throw new Error(`Missing URL for client: ${windowData.name}`);
+                }
+                const saveRequestResponse = yield PromiseWrap$1(() => __awaiter(this, void 0, void 0, function* () {
+                    try {
+                        const clientResponse = yield this.glueController.callWindow("layouts", this.operations.clientSaveRequest, requestConfig, windowData.windowId);
+                        return clientResponse;
+                    }
+                    catch (error) {
+                        return {};
+                    }
+                }), 15000, timeoutMessage);
+                const instanceData = this.sessionStore.getAllInstancesData().find((instance) => instance.id === windowData.windowId);
+                const windowBounds = yield this.windowsController.getWindowBounds(windowData.windowId, commandId);
+                const clientProvidedContext = (_a = saveRequestResponse.windowContext) !== null && _a !== void 0 ? _a : {};
+                return {
+                    bounds: windowBounds,
+                    windowContext: clientProvidedContext,
+                    url: windowData.initialUrl,
+                    name: windowData.name,
+                    application: instanceData ? instanceData.applicationName : defaultNoAppWindowComponentAppName,
+                    initialContext: windowData.initialContext,
+                    windowId: windowData.windowId
+                };
+            });
+        }
+        buildRawNonGlueWindowData(windowData, requestConfig, commandId) {
+            var _a;
+            return __awaiter(this, void 0, void 0, function* () {
+                if (!windowData.initialUrl) {
+                    throw new Error(`Missing URL for client: ${windowData.name}`);
+                }
+                const instanceData = this.sessionStore.getAllInstancesData().find((instance) => instance.id === windowData.windowId);
+                return {
+                    bounds: (_a = windowData.initialBounds) !== null && _a !== void 0 ? _a : defaultPlatformConfig.windows.defaultWindowOpenBounds,
+                    windowContext: {},
+                    url: windowData.initialUrl,
+                    name: windowData.name,
+                    application: instanceData ? instanceData.applicationName : defaultNoAppWindowComponentAppName,
+                    initialContext: windowData.initialContext,
+                    windowId: windowData.windowId
+                };
+            });
+        }
+        handleGetGlobalPermissionState(args, commandId) {
+            var _a, _b;
+            return __awaiter(this, void 0, void 0, function* () {
+                (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${commandId}] handling Get Global Permission State request`);
+                const { state } = yield navigator.permissions.query({ name: "window-placement" });
+                (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace(`[${commandId}] request completed with state: ${state}, responding to the caller`);
+                return { state };
+            });
+        }
+        handleRequestGlobalPermission(args, commandId) {
+            var _a, _b, _c;
+            return __awaiter(this, void 0, void 0, function* () {
+                (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${commandId}] handling Request Global Permission command`);
+                const { state } = yield navigator.permissions.query({ name: "window-placement" });
+                if (state === "granted") {
+                    return { isAvailable: true };
+                }
+                if (state === "denied") {
+                    return { isAvailable: false };
+                }
+                try {
+                    yield window.getScreenDetails();
+                    (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace(`[${commandId}] request completed, responding to the caller`);
+                    return { isAvailable: true };
+                }
+                catch (error) {
+                    (_c = this.logger) === null || _c === void 0 ? void 0 : _c.trace(`[${commandId}] request completed, responding to the caller`);
+                    return { isAvailable: false };
+                }
+            });
+        }
+        handleCheckGlobalActivated(args, commandId) {
+            var _a, _b;
+            return __awaiter(this, void 0, void 0, function* () {
+                (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${commandId}] handling Check Global Activated request`);
+                (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace(`[${commandId}] request completed, responding to the caller`);
+                return { isAvailable: false };
+            });
+        }
         emitStreamData(operation, data) {
             var _a;
             (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`sending notification of event: ${operation} with data: ${JSON.stringify(data)}`);
             this.glueController.pushSystemMessage("layouts", operation, data);
         }
-        mergeImport(layouts) {
+        mergeImport(layouts, type) {
             var _a, _b;
             return __awaiter(this, void 0, void 0, function* () {
-                const currentLayouts = yield this.getAll("Workspace");
+                const currentLayouts = yield this.getAll(type);
                 const pendingEvents = [];
                 for (const layout of layouts) {
                     const defCurrentIdx = currentLayouts.findIndex((app) => app.name === layout.name);
@@ -28676,14 +29268,14 @@
                         currentLayouts.push(layout);
                     }
                 }
-                yield this.cleanSave(currentLayouts);
+                yield this.cleanSave(currentLayouts, type);
                 pendingEvents.forEach((pending) => this.emitStreamData(pending.operation, pending.layout));
             });
         }
-        replaceImport(layouts) {
+        replaceImport(layouts, type) {
             var _a, _b;
             return __awaiter(this, void 0, void 0, function* () {
-                const currentLayouts = yield this.getAll("Workspace");
+                const currentLayouts = yield this.getAll(type);
                 const pendingEvents = [];
                 for (const layout of layouts) {
                     const defCurrentIdx = currentLayouts.findIndex((app) => app.name === layout.name);
@@ -28703,7 +29295,7 @@
                     (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`layout ${layout.name} missing, removing and announcing`);
                     pendingEvents.push({ operation: "layoutRemoved", layout });
                 });
-                yield this.cleanSave(layouts);
+                yield this.cleanSave(layouts, type);
                 pendingEvents.forEach((pending) => this.emitStreamData(pending.operation, pending.layout));
             });
         }
@@ -28714,21 +29306,21 @@
                     all = yield this.idbStore.getAll(type);
                 }
                 else {
-                    all = this.sessionStore.getLayoutSnapshot().layouts;
+                    all = this.sessionStore.getLayoutSnapshot(type).layouts;
                 }
                 return all;
             });
         }
-        cleanSave(layouts) {
+        cleanSave(layouts, type) {
             return __awaiter(this, void 0, void 0, function* () {
                 if (this.config.mode === "idb") {
-                    yield this.idbStore.clear("Workspace");
+                    yield this.idbStore.clear(type);
                     for (const layout of layouts) {
                         yield this.idbStore.store(layout, layout.type);
                     }
                     return;
                 }
-                this.sessionStore.saveLayoutSnapshot({ layouts });
+                this.sessionStore.saveLayoutSnapshot({ layouts }, type);
             });
         }
         delete(name, type) {
@@ -28737,13 +29329,57 @@
                     yield this.idbStore.delete(name, type);
                     return;
                 }
-                const all = this.sessionStore.getLayoutSnapshot().layouts;
+                const all = this.sessionStore.getLayoutSnapshot(type).layouts;
                 const idxToRemove = all.findIndex((l) => l.name === name && l.type);
                 if (idxToRemove > -1) {
                     all.splice(idxToRemove, 1);
                 }
-                this.sessionStore.saveLayoutSnapshot({ layouts: all });
+                this.sessionStore.saveLayoutSnapshot({ layouts: all }, type);
             });
+        }
+        getEligibleNonGlueWindows(requestedInstances, ignoreInstances) {
+            const allEligibleWindows = this.getAllEligibleWindows(requestedInstances, ignoreInstances);
+            const allNonGlueWindows = this.sessionStore.getAllNonGlue();
+            const allWorkspaceClients = this.sessionStore.pickWorkspaceClients(() => true);
+            return allEligibleWindows
+                .filter((eligibleWindow) => allNonGlueWindows.some((nonGlueWebWindow) => nonGlueWebWindow.windowId === eligibleWindow.windowId) &&
+                allWorkspaceClients.every((workspaceClient) => workspaceClient.windowId !== eligibleWindow.windowId));
+        }
+        getEligibleGlueWorkspaceWindows(requestedInstances, ignoreInstances) {
+            let allEligibleWindows = this.getAllEligibleWindows(requestedInstances, ignoreInstances);
+            const allNonGlueWindows = this.sessionStore.getAllNonGlue();
+            allEligibleWindows = allEligibleWindows.filter((eligibleWindow) => allNonGlueWindows.every((nonGlueWebWindow) => nonGlueWebWindow.windowId !== eligibleWindow.windowId));
+            const allWorkspaceClients = this.sessionStore.pickWorkspaceClients(() => true);
+            const allFrames = this.sessionStore.getAllFrames();
+            const platformFrame = allFrames.find((frame) => frame.isPlatform);
+            return allEligibleWindows
+                .filter((eligibleWindow) => {
+                const correspondingWorkspaceWindow = allWorkspaceClients.find((wspClient) => wspClient.windowId === eligibleWindow.windowId);
+                if (platformFrame) {
+                    return !(correspondingWorkspaceWindow && correspondingWorkspaceWindow.frameId === platformFrame.windowId);
+                }
+                return !!correspondingWorkspaceWindow;
+            });
+        }
+        getEligibleGlueWindows(requestedInstances, ignoreInstances) {
+            const allEligibleWindows = this.getAllEligibleWindows(requestedInstances, ignoreInstances);
+            const allNonGlueWindows = this.sessionStore.getAllNonGlue();
+            const allWorkspaceClients = this.sessionStore.pickWorkspaceClients(() => true);
+            return allEligibleWindows
+                .filter((eligibleWindow) => allWorkspaceClients.every((workspaceClient) => workspaceClient.windowId !== eligibleWindow.windowId) &&
+                allNonGlueWindows.every((nonGlueWebWindow) => nonGlueWebWindow.windowId !== eligibleWindow.windowId));
+        }
+        getAllEligibleWindows(requestedInstances, ignoreInstances) {
+            let allNonPlatformWindows = this.sessionStore.getAllWindowsData().filter((webWindow) => webWindow.name !== "Platform");
+            if (requestedInstances && requestedInstances.length) {
+                const requestedServers = this.glueController.getServers().filter((server) => requestedInstances.some((instanceId) => server.instance === instanceId));
+                allNonPlatformWindows = allNonPlatformWindows.filter((eligibleWindow) => requestedServers.some((server) => server.windowId === eligibleWindow.windowId));
+            }
+            if (ignoreInstances && ignoreInstances.length) {
+                const ignoredServers = this.glueController.getServers().filter((server) => ignoreInstances.some((instanceId) => server.instance === instanceId));
+                allNonPlatformWindows = allNonPlatformWindows.filter((eligibleWindow) => ignoredServers.every((server) => server.windowId !== eligibleWindow.windowId));
+            }
+            return allNonPlatformWindows;
         }
     }
 
@@ -28795,8 +29431,8 @@
         }
         store(layout, layoutType) {
             return __awaiter(this, void 0, void 0, function* () {
-                layoutDecoder.runWithException(layout);
-                layoutTypeDecoder$2.runWithException(layoutType);
+                glueLayoutDecoder$1.runWithException(layout);
+                layoutTypeDecoder$1.runWithException(layoutType);
                 switch (layoutType) {
                     case "Workspace": return (yield this.database).put("workspaceLayouts", layout, layout.name);
                     case "Global": return (yield this.database).put("globalLayouts", layout, layout.name);
@@ -28849,7 +29485,7 @@
                 getFrameState: { name: "getFrameState", dataDecoder: simpleItemConfigDecoder, resultDecoder: frameStateResultDecoder, execute: this.getFrameState.bind(this) },
                 getFrameBounds: { name: "getFrameBounds", dataDecoder: simpleItemConfigDecoder, resultDecoder: frameBoundsResultDecoder, execute: this.getFrameBounds.bind(this) },
                 moveFrame: { name: "moveFrame", dataDecoder: moveFrameConfigDecoder, resultDecoder: voidResultDecoder, execute: this.moveFrame.bind(this) },
-                getFrameSnapshot: { name: "getFrameSnapshot", dataDecoder: simpleItemConfigDecoder, resultDecoder: frameSnapshotResultDecoder, execute: this.getFrameSnapshot.bind(this) },
+                getFrameSnapshot: { name: "getFrameSnapshot", dataDecoder: frameSnapshotConfigDecoder, resultDecoder: frameSnapshotResultDecoder, execute: this.getFrameSnapshot.bind(this) },
                 forceLoadWindow: { name: "forceLoadWindow", dataDecoder: simpleItemConfigDecoder, resultDecoder: simpleWindowOperationSuccessResultDecoder, execute: this.forceLoadWindow.bind(this) },
                 ejectWindow: { name: "ejectWindow", dataDecoder: simpleItemConfigDecoder, resultDecoder: simpleWindowOperationSuccessResultDecoder, execute: this.ejectWindow.bind(this) },
                 setItemTitle: { name: "setItemTitle", dataDecoder: setItemTitleConfigDecoder, resultDecoder: voidResultDecoder, execute: this.setItemTitle.bind(this) },
@@ -28866,7 +29502,12 @@
                 pinWorkspace: { name: "pinWorkspace", dataDecoder: pinWorkspaceDecoder, resultDecoder: voidResultDecoder, execute: this.pinWorkspace.bind(this) },
                 unpinWorkspace: { name: "unpinWorkspace", dataDecoder: workspaceSelectorDecoder, resultDecoder: voidResultDecoder, execute: this.unpinWorkspace.bind(this) },
                 getWorkspaceIcon: { name: "getWorkspaceIcon", dataDecoder: workspaceSelectorDecoder, resultDecoder: workspaceIconDecoder, execute: this.getWorkspaceIcon.bind(this) },
-                setWorkspaceIcon: { name: "setWorkspaceIcon", dataDecoder: setWorkspaceIconDecoder, resultDecoder: voidResultDecoder, execute: this.setWorkspaceIcon.bind(this) }
+                setWorkspaceIcon: { name: "setWorkspaceIcon", dataDecoder: setWorkspaceIconDecoder, resultDecoder: voidResultDecoder, execute: this.setWorkspaceIcon.bind(this) },
+                checkStarted: { name: "checkStarted", execute: this.handleCheckStarted.bind(this) },
+                getPlatformFrameId: { name: "getPlatformFrameId", execute: this.handleGetPlatformFrameId.bind(this) },
+                getWorkspacesLayouts: { name: "getWorkspacesLayouts", dataDecoder: getWorkspacesLayoutsConfigDecoder, resultDecoder: getWorkspacesLayoutsResponseDecoder, execute: this.handleGetWorkspacesLayouts.bind(this) },
+                getWorkspaceWindowsOnLayoutSaveContext: { name: "getWorkspaceWindowsOnLayoutSaveContext", dataDecoder: getWorkspaceWindowsOnLayoutSaveContextConfigDecoder, resultDecoder: getWorkspaceWindowsOnLayoutSaveContextResult, execute: this.handleGetWorkspaceWindowsOnLayoutSaveContext.bind(this) },
+                setMaximizationBoundary: { name: "setMaximizationBoundary", dataDecoder: setMaximizationBoundaryConfigDecoder, resultDecoder: voidResultDecoder, execute: this.handleSetMaximizationBoundary.bind(this) }
             };
         }
         start(config) {
@@ -29194,7 +29835,7 @@
                         height: config.height,
                         relative: config.relative
                     };
-                    yield this.glueController.callWindow(this.ioc.windowsController.moveResizeOperation, resizeConfig, targetedFrame.windowId);
+                    yield this.glueController.callWindow("windows", this.ioc.windowsController.moveResizeOperation, resizeConfig, targetedFrame.windowId);
                     (_c = this.logger) === null || _c === void 0 ? void 0 : _c.trace(`[${commandId}] window resize responded with success, returning to caller`);
                     return;
                 }
@@ -29360,6 +30001,56 @@
                 (_c = this.logger) === null || _c === void 0 ? void 0 : _c.trace(`[${commandId}] frame ${frame.windowId} gave a success signal, responding to caller`);
             });
         }
+        handleCheckStarted(config, commandId) {
+            var _a, _b;
+            return __awaiter(this, void 0, void 0, function* () {
+                (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${commandId}] handling handleCheckStarted request`);
+                (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace(`[${commandId}] the controller has been started, responding to caller`);
+                return { started: true };
+            });
+        }
+        handleGetPlatformFrameId(config, commandId) {
+            var _a, _b;
+            return __awaiter(this, void 0, void 0, function* () {
+                (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${commandId}] handling GetPlatformFrameId request`);
+                const platformFrameData = this.framesController.getPlatformFrameSessionData();
+                (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace(`[${commandId}] GetPlatformFrameId completed, responding to caller`);
+                return { id: platformFrameData === null || platformFrameData === void 0 ? void 0 : platformFrameData.windowId };
+            });
+        }
+        handleGetWorkspacesLayouts(config, commandId) {
+            var _a, _b;
+            return __awaiter(this, void 0, void 0, function* () {
+                (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${commandId}] handling handleGetWorkspacesLayouts request for frame: ${config.frameId} for layout: ${config.layoutName} of type: ${config.layoutType}`);
+                const response = yield this.glueController.callFrame(this.operations.getWorkspacesLayouts, config, config.frameId);
+                (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace(`[${commandId}] handleGetWorkspacesLayouts request completed for frame: ${config.frameId} for layout: ${config.layoutName} of type: ${config.layoutType}`);
+                return response;
+            });
+        }
+        handleGetWorkspaceWindowsOnLayoutSaveContext(config, commandId) {
+            var _a, _b;
+            return __awaiter(this, void 0, void 0, function* () {
+                (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${commandId}] handling GetWorkspaceWindowsOnLayoutSaveContext request with config: ${JSON.stringify(config)}`);
+                const windowsOnSaveData = yield Promise.all(config.windowIds.map((windowId) => __awaiter(this, void 0, void 0, function* () {
+                    return {
+                        windowId,
+                        windowContext: yield this.getWorkspaceWindowOnLayoutSaveData(windowId, config)
+                    };
+                })));
+                (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace(`[${commandId}] operation GetWorkspaceWindowsOnLayoutSaveContext completed responding`);
+                return { windowsOnSaveData };
+            });
+        }
+        handleSetMaximizationBoundary(config, commandId) {
+            var _a, _b, _c;
+            return __awaiter(this, void 0, void 0, function* () {
+                (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${commandId}] handling setMaximizationBoundary request with config ${JSON.stringify(config)}`);
+                const frame = yield this.framesController.getFrameInstance(config);
+                (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace(`[${commandId}] targeting frame ${frame.windowId}`);
+                yield this.glueController.callFrame(this.operations.setMaximizationBoundary, config, frame.windowId);
+                (_c = this.logger) === null || _c === void 0 ? void 0 : _c.trace(`[${commandId}] frame ${frame.windowId} gave a success signal, responding to caller`);
+            });
+        }
         changeFrameState(config, commandId) {
             return __awaiter(this, void 0, void 0, function* () {
                 throw new Error("Frame states are not supported in Glue42 Core");
@@ -29375,7 +30066,7 @@
             return __awaiter(this, void 0, void 0, function* () {
                 (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${commandId}] handling getFrameBounds request with config ${JSON.stringify(config)}`);
                 const frame = yield this.framesController.getFrameInstance({ frameId: config.itemId });
-                const frameWindowBounds = yield this.glueController.callWindow(this.ioc.windowsController.getFrameBoundsOperation, { windowId: frame.windowId }, frame.windowId);
+                const frameWindowBounds = yield this.glueController.callWindow("windows", this.ioc.windowsController.getFrameBoundsOperation, { windowId: frame.windowId }, frame.windowId);
                 (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace(`[${commandId}] getFrameBounds completed`);
                 return { bounds: frameWindowBounds.bounds };
             });
@@ -29391,7 +30082,7 @@
                     left: config.left,
                     relative: config.relative
                 };
-                yield this.glueController.callWindow(this.ioc.windowsController.moveResizeOperation, moveConfig, frame.windowId);
+                yield this.glueController.callWindow("windows", this.ioc.windowsController.moveResizeOperation, moveConfig, frame.windowId);
                 (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace(`[${commandId}] frame with id ${frame.windowId} was successfully moved, responding to caller`);
             });
         }
@@ -29400,6 +30091,30 @@
             const providedLoadingConfig = (config === null || config === void 0 ? void 0 : config.loadingStrategy) || {};
             const loadingConfig = cjs(defaultLoadingConfig, providedLoadingConfig);
             return Object.assign(Object.assign({}, config), { loadingStrategy: loadingConfig, hibernation: providedHibernationConfig });
+        }
+        getWorkspaceWindowOnLayoutSaveData(windowId, requestConfig) {
+            var _a;
+            return __awaiter(this, void 0, void 0, function* () {
+                const nonGlueWindows = this.ioc.sessionController.getAllNonGlue();
+                if (nonGlueWindows.some((nonGlueWindow) => nonGlueWindow.windowId === windowId)) {
+                    return {};
+                }
+                const workspaceWindow = this.ioc.sessionController.getWorkspaceClientById(windowId);
+                if (!workspaceWindow) {
+                    throw new Error(`Cannot ask window: ${windowId} for on layout save request, because it is not a known workspace window`);
+                }
+                const timeoutMessage = `Cannot fetch the on layout save context from: ${windowId}, because of timeout`;
+                const saveRequestResponse = yield PromiseWrap$1(() => __awaiter(this, void 0, void 0, function* () {
+                    try {
+                        const clientResponse = yield this.glueController.callWindow("layouts", this.ioc.layoutsController.operations.clientSaveRequest, requestConfig, windowId);
+                        return clientResponse;
+                    }
+                    catch (error) {
+                        return {};
+                    }
+                }), 15000, timeoutMessage);
+                return (_a = saveRequestResponse === null || saveRequestResponse === void 0 ? void 0 : saveRequestResponse.windowContext) !== null && _a !== void 0 ? _a : {};
+            });
         }
     }
 
@@ -29727,9 +30442,21 @@
         }
     }
 
+    const channelOperationDecoder = oneOf$1(constant$1("addChannel"));
+    const channelContextDecoder$1 = object$1({
+        name: nonEmptyStringDecoder$1,
+        meta: object$1({
+            color: nonEmptyStringDecoder$1
+        }),
+        data: optional$1(anyJson$1()),
+    });
+
     class ChannelsController$1 {
         constructor(glueController) {
             this.glueController = glueController;
+            this.operations = {
+                addChannel: { name: "addChannel", execute: this.addChannel.bind(this), dataDecoder: channelContextDecoder$1 }
+            };
         }
         get logger() {
             return logger.get("channels.controller");
@@ -29743,8 +30470,28 @@
                 (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace("initialization is completed");
             });
         }
-        handleControl() {
+        handleControl(args) {
+            var _a, _b, _c, _d;
             return __awaiter(this, void 0, void 0, function* () {
+                const channelsData = args.data;
+                const commandId = args.commandId;
+                const operationValidation = channelOperationDecoder.run(args.operation);
+                if (!operationValidation.ok) {
+                    throw new Error(`This channels request cannot be completed, because the operation name did not pass validation: ${JSON.stringify(operationValidation.error)}`);
+                }
+                const operationName = operationValidation.result;
+                const incomingValidation = (_a = this.operations[operationName].dataDecoder) === null || _a === void 0 ? void 0 : _a.run(channelsData);
+                if (incomingValidation && !incomingValidation.ok) {
+                    throw new Error(`Channels request for ${operationName} rejected, because the provided arguments did not pass the validation: ${JSON.stringify(incomingValidation.error)}`);
+                }
+                (_b = this.logger) === null || _b === void 0 ? void 0 : _b.debug(`[${commandId}] ${operationName} command is valid with data: ${JSON.stringify(channelsData)}`);
+                const result = yield this.operations[operationName].execute(channelsData, commandId);
+                const resultValidation = (_c = this.operations[operationName].resultDecoder) === null || _c === void 0 ? void 0 : _c.run(result);
+                if (resultValidation && !resultValidation.ok) {
+                    throw new Error(`Channels request for ${operationName} could not be completed, because the operation result did not pass the validation: ${JSON.stringify(resultValidation.error)}`);
+                }
+                (_d = this.logger) === null || _d === void 0 ? void 0 : _d.trace(`[${commandId}] ${operationName} command was executed successfully`);
+                return result;
             });
         }
         setupChannels(channels) {
@@ -29752,19 +30499,28 @@
                 yield Promise.all(channels.map((channel) => this.addChannel(channel)));
             });
         }
-        addChannel(info) {
+        addChannel(info, commandId) {
             return __awaiter(this, void 0, void 0, function* () {
+                this.trace(`[${commandId}] handling addChannel command with a valid name: ${info.name}, color: ${info.meta.color} and data: ${JSON.stringify(info.data)}`, commandId);
                 const context = {
                     name: info.name,
                     meta: info.meta,
                     data: info.data || {}
                 };
                 const contextName = this.createContextName(context.name);
+                this.trace(`[${commandId}] setting a new channel context with name: ${contextName}`, commandId);
                 yield this.glueController.setContext(contextName, context);
+                this.trace(`[${commandId}] channel context with name: ${contextName} created successfully`, commandId);
             });
         }
         createContextName(channelName) {
             return `${ChannelContextPrefix}${channelName}`;
+        }
+        trace(msg, commandId) {
+            var _a;
+            if (commandId) {
+                (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(msg);
+            }
         }
     }
 
@@ -29802,7 +30558,11 @@
                     width: (_d = providedBounds.width) !== null && _d !== void 0 ? _d : this.defaultBounds.width,
                     height: (_e = providedBounds.height) !== null && _e !== void 0 ? _e : this.defaultBounds.height
                 };
-                const frameWindowId = shortid$2.generate();
+                const frameWindowId = typeof newFrameConfig === "object" && (newFrameConfig === null || newFrameConfig === void 0 ? void 0 : newFrameConfig.frameId) ? newFrameConfig.frameId : shortid$2.generate();
+                const allExistingFrames = this.sessionController.getAllFrames();
+                if (allExistingFrames.some((frame) => frame.windowId === frameWindowId)) {
+                    throw new Error(`Cannot open a frame with id: ${frameWindowId}, because a frame with this id already exists`);
+                }
                 const frameData = {
                     windowId: frameWindowId,
                     active: false,
@@ -29888,6 +30648,9 @@
                 }
                 return allFrames.length ? this.getLastOpenedFrame() : this.openFrame();
             });
+        }
+        getPlatformFrameSessionData() {
+            return this.sessionController.getAllFrames().find((frame) => frame.isPlatform);
         }
         clearAllWorkspaceWindows(frameId) {
             const workspaceWindows = this.sessionController.pickWorkspaceClients((client) => client.frameId === frameId);
@@ -30108,7 +30871,8 @@
     }
 
     class SystemController$1 {
-        constructor() {
+        constructor(session) {
+            this.session = session;
             this.base = {};
             this.started = false;
             this.operations = {
@@ -30120,11 +30884,13 @@
             return logger.get("applications.controller");
         }
         start(config) {
+            var _a;
             return __awaiter(this, void 0, void 0, function* () {
                 this.environment = config.environment;
                 this.base = {
                     workspacesFrameCache: config.workspacesFrameCache,
-                    communicationId: config.communicationId
+                    communicationId: (_a = this.session.getSystemSettings()) === null || _a === void 0 ? void 0 : _a.systemInstanceId,
+                    platformVersion: version$5
                 };
             });
         }
@@ -30969,7 +31735,7 @@
             return __awaiter(this, void 0, void 0, function* () {
                 (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`Starting the preferred connection with config: ${JSON.stringify(config)}`);
                 this.preferredUrl = config.url;
-                this.preferredAuth = config.auth ? config.auth : { provider: "core" };
+                this.preferredAuth = Object.assign({}, { provider: "core" }, config.auth);
                 this.shouldForceTransfer = typeof config.forceIncompleteSwitch === "boolean" ? config.forceIncompleteSwitch : false;
                 this.discoveryInterval = typeof config.discoveryIntervalMS === "number" ? config.discoveryIntervalMS : defaultPreferredDiscoveryIntervalMS;
                 this.portsBridge.setPreferredActivated();
@@ -31410,6 +32176,147 @@
         }
     }
 
+    class InterceptionController {
+        constructor() {
+            this.interceptions = [];
+        }
+        registerInterceptor(request, registrantName) {
+            return __awaiter(this, void 0, void 0, function* () {
+                interceptorRegistrationRequestDecoder.runWithException(request);
+                nonEmptyStringDecoder$1.runWithException(registrantName);
+                const collisions = request.interceptions.reduce((collisions, interception) => {
+                    const foundCollision = this.interceptions.some((registeredInterception) => registeredInterception.domain === interception.domain && registeredInterception.operation === interception.operation);
+                    if (foundCollision) {
+                        collisions.push({ domain: interception.domain, operation: interception.operation });
+                    }
+                    return collisions;
+                }, []);
+                if (collisions.length) {
+                    const collisionsAsString = collisions.map((collision) => `${collision.domain} - ${collision.operation}`).join(", ");
+                    throw new Error(`Interception registration is rejected, because the following collisions where found: ${collisionsAsString}`);
+                }
+                request.interceptions.forEach((interception) => {
+                    this.interceptions.push({
+                        domain: interception.domain,
+                        operation: interception.operation,
+                        callInterceptor: request.callInterceptor,
+                        registrantName
+                    });
+                });
+            });
+        }
+        getOperationInterceptor(inquiry) {
+            const foundEntry = this.interceptions.find((registeredInterception) => registeredInterception.domain === inquiry.domain && registeredInterception.operation === inquiry.operation);
+            if (foundEntry) {
+                return {
+                    name: foundEntry.registrantName,
+                    intercept: foundEntry.callInterceptor
+                };
+            }
+        }
+    }
+
+    class PluginsController {
+        constructor(interceptionController, glueController) {
+            this.interceptionController = interceptionController;
+            this.glueController = glueController;
+            this.registeredPlugins = [];
+        }
+        get logger() {
+            return logger.get("plugins.controller");
+        }
+        start(config) {
+            return __awaiter(this, void 0, void 0, function* () {
+                this.handlePluginMessage = config.handlePluginMessage;
+                this.internalConfig = config.platformConfig;
+                this.platformApi = config.api;
+                if (!config.plugins || !config.plugins.length) {
+                    return;
+                }
+                const criticalPlugins = [];
+                for (const plugin of config.plugins) {
+                    const startPromise = this.startPlugin(plugin);
+                    if (plugin.critical) {
+                        criticalPlugins.push(startPromise);
+                    }
+                }
+                yield Promise.all(criticalPlugins);
+            });
+        }
+        startCorePlus(definition) {
+            return __awaiter(this, void 0, void 0, function* () {
+                if (!definition) {
+                    return;
+                }
+                const coreStartPromise = this.startPlugin(Object.assign(Object.assign({}, definition), { name: "Glue42CorePlus" }));
+                if (definition.critical) {
+                    yield coreStartPromise;
+                }
+            });
+        }
+        startPlugin(definition) {
+            var _a;
+            return __awaiter(this, void 0, void 0, function* () {
+                try {
+                    const platformControls = this.buildPlatformControls(definition.name, this.platformApi);
+                    yield definition.start(this.glueController.clientGlue, definition.config, platformControls);
+                }
+                catch (error) {
+                    const stringError = typeof error === "string" ? error : JSON.stringify(error.message);
+                    const message = `Plugin: ${definition.name} threw while initiating: ${stringError}`;
+                    if (definition.critical) {
+                        throw new Error(message);
+                    }
+                    else {
+                        (_a = this.logger) === null || _a === void 0 ? void 0 : _a.warn(message);
+                    }
+                }
+            });
+        }
+        buildPlatformControls(pluginName, api) {
+            return {
+                control: (args) => this.handlePluginMessage(args, pluginName),
+                logger: logger.get(pluginName),
+                platformApi: api,
+                interception: {
+                    register: (request) => this.interceptionController.registerInterceptor(request, pluginName)
+                },
+                system: {
+                    sendControl: (args) => this.handlePluginMessage(args, pluginName),
+                    register: this.registerPlugin.bind(this),
+                    getInfo: this.getGlueInfo.bind(this)
+                }
+            };
+        }
+        getGlueInfo() {
+            var _a;
+            const workspaces = this.glueController.clientGlue.workspaces ? {
+                version: this.glueController.clientGlue.workspaces.version,
+                frameUrl: (_a = this.internalConfig.workspaces) === null || _a === void 0 ? void 0 : _a.src
+            } : undefined;
+            return {
+                web: {
+                    version: this.glueController.clientGlue.version
+                },
+                platform: {
+                    version: this.glueController.platformVersion,
+                    plugins: this.registeredPlugins
+                },
+                workspaces
+            };
+        }
+        registerPlugin(name, version) {
+            if (typeof name !== "string" || !name.length) {
+                return;
+            }
+            const existingPlugin = this.registeredPlugins.some((plugin) => plugin.name === name);
+            if (existingPlugin) {
+                return;
+            }
+            this.registeredPlugins.push({ name, version });
+        }
+    }
+
     class IoC$1 {
         constructor(config) {
             this.config = config;
@@ -31428,7 +32335,7 @@
         }
         get controller() {
             if (!this._mainController) {
-                this._mainController = new PlatformController(this.systemController, this.glueController, this.windowsController, this.applicationsController, this.layoutsController, this.workspacesController, this.intentsController, this.channelsController, this.notificationsController, this.portsBridge, this.stateController, this.serviceWorkerController, this.extensionController, this.preferredConnectionController);
+                this._mainController = new PlatformController(this.systemController, this.glueController, this.windowsController, this.applicationsController, this.layoutsController, this.workspacesController, this.intentsController, this.channelsController, this.notificationsController, this.portsBridge, this.stateController, this.serviceWorkerController, this.extensionController, this.preferredConnectionController, this.interceptionController, this.pluginsController);
             }
             return this._mainController;
         }
@@ -31440,7 +32347,7 @@
         }
         get systemController() {
             if (!this._systemController) {
-                this._systemController = new SystemController$1();
+                this._systemController = new SystemController$1(this.sessionController);
             }
             return this._systemController;
         }
@@ -31482,7 +32389,7 @@
         }
         get layoutsController() {
             if (!this._layoutsController) {
-                this._layoutsController = new LayoutsController$1(this.glueController, this.idbStore, this.sessionController);
+                this._layoutsController = new LayoutsController$1(this.glueController, this.idbStore, this.sessionController, this.windowsController);
             }
             return this._layoutsController;
         }
@@ -31552,6 +32459,18 @@
             }
             return this._transactionsController;
         }
+        get interceptionController() {
+            if (!this._interceptionController) {
+                this._interceptionController = new InterceptionController();
+            }
+            return this._interceptionController;
+        }
+        get pluginsController() {
+            if (!this._pluginsController) {
+                this._pluginsController = new PluginsController(this.interceptionController, this.glueController);
+            }
+            return this._pluginsController;
+        }
         getDatabase() {
             if (this._database) {
                 return Promise.resolve(this._database);
@@ -31603,7 +32522,7 @@
         const ioc = new IoC$1(config);
         yield ioc.platform.ready();
         const glue = ioc.platform.getClientGlue();
-        return { glue, platform: ioc === null || ioc === void 0 ? void 0 : ioc.platform.exposeAPI() };
+        return { glue, platform: ioc === null || ioc === void 0 ? void 0 : ioc.platform.getPlatformApi() };
     });
 
     if (typeof window !== "undefined") {
