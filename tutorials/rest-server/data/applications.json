@@ -1,0 +1,63 @@
+[
+    {
+        "name": "Clients",
+        "type": "window",
+        "details": {
+            "url": "http://localhost:9000/"
+        }
+    },
+    {
+        "name": "Stocks",
+        "type": "window",
+        "details": {
+            "url": "http://localhost:9100/",
+            "left": 0,
+            "top": 0,
+            "width": 860,
+            "height": 600
+        },
+        "customProperties": {
+            "includeInWorkspaces": true
+        }
+    },
+    {
+        "name": "Stock Details",
+        "type": "window",
+        "details": {
+            "url": "http://localhost:9100/details",
+            "left": 100,
+            "top": 100,
+            "width": 400,
+            "height": 400
+        },
+        "customProperties": {
+            "includeInWorkspaces": true
+        }
+    },
+    {
+        "name": "Client Details",
+        "type": "window",
+        "details": {
+            "url": "http://localhost:9200/"
+        },
+        "customProperties": {
+            "includeInWorkspaces": true
+        }
+    },
+    {
+        "name": "Portfolio Downloader",
+        "type": "window",
+        "details": {
+            "url": "http://localhost:9400/"
+        },
+        "intents": [
+            {
+                "name": "ExportPortfolio",
+                "displayName": "Download Portfolio",
+                "contexts": [
+                    "ClientPortfolio"
+                ]
+            }
+        ]
+    }
+]

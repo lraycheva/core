@@ -67,7 +67,10 @@ window.createChannelSelectorWidget = (
     // Add the option to leave the current channel.
     channelSelectorWidgetElement.append(
         $("<option>", {
-            value: NO_CHANNEL_VALUE
+            value: NO_CHANNEL_VALUE,
+            attr: {
+                color: ""
+            }
         })
     );
 

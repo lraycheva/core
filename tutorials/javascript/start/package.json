@@ -7,7 +7,8 @@
     "start:stocks": "http-server ./Stocks -p 9100 -c-1",
     "start:clientDetails": "http-server ./client-details -p 9200 -c-1",
     "start:workspace": "http-server ./workspace -p 9300 -c-1",
-    "start": "concurrently \"npm run start:clients\" \"npm run start:stocks\" \"npm run start:clientDetails\" \"npm run start:workspace\""
+    "start:downloader": "http-server ./portfolio-downloader -p 9400 -c-1",
+    "start": "concurrently \"npm run start:clients\" \"npm run start:stocks\" \"npm run start:clientDetails\" \"npm run start:workspace\" \"npm run start:downloader\""
   },
   "keywords": [],
   "author": "",

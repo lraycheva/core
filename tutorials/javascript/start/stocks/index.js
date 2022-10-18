@@ -1,6 +1,8 @@
+let clientPortfolioStocks;
+let clientName;
+
 const generateStockPrices = (handleNewPrices) => {
     setInterval(() => {
-
         const priceUpdate = {
             stocks: [
                 {
@@ -74,20 +76,21 @@ const setupStocks = (stocks) => {
     const table = document.getElementById("stocksTable").getElementsByTagName("tbody")[0];
 
     table.innerHTML = "";
-    const addRowCell = (row, cellData, cssClass) => {
 
+    const addRowCell = (row, cellData, cssClass) => {
         const cell = document.createElement("td");
 
         cell.innerText = cellData;
 
         if (cssClass) {
             cell.className = cssClass;
-        }
+        };
         row.appendChild(cell);
     };
 
     const addRow = (table, stock) => {
         const row = document.createElement("tr");
+
         addRowCell(row, stock.RIC || "");
         addRowCell(row, stock.Description || "");
         addRowCell(row, stock.Bid || "");
@@ -98,6 +101,7 @@ const setupStocks = (stocks) => {
         row.onclick = () => {
             stockClickedHandler(stock);
         };
+
         table.appendChild(row);
     };
 
@@ -109,6 +113,7 @@ const setupStocks = (stocks) => {
 // TODO: Chapter 2
 // const toggleGlueAvailable = () => {
 //     const span = document.getElementById("glueSpan");
+
 //     span.classList.remove("label-warning");
 //     span.classList.add("label-success");
 //     span.textContent = "Glue42 is available";
@@ -120,7 +125,7 @@ const newPricesHandler = (priceUpdate) => {
 
         if (!row) {
             return;
-        }
+        };
 
         const bidElement = row.children[2];
         bidElement.innerText = stock.Bid;
@@ -138,23 +143,25 @@ const stockClickedHandler = (stock) => {
 
     // TODO: Chapter 3.3
 
-    // TODO: Chapter 7.2
+    // TODO: Chapter 7.3
 
-    // TODO: Chapter 8.6
+    // TODO: Chapter 9.6
 };
 
-const start = async () => {
+const exportPortfolioButtonHandler = async (portfolio) => {
+    // TODO: Chapter 10.2
+};
 
+
+const start = async () => {
     if ("serviceWorker" in navigator) {
         navigator.serviceWorker.register("/service-worker.js");
-    }
+    };
 
     const stocksResponse = await fetch("http://localhost:8080/api/portfolio");
-
     const stocks = await stocksResponse.json();
 
     setupStocks(stocks);
-
     generateStockPrices(newPricesHandler);
 
     // TODO: Chapter 2
@@ -169,7 +176,18 @@ const start = async () => {
 
     // TODO: Chapter 6.3
 
-    // TODO: Chapter 8.5
+    // TODO: Chapter 9.5
+
+    // TODO: Chapter 10.2
+    // const exportPortfolioButton = document.getElementById("exportPortfolio");
+
+    // exportPortfolioButton.onclick = () => {
+    //     if (!clientPortfolioStocks) {
+    //         return;
+    //     };
+
+    //     exportPortfolioButtonHandler(clientPortfolioStocks).catch(console.error);
+    // };
 };
 
 start().catch(console.error);

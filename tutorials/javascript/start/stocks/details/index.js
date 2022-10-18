@@ -1,5 +1,4 @@
 const setFields = (stock) => {
-
     const elementTitle = document.querySelector(".text-center");
     elementTitle.innerText = `Stock Details ${stock.RIC}`;
 
@@ -35,6 +34,7 @@ const updateStockPrices = (bid, ask) => {
 // TODO: Chapter 2
 // const toggleGlueAvailable = () => {
 //     const span = document.getElementById("glueSpan");
+
 //     span.classList.remove("label-warning");
 //     span.classList.add("label-success");
 //     span.textContent = "Glue42 is available";
@@ -42,12 +42,11 @@ const updateStockPrices = (bid, ask) => {
 
 // TODO: Chapter 5.2
 // const updateClientStatus = (client, stock) => {
-
 //     const message = client.portfolio.includes(stock.RIC) ?
 //         `${client.name} has this stock in the portfolio` :
 //         `${client.name} does NOT have this stock in the portfolio`;
-
 //     const elementTitle = document.getElementById("clientStatus");
+
 //     elementTitle.innerText = message;
 // };
 
@@ -62,7 +61,7 @@ const start = async () => {
 
     // TODO: Chapter 5.2
 
-    // TODO: Chapter 8.6
+    // TODO: Chapter 9.6
 };
 
 start().catch(console.error);

@@ -2,19 +2,20 @@ const setupClients = (clients) => {
     const table = document.getElementById("clientsTable").getElementsByTagName("tbody")[0];
 
     const addRowCell = (row, cellData, cssClass) => {
-
         const cell = document.createElement("td");
 
         cell.innerText = cellData;
 
         if (cssClass) {
             cell.className = cssClass;
-        }
+        };
+
         row.appendChild(cell);
     };
 
     const addRow = (table, client) => {
         const row = document.createElement("tr");
+
         addRowCell(row, client.name || "");
         addRowCell(row, client.pId || "");
         addRowCell(row, client.gId || "");
@@ -23,6 +24,7 @@ const setupClients = (clients) => {
         row.onclick = () => {
             clientClickedHandler(client);
         };
+
         table.appendChild(row);
     };
 
@@ -34,6 +36,7 @@ const setupClients = (clients) => {
 // TODO: Chapter 2
 // const toggleGlueAvailable = () => {
 //     const span = document.getElementById("glueSpan");
+
 //     span.classList.remove("label-warning");
 //     span.classList.add("label-success");
 //     span.textContent = "Glue42 is available";
@@ -48,7 +51,8 @@ const clientClickedHandler = (client) => {
 
     // TODO: Chapter 6.3
 
-    // TODO: Chapter 8.4
+    // TODO: Chapter 9.4
+
 };
 
 let counter = 1;
@@ -64,24 +68,26 @@ const stocksButtonHandler = () => {
     // TODO: Chapter 7.2
 };
 
-const start = async () => {
+const raiseNotificationOnWorkspaceOpen = async (clientName, workspace) => {
+    // TODO: Chapter 11.1
+};
 
+const start = async () => {
     if ("serviceWorker" in navigator) {
         navigator.serviceWorker.register("/service-worker.js");
     }
 
     const clientsResponse = await fetch("http://localhost:8080/api/clients");
-
     const clients = await clientsResponse.json();
 
     setupClients(clients);
 
     const stocksButton = document.getElementById("stocks-btn");
-    
+
     stocksButton.onclick = stocksButtonHandler;
 
     // TODO: Chapter 6.1
-    
+
     // TODO: Chapter 2
 
     // TODO: Chapter 6.2

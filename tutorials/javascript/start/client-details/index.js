@@ -1,5 +1,4 @@
 const setFields = (client) => {
-
     const elementName = document.querySelectorAll("[data-name]")[0];
     elementName.innerText = client.name;
 
@@ -19,6 +18,7 @@ const setFields = (client) => {
 // TODO: Chapter 2
 // const toggleGlueAvailable = () => {
 //     const span = document.getElementById("glueSpan");
+
 //     span.classList.remove("label-warning");
 //     span.classList.add("label-success");
 //     span.textContent = "Glue42 is available";
@@ -27,7 +27,7 @@ const setFields = (client) => {
 const start = async () => {
     // TODO: Chapter 2
 
-    // TODO: Chapter 8.5
+    // TODO: Chapter 9.5
 };
 
 start().catch(console.error);

@@ -1,7 +1,8 @@
-/* eslint-disable no-undef */
+let clientPortfolioStocks;
+let clientName;
+
 const generateStockPrices = (handleNewPrices) => {
     setInterval(() => {
-
         const priceUpdate = {
             stocks: [
                 {
@@ -75,20 +76,22 @@ const setupStocks = (stocks) => {
     const table = document.getElementById("stocksTable").getElementsByTagName("tbody")[0];
 
     table.innerHTML = "";
-    const addRowCell = (row, cellData, cssClass) => {
 
+    const addRowCell = (row, cellData, cssClass) => {
         const cell = document.createElement("td");
 
         cell.innerText = cellData;
 
         if (cssClass) {
             cell.className = cssClass;
-        }
+        };
+
         row.appendChild(cell);
     };
 
     const addRow = (table, stock) => {
         const row = document.createElement("tr");
+
         addRowCell(row, stock.RIC || "");
         addRowCell(row, stock.Description || "");
         addRowCell(row, stock.Bid || "");
@@ -99,6 +102,7 @@ const setupStocks = (stocks) => {
         row.onclick = () => {
             stockClickedHandler(stock);
         };
+
         table.appendChild(row);
     };
 
@@ -109,6 +113,7 @@ const setupStocks = (stocks) => {
 
 const toggleGlueAvailable = () => {
     const span = document.getElementById("glueSpan");
+
     span.classList.remove("label-warning");
     span.classList.add("label-success");
     span.textContent = "Glue42 is available";
@@ -120,7 +125,7 @@ const newPricesHandler = (priceUpdate) => {
 
         if (!row) {
             return;
-        }
+        };
 
         const bidElement = row.children[2];
         bidElement.innerText = stock.Bid;
@@ -128,143 +133,133 @@ const newPricesHandler = (priceUpdate) => {
         const askElement = row.children[3];
         askElement.innerText = stock.Ask;
     });
-    if (window.priceStream) {
-        window.priceStream.push(priceUpdate);
-    }
+
+    if (priceStream) {
+        priceStream.push(priceUpdate);
+    };
 };
 
 const stockClickedHandler = async (stock) => {
-    // const windowName = `${stock.BPOD} Details`;
+    // const name = `${stock.BPOD} Details`;
     // const URL = "http://localhost:9100/details/";
     // const config = {
     //     left: 100,
     //     top: 100,
     //     width: 550,
     //     height: 550,
-    //     // Set the `stock` object as a context for the new window.
     //     context: stock
     // };
 
-    // Check whether the clicked stock has already been opened in a new window.
-    // const stockWindowExists = glue.windows.list().find(w => w.name === windowName);
+    // const stockWindowExists = glue.windows.list().find(w => w.name === name);
 
     // if (!stockWindowExists) {
-    //     glue.windows.open(windowName, URL, config).catch(console.error);
+    //     glue.windows.open(name, URL, config).catch(console.error);
     // };
 
     // const detailsApplication = glue.appManager.application("Stock Details");
-
-    // // Check whether an instance with the selected stock is already running.
     // const contexts = await Promise.all(
-    //     // Use the `instances` property to get all running application instances.
     //     detailsApplication.instances.map(instance => instance.getContext())
     // );
     // const isRunning = contexts.find(context => context.RIC === stock.RIC);
 
     // if (!isRunning) {
-    //     // Start the app and pass the `stock` as context.
     //     detailsApplication.start(stock).catch(console.error);
     // };
 
-    let detailsGdWindow;
+    let detailsGlue42Window;
 
     const myWorkspace = await glue.workspaces.getMyWorkspace();
-
-    let detailsWorkspaceWindow = myWorkspace.getWindow((win) => win.appName === "Stock Details");
+    let detailsWorkspaceWindow = myWorkspace.getWindow(window => window.appName === "Stock Details");
 
     if (detailsWorkspaceWindow) {
-        detailsGdWindow = detailsWorkspaceWindow.getGdWindow();
+        detailsGlue42Window = detailsWorkspaceWindow.getGdWindow();
     } else {
-
         const myId = glue.windows.my().id;
-
-        const myImmediateParent = myWorkspace.getWindow((win) => win.id === myId).parent;
-
+        const myImmediateParent = myWorkspace.getWindow(window => window.id === myId).parent;
         const group = await myImmediateParent.parent.addGroup();
 
         detailsWorkspaceWindow = await group.addWindow({ appName: "Stock Details" });
 
         await detailsWorkspaceWindow.forceLoad();
 
-        detailsGdWindow = detailsWorkspaceWindow.getGdWindow();
-    }
-    detailsGdWindow.updateContext({ stock });
+        detailsGlue42Window = detailsWorkspaceWindow.getGdWindow();
+    };
+
+    detailsGlue42Window.updateContext({ stock });
 };
 
-const start = async () => {
+const exportPortfolioButtonHandler = async (portfolio) => {
+    const intents = await glue.intents.find("ExportPortfolio");
 
+    if (!intents) {
+        return;
+    };
+
+    const intentRequest = {
+        intent: "ExportPortfolio",
+        context: {
+            type: "ClientPortfolio",
+            data: { portfolio, clientName }
+        }
+    };
+
+    glue.intents.raise(intentRequest);
+};
+
+
+const start = async () => {
     if ("serviceWorker" in navigator) {
         navigator.serviceWorker.register("/service-worker.js");
-    }
+    };
 
     const stocksResponse = await fetch("http://localhost:8080/api/portfolio");
-
     const stocks = await stocksResponse.json();
 
-    // setupStocks(stocks);
-
+    setupStocks(stocks);
     generateStockPrices(newPricesHandler);
 
-    window.glue = await window.GlueWeb({
-        libraries: [window.GlueWorkspaces]
-    });
+    const config = {
+        libraries: [GlueWorkspaces]
+    };
+    const glue = await GlueWeb(config);
+    window.glue = glue;
 
     toggleGlueAvailable();
 
-    const myWorkspace = await glue.workspaces.getMyWorkspace().catch(console.error);;
-
-    if (myWorkspace) {
-        myWorkspace.onContextUpdated((ctx) => {
-            if (ctx.client) {
-                const clientPortfolio = ctx.client.portfolio;
-                const stockToShow = stocks.filter((stock) => clientPortfolio.includes(stock.RIC));
-                setupStocks(stockToShow);
-            }
-        });
-    }
-
-    // window.glue.interop.register("SelectClient", (args) => {
+    // const methodName = "SelectClient";
+    // const methodHandler = (args) => {
     //     const clientPortfolio = args.client.portfolio;
-    //     const stockToShow = stocks.filter((stock) => clientPortfolio.includes(stock.RIC));
-    //     setupStocks(stockToShow);
-    // });
+    //     const stockToShow = stocks.filter(stock => clientPortfolio.includes(stock.RIC));
 
-    // window.glue.contexts.subscribe("SelectedClient", (client) => {
-    //     const clientPortfolio = client.portfolio;
-    //     const stockToShow = stocks.filter((stock) => clientPortfolio.includes(stock.RIC));
     //     setupStocks(stockToShow);
-    // });
+    // };
 
-    // window.glue.channels.subscribe((client) => {
-    //     if (client.portfolio) {
-    //         const clientPortfolio = client.portfolio;
-    //         const stockToShow = stocks.filter((stock) => clientPortfolio.includes(stock.RIC));
-    //         setupStocks(stockToShow);
-    //     } else {
-    //         setupStocks(stocks);
-    //     }
-    // });
+    // glue.interop.register(methodName, methodHandler);
 
     window.priceStream = await glue.interop.createStream("LivePrices");
 
-    // // The value that will be displayed inside the channel selector widget to leave the current channel.
-    // const NO_CHANNEL_VALUE = "No channel";
+    // glue.contexts.subscribe("SelectedClient", updateHandler);
 
-    // // Get the channel names and colors using the Channels API.
+    // const NO_CHANNEL_VALUE = "No channel";
     // const channelContexts = await window.glue.channels.list();
-    // const channelNamesAndColors = channelContexts.map(channelContext => ({
-    //     name: channelContext.name,
-    //     color: channelContext.meta.color
-    // }));
+
+    // const channelNamesAndColors = channelContexts.map((channelContext) => {
+    //     const channelInfo = {
+    //         name: channelContext.name,
+    //         color: channelContext.meta.color
+    //     };
+
+    //     return channelInfo;
+    // });
 
     // const onChannelSelected = (channelName) => {
     //     if (channelName === NO_CHANNEL_VALUE) {
-    //         if (window.glue.channels.my()) {
-    //             window.glue.channels.leave().catch(console.error);
-    //         }
+    //         if (glue.channels.my()) {
+    //             glue.channels.leave().catch(console.error);
+    //         };
     //     } else {
-    //         window.glue.channels.join(channelName).catch(console.error);
-    //     }
+    //         glue.channels.join(channelName).catch(console.error);
+    //     };
     // };
 
     // const updateChannelSelectorWidget = createChannelSelectorWidget(
@@ -273,16 +268,54 @@ const start = async () => {
     //     onChannelSelected
     // );
 
-    // // Whenever a channel is joined or left rerender the channels.
-    // window.glue.channels.onChanged((channelName) => {
-    //     updateChannelSelectorWidget(channelName || NO_CHANNEL_VALUE);
-    // });
+    // const updateHandler = (client) => {
+    //     if (client.portfolio) {
+    //         const clientPortfolio = client.portfolio;
+    //         const stockToShow = stocks.filter(stock => clientPortfolio.includes(stock.RIC));
 
-    // const channelToJoin = (await window.glue.appManager.myInstance.getContext()).channel;
+    //         setupStocks(stockToShow);
+    //     };
+    // };
+
+    // glue.channels.subscribe(updateHandler);
+
+    // const handleChannelChanges = (channelName) => {
+    //     updateChannelSelectorWidget(channelName || NO_CHANNEL_VALUE);
+    //     console.log(`channel changed ${channelName}`)
+    // };
+
+    // glue.channels.onChanged(handleChannelChanges);
+
+    // const appContext = await glue.appManager.myInstance.getContext();
+    // const channelToJoin = appContext.channel;
 
     // if (channelToJoin) {
-    //     window.glue.channels.join(channelToJoin);
-    // }
+    //     await glue.channels.join(channelToJoin);
+    // };
+
+    const myWorkspace = await glue.workspaces.getMyWorkspace();
+
+    if (myWorkspace) {
+        myWorkspace.onContextUpdated((context) => {
+            if (context.client) {
+                const clientPortfolio = context.client.portfolio;
+                clientPortfolioStocks = stocks.filter((stock) => clientPortfolio.includes(stock.RIC));
+                clientName = context.client.name;
+
+                setupStocks(clientPortfolioStocks);
+            };
+        });
+    };
+
+    const exportPortfolioButton = document.getElementById("exportPortfolio");
+
+    exportPortfolioButton.onclick = () => {
+        if (!clientPortfolioStocks) {
+            return;
+        };
+        
+        exportPortfolioButtonHandler(clientPortfolioStocks).catch(console.error);
+    };
 };
 
 start().catch(console.error);

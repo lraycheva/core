@@ -1,6 +1,4 @@
-/* eslint-disable no-undef */
 const setFields = (stock) => {
-
     const elementTitle = document.querySelector(".text-center");
     elementTitle.innerText = `Stock Details ${stock.RIC}`;
 
@@ -35,67 +33,66 @@ const updateStockPrices = (bid, ask) => {
 
 const toggleGlueAvailable = () => {
     const span = document.getElementById("glueSpan");
+
     span.classList.remove("label-warning");
     span.classList.add("label-success");
     span.textContent = "Glue42 is available";
 };
 
 // const updateClientStatus = (client, stock) => {
-
 //     const message = client.portfolio.includes(stock.RIC) ?
 //         `${client.name} has this stock in the portfolio` :
 //         `${client.name} does NOT have this stock in the portfolio`;
-
 //     const elementTitle = document.getElementById("clientStatus");
+
 //     elementTitle.innerText = message;
 // };
 
 const start = async () => {
-    window.glue = await window.GlueWeb();
+    const glue = await GlueWeb();
+    window.glue = glue;
+
     toggleGlueAvailable();
 
-    const subscription = await window.glue.interop.subscribe("LivePrices");
-    subscription.onData((streamData) => {
-        if (!selectedStock) {
-            return;
-        }
-        const newPrices = streamData.data.stocks;
-        const selectedStockPrice = newPrices.find((prices) => prices.RIC === selectedStock.RIC);
-        updateStockPrices(selectedStockPrice.Bid, selectedStockPrice.Ask);
-    });
-
-    const context = await glue.windows.my().getContext();
+    const myWindow = glue.windows.my();
+    const context = await myWindow.getContext();
+    // const stock = await glue.appManager.myInstance.getContext();
     let selectedStock;
 
     if (context && context.stock) {
         selectedStock = context.stock;
-        setFields(selectedStock);
-    }
 
-    glue.windows.my().onContextUpdated((ctx) => {
-        if (ctx.stock) {
-            selectedStock = ctx.stock;
+        setFields(selectedStock);
+    };
+
+    myWindow.onContextUpdated((context) => {
+        if (context.stock) {
+            selectedStock = context.stock;
+
             setFields(selectedStock);
-        }
+        };
     });
 
-    // const stock = await window.glue.windows.my().getContext();
+    const subscription = await glue.interop.subscribe("LivePrices");
 
-    // const stock = await window.glue.appManager.myInstance.getContext();
+    const streamDataHandler = (streamData) => {
+        if (!selectedStock) {
+            return;
+        };
 
-    // setFields(stock);
+        const updatedStocks = streamData.data.stocks;
+        const selectedStockPrice = updatedStocks.find(updatedStock => updatedStock.RIC === selectedStock.RIC);
 
-    // const subscription = await window.glue.interop.subscribe("LivePrices");
+        updateStockPrices(selectedStockPrice.Bid, selectedStockPrice.Ask);
+    };
 
-    // subscription.onData((streamData) => {
-    //     const newPrices = streamData.data.stocks;
-    //     const selectedStockPrice = newPrices.find((prices) => prices.RIC === stock.RIC);
-    //     updateStockPrices(selectedStockPrice.Bid, selectedStockPrice.Ask);
-    // });
+    subscription.onData(streamDataHandler);
 
-    // window.glue.contexts.subscribe("SelectedClient", (client) => {
+    // const updateHandler = (client) => {
     //     updateClientStatus(client, stock);
-    // });
+    // };
+
+    // glue.contexts.subscribe("SelectedClient", updateHandler);
 };
 
 start().catch(console.error);
