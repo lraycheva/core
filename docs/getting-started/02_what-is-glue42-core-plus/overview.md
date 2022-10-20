@@ -1,6 +1,6 @@
 ## Overview
 
-[**Glue42 Core+**](https://glue42.com/core-plus/) includes all free open-source features of [**Glue42 Core**](https://glue42.com/core/) and offers an extensive set of additional features available under a paid license, thus bridging the gap between [**Glue42 Core**](https://glue42.com/core/) and [**Glue42 Enterprise**](https://glue42.com/enterprise/).
+[**Glue42 Core+**](https://glue42.com/core-plus/) is a Plugin for [**Glue42 Core**](https://glue42.com/core/) and offers an extensive set of additional features available under a paid license, thus bridging the gap between [**Glue42 Core**](https://glue42.com/core/) and [**Glue42 Enterprise**](https://glue42.com/enterprise/).
 
 The following diagram shows the features offered by [**Glue42 Core**](https://glue42.com/core/) and [**Glue42 Core+**](https://glue42.com/core-plus/):
 
@@ -17,13 +17,19 @@ In a licensed [**Glue42 Core+**](https://glue42.com/core-plus/) project, you can
 - Connectors to integrate your web apps with Bloomberg, Fidessa, Excel, Outlook and more;
 - an installable Browser Extension which replaces the need for a [Main app](../../developers/core-concepts/web-platform/overview/index.html) and provides many other handy features for your web project;
 - automatic [FDC3](https://fdc3.finos.org/) implementation injection;
-- Glue42 Developer Tools (Interop Viewer, Context Viewer) for tracking the behavior of [Interop methods and streams](../../capabilities/data-sharing-between-apps/interop/index.html), and [shared contexts](../../capabilities/data-sharing-between-apps/shared-contexts/index.html).
+- Glue42 Developer Tools (Interop Viewer, Context Viewer) for tracking the behavior of [Interop methods and streams](../../capabilities/data-sharing-between-apps/interop/index.html) and [shared contexts](../../capabilities/data-sharing-between-apps/shared-contexts/index.html).
 
 [**Glue42 Core+**](https://glue42.com/core-plus/) enables you to connect to a [Glue42 Server](https://docs.glue42.com/glue42-concepts/glue42-server/index.html), and even achieve interoperability across different user machines. Customer support is also available under a paid license for [**Glue42 Core+**](https://glue42.com/core-plus/).
 
+## Licensing
+
+The [`@glue42/core-plus`](https://www.npmjs.com/package/@glue42/core-plus) Plugin is free to download from the public NPM registry, but it requires a valid license key to operate. To purchase a license or request a trial one, [contact us](https://glue42.com/contacts/) at `info@glue42.com`.
+
+*For more details on how to enable the [**Glue42 Core+**](https://glue42.com/core-plus/) Plugin if you already have a valid license key, see the [Developers > Glue42 Core+ Plugin](../../developers/core-plus-plugin/index.html) section.*
+
 ## Features
 
-*Note that the features described here are still under development and detailed information about them isn't available yet. For more information, [contact us](https://glue42.com/contacts/) at `info@glue42.com`.*
+*Note that some of the features described here are still under development and detailed information about them isn't available yet. For more information, [contact us](https://glue42.com/contacts/) at `info@glue42.com`.*
 
 ### Layouts
 
@@ -53,7 +59,7 @@ The Glue42 Browser Extension enables you to inject automatically an FDC3 impleme
 
 ### Connectivity to Glue42 Server
 
-A [**Glue42 Core+**](https://glue42.com/core-plus/) project can connect to a Glue42 Server and use its functionalities.
+A [**Glue42 Core+**](https://glue42.com/core-plus/) project can [connect to a Glue42 Server](../../capabilities/connectivity-to-enterprise/index.html) and use its functionalities.
 
 *For more details about the Glue42 Server, see the [Glue42 Server](https://docs.glue42.com/glue42-concepts/glue42-server/index.html) section of the [**Glue42 Enterprise**](https://glue42.com/enterprise/) documentation.*
 
@@ -73,4 +79,10 @@ The basic structure of a [**Glue42 Core+**](https://glue42.com/core-plus/) proje
 
 ## Requirements
 
-All [requirements](../what-is-glue42-core/index.html#requirements) for a [**Glue42 Core**](https://glue42.com/core/) project are also valid for [**Glue42 Core+**](https://glue42.com/core-plus/). There aren't any other specific requirements for a [**Glue42 Core+**](https://glue42.com/core-plus/) project.
+All [requirements](../what-is-glue42-core/index.html#requirements) for a [**Glue42 Core**](https://glue42.com/core/) project are also valid for [**Glue42 Core+**](https://glue42.com/core-plus/).
+
+The [`@glue42/core-plus`](https://www.npmjs.com/package/@glue42/core-plus) Plugin also requires:
+
+- [`@glue42/web-platform`](https://www.npmjs.com/package/@glue42/web-platform) version 1.14.1 or later;
+- [`@glue42/web`](https://www.npmjs.com/package/@glue42/web) version 2.8.1 or later;
+- [`@glue42/workspaces-api`](https://www.npmjs.com/package/@glue42/workspaces-api) version 1.16.4 or later;

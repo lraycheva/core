@@ -196,8 +196,8 @@ The `delayed` object has the following properties, all of which are optional:
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `initialOffsetInterval` | `number` | Initial period in milliseconds after which to start loading apps in batches. Defaults to `1000`. |
-| `interval` | `number` | Interval in milliseconds at which to load the app batches. Defaults to `5000`. |
+| `initialOffsetInterval` | `number` | Initial period in milliseconds after which to start loading apps in batches. Defaults to 1000. |
+| `interval` | `number` | Interval in milliseconds at which to load the app batches. Defaults to 5000. |
 | `batch` | `number` | Number of apps in a batch to be loaded at each interval. Defaults to 1. |
 
 *For programmatic control of Workspace loading strategies, see [Loading Strategies](../workspaces-api/index.html#workspace-loading_strategies) in the Workspaces API section.*

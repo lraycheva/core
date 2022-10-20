@@ -23,14 +23,14 @@ const myLayout = await glue.layouts.get(name, type);
 
 ### Saving and Restoring
 
-*Note that if you haven't already handled programmatically the process of [requesting a permission from the user for the Multi-Screen Window Placement browser functionality](#requesting_multiscreen_window_placement_permission), the first time either the [`save()`](../../../../reference/core/latest/layouts/index.html#API-save) or the [`restore()`](../../../../reference/core/latest/layouts/index.html#API-restore) method is invoked, the Global Layouts Plugin will automatically ask the user for permission. This default behavior isn't recommended, as it's not ideal for the user experience.*
+*Note that if you haven't already handled programmatically the process of [requesting a permission from the user for the Multi-Screen Window Placement browser functionality](#requesting_multiscreen_window_placement_permission), the first time either the [`save()`](../../../../reference/core/latest/layouts/index.html#API-save) or the [`restore()`](../../../../reference/core/latest/layouts/index.html#API-restore) method is invoked, the Global Layouts library will automatically ask the user for permission. This default behavior isn't recommended, as it's not ideal for the user experience.*
 
 To save a Layout, use the [`save()`](../../../../reference/core/latest/layouts/index.html#API-save) method and pass a [`NewLayoutOptions`](../../../../reference/core/latest/layouts/index.html#NewLayoutOptions) object with a required `name` property. Note that if a Layout with that name already exists, it will be replaced. This method returns the saved [`Layout`](../../../../reference/core/latest/layouts/index.html#Layout) object:
 
 ```javascript
 const layoutConfig = {
     name: "My Layout",
-    // Optionally specify a Layout type. The default is "Global".
+    // Optionally specify a Layout type. Defaults to "Global".
     type: "Workspace"
 };
 
@@ -42,7 +42,7 @@ To restore a Layout, use the [`restore()`](../../../../reference/core/latest/lay
 ```javascript
 const restoreOptions = {
     name: "My Layout",
-    // Specify whether to close all running apps before restoring the Layout. The default is `true`.
+    // Specify whether to close all running apps before restoring the Layout. Defaults to `true`.
     // Note that the Main app is an exception and will never be closed when restoring a Layout.
     closeRunningInstance: false
 };
@@ -144,7 +144,7 @@ const gridWidth = windowContext.gridWidth;
 
 ## Checking the Global Layouts State
 
-To check whether the [Main app](../../../../developers/core-concepts/web-platform/overview/index.html) has loaded and initialized the Global Layouts Plugin that enables [**Glue42 Core+**](https://glue42.com/core-plus/) to save and restore Layouts of type `"Global"`, use the [`getGlobalTypeState()`](../../../../reference/core/latest/layouts/index.html#API-getGlobalTypeState) method. It returns an object with an `activated` property holding a Boolean value:
+To check whether the [Main app](../../../../developers/core-concepts/web-platform/overview/index.html) has loaded and initialized the Global Layouts library that enables [**Glue42 Core+**](https://glue42.com/core-plus/) to save and restore Layouts of type `"Global"`, use the [`getGlobalTypeState()`](../../../../reference/core/latest/layouts/index.html#API-getGlobalTypeState) method. It returns an object with an `activated` property holding a Boolean value:
 
 ```javascript
 const state = await glue.layouts.getGlobalTypeState();
@@ -158,7 +158,7 @@ if (state.activated) {
 
 ## Requesting Multi-Screen Window Placement Permission
 
-The [**Glue42 Core+**](https://glue42.com/core-plus/) Layouts API provides methods with which you can ask the user to allow the Multi-Screen Window Placement browser functionality, which is mandatory for the Global Layouts to work properly. This allows you to handle the permission request process at the right moment, in a well-designed manner.
+The Layouts API provides methods with which you can ask the user to allow the Multi-Screen Window Placement browser functionality, which is mandatory for the Global Layouts to work properly. This allows you to handle the permission request process at the right moment, in a well-designed manner.
 
 To check whether the user has already granted or denied permission for the Multi-Screen Window Placement browser functionality, or this permission is yet to be requested, use the [`getMultiScreenPermissionState()`](../../../../reference/core/latest/layouts/index.html#API-getMultiScreenPermissionState) method and extract the value describing the current permission state from the `state` property of the returned object:
 

@@ -41,6 +41,6 @@ The Plugin definition object has the following properties:
 | Property | Type | Description |
 |----------|------|-------------|
 | `name` | `string` | **Required.** Name for the Plugin. |
-| `start` | `(glue, config, platform) => void` | **Required.** Function that will receive as arguments a fully initialized `glue` object, the `config` object specified in the definition and a `platform` object which can be used to handle system messages and logging. |
+| `start` | `(glue, config, platform) => Promise<void> \| void` | **Required.** Function that will receive as arguments a fully initialized `glue` object, the `config` object specified in the definition and a `platform` object which can be used to handle system messages and logging. |
 | `config` | `object` | Configuration that will be passed to the Plugin. |
 | `critical` | `boolean` | If `true`, the [Web Platform](https://www.npmjs.com/package/@glue42/web-platform) library will wait for the Plugin to be executed before completing its initialization. |
