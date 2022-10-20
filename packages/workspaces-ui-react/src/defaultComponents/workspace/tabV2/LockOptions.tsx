@@ -1,6 +1,7 @@
 import { GlueContext } from "@glue42/react-hooks";
 import React, { useCallback, useContext, useEffect, useRef } from "react";
 import { Size } from "../../../types/internal";
+import BackButton from "./BackButton";
 import LockOption from "./LockOption";
 import { Workspace, WorkspaceLockConfig } from "./types";
 
@@ -86,7 +87,7 @@ const LockOptions: React.FC<LockOptionsProps> = ({ workspaceId, lockConfig, onBa
     const disableName = "Lock All";
 
     return <div ref={ref} className="p-3" style={{ width: 400 }}>
-        {showBackButton && <button onClick={onBackClick} className="btn btn-icon-action position-absolute btn-back"><i className="icon-angle-left" /></button>}
+        {showBackButton && <BackButton onClick={onBackClick} />}
         <div className="mb-2">
             <LockOption name={isLocked() ? enableName : disableName} value={isLocked()} onChange={toggleAll} />
         </div>

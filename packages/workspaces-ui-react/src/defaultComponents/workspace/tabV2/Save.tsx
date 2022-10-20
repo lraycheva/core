@@ -1,5 +1,6 @@
 import React from "react";
 import SaveWorkspacePopup from "../../popups/saveWorkspace/SaveWorkspacePopup";
+import BackButton from "./BackButton";
 
 interface SaveProps {
     hidePopup: () => void;
@@ -10,7 +11,7 @@ interface SaveProps {
 
 const Save: React.FC<SaveProps> = (props) => {
     return <div>
-        <button onClick={props.onBackClick} className="btn btn-icon-action position-absolute mt-2 btn-back"><i className="icon-angle-left" /></button>
+        <BackButton onClick={props.onBackClick} />
         <SaveWorkspacePopup resizePopup={props.resizePopup!} {...props} />
     </div>;
 }
