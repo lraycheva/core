@@ -1,3 +1,5 @@
+1.10.2
+chore: css structure changes for workspace tab v2
 1.10.1
 chore: bump due to dependencies update
 1.10.0

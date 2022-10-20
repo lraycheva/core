@@ -4,6 +4,7 @@ import typescript from 'rollup-plugin-typescript2'
 import external from 'rollup-plugin-peer-deps-external';
 import { terser } from "rollup-plugin-terser";
 import copy from "rollup-plugin-copy";
+import execute from "rollup-plugin-execute";
 
 export default [
     {
@@ -13,7 +14,6 @@ export default [
             commonjs(),
             resolve({
                 mainFields: ["main", "module", "browser"],
-
             }),
             external(),
             terser({
@@ -24,7 +24,8 @@ export default [
                     { src: './assets/css/*.css', dest: 'dist/styles' },
 
                 ]
-            })
+            }),
+            execute("npm run bundle:css")
         ],
         output: [{ dir: 'dist', format: 'es', sourcemap: true }]
     }
