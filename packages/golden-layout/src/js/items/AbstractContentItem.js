@@ -639,5 +639,17 @@ lm.utils.copy(lm.items.AbstractContentItem.prototype, {
 	_propagateEventToLayoutManager: function (name, event) {
 		this._pendingEventPropagations[name] = false;
 		this.layoutManager.emit(name, event);
-	}
+	},
+	_memoizeConstraint(constraintProperty, value) {
+		const id = lm.utils.idAsString(this.config.id);
+		if (!id) {
+			return;
+		}
+		const memoizedConstraints = this.layoutManager._idToMinMaxConstraints[id];
+		if (memoizedConstraints) {
+			this.layoutManager._idToMinMaxConstraints[id][constraintProperty] = value;
+		} else {
+			this.layoutManager._idToMinMaxConstraints[id] = { [`${constraintProperty}`]: value };
+		}
+	},
 });

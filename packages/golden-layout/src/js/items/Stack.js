@@ -65,21 +65,16 @@ lm.utils.copy(lm.items.Stack.prototype, {
 	 * @returns {number | undefined}
 	 */
 	getMinWidth() {
+		const memoizedConstraints = this.layoutManager._idToMinMaxConstraints[lm.utils.idAsString(this.config.id)];
+		if (memoizedConstraints && typeof memoizedConstraints.minWidth === "number") {
+			return memoizedConstraints.minWidth;
+		}
 		const elementMinWidth = this.config.workspacesConfig.minWidth || this.layoutManager.config.dimensions.minItemWidth;
-		return this.contentItems.reduce((minWidth, ci) => {
+		const result =  this.contentItems.reduce((minWidth, ci) => {
 			return Math.max(minWidth, ci.getMinWidth() || this.layoutManager.config.dimensions.minItemWidth);
 		}, elementMinWidth);
-	},
-	/**
-	 * Returns the min width of the row or column
-	 * @returns {number | undefined}
-	 */
-	getMaxWidth() {
-		const elementMaxWidth = this.config.workspacesConfig.maxWidth || this.layoutManager.config.dimensions.maxItemWidth;
-		const result = this.contentItems.reduce((maxWidth, ci) => {
-			const childMaxWidth = ci.getMaxWidth();
-			return Math.min(maxWidth, childMaxWidth || this.layoutManager.config.dimensions.maxItemWidth);
-		}, elementMaxWidth);
+
+		lm.items.AbstractContentItem.prototype._memoizeConstraint.call(this, "minWidth", result);
 
 		return result;
 	},
@@ -87,7 +82,29 @@ lm.utils.copy(lm.items.Stack.prototype, {
 	 * Returns the min width of the row or column
 	 * @returns {number | undefined}
 	 */
+	getMaxWidth() {
+		const memoizedConstraints = this.layoutManager._idToMinMaxConstraints[lm.utils.idAsString(this.config.id)];
+		if (memoizedConstraints && typeof memoizedConstraints.maxWidth === "number") {
+			return memoizedConstraints.maxWidth;
+		}
+		const elementMaxWidth = this.config.workspacesConfig.maxWidth || this.layoutManager.config.dimensions.maxItemWidth;
+		const result = this.contentItems.reduce((maxWidth, ci) => {
+			const childMaxWidth = ci.getMaxWidth();
+			return Math.min(maxWidth, childMaxWidth || this.layoutManager.config.dimensions.maxItemWidth);
+		}, elementMaxWidth);
+
+		lm.items.AbstractContentItem.prototype._memoizeConstraint.call(this, "maxWidth", result);
+		return result;
+	},
+	/**
+	 * Returns the min width of the row or column
+	 * @returns {number | undefined}
+	 */
 	getMinHeight() {
+		const memoizedConstraints = this.layoutManager._idToMinMaxConstraints[lm.utils.idAsString(this.config.id)];
+		if (memoizedConstraints && typeof memoizedConstraints.minHeight === "number") {
+			return memoizedConstraints.minHeight;
+		}
 		const elementMinHeight = this.config.workspacesConfig.minHeight || this.layoutManager.config.dimensions.minItemHeight;
 		const headerElement = this.header.element;
 		let headerHeight = headerElement ? this.realHeight(headerElement) : 0;
@@ -99,6 +116,8 @@ lm.utils.copy(lm.items.Stack.prototype, {
 			return Math.max(minHeight, ci.getMinHeight() + headerHeight || this.layoutManager.config.dimensions.minItemHeight);
 		}, elementMinHeight);
 
+		lm.items.AbstractContentItem.prototype._memoizeConstraint.call(this, "minHeight", minHeight);
+
 		return minHeight;
 	},
 	/**
@@ -106,6 +125,10 @@ lm.utils.copy(lm.items.Stack.prototype, {
 	 * @returns {number | undefined}
 	 */
 	getMaxHeight() {
+		const memoizedConstraints = this.layoutManager._idToMinMaxConstraints[lm.utils.idAsString(this.config.id)];
+		if (memoizedConstraints && typeof memoizedConstraints.maxHeight === "number") {
+			return memoizedConstraints.maxHeight;
+		}
 		const elementMaxHeight = this.config.workspacesConfig.maxHeight || this.layoutManager.config.dimensions.maxItemHeight;
 		const headerElement = this.header.element;
 		let headerHeight = headerElement ? this.realHeight(headerElement) : 0;
@@ -116,6 +139,8 @@ lm.utils.copy(lm.items.Stack.prototype, {
 		const maxHeight = this.contentItems.reduce((maxHeight, ci) => {
 			return Math.min(maxHeight, ci.getMaxHeight() + headerHeight || this.layoutManager.config.dimensions.maxItemHeight);
 		}, elementMaxHeight);
+
+		lm.items.AbstractContentItem.prototype._memoizeConstraint.call(this, "maxHeight", maxHeight);
 
 		return maxHeight;
 	},

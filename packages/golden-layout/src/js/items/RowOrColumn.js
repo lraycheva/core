@@ -167,6 +167,10 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
 	 * @returns {number | undefined}
 	 */
 	getMinWidth() {
+		const memoizedConstraints = this.layoutManager._idToMinMaxConstraints[lm.utils.idAsString(this.config.id)];
+		if (memoizedConstraints && typeof memoizedConstraints.minWidth === "number") {
+			return memoizedConstraints.minWidth;
+		}
 		const elementMinWidth = this.config.workspacesConfig.minWidth || this.layoutManager.config.dimensions.minItemWidth;
 		const contentsMinWidth = this.contentItems.reduce((minWidth, ci) => {
 			if (this.config.type === "row") {
@@ -176,13 +180,21 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
 			}
 			return minWidth;
 		}, 0);
-		return Math.max(elementMinWidth, contentsMinWidth);
+		const result = Math.max(elementMinWidth, contentsMinWidth);
+
+		lm.items.AbstractContentItem.prototype._memoizeConstraint.call(this, "minWidth", result);
+
+		return result;
 	},
 	/**
 	 * Returns the min width of the row or column
 	 * @returns {number | undefined}
 	 */
 	getMaxWidth() {
+		const memoizedConstraints = this.layoutManager._idToMinMaxConstraints[lm.utils.idAsString(this.config.id)];
+		if (memoizedConstraints && typeof memoizedConstraints.maxWidth === "number") {
+			return memoizedConstraints.maxWidth;
+		}
 		const elementMaxWidth = this.config.workspacesConfig.maxWidth || this.layoutManager.config.dimensions.maxItemWidth;
 		if (!this.contentItems.length) {
 			// When there are no content items the item constraint should be returned directly
@@ -197,13 +209,21 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
 			return maxWidth;
 		}, 0);
 
-		return Math.min(elementMaxWidth, contentsMaxWidth);
+		const result = Math.min(elementMaxWidth, contentsMaxWidth);
+
+		lm.items.AbstractContentItem.prototype._memoizeConstraint.call(this, "maxWidth", result);
+
+		return result;
 	},
 	/**
 	 * Returns the min width of the row or column
 	 * @returns {number | undefined}
 	 */
 	getMinHeight() {
+		const memoizedConstraints = this.layoutManager._idToMinMaxConstraints[lm.utils.idAsString(this.config.id)];
+		if (memoizedConstraints && typeof memoizedConstraints.minHeight === "number") {
+			return memoizedConstraints.minHeight;
+		}
 		const elementMinHeight = this.config.workspacesConfig.minHeight || this.layoutManager.config.dimensions.minItemHeight;
 		const contentsMinHeight = this.contentItems.reduce((minHeight, ci) => {
 			if (this.config.type === "row") {
@@ -214,13 +234,21 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
 			return minHeight;
 		}, 0);
 
-		return Math.max(elementMinHeight, contentsMinHeight);
+		const result = Math.max(elementMinHeight, contentsMinHeight);
+
+		lm.items.AbstractContentItem.prototype._memoizeConstraint.call(this, "minHeight", result);
+
+		return result;
 	},
 	/**
 	 * Returns the min width of the row or column
 	 * @returns {number | undefined}
 	 */
 	getMaxHeight() {
+		const memoizedConstraints = this.layoutManager._idToMinMaxConstraints[lm.utils.idAsString(this.config.id)];
+		if (memoizedConstraints && typeof memoizedConstraints.maxHeight === "number") {
+			return memoizedConstraints.maxHeight;
+		}
 		const elementMaxHeight = this.config.workspacesConfig.maxHeight || this.layoutManager.config.dimensions.maxItemHeight;
 		if (!this.contentItems.length) {
 			// When there are no content items the item constraint should be returned directly
@@ -235,7 +263,11 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
 			return maxHeight;
 		}, 0);
 
-		return Math.min(elementMaxHeight, contentsMaxHeight);
+		const result = Math.min(elementMaxHeight, contentsMaxHeight);
+
+		lm.items.AbstractContentItem.prototype._memoizeConstraint.call(this, "maxHeight", result);
+
+		return result;
 	},
 
 	/**
@@ -883,7 +915,7 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
 			this._layoutManager._ignorePinned = false;
 			// ensuring that if there are maximized items after splitter drag their bounds will be correct
 			// they will be correct because update size applies again the rule that the maximized items should have the size of their maximization container
-			if(Object.values(this.layoutManager._maximizedItemsInTargetContainer).length){
+			if (Object.values(this.layoutManager._maximizedItemsInTargetContainer).length) {
 				this._layoutManager.updateSize();
 			}
 		});

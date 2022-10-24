@@ -27,6 +27,8 @@ lm.LayoutManager = function (config, container, componentFactory) {
 	this._itemAreas = [];
 	this._resizeFunction = lm.utils.fnBind(this._onResize, this);
 	this._unloadFunction = lm.utils.fnBind(this._onUnload, this);
+	this._onItemCreatedFunction = lm.utils.fnBind(this._onItemCreated, this);
+	this._onItemDestroyedFunction = lm.utils.fnBind(this._onItemDestroyed, this);
 	this._maximizedItem = null;
 	this._maximizedItemsInTargetContainer = {};
 	this._maximizePlaceholder = $('<div class="lm_maximise_place"></div>');
@@ -38,6 +40,7 @@ lm.LayoutManager = function (config, container, componentFactory) {
 	this._firstLoad = true;
 	this._componentFactory = componentFactory;
 	this._ignorePinned = false;
+	this._idToMinMaxConstraints = {};
 
 	this.width = null;
 	this.height = null;
@@ -895,6 +898,9 @@ lm.utils.copy(lm.LayoutManager.prototype, {
 			$(window).resize(this._resizeFunction);
 		}
 		$(window).on('unload beforeunload', this._unloadFunction);
+
+		this.on("itemCreated", this._onItemCreatedFunction);
+		this.on("itemDestroyed", this._onItemDestroyedFunction);
 	},
 
 	/**
@@ -1090,6 +1096,13 @@ lm.utils.copy(lm.LayoutManager.prototype, {
 				this.openPopouts[i].close();
 			}
 		}
+	},
+
+	_onItemCreated: function () {
+		this._idToMinMaxConstraints = {};
+	},
+	_onItemDestroyed: function () {
+		this._idToMinMaxConstraints = {};
 	},
 
 	/**

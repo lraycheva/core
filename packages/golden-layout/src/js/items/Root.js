@@ -45,51 +45,83 @@ lm.utils.copy(lm.items.Root.prototype, {
 		 * @returns {number | undefined}
 		 */
 	getMinWidth() {
+		const memoizedConstraints = this.layoutManager._idToMinMaxConstraints[lm.utils.idAsString(this.config.id)];
+		if (memoizedConstraints && typeof memoizedConstraints.minWidth === "number") {
+			return memoizedConstraints.minWidth;
+		}
 		const elementMinWidth = this.config.workspacesConfig.minWidth || this.layoutManager.config.dimensions.minItemWidth;
 		const contentsMinWidth = this.contentItems.reduce((minWidth, ci) => {
 			minWidth += ci.getMinWidth() || this.layoutManager.config.dimensions.minItemWidth;
 			return minWidth;
 		}, 0);
-		return Math.max(elementMinWidth, contentsMinWidth);
+		const result = Math.max(elementMinWidth, contentsMinWidth);
+
+		lm.items.AbstractContentItem.prototype._memoizeConstraint.call(this, "minWidth", result);
+
+		return result;
 	},
 	/**
 	 * Returns the min width of the row or column
 	 * @returns {number | undefined}
 	 */
 	getMaxWidth() {
+		const memoizedConstraints = this.layoutManager._idToMinMaxConstraints[lm.utils.idAsString(this.config.id)];
+		if (memoizedConstraints && typeof memoizedConstraints.maxWidth === "number") {
+			return memoizedConstraints.maxWidth;
+		}
 		const elementMaxWidth = this.config.workspacesConfig.maxWidth || this.layoutManager.config.dimensions.maxItemWidth;
 		const contentsMaxWidth = this.contentItems.reduce((maxWidth, ci) => {
 			maxWidth += ci.getMaxWidth() || this.layoutManager.config.dimensions.maxItemWidth;
 			return maxWidth;
 		}, 0);
 
-		return Math.min(elementMaxWidth, contentsMaxWidth);
+		const result = Math.min(elementMaxWidth, contentsMaxWidth);
+
+		lm.items.AbstractContentItem.prototype._memoizeConstraint.call(this, "maxWidth", result);
+		
+		return result;
 	},
 	/**
 	 * Returns the min width of the row or column
 	 * @returns {number | undefined}
 	 */
 	getMinHeight() {
+		const memoizedConstraints = this.layoutManager._idToMinMaxConstraints[lm.utils.idAsString(this.config.id)];
+		if (memoizedConstraints && typeof memoizedConstraints.minHeight === "number") {
+			return memoizedConstraints.minHeight;
+		}
 		const elementMinHeight = this.config.workspacesConfig.minHeight || this.layoutManager.config.dimensions.minItemHeight;
 		const contentsMinHeight = this.contentItems.reduce((minHeight, ci) => {
 			minHeight += ci.getMinHeight() || this.layoutManager.config.dimensions.minItemHeight;
 			return minHeight;
 		}, 0);
 
-		return Math.max(elementMinHeight, contentsMinHeight);
+		const result =  Math.max(elementMinHeight, contentsMinHeight);
+
+		lm.items.AbstractContentItem.prototype._memoizeConstraint.call(this, "minHeight", result);
+
+		return result;
 	},
 	/**
 	 * Returns the min width of the row or column
 	 * @returns {number | undefined}
 	 */
 	getMaxHeight() {
+		const memoizedConstraints = this.layoutManager._idToMinMaxConstraints[lm.utils.idAsString(this.config.id)];
+		if (memoizedConstraints && typeof memoizedConstraints.maxHeight === "number") {
+			return memoizedConstraints.maxHeight;
+		}
 		const elementMaxHeight = this.config.workspacesConfig.maxHeight || this.layoutManager.config.dimensions.maxItemHeight;
 		const contentsMaxHeight = this.contentItems.reduce((maxHeight, ci) => {
 			maxHeight += ci.getMaxHeight() || this.layoutManager.config.dimensions.maxItemHeight;
 			return maxHeight;
 		}, 0);
 
-		return Math.min(elementMaxHeight, contentsMaxHeight);
+		const result =  Math.min(elementMaxHeight, contentsMaxHeight);
+
+		lm.items.AbstractContentItem.prototype._memoizeConstraint.call(this, "maxHeight", result);
+
+		return result;
 	},
 	_$highlightDropZone: function (x, y, area) {
 		this.layoutManager.tabDropPlaceholder.remove();
