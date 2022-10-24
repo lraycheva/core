@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Glue42Core } from "@glue42/core";
-import { BridgeOperation, InternalPlatformConfig, LibController, SystemOperationTypes } from "../common/types";
-import { anyDecoder, systemOperationTypesDecoder } from "../shared/decoders";
+import { BridgeOperation, InternalPlatformConfig, LibController, OperationCheckConfig, OperationCheckResult, SystemOperationTypes } from "../common/types";
+import { anyDecoder, operationCheckConfigDecoder, operationCheckResultDecoder, systemOperationTypesDecoder } from "../shared/decoders";
 import logger from "../shared/logger";
 import { SessionStorageController } from "./session";
 import { version } from "../../package.json";
@@ -12,9 +12,14 @@ export class SystemController implements LibController {
     private base: any = {};
     private started = false;
 
+    private platformOperations = [
+        "cleanupClientsOnWorkspaceFrameUnregister"
+    ];
+
     private operations: { [key in SystemOperationTypes]: BridgeOperation } = {
         getEnvironment: { name: "getEnvironment", resultDecoder: anyDecoder, execute: this.handleGetEnvironment.bind(this) },
-        getBase: { name: "getBase", resultDecoder: anyDecoder, execute: this.handleGetBase.bind(this) }
+        getBase: { name: "getBase", resultDecoder: anyDecoder, execute: this.handleGetBase.bind(this) },
+        operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder, resultDecoder: operationCheckResultDecoder, execute: this.handleOperationCheck.bind(this) }
     }
 
     constructor(private readonly session: SessionStorageController) { }
@@ -69,6 +74,16 @@ export class SystemController implements LibController {
         this.logger?.trace(`[${commandId}] ${operationName} command was executed successfully`);
 
         return result;
+    }
+
+    private async handleOperationCheck(config: OperationCheckConfig): Promise<OperationCheckResult> {
+        const operations = Object.keys(this.operations);
+
+        const isSupportedByController = operations.some((operation) => operation.toLowerCase() === config.operation.toLowerCase());
+
+        const isSupportedByPlatform = this.platformOperations.some((operation) => operation.toLowerCase() === config.operation.toLowerCase());
+
+        return { isSupported: isSupportedByController || isSupportedByPlatform };
     }
 
     private async handleGetEnvironment(): Promise<any> {

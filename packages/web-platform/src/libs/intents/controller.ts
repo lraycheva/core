@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Glue42Core } from "@glue42/core";
 import { Glue42Web } from "@glue42/web";
-import { ApplicationStartConfig, BridgeOperation, LibController } from "../../common/types";
+import { ApplicationStartConfig, BridgeOperation, LibController, OperationCheckConfig, OperationCheckResult } from "../../common/types";
 import { GlueController } from "../../controllers/glue";
 import { IoC } from "../../shared/ioc";
 import { PromisePlus } from "../../shared/promisePlus";
@@ -10,12 +10,14 @@ import { IntentsOperationTypes, AppDefinitionWithIntents, IntentInfo, IntentStor
 import logger from "../../shared/logger";
 import { GlueWebIntentsPrefix } from "../../common/constants";
 import { AppDirectory } from "../applications/appStore/directory";
+import { operationCheckConfigDecoder, operationCheckResultDecoder } from "../../shared/decoders";
 
 export class IntentsController implements LibController {
     private operations: { [key in IntentsOperationTypes]: BridgeOperation } = {
         getIntents: { name: "getIntents", resultDecoder: wrappedIntentsDecoder, execute: this.getWrappedIntents.bind(this) },
         findIntent: { name: "findIntent", dataDecoder: wrappedIntentFilterDecoder, resultDecoder: wrappedIntentsDecoder, execute: this.findIntent.bind(this) },
-        raiseIntent: { name: "raiseIntent", dataDecoder: intentRequestDecoder, resultDecoder: intentResultDecoder, execute: this.raiseIntent.bind(this) }
+        raiseIntent: { name: "raiseIntent", dataDecoder: intentRequestDecoder, resultDecoder: intentResultDecoder, execute: this.raiseIntent.bind(this) },
+        operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder, resultDecoder: operationCheckResultDecoder, execute: this.handleOperationCheck.bind(this) }
     };
     private started = false;
 
@@ -69,6 +71,14 @@ export class IntentsController implements LibController {
         this.logger?.trace(`[${commandId}] ${operationName} command was executed successfully`);
 
         return result;
+    }
+
+    private async handleOperationCheck(config: OperationCheckConfig): Promise<OperationCheckResult> {
+        const operations = Object.keys(this.operations);
+
+        const isSupported = operations.some((operation) => operation.toLowerCase() === config.operation.toLowerCase());
+
+        return { isSupported };
     }
 
     private extractAppIntents(apps: AppDefinitionWithIntents[]): IntentStore {

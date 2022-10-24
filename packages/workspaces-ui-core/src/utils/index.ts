@@ -1,5 +1,6 @@
 import GoldenLayout, { Container } from "@glue42/golden-layout";
 import { generate } from "shortid";
+import { ControlArguments } from "../interop/types";
 import { ColumnItem, GroupItem, RowItem, WindowItem, WorkspaceItem } from "../types/internal";
 
 export const idAsString = (id: string | string[]) => Array.isArray(id) ? id[0] : id;
@@ -117,4 +118,57 @@ export const getRealHeight = (obj: JQuery<HTMLElement>): number => {
 
 export const generateWindowId = () => {
     return `g42-${generate()}`;
+}
+
+export const isOperationSupported = (operation: ControlArguments["operation"]): boolean => {
+    const returnIsNotSupported = (invalidOperation: never): never => {
+        return { isSupported: false } as never;
+    }
+    switch (operation) {
+        case "isWindowInWorkspace":
+        case "addWindow":
+        case "addContainer":
+        case "getWorkspaceSnapshot":
+        case "openWorkspace":
+        case "saveLayout":
+        case "exportAllLayouts":
+        case "deleteLayout":
+        case "getAllWorkspacesSummaries":
+        case "maximizeItem":
+        case "restoreItem":
+        case "closeItem":
+        case "setItemTitle":
+        case "addWorkspaceChildren":
+        case "ejectWindow":
+        case "createWorkspace":
+        case "forceLoadWindow":
+        case "focusItem":
+        case "bundleWorkspace":
+        case "getFrameSummary":
+        case "moveFrame":
+        case "getFrameSnapshot":
+        case "getSnapshot":
+        case "moveWindowTo":
+        case "generateLayout":
+        case "ping":
+        case "hibernateWorkspace":
+        case "resumeWorkspace":
+        case "lockWorkspace":
+        case "lockContainer":
+        case "lockWindow":
+        case "resizeItem":
+        case "pinWorkspace":
+        case "unpinWorkspace":
+        case "getWorkspaceIcon":
+        case "setWorkspaceIcon":
+        case "initFrame":
+        case "createFrame":
+        case "initFrameFromSnapshot":
+        case "getWorkspacesLayouts":
+        case "setMaximizationBoundary":
+        case "operationCheck":
+            return true;
+        default:
+            return returnIsNotSupported(operation);
+    }
 }

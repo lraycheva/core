@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Glue42Web } from "@glue42/web";
-import { BridgeOperation, LibController } from "../../common/types";
+import { BridgeOperation, LibController, OperationCheckConfig, OperationCheckResult } from "../../common/types";
 import { GlueController } from "../../controllers/glue";
 import { ServiceWorkerController } from "../../controllers/serviceWorker";
 import { SessionStorageController } from "../../controllers/session";
+import { operationCheckConfigDecoder, operationCheckResultDecoder } from "../../shared/decoders";
 import logger from "../../shared/logger";
 import { notificationsOperationDecoder, permissionQueryResultDecoder, permissionRequestResultDecoder, raiseNotificationDecoder } from "./decoders";
 import { ExtensionNotification, GlueNotificationData, NotificationEventPayload, NotificationsOperationsTypes, PermissionQueryResult, PermissionRequestResult, RaiseNotificationConfig } from "./types";
@@ -17,7 +18,8 @@ export class NotificationsController implements LibController {
     private operations: { [key in NotificationsOperationsTypes]: BridgeOperation } = {
         raiseNotification: { name: "raiseNotification", execute: this.handleRaiseNotification.bind(this), dataDecoder: raiseNotificationDecoder },
         requestPermission: { name: "requestPermission", resultDecoder: permissionRequestResultDecoder, execute: this.handleRequestPermission.bind(this) },
-        getPermission: { name: "getPermission", resultDecoder: permissionQueryResultDecoder, execute: this.handleGetPermission.bind(this) }
+        getPermission: { name: "getPermission", resultDecoder: permissionQueryResultDecoder, execute: this.handleGetPermission.bind(this) },
+        operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder, resultDecoder: operationCheckResultDecoder, execute: this.handleOperationCheck.bind(this) }
     }
 
     constructor(
@@ -43,6 +45,14 @@ export class NotificationsController implements LibController {
         }
 
         this.serviceWorkerController.onNotificationClick(this.handleNotificationClick.bind(this));
+    }
+
+    private async handleOperationCheck(config: OperationCheckConfig): Promise<OperationCheckResult> {
+        const operations = Object.keys(this.operations);
+
+        const isSupported = operations.some((operation) => operation.toLowerCase() === config.operation.toLowerCase());
+
+        return { isSupported };
     }
 
     private handleNotificationClick(clickData: { action: string; glueData: GlueNotificationData; definition: Glue42Web.Notifications.NotificationDefinition }): void {

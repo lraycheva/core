@@ -3,7 +3,7 @@ import { allApplicationDefinitionsDecoder, applicationDetailsDecoder, glueCoreAp
 import { ApplicationData, BaseApplicationData, AppHelloSuccess, InstanceData, AppHello, BasicInstanceData, AppManagerOperationTypes, AppsImportOperation as AppsImportOperation, AppRemoveConfig, AppsExportOperation, AppsRemoteRegistration } from "./types";
 import { ApplicationStartConfig } from "../../common/types";
 
-export const appManagerOperationTypesDecoder: Decoder<AppManagerOperationTypes> = oneOf<"appHello" | "applicationStart" | "instanceStop" | "registerWorkspaceApp" | "unregisterWorkspaceApp" | "export" | "import" | "remove" | "clear" | "registerRemoteApps">(
+export const appManagerOperationTypesDecoder: Decoder<AppManagerOperationTypes> = oneOf<"appHello" | "applicationStart" | "instanceStop" | "registerWorkspaceApp" | "unregisterWorkspaceApp" | "export" | "import" | "remove" | "clear" | "registerRemoteApps" | "operationCheck">(
     constant("appHello"),
     constant("applicationStart"),
     constant("instanceStop"),
@@ -13,7 +13,8 @@ export const appManagerOperationTypesDecoder: Decoder<AppManagerOperationTypes> 
     constant("import"),
     constant("remove"),
     constant("clear"),
-    constant("registerRemoteApps")
+    constant("registerRemoteApps"),
+    constant("operationCheck")
 );
 
 export const basicInstanceDataDecoder: Decoder<BasicInstanceData> = object({

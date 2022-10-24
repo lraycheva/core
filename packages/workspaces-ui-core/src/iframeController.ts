@@ -2,7 +2,7 @@ import { Bounds } from "./types/internal";
 import callbackRegistry, { UnsubscribeFunction } from "callback-registry";
 import { Glue42Web } from "@glue42/web";
 import { generateWindowId } from "./utils";
-const semverLte = require('semver/functions/lte');
+import { PlatformCommunicator } from "./interop/platformCommunicator";
 
 declare var window: Window & { glue42core: { platformVersion: string } };
 
@@ -10,8 +10,11 @@ export class IFrameController {
     private readonly _registry = callbackRegistry();
     private _idToFrame: { [k: string]: HTMLIFrameElement } = {};
     private readonly _glue: Glue42Web.API;
-    constructor(glue: Glue42Web.API) {
+    private readonly _platformCommunicator: PlatformCommunicator;
+
+    constructor(glue: Glue42Web.API, platformCommunicator: PlatformCommunicator) {
         this._glue = glue;
+        this._platformCommunicator = platformCommunicator;
     }
 
     public async startFrame(id: string, url: string, layoutState?: object, windowId?: string): Promise<HTMLIFrameElement> {
@@ -80,17 +83,20 @@ export class IFrameController {
         const frame = this._idToFrame[id];
         if (frame) {
             delete this._idToFrame[id];
-            if (!window.glue42core.platformVersion || semverLte(window.glue42core.platformVersion, "1.12.11")) {
-                frame.contentWindow.postMessage({
-                    glue42core: {
-                        type: "manualUnload"
+            this._platformCommunicator.isOperationSupported({ domain: "system", operation: "cleanupClientsOnWorkspaceFrameUnregister" })
+                .then((isOperationSupported) => {
+                    if (!isOperationSupported) {
+                        frame.contentWindow.postMessage({
+                            glue42core: {
+                                type: "manualUnload"
+                            }
+                        }, "*");
                     }
-                }, "*");
-            }
-            setTimeout(() => {
-                frame.remove();
-                this._registry.execute("frame-removed", id);
-            }, 0);
+                    setTimeout(() => {
+                        frame.remove();
+                        this._registry.execute("frame-removed", id);
+                    }, 0);
+                });
         }
     }
 

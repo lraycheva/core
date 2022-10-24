@@ -3,7 +3,7 @@ import { Glue42Web } from "@glue42/web";
 export type WindowOperationsTypes = "openWindow" |
     "windowHello" | "getUrl" | "getTitle" | "setTitle" |
     "moveResize" | "focus" | "close" | "getBounds" | "getFrameBounds" |
-    "registerWorkspaceWindow" | "unregisterWorkspaceWindow";
+    "registerWorkspaceWindow" | "unregisterWorkspaceWindow" | "operationCheck";
 
 export interface OpenWindowConfig {
     name: string;

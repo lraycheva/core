@@ -1,18 +1,20 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { BridgeOperation, LibController } from "../../common/types";
+import { BridgeOperation, LibController, OperationCheckConfig, OperationCheckResult } from "../../common/types";
 import { Glue42Core } from "@glue42/core";
 import { ClientHello, ClientHelloResponse, ExtensionOperationTypes } from "./types";
 import logger from "../../shared/logger";
 import { clientHelloDecoder, clientHelloResponseDecoder, extensionOperationTypesDecoder } from "./decoders";
 import { SessionStorageController } from "../../controllers/session";
+import { operationCheckConfigDecoder, operationCheckResultDecoder } from "../../shared/decoders";
 
 export class ExtensionController implements LibController {
 
     private started = false;
 
     private operations: { [key in ExtensionOperationTypes]: BridgeOperation } = {
-        clientHello: { name: "appHello", resultDecoder: clientHelloResponseDecoder, dataDecoder: clientHelloDecoder, execute: this.handleClientHello.bind(this) }
+        clientHello: { name: "appHello", resultDecoder: clientHelloResponseDecoder, dataDecoder: clientHelloDecoder, execute: this.handleClientHello.bind(this) },
+        operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder, resultDecoder: operationCheckResultDecoder, execute: this.handleOperationCheck.bind(this) }
     }
 
     constructor(
@@ -88,6 +90,14 @@ export class ExtensionController implements LibController {
         this.logger?.trace(`[${commandId}] responding to client hello command with: ${JSON.stringify(response)}`);
 
         return response;
+    }
+
+    private async handleOperationCheck(config: OperationCheckConfig): Promise<OperationCheckResult> {
+        const operations = Object.keys(this.operations);
+
+        const isSupported = operations.some((operation) => operation.toLowerCase() === config.operation.toLowerCase());
+
+        return { isSupported };
     }
 
     private getWidgetConfig(): Promise<{ widget: { enable: boolean } }> {

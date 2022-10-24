@@ -3,10 +3,11 @@ import { anyJson, array, boolean, constant, Decoder, number, object, oneOf, opti
 import { nonEmptyStringDecoder, nonNegativeNumberDecoder } from "../../shared/decoders";
 import { NotificationsOperationsTypes, PermissionQueryResult, PermissionRequestResult, RaiseNotificationConfig } from "./types";
 
-export const notificationsOperationDecoder: Decoder<NotificationsOperationsTypes> = oneOf<"raiseNotification" | "requestPermission" | "getPermission">(
+export const notificationsOperationDecoder: Decoder<NotificationsOperationsTypes> = oneOf<"raiseNotification" | "requestPermission" | "getPermission" | "operationCheck">(
     constant("raiseNotification"),
     constant("requestPermission"),
-    constant("getPermission")
+    constant("getPermission"),
+    constant("operationCheck")
 );
 
 

@@ -91,12 +91,12 @@ export class WorkspacesManager {
         this._configFactory = new WorkspacesConfigurationFactory(glue);
         const converter = new ConfigConverter(this._configFactory);
         componentStateMonitor.init(this._frameId, componentFactory);
-        this._frameController = new IFrameController(glue);
+        this._platformCommunicator = new PlatformCommunicator(this._glue, this._frameId);
+        this._frameController = new IFrameController(glue, this._platformCommunicator);
         const eventEmitter = new LayoutEventEmitter(registryFactory());
         this._wrapperFactory = new WorkspacesWrapperFactory(eventEmitter, this.frameId);
         this._stateResolver = new LayoutStateResolver(this._frameId, eventEmitter, this._frameController, converter, this._wrapperFactory);
         this._controller = new LayoutController(eventEmitter, this._stateResolver, startupConfig, this._configFactory, this._wrapperFactory);
-        this._platformCommunicator = new PlatformCommunicator(this._glue, this._frameId);
         this._systemSettings = new WorkspacesSystemSettingsProvider(this._platformCommunicator);
         this._applicationFactory = new ApplicationFactory(glue, this.stateResolver, this._frameController, this, new DelayedExecutor(), this._platformCommunicator, this._systemSettings);
         this._layoutsManager = new LayoutsManager(this.stateResolver, glue, this._configFactory, converter, new ConstraintsValidator(), this._platformCommunicator);

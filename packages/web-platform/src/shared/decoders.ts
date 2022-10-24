@@ -3,7 +3,7 @@ import { Glue42Web } from "@glue42/web";
 import { Glue42Workspaces } from "@glue42/workspaces-api";
 import { anyJson, array, boolean, constant, Decoder, fail, lazy, number, object, oneOf, optional, string } from "decoder-validate";
 import { Glue42WebPlatform } from "../../platform";
-import { LibDomains, SystemOperationTypes } from "../common/types";
+import { LibDomains, OperationCheckConfig, OperationCheckResult, SystemOperationTypes } from "../common/types";
 
 export const nonNegativeNumberDecoder: Decoder<number> = number().where((num) => num >= 0, "Expected a non-negative number");
 export const nonEmptyStringDecoder: Decoder<string> = string().where((s) => s.length > 0, "Expected a non-empty string");
@@ -57,6 +57,14 @@ const functionCheck = (input: any, propDescription: string): Decoder<any> => {
         fail(`The provided argument as ${propDescription} should be of type function, provided: ${typeof providedType}`);
 };
 
+export const operationCheckConfigDecoder: Decoder<OperationCheckConfig> = object({
+    operation: nonEmptyStringDecoder
+});
+
+export const operationCheckResultDecoder: Decoder<OperationCheckResult> = object({
+    isSupported: boolean()
+});
+
 export const layoutSummaryDecoder: Decoder<Glue42Web.Layouts.LayoutSummary> = object({
     name: nonEmptyStringDecoder,
     type: layoutTypeDecoder,
@@ -102,9 +110,10 @@ export const libDomainDecoder: Decoder<LibDomains> = oneOf<"system" | "windows" 
     constant("channels")
 );
 
-export const systemOperationTypesDecoder: Decoder<SystemOperationTypes> = oneOf<"getEnvironment" | "getBase">(
+export const systemOperationTypesDecoder: Decoder<SystemOperationTypes> = oneOf<"getEnvironment" | "getBase" | "operationCheck">(
     constant("getEnvironment"),
-    constant("getBase")
+    constant("getBase"),
+    constant("operationCheck")
 );
 
 export const windowLayoutItemDecoder: Decoder<Glue42Workspaces.WindowLayoutItem> = object({

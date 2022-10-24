@@ -13,7 +13,7 @@ export const workspacesOperationDecoder: Decoder<WorkspacesOperationsTypes> = on
     "ejectWindow" | "setItemTitle" | "moveWindowTo" | "addWindow" | "addContainer" |
     "bundleWorkspace" | "changeFrameState" | "getFrameState" | "getFrameBounds" | "frameHello" | "hibernateWorkspace" | "resumeWorkspace" | "getWorkspacesConfig" |
     "lockWorkspace" | "lockContainer" | "lockWindow" | "pinWorkspace" | "unpinWorkspace" | "getWorkspaceIcon" | "setWorkspaceIcon" | "createFrame" | "initFrame" | "checkStarted" | "getPlatformFrameId" |
-    "getWorkspaceWindowsOnLayoutSaveContext" | "getWorkspacesLayouts" | "setMaximizationBoundary"
+    "getWorkspaceWindowsOnLayoutSaveContext" | "getWorkspacesLayouts" | "setMaximizationBoundary" | "operationCheck"
 >(
     constant("isWindowInWorkspace"),
     constant("createWorkspace"),
@@ -61,7 +61,8 @@ export const workspacesOperationDecoder: Decoder<WorkspacesOperationsTypes> = on
     constant("getPlatformFrameId"),
     constant("getWorkspaceWindowsOnLayoutSaveContext"),
     constant("getWorkspacesLayouts"),
-    constant("setMaximizationBoundary")
+    constant("setMaximizationBoundary"),
+    constant("operationCheck")
 );
 
 export const frameHelloDecoder: Decoder<FrameHello> = object({

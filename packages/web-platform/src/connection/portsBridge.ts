@@ -234,7 +234,7 @@ export class PortsBridge {
     private async handleRemoteConnectionRequest(source: Window, origin: string, clientId: string, clientType: "child" | "grandChild", bridgeInstanceId: string): Promise<void> {
         const channel = this.ioc.createMessageChannel();
 
-        const client = await this.gateway.connectClient(channel.port1, this.removeClient.bind(this));
+        const client = await this.gateway.connectClient(channel.port1);
 
         this.setupGwClientPort({ client, clientId, clientPort: channel.port1 });
 

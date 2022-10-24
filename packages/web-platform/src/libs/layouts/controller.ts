@@ -4,9 +4,10 @@ import { Glue42Core } from "@glue42/core";
 import { Glue42Web } from "@glue42/web";
 import { defaultNoAppWindowComponentAppName } from "../../common/constants";
 import { defaultPlatformConfig } from "../../common/defaultConfig";
-import { BridgeOperation, InternalLayoutsConfig, InternalPlatformConfig, LibController, SessionWindowData } from "../../common/types";
+import { BridgeOperation, InternalLayoutsConfig, InternalPlatformConfig, LibController, OperationCheckConfig, OperationCheckResult, SessionWindowData } from "../../common/types";
 import { GlueController } from "../../controllers/glue";
 import { SessionStorageController } from "../../controllers/session";
+import { operationCheckConfigDecoder, operationCheckResultDecoder } from "../../shared/decoders";
 import logger from "../../shared/logger";
 import { PromiseWrap } from "../../shared/promisePlus";
 import { objEqual } from "../../shared/utils";
@@ -32,7 +33,8 @@ export class LayoutsController implements LibController {
         clientSaveRequest: { name: "clientSaveRequest", dataDecoder: rawWindowsLayoutDataRequestConfigDecoder, resultDecoder: saveRequestClientResponseDecoder, execute: async () => { } },
         getGlobalPermissionState: { name: "getGlobalPermissionState", resultDecoder: permissionStateResultDecoder, execute: this.handleGetGlobalPermissionState.bind(this) },
         requestGlobalPermission: { name: "requestGlobalPermission", resultDecoder: simpleAvailabilityResultDecoder, execute: this.handleRequestGlobalPermission.bind(this) },
-        checkGlobalActivated: { name: "checkGlobalActivated", resultDecoder: simpleAvailabilityResultDecoder, execute: this.handleCheckGlobalActivated.bind(this) }
+        checkGlobalActivated: { name: "checkGlobalActivated", resultDecoder: simpleAvailabilityResultDecoder, execute: this.handleCheckGlobalActivated.bind(this) },
+        operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder, resultDecoder: operationCheckResultDecoder, execute: this.handleOperationCheck.bind(this) }
     }
 
     constructor(
@@ -203,6 +205,14 @@ export class LayoutsController implements LibController {
         this.logger?.trace(`[${commandId}] request completed, responding to the caller`);
 
         return result;
+    }
+
+    private async handleOperationCheck(config: OperationCheckConfig): Promise<OperationCheckResult> {
+        const operations = Object.keys(this.operations);
+
+        const isSupported = operations.some((operation) => operation.toLowerCase() === config.operation.toLowerCase());
+
+        return { isSupported };
     }
 
     private async buildRawGlueWindowData(windowData: SessionWindowData, requestConfig: RawWindowsLayoutDataRequestConfig, commandId: string): Promise<WindowRawLayoutData> {

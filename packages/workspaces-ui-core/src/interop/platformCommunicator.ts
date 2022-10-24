@@ -1,8 +1,7 @@
 import { Glue42Web } from "@glue42/web";
 import { WorkspacesSystemConfig } from "../types/internal";
 import { PlatformControlMethod } from "../utils/constants";
-import { GetWorkspaceWindowOnLayoutSaveContextResult, GetWorkspaceWindowsOnLayoutSaveContextConfig, WorkspaceWindowOnSaveData } from "./types";
-const semverLte = require('semver/functions/lte');
+import { GetWorkspaceWindowOnLayoutSaveContextResult, GetWorkspaceWindowsOnLayoutSaveContextConfig, OperationCheckResult, PlatformOperations, WorkspaceWindowOnSaveData } from "./types";
 
 declare var window: Window & { glue42core: { platformVersion: string } };
 
@@ -13,7 +12,8 @@ export class PlatformCommunicator {
     }
 
     public async requestOnLayoutSaveContexts(data: GetWorkspaceWindowsOnLayoutSaveContextConfig): Promise<WorkspaceWindowOnSaveData[]> {
-        if (!window.glue42core.platformVersion || semverLte(window.glue42core.platformVersion, "1.12.12")) {
+        const isOperationSupported = await this.isOperationSupported({ domain: "workspaces", operation: "getWorkspaceWindowsOnLayoutSaveContext" });
+        if (!isOperationSupported) {
             console.warn(`Workspace layout ${data.layoutName} won't save the window contexts because the platform must be at lease version 1.13.0`);
             return [];
         }
@@ -73,5 +73,18 @@ export class PlatformCommunicator {
         }, systemId ? { instance: systemId } : undefined);
 
         return result.returned;
+    }
+
+    public async isOperationSupported(config: PlatformOperations) {
+        try {
+            const result = await this._glue.agm.invoke<OperationCheckResult>(PlatformControlMethod, {
+                domain: config.domain,
+                operation: "operationCheck",
+                data: { operation: config.operation }
+            });
+            return result.returned.isSupported;
+        } catch (error) {
+            return false;
+        }
     }
 }

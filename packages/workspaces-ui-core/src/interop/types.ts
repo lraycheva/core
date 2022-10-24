@@ -1,3 +1,4 @@
+import { type } from "os";
 import { WorkspaceItem, WorkspaceSnapshot, RowItem, ColumnItem, GroupItem, WindowDefinition, LoadingStrategy, WindowItem } from "../types/internal";
 
 //#region Platform
@@ -229,6 +230,11 @@ export interface SetMaximizationBoundaryRequest {
     operationArguments: SetMaximizationBoundaryArguments;
 }
 
+export interface OperationCheckRequest {
+    operation: "operationCheck";
+    operationArguments: OperationCheckArguments;
+}
+
 //#endregion
 
 //#region Arguments
@@ -440,7 +446,11 @@ export interface GetWorkspacesLayoutsArguments {
 
 export interface SetMaximizationBoundaryArguments {
     itemId: string;
-    enabled: boolean; 
+    enabled: boolean;
+}
+
+export interface OperationCheckArguments {
+    operation: ControlArguments["operation"];
 }
 
 //#endregion
@@ -499,6 +509,10 @@ export interface GetWorkspacesLayoutsResult {
     workspaces: WorkspaceSnapshot[];
 }
 
+export interface OperationCheckResult {
+    isSupported: boolean;
+}
+
 //#endregion
 
 export type ControlArguments = SaveLayoutRequest | DeleteLayoutRequest |
@@ -508,4 +522,17 @@ export type ControlArguments = SaveLayoutRequest | DeleteLayoutRequest |
     BundleWorkspaceRequest | IsWindowInWorkspaceRequest | GetFrameSummaryRequest | MoveFrameRequest | GetFrameSnapshotRequest |
     GetSnapshotRequest | MoveWindowToRequest | GenerateLayoutRequest | PingRequest | HibernateWorkspaceRequest | ResumeWorkspaceRequest |
     LockWorkspaceRequest | LockContainerRequest | LockWindowRequest | ResizeItemRequest | PinWorkspaceRequest | UnpinWorkspaceRequest |
-    GetWorkspaceIconRequest | SetWorkspaceIconRequest | InitFrameRequest | CreateFrameRequest | InitFrameFromSnapshotRequest | GetWorkspacesLayoutsRequest | SetMaximizationBoundaryRequest;
+    GetWorkspaceIconRequest | SetWorkspaceIconRequest | InitFrameRequest | CreateFrameRequest | InitFrameFromSnapshotRequest | GetWorkspacesLayoutsRequest |
+    SetMaximizationBoundaryRequest | OperationCheckRequest;
+
+export interface CleanupClientsOnWorkspaceFrameUnregister {
+    domain: "system";
+    operation: "cleanupClientsOnWorkspaceFrameUnregister";
+}
+
+export interface GetWorkspaceWindowsOnLayoutSaveContext {
+    domain: "workspaces";
+    operation: "getWorkspaceWindowsOnLayoutSaveContext";
+}
+
+export type PlatformOperations = CleanupClientsOnWorkspaceFrameUnregister | GetWorkspaceWindowsOnLayoutSaveContext;

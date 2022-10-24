@@ -2,7 +2,7 @@
 import { Glue42Web } from "@glue42/web";
 import { Glue42Core } from "@glue42/core";
 import { generate } from "shortid";
-import { ApplicationStartConfig, BridgeOperation, InternalApplicationsConfig, InternalPlatformConfig, LibController, SessionWindowData } from "../../common/types";
+import { ApplicationStartConfig, BridgeOperation, InternalApplicationsConfig, InternalPlatformConfig, LibController, OperationCheckConfig, OperationCheckResult, SessionWindowData } from "../../common/types";
 import { GlueController } from "../../controllers/glue";
 import { SessionStorageController } from "../../controllers/session";
 import { WindowsStateController } from "../../controllers/state";
@@ -18,6 +18,7 @@ import { WorkspaceWindowData } from "../workspaces/types";
 import { SimpleWindowCommand, WindowTitleConfig } from "../windows/types";
 import { AppDirectory } from "./appStore/directory";
 import { defaultNoAppWindowComponentAppName } from "../../common/constants";
+import { operationCheckConfigDecoder, operationCheckResultDecoder } from "../../shared/decoders";
 
 export class ApplicationsController implements LibController {
     private config!: InternalApplicationsConfig;
@@ -38,6 +39,7 @@ export class ApplicationsController implements LibController {
         export: { name: "export", resultDecoder: appsExportOperationDecoder, execute: this.handleExport.bind(this) },
         clear: { name: "clear", execute: this.handleClear.bind(this) },
         registerRemoteApps: { name: "registerRemoteApps", dataDecoder: appsRemoteRegistrationDecoder, execute: this.handleRegisterRemoteApps.bind(this) },
+        operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder, resultDecoder: operationCheckResultDecoder, execute: this.handleOperationCheck.bind(this) }
     }
 
     constructor(
@@ -201,9 +203,9 @@ export class ApplicationsController implements LibController {
         if (!selfWindowId) {
             return;
         }
-        
+
         const instanceData = this.sessionStorage.getInstanceData(selfWindowId);
-        
+
         if (instanceData) {
             delete this.locks[instanceData.id];
             this.sessionStorage.removeInstance(instanceData.id);
@@ -221,6 +223,14 @@ export class ApplicationsController implements LibController {
         };
 
         await this.ioc.windowsController.processNewWindow(windowData, context, child);
+    }
+
+    private async handleOperationCheck(config: OperationCheckConfig): Promise<OperationCheckResult> {
+        const operations = Object.keys(this.operations);
+
+        const isSupported = operations.some((operation) => operation.toLowerCase() === config.operation.toLowerCase());
+
+        return { isSupported };
     }
 
     private async handleAppHello(helloMsg: AppHello, commandId: string): Promise<AppHelloSuccess> {

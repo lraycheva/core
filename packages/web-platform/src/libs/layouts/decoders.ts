@@ -3,7 +3,7 @@ import { Decoder, oneOf, constant, anyJson, array, object, optional, boolean } f
 import { glueLayoutDecoder, layoutSummaryDecoder, nonEmptyStringDecoder, nonNegativeNumberDecoder, windowBoundsDecoder, layoutTypeDecoder } from "../../shared/decoders";
 import { GetAllLayoutsConfig, AllLayoutsSummariesResult, AllLayoutsFullConfig, LayoutsOperationTypes, SimpleLayoutConfig, SimpleLayoutResult, OptionalSimpleLayoutResult, LayoutsImportConfig, SaveLayoutConfig, RestoreLayoutConfig, RawWindowsLayoutDataRequestConfig, SaveRequestClientResponse, WindowRawLayoutData, PermissionStateResult, SimpleAvailabilityResult, WindowsRawLayoutData, WorkspaceWindowRawLayoutData } from "./types";
 
-export const layoutsOperationTypesDecoder: Decoder<LayoutsOperationTypes> = oneOf<"get" | "getAll" | "export" | "import" | "remove" | "save" | "restore" | "getRawWindowsLayoutData" | "clientSaveRequest" | "getGlobalPermissionState" | "requestGlobalPermission" | "checkGlobalActivated">(
+export const layoutsOperationTypesDecoder: Decoder<LayoutsOperationTypes> = oneOf<"get" | "getAll" | "export" | "import" | "remove" | "save" | "restore" | "getRawWindowsLayoutData" | "clientSaveRequest" | "getGlobalPermissionState" | "requestGlobalPermission" | "checkGlobalActivated" | "operationCheck">(
     constant("get"),
     constant("getAll"),
     constant("export"),
@@ -15,7 +15,8 @@ export const layoutsOperationTypesDecoder: Decoder<LayoutsOperationTypes> = oneO
     constant("clientSaveRequest"),
     constant("getGlobalPermissionState"),
     constant("checkGlobalActivated"),
-    constant("requestGlobalPermission")
+    constant("requestGlobalPermission"),
+    constant("operationCheck")
 );
 
 export const newLayoutOptionsDecoder: Decoder<Glue42Web.Layouts.NewLayoutOptions> = object({

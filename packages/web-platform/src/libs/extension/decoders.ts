@@ -2,8 +2,9 @@ import { Decoder, oneOf, constant, object, boolean } from "decoder-validate";
 import { nonEmptyStringDecoder } from "../../shared/decoders";
 import { ClientHello, ClientHelloResponse, ExtensionOperationTypes } from "./types";
 
-export const extensionOperationTypesDecoder: Decoder<ExtensionOperationTypes> = oneOf<"clientHello">(
-    constant("clientHello")
+export const extensionOperationTypesDecoder: Decoder<ExtensionOperationTypes> = oneOf<"clientHello" | "operationCheck">(
+    constant("clientHello"),
+    constant("operationCheck")
 );
 
 export const clientHelloResponseDecoder: Decoder<ClientHelloResponse> = object({

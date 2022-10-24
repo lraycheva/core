@@ -36,12 +36,14 @@ import {
     GetWorkspacesLayoutsArguments,
     GetWorkspacesLayoutsResult,
     SetMaximizationBoundaryArguments,
+    OperationCheckArguments,
+    OperationCheckResult,
 } from "./types";
 import manager from "../manager";
 import store from "../state/store";
 import { WorkspaceSummary, ColumnItem, RowItem, WorkspaceLayout, WorkspaceItem, FrameSummary, WorkspaceSnapshot } from "../types/internal";
 import GoldenLayout, { RowConfig, ColumnConfig } from "@glue42/golden-layout";
-import { idAsString } from "../utils";
+import { idAsString, isOperationSupported } from "../utils";
 import { Glue42Web } from "@glue42/web";
 import { EventActionType, EventPayload } from "../types/events";
 import { WorkspacesConfigurationFactory } from "../config/factory";
@@ -258,6 +260,9 @@ export class GlueFacade {
                 case "setMaximizationBoundary":
                     this.handleSetMaximizationBoundary(args.operationArguments)
                     successCallback(undefined);
+                    break;
+                case "operationCheck":
+                    successCallback(this.handleOperationCheck(args.operationArguments));
                     break;
                 default:
                     errorCallback(`Invalid operation - ${((args as unknown) as { operation: string }).operation}`);
@@ -591,6 +596,10 @@ export class GlueFacade {
 
     private handleSetMaximizationBoundary(operationArguments: SetMaximizationBoundaryArguments): void {
         manager.setMaximizationBoundary(operationArguments.itemId, operationArguments.enabled);
+    }
+
+    private handleOperationCheck(operationArguments: OperationCheckArguments): OperationCheckResult {
+        return {isSupported: isOperationSupported(operationArguments.operation)};
     }
 
     private handleCreateFrame(operationArguments: CreateFrameArguments): FrameSummary {

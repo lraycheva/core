@@ -1,7 +1,7 @@
 import { Glue42Web } from "@glue42/web";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-export type IntentsOperationTypes = "findIntent" | "getIntents" | "raiseIntent";
+export type IntentsOperationTypes = "findIntent" | "getIntents" | "raiseIntent" | "operationCheck";
 
 export interface IntentInfo {
     name: string;

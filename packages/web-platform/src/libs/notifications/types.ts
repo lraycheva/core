@@ -1,6 +1,6 @@
 import { Glue42Web } from "@glue42/web";
 
-export type NotificationsOperationsTypes = "raiseNotification" | "requestPermission" | "getPermission";
+export type NotificationsOperationsTypes = "raiseNotification" | "requestPermission" | "getPermission" | "operationCheck";
 
 export type NotificationPermissionTypes = "default" | "granted" | "denied";
 

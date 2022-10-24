@@ -3,10 +3,11 @@ import { Decoder, object, array, optional, anyJson, oneOf, constant, string } fr
 import { nonEmptyStringDecoder, windowOpenSettingsDecoder } from "../../shared/decoders";
 import { IntentsOperationTypes, WrappedIntentFilter, WrappedIntents } from "./types";
 
-export const intentsOperationTypesDecoder: Decoder<IntentsOperationTypes> = oneOf<"findIntent" | "getIntents" | "raiseIntent">(
+export const intentsOperationTypesDecoder: Decoder<IntentsOperationTypes> = oneOf<"findIntent" | "getIntents" | "raiseIntent" | "operationCheck">(
     constant("findIntent"),
     constant("getIntents"),
-    constant("raiseIntent")
+    constant("raiseIntent"),
+    constant("operationCheck")
 );
 
 const intentHandlerDecoder: Decoder<Glue42Web.Intents.IntentHandler> = object({

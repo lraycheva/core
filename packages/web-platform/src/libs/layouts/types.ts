@@ -5,7 +5,7 @@ import { InternalLayoutsConfig } from "../../common/types";
 export type LayoutEvent = "layoutAdded" | "layoutChanged" | "layoutRemoved";
 
 export type LayoutsOperationTypes = "get" | "getAll" | "export" | "import" | "remove" | "save" | "restore" | "getRawWindowsLayoutData" | "clientSaveRequest" |
-    "getGlobalPermissionState" | "requestGlobalPermission" | "checkGlobalActivated";
+    "getGlobalPermissionState" | "requestGlobalPermission" | "checkGlobalActivated" | "operationCheck";
 
 export interface LayoutModeExecutor {
     setup(config: InternalLayoutsConfig): Promise<void>;

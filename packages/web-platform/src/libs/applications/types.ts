@@ -5,7 +5,7 @@ import { AsyncSequelizer } from "../../shared/sequelizer";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export type AppManagerOperationTypes = "appHello" | "applicationStart" | "instanceStop" |
-    "registerWorkspaceApp" | "unregisterWorkspaceApp" | "export" | "import" | "remove" | "clear" | "registerRemoteApps";
+    "registerWorkspaceApp" | "unregisterWorkspaceApp" | "export" | "import" | "remove" | "clear" | "registerRemoteApps" | "operationCheck";
 
 export interface AppDirectoryStateChange {
     appsAdded: BaseApplicationData[];

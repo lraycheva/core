@@ -1,4 +1,4 @@
-export type ExtensionOperationTypes = "clientHello";
+export type ExtensionOperationTypes = "clientHello" | "operationCheck";
 
 export interface ClientHello {
     windowId: string;

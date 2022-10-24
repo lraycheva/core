@@ -32,7 +32,7 @@ export class Gateway {
         await this._gatewayWebInstance.start();
     }
 
-    public async connectClient(clientPort: MessagePort, removeFromPlatform?: (clientId: string, announce?: boolean, preservePort?: boolean) => void): Promise<GwClient> {
+    public async connectClient(clientPort: MessagePort): Promise<GwClient> {
 
         const client = await this._gatewayWebInstance.connect((_: object, message: string) => clientPort.postMessage(message));
 

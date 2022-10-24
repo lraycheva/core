@@ -2,15 +2,17 @@
 import { Glue42Web } from "@glue42/web";
 import { Glue42Core } from "@glue42/core";
 import { Glue42WebPlatform } from "../../../platform";
-import { BridgeOperation, InternalPlatformConfig, LibController } from "../../common/types";
+import { BridgeOperation, InternalPlatformConfig, LibController, OperationCheckConfig, OperationCheckResult } from "../../common/types";
 import { GlueController } from "../../controllers/glue";
 import logger from "../../shared/logger";
 import { ChannelContextPrefix } from "../../common/constants";
 import { channelContextDecoder, channelOperationDecoder, ChannelOperationTypes } from './decoders';
+import { operationCheckConfigDecoder, operationCheckResultDecoder } from "../../shared/decoders";
 
 export class ChannelsController implements LibController {
     private operations: { [key in ChannelOperationTypes]: BridgeOperation } = {
-        addChannel: { name: "addChannel", execute: this.addChannel.bind(this), dataDecoder: channelContextDecoder }
+        addChannel: { name: "addChannel", execute: this.addChannel.bind(this), dataDecoder: channelContextDecoder },
+        operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder, resultDecoder: operationCheckResultDecoder, execute: this.handleOperationCheck.bind(this) }
     }
 
     constructor(
@@ -63,6 +65,14 @@ export class ChannelsController implements LibController {
         this.logger?.trace(`[${commandId}] ${operationName} command was executed successfully`);
 
         return result;
+    }
+
+    private async handleOperationCheck(config: OperationCheckConfig): Promise<OperationCheckResult> {
+        const operations = Object.keys(this.operations);
+
+        const isSupported = operations.some((operation) => operation.toLowerCase() === config.operation.toLowerCase());
+
+        return { isSupported };
     }
 
     private async setupChannels(channels: Glue42WebPlatform.Channels.ChannelDefinition[]): Promise<void> {

@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Glue42Web } from "@glue42/web";
 import { generate } from "shortid";
-import { BridgeOperation, InternalPlatformConfig, LibController, SessionWindowData } from "../../common/types";
+import { BridgeOperation, InternalPlatformConfig, LibController, OperationCheckConfig, OperationCheckResult, SessionWindowData } from "../../common/types";
 import { GlueController } from "../../controllers/glue";
 import { SessionStorageController } from "../../controllers/session";
 import { PromiseWrap } from "../../shared/promisePlus";
@@ -14,6 +14,7 @@ import logger from "../../shared/logger";
 import { WorkspaceWindowData } from "../workspaces/types";
 import { workspaceWindowDataDecoder } from "../workspaces/decoders";
 import { IoC } from "../../shared/ioc";
+import { operationCheckConfigDecoder, operationCheckResultDecoder } from "../../shared/decoders";
 
 export class WindowsController implements LibController {
     private started = false;
@@ -32,7 +33,8 @@ export class WindowsController implements LibController {
         getTitle: { name: "getTitle", dataDecoder: simpleWindowDecoder, resultDecoder: windowTitleConfigDecoder, execute: this.handleGetTitle.bind(this) },
         setTitle: { name: "setTitle", dataDecoder: windowTitleConfigDecoder, execute: this.handleSetTitle.bind(this) },
         registerWorkspaceWindow: { name: "registerWorkspaceWindow", dataDecoder: workspaceWindowDataDecoder, execute: this.registerWorkspaceWindow.bind(this) },
-        unregisterWorkspaceWindow: { name: "unregisterWorkspaceWindow", dataDecoder: simpleWindowDecoder, execute: this.handleWorkspaceClientRemoval.bind(this) }
+        unregisterWorkspaceWindow: { name: "unregisterWorkspaceWindow", dataDecoder: simpleWindowDecoder, execute: this.handleWorkspaceClientRemoval.bind(this) },
+        operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder, resultDecoder: operationCheckResultDecoder, execute: this.handleOperationCheck.bind(this) }
     }
 
     constructor(
@@ -178,6 +180,14 @@ export class WindowsController implements LibController {
         this.emitStreamData("windowAdded", { windowId: data.windowId, name: data.name });
 
         this.logger?.trace(`[${commandId}] workspace window registered successfully with id ${data.windowId} and name ${data.name}`);
+    }
+
+    private async handleOperationCheck(config: OperationCheckConfig): Promise<OperationCheckResult> {
+        const operations = Object.keys(this.operations);
+
+        const isSupported = operations.some((operation) => operation.toLowerCase() === config.operation.toLowerCase());
+
+        return { isSupported };
     }
 
     private emitStreamData(operation: string, data: any): void {

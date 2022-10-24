@@ -10,6 +10,14 @@ export type Glue42API = Glue42.Glue;
 export type Glue42Config = Glue42.Config;
 export type LibDomains = "system" | "windows" | "appManager" | "layouts" | "workspaces" | "intents" | "channels" | "notifications" | "extension";
 
+export interface OperationCheckConfig {
+    operation: string;
+}
+
+export interface OperationCheckResult {
+    isSupported: boolean;
+}
+
 export interface InternalWindowsConfig {
     windowResponseTimeoutMs: number;
     defaultWindowOpenBounds: Glue42Web.Windows.Bounds;
@@ -123,7 +131,7 @@ export interface ApplicationStartConfig {
     forceChromeTab?: boolean;
 }
 
-export type SystemOperationTypes = "getEnvironment" | "getBase";
+export type SystemOperationTypes = "getEnvironment" | "getBase" | "operationCheck";
 
 export interface ClientTransportSwitchLock {
     promise: Promise<void>;
