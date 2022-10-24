@@ -11,7 +11,7 @@ import { GlueContext } from "@glue42/react-hooks";
 
 const WorkspaceTabV2: React.FC<WorkspaceTabComponentProps> = ({ isPinned, title, onCloseClick, onSaveClick, icon, showSaveButton, showCloseButton, workspaceId }) => {
     const [lockConfig, setLockConfig] = useState<WorkspaceLockConfig>({});
-    const glue = (window as any).glue || useContext(GlueContext); 
+    const glue = (window as any).glue || useContext(GlueContext);
     useEffect(() => {
         let unsub = () => { };
         let mounted = true;
@@ -43,7 +43,23 @@ const WorkspaceTabV2: React.FC<WorkspaceTabComponentProps> = ({ isPinned, title,
                 if (!mounted) {
                     return;
                 }
-                setLockConfig({ ...config });
+                setLockConfig({
+                    allowDrop: config.allowDrop,
+                    allowExtract: config.allowExtract,
+                    allowDropBottom: config.allowDropBottom,
+                    allowSplitters: config.allowSplitters,
+                    allowDropLeft: config.allowDropLeft,
+                    allowWorkspaceTabExtract: config.allowWorkspaceTabExtract,
+                    allowDropRight: config.allowDropRight,
+                    allowWindowReorder: config.allowWindowReorder,
+                    allowDropTop: config.allowDropTop,
+                    allowWorkspaceTabReorder: config.allowWorkspaceTabReorder,
+                    showAddWindowButtons: config.showAddWindowButtons,
+                    showCloseButton: config.showCloseButton,
+                    showEjectButtons: config.showEjectButtons,
+                    showSaveButton: config.showSaveButton,
+                    showWindowCloseButtons: config.showWindowCloseButtons
+                });
             }).then((un: any) => {
                 unsub = un;
             });

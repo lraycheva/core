@@ -308,7 +308,6 @@
 .mid .ball + .ball {
   background: hsl(var(--t42-content-color-base), 79%);
 }
-
 .tab-item-v2 {
   display: flex;
   align-items: center;
@@ -368,7 +367,6 @@
 .list-group {
   box-shadow: none;
 }
-
 .t42-workspace-loading-animation {
   display: none;
   position: absolute;
@@ -376,7 +374,7 @@
   top: 0px;
   right: 0px;
   bottom: 0px;
-  z-index: 40;
+  z-index: 41;
   background: rgb(var(--t42-bg-light));
   height: 100%;
 }

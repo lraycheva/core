@@ -1,3 +1,5 @@
+2.0.3
+bugfix: the order of the lock options changes after rerender 
 2.0.2
 chore: css structure changes for workspace tab v2
 2.0.1
