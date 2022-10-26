@@ -221,9 +221,8 @@ export class MainController implements WorkspacesController {
         return await this.bridge.send(OPERATIONS.saveLayout.name, config);
     }
 
-    public async importLayout(layouts: Glue42Workspaces.WorkspaceLayout[], mode: "replace" | "merge"): Promise<void> {
-
-        await Promise.all(layouts.map((layout) => this.bridge.send(OPERATIONS.importLayout.name, { layout, mode })));
+    public async importLayouts(layouts: Glue42Workspaces.WorkspaceLayout[], mode: "replace" | "merge"): Promise<void> {
+        await this.base.importLayouts(layouts, mode);
     }
 
     public handleOnSaved(callback: (layout: Glue42Workspaces.WorkspaceLayout) => void): UnsubscribeFunction {

@@ -55,9 +55,12 @@ export class LayoutsController implements LibController {
 
         if (this.config.local && this.config.local.length) {
 
+            const localGlobalLayouts = this.config.local.filter((layout) => layout.type === "Global");
+            const localWorkspaceLayouts = this.config.local.filter((layout) => layout.type === "Workspace");
+
             await Promise.all([
-                this.mergeImport(this.config.local.filter((layout) => layout.type === "Global"), "Global"),
-                this.mergeImport(this.config.local.filter((layout) => layout.type === "Workspace"), "Workspace")
+                this.mergeImport(localGlobalLayouts, "Global"),
+                this.mergeImport(localWorkspaceLayouts, "Workspace")
             ]);
         }
 
@@ -152,9 +155,12 @@ export class LayoutsController implements LibController {
 
         this.logger?.trace(`[${commandId}] importing the layouts in ${config.mode} mode`);
 
+        const workspaceLayouts = config.layouts.filter((layout) => layout.type === "Workspace");
+        const globalLayouts = config.layouts.filter((layout) => layout.type === "Global");
+
         await Promise.all([
-            importExecution(config.layouts.filter((layout) => layout.type === "Global"), "Global"),
-            importExecution(config.layouts.filter((layout) => layout.type === "Workspace"), "Workspace")
+            importExecution(globalLayouts, "Global"),
+            importExecution(workspaceLayouts, "Workspace")
         ]);
 
         this.logger?.trace(`[${commandId}] mass import completed, responding to caller`);
@@ -343,7 +349,7 @@ export class LayoutsController implements LibController {
         }
 
         await this.cleanSave(currentLayouts, type);
-        pendingEvents.forEach((pending) => this.emitStreamData(pending.operation, pending.layout));
+        await this.announceEvents(pendingEvents);
     }
 
     private async replaceImport(layouts: Glue42Web.Layouts.Layout[], type: Glue42Web.Layouts.LayoutType): Promise<void> {
@@ -374,7 +380,22 @@ export class LayoutsController implements LibController {
         });
 
         await this.cleanSave(layouts, type);
-        pendingEvents.forEach((pending) => this.emitStreamData(pending.operation, pending.layout));
+        await this.announceEvents(pendingEvents);
+    }
+
+    private async announceEvents(events: Array<{ operation: "layoutChanged" | "layoutAdded" | "layoutRemoved", layout: Glue42Web.Layouts.Layout }>): Promise<void> {
+
+        let batchCount = 0;
+
+        for (const event of events) {
+            ++batchCount;
+
+            if (batchCount % 10 === 0) {
+                await this.waitEventFlush();
+            }
+
+            this.emitStreamData(event.operation, event.layout)
+        }
     }
 
     private async getAll(type: Glue42Web.Layouts.LayoutType): Promise<Glue42Web.Layouts.Layout[]> {
@@ -488,5 +509,9 @@ export class LayoutsController implements LibController {
         }
 
         return allNonPlatformWindows;
+    }
+
+    private waitEventFlush(): Promise<void> {
+        return new Promise((resolve) => setTimeout(resolve, 10));
     }
 }

@@ -117,6 +117,10 @@ export class LayoutsController implements LibController {
             throw new Error("Import must be called with an array of layouts");
         }
 
+        if (layouts.length > 1000) {
+            throw new Error("Cannot import more than 1000 layouts at once in Glue42 Core.");
+        }
+
         const parseResult = layouts.reduce<LayoutParseResult>((soFar, layout) => {
 
             const decodeResult = glueLayoutDecoder.run(layout);

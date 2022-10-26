@@ -166,6 +166,10 @@ export class BaseController {
         return this.layouts.onRemoved(wrappedCallback);
     }
 
+    public async importLayouts(layouts: Glue42Workspaces.WorkspaceLayout[], mode: "replace" | "merge"): Promise<void> {
+        await this.layouts.import(layouts, mode);
+    }
+
     public async transformStreamPayloadToWorkspace(payload: WorkspaceStreamData): Promise<Workspace> {
         const frameConfig: FrameCreateConfig = {
             summary: payload.frameSummary

@@ -38,7 +38,7 @@ export interface WorkspacesController {
     updateWorkspaceContext(workspaceId: string, data: any): Promise<void>;
     subscribeWorkspaceContextUpdated(workspaceId: string, callback: (data: any) => void): Promise<UnsubscribeFunction>;
     saveLayout(config: Glue42Workspaces.WorkspaceLayoutSaveConfig): Promise<Glue42Workspaces.WorkspaceLayout>;
-    importLayout(layouts: Glue42Workspaces.WorkspaceLayout[], mode: "replace" | "merge"): Promise<void>;
+    importLayouts(layouts: Glue42Workspaces.WorkspaceLayout[], mode: "replace" | "merge"): Promise<void>;
     handleOnSaved(callback: (layout: Glue42Workspaces.WorkspaceLayout) => void): UnsubscribeFunction;
     handleOnRemoved(callback: (layout: Glue42Workspaces.WorkspaceLayout) => void): UnsubscribeFunction;
     restoreItem(itemId: string): Promise<void>;

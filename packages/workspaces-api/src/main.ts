@@ -140,7 +140,7 @@ export const composeAPI = (glue: any, ioc: IoC): API => {
             }
 
             layouts.forEach((layout) => workspaceLayoutDecoder.runWithException(layout));
-            return controller.importLayout(layouts, mode);
+            return controller.importLayouts(layouts, mode);
         },
         save: async (config: Glue42Workspaces.WorkspaceLayoutSaveConfig): Promise<Glue42Workspaces.WorkspaceLayout> => {
             const verifiedConfig = workspaceLayoutSaveConfigDecoder.runWithException(config);

@@ -8,7 +8,7 @@ export type LayoutsAPI = {
     getAll(type: "Workspace"): Promise<LayoutSummary[]>;
     remove(type: "Workspace", name: string): Promise<void>;
     export(layoutType?: "Workspace"): Promise<Glue42Workspaces.WorkspaceLayout[]>;
-    import(layout: Glue42Workspaces.WorkspaceLayout[]): Promise<void>;
+    import(layout: Glue42Workspaces.WorkspaceLayout[], mode?: "merge" | "replace"): Promise<void>;
     onAdded(callback: (layout: Glue42Workspaces.WorkspaceLayout) => void): () => void;
     onChanged(callback: (layout: Glue42Workspaces.WorkspaceLayout) => void): () => void;
     onRemoved(callback: (layout: Glue42Workspaces.WorkspaceLayout) => void): () => void;
