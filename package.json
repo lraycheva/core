@@ -11,6 +11,7 @@
     "build": "lerna run build",
     "test": "npm run test:scripts && lerna run test",
     "build:gtf": "gulp buildGtf",
+    "e2e:fdc3": "echo no fdc3 found",
     "e2e:puppet": "cross-env RUNNER=Puppet npm run build:gtf && node ./e2e/scripts/copyLibs.js && cross-env RUNNER=Puppet node ./e2e/index.js",
     "e2e": "cross-env RUNNER=Platform npm run build:gtf && npm run e2e:no-gtf-rebuild",
     "e2e:full": "npm run e2e && npm run e2e:puppet",
