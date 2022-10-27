@@ -1,6 +1,5 @@
-2.0.3
-bugfix: the order of the lock options changes after rerender 
 2.0.2
+bugfix: the order of the lock options changes after rerender 
 chore: css structure changes for workspace tab v2
 2.0.1
 bugfix: started searching for the glue object in workspace tab v2 in the context as well

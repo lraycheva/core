@@ -1,3 +1,6 @@
+1.15.0
+feat: added feature detection to the communication protocol
+fix: the platform can handle up to 1000 layouts in one bulk import
 1.14.3
 chore: bump due to dependencies update
 1.14.2

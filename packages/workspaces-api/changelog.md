@@ -1,3 +1,5 @@
+1.17.2
+fix: dedicated the layouts import to the underlying glue, instead of transmitting a dedicated workspaces protocol message
 1.17.1
 feat: optimized the performance of glue.workspaces.getMyWorkspace()
 chore: removed unnecessary console.log

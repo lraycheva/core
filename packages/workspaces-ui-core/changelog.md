@@ -1,6 +1,6 @@
-1.10.3
+1.11.0
+feat: added feature detection to the control protocol
 bugfix: updated the zIndex of the loading animation to be higher than the maximized windows
-1.10.2
 chore: css structure changes for workspace tab v2
 1.10.1
 chore: bump due to dependencies update

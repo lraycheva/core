@@ -1,3 +1,5 @@
+2.8.4
+fix: can not import up to 1000 layouts in a simple bulk import
 2.8.3
 chore: bump due to dependencies update
 2.8.2
