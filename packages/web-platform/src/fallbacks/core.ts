@@ -37,3 +37,9 @@ export const checkIsOpenerGlue = (): Promise<boolean> => {
         setTimeout(() => resolve(false), defaultOpenerTimeoutMs);
     });
 };
+
+export const checkIfPlacedInWorkspace = (): boolean => {
+    const hasWspSuffix = window.name.indexOf("#wsp") !== -1;
+
+    return hasWspSuffix;
+}
