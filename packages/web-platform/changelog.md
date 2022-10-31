@@ -1,3 +1,5 @@
+1.15.1
+fix: the platform now defaults to being a simple client when added to a Workspace
 1.15.0
 feat: added feature detection to the communication protocol
 fix: the platform can handle up to 1000 layouts in one bulk import
