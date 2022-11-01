@@ -405,6 +405,10 @@ export class WorkspacesUIExecutor {
         });
     }
 
+    public getWorkspaceLayoutContainerId(workspaceId: string) {
+        return `nestHere${workspaceId}`;
+    }
+
     private hasTransition(element: HTMLElement): boolean {
         const transition = window.getComputedStyle(element, null).getPropertyValue("transition");
 

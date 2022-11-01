@@ -77,6 +77,8 @@ declare module '@glue42/golden-layout' {
          */
         registerComponent(name: String, component: any): void;
 
+        unregisterComponent(name:string):void;
+
         /**
          * Renders the layout into the container. If init() is called before the document is ready it attaches itself as
          * a listener to the document and executes once it becomes ready.

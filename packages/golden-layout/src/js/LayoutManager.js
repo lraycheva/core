@@ -132,6 +132,10 @@ lm.utils.copy(lm.LayoutManager.prototype, {
 		this._components[name] = constructor;
 	},
 
+	unregisterComponent: function (name) {
+		delete this._components[name];
+	},
+
 	/**
 	 * Creates a layout configuration object based on the the current state
 	 *
@@ -592,7 +596,7 @@ lm.utils.copy(lm.LayoutManager.prototype, {
 			return;
 		}
 		contentItem.element.removeClass('lm_maximised');
-		if(contentItem.hasId('__glMaximised')){
+		if (contentItem.hasId('__glMaximised')) {
 			contentItem.removeId('__glMaximised');
 		}
 		this._maximizePlaceholder.after(contentItem.element);
@@ -635,7 +639,7 @@ lm.utils.copy(lm.LayoutManager.prototype, {
 	_$minimiseInContainer: function (contentItem) {
 		contentItem.element.removeClass('lm_maximised_in_container');
 		const placeholder = this._maximizedItemsInTargetContainer[lm.utils.idAsString(contentItem.config.id)].placeholder;
-		if(contentItem.hasId('__glMaximised')){
+		if (contentItem.hasId('__glMaximised')) {
 			contentItem.removeId('__glMaximised');
 		}
 		placeholder.after(contentItem.element);

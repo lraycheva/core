@@ -31,6 +31,7 @@ import { ComponentFactory } from "./types/componentFactory";
 import { PlatformCommunicator } from "./interop/platformCommunicator";
 import { WorkspacesWrapperFactory } from "./state/factory";
 import { WorkspacesEventBundler } from "./utils/eventBundler";
+import { LayoutComponentsFactory } from "./layout/componentsFactory";
 
 export class WorkspacesManager {
     private _controller: LayoutController;
@@ -96,7 +97,8 @@ export class WorkspacesManager {
         const eventEmitter = new LayoutEventEmitter(registryFactory());
         this._wrapperFactory = new WorkspacesWrapperFactory(eventEmitter, this.frameId);
         this._stateResolver = new LayoutStateResolver(this._frameId, eventEmitter, this._frameController, converter, this._wrapperFactory);
-        this._controller = new LayoutController(eventEmitter, this._stateResolver, startupConfig, this._configFactory, this._wrapperFactory);
+        const layoutComponentsFactory = new LayoutComponentsFactory(eventEmitter, this._configFactory);
+        this._controller = new LayoutController(eventEmitter, this._stateResolver, startupConfig, this._configFactory, this._wrapperFactory, layoutComponentsFactory);
         this._systemSettings = new WorkspacesSystemSettingsProvider(this._platformCommunicator);
         this._applicationFactory = new ApplicationFactory(glue, this.stateResolver, this._frameController, this, new DelayedExecutor(), this._platformCommunicator, this._systemSettings);
         this._layoutsManager = new LayoutsManager(this.stateResolver, glue, this._configFactory, converter, new ConstraintsValidator(), this._platformCommunicator);

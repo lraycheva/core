@@ -1,3 +1,5 @@
+1.11.1
+bugfix: added cleanup logic when closing a window or a workspace to prevent memory leaks
 1.11.0
 feat: added feature detection to the control protocol
 bugfix: updated the zIndex of the loading animation to be higher than the maximized windows

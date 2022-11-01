@@ -1,3 +1,6 @@
+2.3.7
+feat: added unregisterComponent to be able to cleanup the state after closing a component
+fix: tabs can't be moved without extracting
 2.3.6
 improvement: performance optimizations -  added memoization to the constraints and removed the _updateTabSizesWithoutDropdown method
 2.3.5
