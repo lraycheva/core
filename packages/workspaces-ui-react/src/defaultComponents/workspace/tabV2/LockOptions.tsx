@@ -86,18 +86,21 @@ const LockOptions: React.FC<LockOptionsProps> = ({ workspaceId, lockConfig, onBa
     const enableName = "Unlock All";
     const disableName = "Lock All";
 
-    return <div ref={ref} className="p-3" style={{ width: 400 }}>
+    return <>
         {showBackButton && <BackButton onClick={onBackClick} />}
-        <div className="mb-2">
-            <LockOption name={isLocked() ? enableName : disableName} value={isLocked()} onChange={toggleAll} />
+        <div ref={ref} className="p-3" style={{ width: 400 }}>
+            <div className="mb-2">
+                <LockOption name={isLocked() ? enableName : disableName} value={isLocked()} onChange={toggleAll} />
+            </div>
+            <h5>Disable</h5>
+            <hr className="my-2" />
+            <div className="allow-show-gird">{generateAllowOptions()}</div>
+            <h5 className="pt-3">Hide Buttons</h5>
+            <hr className="my-2" />
+            <div className="allow-show-gird">{generateShowOptions()}</div>
         </div>
-        <h5>Disable</h5>
-        <hr className="my-2" />
-        <div className="allow-show-gird">{generateAllowOptions()}</div>
-        <h5 className="pt-3">Hide Buttons</h5>
-        <hr className="my-2" />
-        <div className="allow-show-gird">{generateShowOptions()}</div>
-    </div>
+    </>
+
 }
 
 export default LockOptions;

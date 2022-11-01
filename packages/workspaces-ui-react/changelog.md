@@ -1,3 +1,5 @@
+2.0.3
+improvement: workspaceTabV2 back button style improvements
 2.0.2
 bugfix: the order of the lock options changes after rerender 
 chore: css structure changes for workspace tab v2
