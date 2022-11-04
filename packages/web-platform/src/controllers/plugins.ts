@@ -8,13 +8,13 @@ import { Glue42Web } from "@glue42/web";
 export class PluginsController {
 
     private handlePluginMessage!: (args: Glue42WebPlatform.Plugins.BaseControlMessage, pluginName: string) => Promise<any>;
-    private registeredPlugins: Array<{ name: string, version: string }> = [];
-    private internalConfig!: InternalPlatformConfig;
     private platformApi!: Glue42WebPlatform.API;
+    public registeredPlugins: Array<{ name: string, version: string }> = [];
 
     constructor(
         private readonly interceptionController: InterceptionController,
-        private readonly glueController: GlueController
+        private readonly glueController: GlueController,
+        private readonly startCore: (platformConfig: InternalPlatformConfig) => Promise<void>
     ) { }
 
     private get logger(): Glue42Web.Logger.API | undefined {
@@ -23,7 +23,7 @@ export class PluginsController {
 
     public async start(config: PluginsConfig): Promise<void> {
         this.handlePluginMessage = config.handlePluginMessage;
-        this.internalConfig = config.platformConfig;
+        // this.internalConfig = config.platformConfig;
         this.platformApi = config.api;
 
         if (!config.plugins || !config.plugins.length) {
@@ -43,16 +43,12 @@ export class PluginsController {
         await Promise.all(criticalPlugins);
     }
 
-    public async startCorePlus(definition?: Glue42WebPlatform.CorePlus.Config): Promise<void> {
-        if (!definition) {
+    public async startCorePlus(platformConfig: InternalPlatformConfig): Promise<void> {
+        if (!platformConfig.corePlus) {
             return;
         }
 
-        const coreStartPromise = this.startPlugin({ ...definition, name: "Glue42CorePlus" });
-
-        if (definition.critical) {
-            await coreStartPromise;
-        }
+        await this.startCore(platformConfig);
     }
 
     private async startPlugin(definition: Glue42WebPlatform.Plugins.PluginDefinition): Promise<void> {
@@ -60,6 +56,8 @@ export class PluginsController {
             const platformControls: Glue42WebPlatform.Plugins.PlatformControls = this.buildPlatformControls(definition.name, this.platformApi);
 
             await definition.start(this.glueController.clientGlue, definition.config, platformControls);
+
+            this.registerPlugin(definition.name, definition.version ?? "N/A");
 
         } catch (error: any) {
             const stringError = typeof error === "string" ? error : JSON.stringify(error.message);
@@ -83,28 +81,8 @@ export class PluginsController {
                 register: (request: Glue42WebPlatform.Plugins.InterceptorRegistrationRequest) => this.interceptionController.registerInterceptor(request, pluginName)
             },
             system: {
-                sendControl: (args: Glue42WebPlatform.Plugins.BaseControlMessage): Promise<any> => this.handlePluginMessage(args, pluginName),
-                register: this.registerPlugin.bind(this),
-                getInfo: this.getGlueInfo.bind(this)
+                sendControl: (args: Glue42WebPlatform.Plugins.BaseControlMessage): Promise<any> => this.handlePluginMessage(args, pluginName)
             }
-        }
-    }
-
-    private getGlueInfo(): Glue42WebPlatform.SystemInfo {
-        const workspaces = this.glueController.clientGlue.workspaces ? {
-            version: this.glueController.clientGlue.workspaces.version,
-            frameUrl: this.internalConfig.workspaces?.src
-        } : undefined;
-
-        return {
-            web: {
-                version: this.glueController.clientGlue.version
-            },
-            platform: {
-                version: this.glueController.platformVersion,
-                plugins: this.registeredPlugins
-            },
-            workspaces
         }
     }
 

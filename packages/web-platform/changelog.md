@@ -1,3 +1,6 @@
+1.16.0
+feat: reworked the way the platform interacts with Glue42 Core+
+feat: added a no-gateway bundle
 1.15.1
 fix: the platform now defaults to being a simple client when added to a Workspace
 1.15.0

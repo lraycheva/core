@@ -1,9 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Glue42Core } from "@glue42/core";
 import { Glue42Web } from "@glue42/web";
-import { Glue42API, LibDomains } from "./src/common/types";
+import { Glue42 } from "@glue42/desktop";
 
 export namespace Glue42WebPlatform {
+
+    export type LibDomains = "system" | "windows" | "appManager" | "layouts" | "workspaces" | "intents" | "channels" | "notifications" | "extension";
 
     export interface RemoteStore {
         /**
@@ -230,14 +232,13 @@ export namespace Glue42WebPlatform {
             logger?: Glue42Web.Logger.API;
             system: {
                 sendControl: (args: BaseControlMessage) => Promise<any>;
-                register: (name: string, version: string) => void;
-                getInfo:() => SystemInfo;
             }
         }
 
         export interface PluginDefinition {
             name: string;
             start: (glue: Glue42Web.API, config: any, platform: PlatformControls) => Promise<void> | void;
+            version?: string;
             config?: any;
             critical?: boolean;
         }
@@ -342,9 +343,7 @@ export namespace Glue42WebPlatform {
 
     export namespace CorePlus {
         export interface Config {
-            start: (glue: Glue42Web.API, config: any, platform: Plugins.PlatformControls) => Promise<void>;
-            config?: any;
-            critical?: boolean;
+            start: (ioc: any, platformConfig: any) => Promise<void>;
         }
     }
 
@@ -390,7 +389,7 @@ export namespace Glue42WebPlatform {
     }
 }
 
-export type Glue42WebPlatformFactoryFunction = (config?: Glue42WebPlatform.Config) => Promise<{ glue: Glue42Web.API | Glue42API; platform?: Glue42WebPlatform.API }>;
+export type Glue42WebPlatformFactoryFunction = (config?: Glue42WebPlatform.Config) => Promise<{ glue: Glue42Web.API | Glue42.Glue; platform?: Glue42WebPlatform.API }>;
 
 declare const WebPlatformFactory: Glue42WebPlatformFactoryFunction;
 

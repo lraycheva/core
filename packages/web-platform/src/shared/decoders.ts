@@ -278,6 +278,7 @@ export const channelDefinitionDecoder: Decoder<Glue42WebPlatform.Channels.Channe
 export const pluginDefinitionDecoder: Decoder<Glue42WebPlatform.Plugins.PluginDefinition> = object({
     name: nonEmptyStringDecoder,
     start: anyJson(),
+    version: optional(nonEmptyStringDecoder),
     config: optional(anyJson()),
     critical: optional(boolean())
 });
@@ -383,9 +384,7 @@ export const serviceWorkerConfigDecoder: Decoder<Glue42WebPlatform.ServiceWorker
 });
 
 export const corePlusConfigDecoder: Decoder<Glue42WebPlatform.CorePlus.Config> = object({
-    start: anyJson(),
-    critical: optional(boolean()),
-    config: anyJson()
+    start: anyJson()
 })
 
 export const platformConfigDecoder: Decoder<Glue42WebPlatform.Config> = object({

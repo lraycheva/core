@@ -43,7 +43,8 @@ export class Platform {
     }
 
     private processConfig(config: Glue42WebPlatform.Config = {}): void {
-        const verifiedConfig = platformConfigDecoder.runWithException(config);
+        // if corePlus is activated, then the config was already decoded
+        const verifiedConfig = config.corePlus ? config : platformConfigDecoder.runWithException(config);
 
         this.validatePlugins(verifiedConfig);
 

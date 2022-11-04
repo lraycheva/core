@@ -370,6 +370,34 @@ export class WorkspacesController implements LibController {
         return result;
     }
 
+    public async handleCheckStarted(config: unknown, commandId: string): Promise<{ started: boolean }> {
+        this.logger?.trace(`[${commandId}] handling handleCheckStarted request`);
+
+        this.logger?.trace(`[${commandId}] the controller has been started, responding to caller`);
+
+        return { started: true };
+    }
+
+    public async handleGetPlatformFrameId(config: unknown, commandId: string): Promise<{ id?: string }> {
+        this.logger?.trace(`[${commandId}] handling GetPlatformFrameId request`);
+
+        const platformFrameData = this.framesController.getPlatformFrameSessionData();
+
+        this.logger?.trace(`[${commandId}] GetPlatformFrameId completed, responding to caller`);
+
+        return { id: platformFrameData?.windowId };
+    }
+
+    public async handleGetWorkspacesLayouts(config: GetWorkspacesLayoutsConfig, commandId: string): Promise<GetWorkspacesLayoutsResponse> {
+        this.logger?.trace(`[${commandId}] handling handleGetWorkspacesLayouts request for frame: ${config.frameId} for layout: ${config.layoutName} of type: ${config.layoutType}`);
+
+        const response = await this.glueController.callFrame<GetWorkspacesLayoutsConfig, GetWorkspacesLayoutsResponse>(this.operations.getWorkspacesLayouts, config, config.frameId);
+
+        this.logger?.trace(`[${commandId}] handleGetWorkspacesLayouts request completed for frame: ${config.frameId} for layout: ${config.layoutName} of type: ${config.layoutType}`);
+
+        return response;
+    }
+
     private async getAllLayoutsSummaries(config: unknown, commandId: string): Promise<LayoutSummariesResult> {
         this.logger?.trace(`[${commandId}] handling getAllLayoutsSummaries command`);
 
@@ -703,34 +731,6 @@ export class WorkspacesController implements LibController {
         await this.glueController.callFrame<SetWorkspaceIconConfig, void>(this.operations.setWorkspaceIcon, config, frame.windowId);
 
         this.logger?.trace(`[${commandId}] frame ${frame.windowId} gave a success signal, responding to caller`);
-    }
-
-    private async handleCheckStarted(config: unknown, commandId: string): Promise<{ started: boolean }> {
-        this.logger?.trace(`[${commandId}] handling handleCheckStarted request`);
-
-        this.logger?.trace(`[${commandId}] the controller has been started, responding to caller`);
-
-        return { started: true };
-    }
-
-    private async handleGetPlatformFrameId(config: unknown, commandId: string): Promise<{ id?: string }> {
-        this.logger?.trace(`[${commandId}] handling GetPlatformFrameId request`);
-
-        const platformFrameData = this.framesController.getPlatformFrameSessionData();
-
-        this.logger?.trace(`[${commandId}] GetPlatformFrameId completed, responding to caller`);
-
-        return { id: platformFrameData?.windowId };
-    }
-
-    private async handleGetWorkspacesLayouts(config: GetWorkspacesLayoutsConfig, commandId: string): Promise<GetWorkspacesLayoutsResponse> {
-        this.logger?.trace(`[${commandId}] handling handleGetWorkspacesLayouts request for frame: ${config.frameId} for layout: ${config.layoutName} of type: ${config.layoutType}`);
-
-        const response = await this.glueController.callFrame<GetWorkspacesLayoutsConfig, GetWorkspacesLayoutsResponse>(this.operations.getWorkspacesLayouts, config, config.frameId);
-
-        this.logger?.trace(`[${commandId}] handleGetWorkspacesLayouts request completed for frame: ${config.frameId} for layout: ${config.layoutName} of type: ${config.layoutType}`);
-
-        return response;
     }
 
     private async handleGetWorkspaceWindowsOnLayoutSaveContext(config: GetWorkspaceWindowsOnLayoutSaveContextConfig, commandId: string): Promise<GetWorkspaceWindowsOnLayoutSaveContextResult> {

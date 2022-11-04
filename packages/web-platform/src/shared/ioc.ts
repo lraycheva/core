@@ -23,12 +23,13 @@ import { NotificationsController } from "../libs/notifications/controller";
 import { ExtensionController } from "../libs/extension/controller";
 import { AsyncSequelizer } from "./sequelizer";
 import { PreferredConnectionController } from "../connection/preferred";
-import { Glue42CoreDB } from "../common/types";
+import { Glue42CoreDB, InternalPlatformConfig } from "../common/types";
 import { IDBPDatabase, openDB } from "idb";
 import { dbName, dbVersion } from "../common/constants";
 import { TransactionsController } from "../controllers/transactions";
 import { InterceptionController } from "../controllers/interception";
 import { PluginsController } from "../controllers/plugins";
+import { DomainsController } from "../controllers/domains";
 
 export class IoC {
     private _gatewayInstance!: Gateway;
@@ -58,6 +59,7 @@ export class IoC {
     private _transactionsController!: TransactionsController;
     private _interceptionController!: InterceptionController;
     private _pluginsController!: PluginsController;
+    private _domainsController!: DomainsController;
 
     constructor(private readonly config?: Glue42WebPlatform.Config) { }
 
@@ -77,11 +79,10 @@ export class IoC {
         return this._platformInstance;
     }
 
-    public get controller(): PlatformController {
-        if (!this._mainController) {
-            this._mainController = new PlatformController(
+    public get domainsController(): DomainsController {
+        if (!this._domainsController) {
+            this._domainsController = new DomainsController(
                 this.systemController,
-                this.glueController,
                 this.windowsController,
                 this.applicationsController,
                 this.layoutsController,
@@ -89,10 +90,22 @@ export class IoC {
                 this.intentsController,
                 this.channelsController,
                 this.notificationsController,
+                this.extensionController
+            );
+        }
+
+        return this._domainsController;
+    }
+
+
+    public get controller(): PlatformController {
+        if (!this._mainController) {
+            this._mainController = new PlatformController(
+                this.domainsController,
+                this.glueController,
                 this.portsBridge,
                 this.stateController,
                 this.serviceWorkerController,
-                this.extensionController,
                 this.preferredConnectionController,
                 this.interceptionController,
                 this.pluginsController
@@ -307,7 +320,7 @@ export class IoC {
 
     public get pluginsController(): PluginsController {
         if (!this._pluginsController) {
-            this._pluginsController = new PluginsController(this.interceptionController, this.glueController);
+            this._pluginsController = new PluginsController(this.interceptionController, this.glueController, this.startCore.bind(this));
         }
 
         return this._pluginsController;
@@ -342,6 +355,10 @@ export class IoC {
 
     public createSequelizer(looseInterval?: number): AsyncSequelizer {
         return new AsyncSequelizer(looseInterval);
+    }
+
+    private async startCore(platformConfig: InternalPlatformConfig): Promise<void> {
+        await platformConfig.corePlus?.start(this, platformConfig);
     }
 
     private setUpDb(database: IDBPDatabase<Glue42CoreDB>): void {

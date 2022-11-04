@@ -18,7 +18,7 @@
     "homepage": "https://glue42.com/",
     "scripts": {
         "test": "echo \"Error: no test specified\"",
-        "build": "rollup -c",
+        "build": "rollup -c && rollup -c ./rollup.config.no.gateway.js",
         "audit": "echo no audit found",
         "audit:V1": "node ../../scripts/audit/index.js",
         "preversion": "npm run build && npm run test && npm run audit",
@@ -49,6 +49,7 @@
         "shortid": "^2.2.15"
     },
     "devDependencies": {
+        "@rollup/plugin-alias": "^4.0.2",
         "@rollup/plugin-commonjs": "^15.1.0",
         "@rollup/plugin-json": "^4.1.0",
         "@rollup/plugin-node-resolve": "^9.0.0",

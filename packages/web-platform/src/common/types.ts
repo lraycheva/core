@@ -8,7 +8,14 @@ import { Glue42Core } from "@glue42/core";
 
 export type Glue42API = Glue42.Glue;
 export type Glue42Config = Glue42.Config;
-export type LibDomains = "system" | "windows" | "appManager" | "layouts" | "workspaces" | "intents" | "channels" | "notifications" | "extension";
+export type LibDomains = Glue42WebPlatform.LibDomains;
+
+export interface PlatformDomain {
+    libController: LibController;
+    name: string;
+    domainNameDecoder?: Decoder<string>;
+}
+
 
 export interface OperationCheckConfig {
     operation: string;
