@@ -362,16 +362,16 @@ export class IoC {
     }
 
     private setUpDb(database: IDBPDatabase<Glue42CoreDB>): void {
-        if (!database.objectStoreNames.contains("workspaceLayouts")) {
-            database.createObjectStore("workspaceLayouts");
+        if (!database.objectStoreNames.contains("workspaceLayouts" as never)) {
+            database.createObjectStore("workspaceLayouts" as never);
         }
 
-        if (!database.objectStoreNames.contains("globalLayouts")) {
-            database.createObjectStore("globalLayouts");
+        if (!database.objectStoreNames.contains("globalLayouts" as never)) {
+            database.createObjectStore("globalLayouts" as never);
         }
 
-        if (!database.objectStoreNames.contains("serviceWorker")) {
-            database.createObjectStore("serviceWorker");
+        if (!database.objectStoreNames.contains("serviceWorker" as never)) {
+            database.createObjectStore("serviceWorker" as never);
         }
     }
 }

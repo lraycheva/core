@@ -149,7 +149,7 @@ export class WorkspaceHibernationWatcher {
             await this.workspacesController.hibernateWorkspace({ workspaceId }, generate());
 
             this.logger?.trace(`workspace ${workspaceId} was hibernated successfully`);
-        } catch (error) {
+        } catch (error: any) {
             this.logger?.trace(error);
         }
     }
@@ -208,7 +208,7 @@ export class WorkspaceHibernationWatcher {
     }
 
     private buildTimer(workspaceId: string): void {
-        const timeout = setTimeout(() => {
+        const timeout = window.setTimeout(() => {
             this.logger?.trace(`Timer triggered will try to hibernated ${workspaceId}`);
             this.tryHibernateWorkspace(workspaceId);
             this.session.removeTimeout(workspaceId);

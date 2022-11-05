@@ -210,7 +210,7 @@ export class NotificationsController implements LibController {
                 settings.actions.map((action) => ({ title: action.title, iconUrl: action.icon })) :
                 undefined;
 
-            const chromeOptions: chrome.notifications.NotificationOptions = {
+            const chromeOptions: any = {
                 type: "basic",
                 iconUrl: settings.icon || this.extNotificationConfig.defaultIcon,
                 title: settings.title,

@@ -142,7 +142,7 @@ export class ServiceWorkerController {
             const registration = await navigator.serviceWorker.register(workerUrl);
 
             return registration;
-        } catch (error) {
+        } catch (error: any) {
             const stringError = typeof error === "string" ? error : JSON.stringify(error.message);
 
             this.logger?.warn(stringError);
@@ -167,8 +167,8 @@ export class ServiceWorkerController {
     private async prepareSwDb(): Promise<void> {
         const db = await this.ioc.getDatabase();
 
-        await db.clear("serviceWorker");
+        await db.clear("serviceWorker" as never);
 
-        await db.put<"serviceWorker">("serviceWorker", { platformUrl: window.location.href }, "workerData");
+        await db.put("serviceWorker" as never, { platformUrl: window.location.href }, "workerData");
     }
 }

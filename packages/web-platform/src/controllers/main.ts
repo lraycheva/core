@@ -67,7 +67,7 @@ export class PlatformController {
 
         await this.serviceWorkerController.connect(config);
 
-        this._platformApi = this.buildPlatformApi();
+        this._platformApi = this.buildPlatformApi(config);
 
         await this.pluginsController.startCorePlus(config);
 
@@ -150,9 +150,10 @@ export class PlatformController {
         return this.domainsController.executeControlMessage(controlMessage);
     }
 
-    private buildPlatformApi(): Glue42WebPlatform.API {
+    private buildPlatformApi(config: InternalPlatformConfig): Glue42WebPlatform.API {
         return {
             version: this.glueController.platformVersion,
+            corePlus: config.corePlus ? { version: config.corePlus.version } : undefined,
             contextTrackGlue: this.ctxTrackingGlue,
             systemGlue: this.systemGlue,
             connectExtClient: (client: any, port: any) => {

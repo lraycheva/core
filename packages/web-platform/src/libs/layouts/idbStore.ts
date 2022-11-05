@@ -19,43 +19,43 @@ export class IdbLayoutsStore {
 
     public async getAll(layoutType: Glue42Web.Layouts.LayoutType): Promise<Glue42Web.Layouts.Layout[]> {
         switch (layoutType) {
-            case "Workspace": return (await this.database).getAll<"workspaceLayouts">("workspaceLayouts");
-            case "Global": return (await this.database).getAll<"globalLayouts">("globalLayouts");
+            case "Workspace": return (await this.database).getAll("workspaceLayouts" as never);
+            case "Global": return (await this.database).getAll("globalLayouts" as never);
             default: throw new Error(`The provided layout type is not recognized: ${layoutType}`);
         }
     }
 
     public async delete(name: string, layoutType: Glue42Web.Layouts.LayoutType): Promise<void> {
         switch (layoutType) {
-            case "Workspace": return (await this.database).delete<"workspaceLayouts">("workspaceLayouts", name);
-            case "Global": return (await this.database).delete<"globalLayouts">("globalLayouts", name);
+            case "Workspace": return (await this.database).delete("workspaceLayouts" as never, name);
+            case "Global": return (await this.database).delete("globalLayouts" as never, name);
             default: throw new Error(`The provided layout type is not recognized: ${layoutType}`);
         }
     }
 
     public async clear(layoutType: Glue42Web.Layouts.LayoutType): Promise<void> {
         switch (layoutType) {
-            case "Workspace": return (await this.database).clear("workspaceLayouts");
-            case "Global": return (await this.database).clear("globalLayouts");
+            case "Workspace": return (await this.database).clear("workspaceLayouts" as never);
+            case "Global": return (await this.database).clear("globalLayouts" as never);
             default: throw new Error(`The provided layout type is not recognized: ${layoutType}`);
         }
     }
 
     public async get(name: string, layoutType: Glue42Web.Layouts.LayoutType): Promise<Glue42Web.Layouts.Layout | undefined> {
         switch (layoutType) {
-            case "Workspace": return (await this.database).get<"workspaceLayouts">("workspaceLayouts", name);
-            case "Global": return (await this.database).get<"globalLayouts">("globalLayouts", name);
+            case "Workspace": return (await this.database).get("workspaceLayouts" as never, name);
+            case "Global": return (await this.database).get("globalLayouts" as never, name);
             default: throw new Error(`The provided layout type is not recognized: ${layoutType}`);
         }
     }
 
-    public async store(layout: Glue42Web.Layouts.Layout, layoutType: Glue42Web.Layouts.LayoutType): Promise<string> {
+    public async store(layout: Glue42Web.Layouts.Layout, layoutType: Glue42Web.Layouts.LayoutType): Promise<IDBValidKey> {
         glueLayoutDecoder.runWithException(layout);
         layoutTypeDecoder.runWithException(layoutType);
 
         switch (layoutType) {
-            case "Workspace": return (await this.database).put<"workspaceLayouts">("workspaceLayouts", layout, layout.name);
-            case "Global": return (await this.database).put<"globalLayouts">("globalLayouts", layout, layout.name);
+            case "Workspace": return (await this.database).put("workspaceLayouts" as never, layout, layout.name);
+            case "Global": return (await this.database).put("globalLayouts" as never, layout, layout.name);
             default: throw new Error(`The provided layout type is not recognized: ${layoutType}`);
         }
     }

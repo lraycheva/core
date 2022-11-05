@@ -384,8 +384,9 @@ export const serviceWorkerConfigDecoder: Decoder<Glue42WebPlatform.ServiceWorker
 });
 
 export const corePlusConfigDecoder: Decoder<Glue42WebPlatform.CorePlus.Config> = object({
-    start: anyJson()
-})
+    start: anyJson(),
+    version: nonEmptyStringDecoder
+});
 
 export const platformConfigDecoder: Decoder<Glue42WebPlatform.Config> = object({
     windows: optional(windowsConfigDecoder),

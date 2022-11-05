@@ -344,6 +344,7 @@ export namespace Glue42WebPlatform {
     export namespace CorePlus {
         export interface Config {
             start: (ioc: any, platformConfig: any) => Promise<void>;
+            version: string;
         }
     }
 
@@ -372,6 +373,7 @@ export namespace Glue42WebPlatform {
 
     export interface API {
         version: string;
+        corePlus?: { version: string };
     }
 
     export interface SystemInfo {

@@ -128,7 +128,7 @@ export class PreferredConnectionController {
                     this.portsBridge.switchAllClientsTransport(config)
                 ]);
 
-            } catch (error) {
+            } catch (error: any) {
                 this.logger?.trace(`Some clients could not connect to the preferred transport with error: ${JSON.stringify(error)}`);
 
                 if (!this.shouldForceTransfer) {
