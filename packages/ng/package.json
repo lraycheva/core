@@ -1,6 +1,6 @@
 {
     "name": "@glue42/ng",
-    "version": "2.8.6",
+    "version": "2.8.7",
     "description": "Glue42 library for Angular - Web and Enterprise",
     "license": "MIT",
     "publishConfig": {
@@ -39,7 +39,7 @@
     "dependencies": {
         "@glue42/desktop": "^5.14.0",
         "@glue42/web": "^2.8.4",
-        "@glue42/web-platform": "^1.16.0",
+        "@glue42/web-platform": "^1.16.1",
         "tslib": "^2.4.0"
     },
     "devDependencies": {
