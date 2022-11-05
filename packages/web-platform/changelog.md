@@ -1,3 +1,5 @@
+1.16.1
+fix: Fixes various types issues in web platform
 1.16.0
 feat: reworked the way the platform interacts with Glue42 Core+
 feat: added a no-gateway bundle
