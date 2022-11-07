@@ -7,6 +7,7 @@ export interface IntentInfo {
     name: string;
     displayName?: string;
     contexts: string[];
+    resultType?: string;
 }
 
 export interface AppDefinitionWithIntents {

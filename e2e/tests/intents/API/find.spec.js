@@ -237,4 +237,92 @@ describe('find()', () => {
 
         expect(foundIntents).to.eql(allMatchingContextTypeIntents);
     });
+
+    describe("Using resultType as a prop in intentFilter", function() {
+        const resultType = "test-result-type";
+        
+        [5, true, false, { test: 42 }, () => {}].forEach((invalidArg) => {
+            it(`Should throw when invoked with invalid resultType of type ${JSON.stringify(invalidArg)}`, async() => {
+                const errorThrownPromise = gtf.wrapPromise();
+
+                try {
+                    await glue.intents.find({ resultType: invalidArg });
+                    errorThrownPromise.reject("Should have thrown");
+                } catch (error) {
+                    errorThrownPromise.resolve();
+                }
+
+                await errorThrownPromise.promise;
+            });
+        })
+
+        it("Should return correct intents array with such resultType registered by localApplications", async() => {
+            const allIntents = await glue.intents.all();
+            const allMatchingResultTypeIntents = allIntents.filter(intent => intent.handlers.some((handler) => handler.resultType === resultType));
+
+            const intentsWithResultType = await glue.intents.find({ resultType });
+
+            expect(allMatchingResultTypeIntents).to.eql(intentsWithResultType);
+        });
+
+        it("Should return correct intents array with such resultType registered at runtime by this app", async() => {
+            const intentName = 'test-intent';
+            const intentToRegister = {
+                intent: intentName,
+                displayName: 'another-party-intent-displayName',
+                icon: 'another-party-intent-icon',
+                description: 'another-party-intent-description',
+                resultType
+            };
+
+            unsubObj = glue.intents.addIntentListener(intentToRegister, () => { });
+            unsubObj.intent = intentToRegister.intent;
+    
+            const allIntents = await glue.intents.all();
+            const allMatchingResultTypeIntents = allIntents.filter(intent => intent.handlers.some((handler) => handler.resultType === resultType));
+
+            const intentsWithResultType = await glue.intents.find({ resultType });
+
+            expect(allMatchingResultTypeIntents).to.eql(intentsWithResultType);
+        });
+
+        it("Should return correct intents array with such resultType registered at runtime by another app", async() => {
+            const intentName = 'test-intent';
+            const intentToRegister = {
+                intent: intentName,
+                displayName: 'another-party-intent-displayName',
+                icon: 'another-party-intent-icon',
+                description: 'another-party-intent-description',
+                resultType
+            };
+
+            glueApplication = await gtf.createApp();
+            await glueApplication.intents.addIntentListener(intentToRegister);
+    
+            const allIntents = await glue.intents.all();
+            const allMatchingResultTypeIntents = allIntents.filter(intent => intent.handlers.some((handler) => handler.resultType === resultType));
+
+            const intentsWithResultType = await glue.intents.find({ resultType });
+
+            expect(allMatchingResultTypeIntents).to.eql(intentsWithResultType);
+        });
+
+        it("Should return an empty array when there're no localApplications registering intents with such resultType", async() => {
+            const intentsWithResultType = await glue.intents.find({ resultType: "non-existing-result-type" });
+
+            expect(intentsWithResultType).to.be.an('array');
+            expect(intentsWithResultType).to.eql([]);
+        });
+
+        it("Should not be case sensitive and return the correct appIntents registered by localApplications", async() => {
+            const resultTypeToUpperCase = resultType.toUpperCase();
+
+            const allIntents = await glue.intents.all();
+            const allMatchingResultTypeIntents = allIntents.filter(intent => intent.handlers.some((handler) => handler.resultType === resultType));
+
+            const intentsWithResultType = await glue.intents.find({ resultType: resultTypeToUpperCase });
+
+            expect(intentsWithResultType).to.eql(allMatchingResultTypeIntents);
+        });
+    });
 });

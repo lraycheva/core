@@ -89,6 +89,11 @@ export namespace Glue42Web {
         contexts?: Glue42Core.ContextsConfig;
 
         /**
+         * Configures whether the Glue42 Web will share the initialized API object upon request via a custom web event. Defaults to true. 
+         */
+        exposeGlue?: boolean;
+
+        /**
          * A list of glue libraries which will be initiated internally and provide access to specific functionalities
          */
         libraries?: Array<(glue: Glue42Web.API, config?: Glue42Web.Config | Glue42.Config) => Promise<void>>;
@@ -970,6 +975,11 @@ export namespace Glue42Web {
              * Custom configuration for the intent that may be required for a particular desktop agent.
              */
             customConfig?: object;
+
+            /**
+             * Result type may be a type name, the string "channel" (which indicates that the app will return a channel) or a string indicating a channel that returns a specific type, e.g. "channel<fdc3.instrument>"
+             */
+            resultType?: string;
         }
 
         export interface Definition {
@@ -1193,6 +1203,7 @@ export namespace Glue42Web {
             displayName?: string;
             icon?: string;
             description?: string;
+            resultType?: string;
         }
 
         /**
@@ -1207,6 +1218,10 @@ export namespace Glue42Web {
              * The name of the context type to be used in the lookup.
              */
             contextType?: string;
+            /**
+             * The type of the intent result to be used in the lookup.
+             */
+            resultType?: string;
         }
 
         /**
@@ -1278,6 +1293,11 @@ export namespace Glue42Web {
              * The window's title of the running application instance.
              */
             instanceTitle?: string;
+
+            /**
+             * Result type may be a type name, the string "channel" (which indicates that the app will return a channel) or a string indicating a channel that returns a specific type, e.g. "channel<fdc3.instrument>"
+             */
+             resultType?: string;
         }
 
         /**

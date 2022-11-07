@@ -22,7 +22,7 @@ const runningProcesses = [];
 let httpServer;
 let wspServer;
 
-const isRunningPuppetMode = process.env.RUNNER === "Puppet";
+const runnerMode = process.env.RUNNER;
 
 const deleteTestCollectionDir = () => {
     rimraf.sync(PATH_TO_TEST_COLLECTION_DIR);
@@ -101,7 +101,16 @@ const runHttpServer = () => {
 };
 
 const runConfigProcesses = async () => {
-    const runCollection = isRunningPuppetMode ? config.runPuppet : config.run;
+    let runCollection;
+
+    if (runnerMode === "Puppet") {
+        runCollection = config.runPuppet;
+    } else if (runnerMode === "Fdc3") {
+        runCollection = config.runFdc3;
+    } else {
+        runCollection = config.run;
+    }
+
     const uniqueProcessNames = extractUniqueProcessNames(runCollection);
     const processDefinitions = mapProcessNamesToProcessDefinitions(config.processes, uniqueProcessNames);
 
@@ -180,7 +189,15 @@ const prepareTestCollection = async () => {
     }
     fs.mkdirSync(PATH_TO_TEST_COLLECTION_DIR);
 
-    const runCollection = isRunningPuppetMode ? config.runPuppet : config.run;
+    let runCollection;
+
+    if (runnerMode === "Puppet") {
+        runCollection = config.runPuppet;
+    } else if (runnerMode === "Fdc3") {
+        runCollection = config.runFdc3;
+    } else {
+        runCollection = config.run;
+    }
 
     const groupsWithNameAndTimesToRun = runCollection.map(({ groupName, timesToRun }) => {
         if (typeof groupName !== 'string') {

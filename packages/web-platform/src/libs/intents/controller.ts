@@ -99,7 +99,8 @@ export class IntentsController implements LibController {
                     displayName: intentDef.displayName,
                     contextTypes: intentDef.contexts,
                     applicationIcon: app.icon,
-                    type: "app"
+                    type: "app",
+                    resultType: intentDef.resultType
                 };
 
                 intents[intentDef.name].push(handler);
@@ -147,8 +148,10 @@ export class IntentsController implements LibController {
                     displayName: info.displayName || appIntent?.displayName,
                     contextTypes: info.contextTypes || appIntent?.contexts,
                     instanceTitle: title,
-                    type: "instance"
+                    type: "instance",
+                    resultType: appIntent?.resultType || info.resultType
                 };
+
                 intents[intentName].push(handler);
             }));
         }
@@ -234,6 +237,11 @@ export class IntentsController implements LibController {
 
         if (intentFilter.name) {
             intents = intents.filter((intent) => intent.name === intentFilter.name);
+        }
+
+        if (intentFilter.resultType) {
+            const resultTypeToLower = intentFilter.resultType.toLowerCase();
+            intents = intents.filter((intent) => intent.handlers.some(handler => handler.resultType?.toLowerCase() === resultTypeToLower));
         }
 
         this.logger?.trace(`[${commandId}] findIntent command completed`);

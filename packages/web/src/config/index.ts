@@ -4,7 +4,8 @@ import { ParsedConfig } from "../shared/types";
 const defaultConfig = {
     logger: "info",
     gateway: { webPlatform: {} },
-    libraries: []
+    libraries: [],
+    exposeGlue: true
 };
 
 /* eslint-disable @typescript-eslint/no-explicit-any */

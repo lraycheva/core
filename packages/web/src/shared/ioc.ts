@@ -133,7 +133,7 @@ export class IoC {
 
     public get eventsDispatcher(): EventsDispatcher {
         if (!this._eventsDispatcher) {
-            this._eventsDispatcher = new EventsDispatcher();
+            this._eventsDispatcher = new EventsDispatcher(this.config);
         }
 
         return this._eventsDispatcher;

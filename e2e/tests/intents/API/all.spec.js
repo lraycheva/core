@@ -145,4 +145,102 @@ describe('all()', () => {
         // The coreSupport application also registers a listener for the core-support intent.
         expect(instanceIntentHandlers).to.be.of.length(1);
     });
+
+    it("Should add one more element to the array returned from all() when addIntentListenerRequest has resultType", async() => {
+        const initIntents = await glue.intents.all();
+
+        const resultType = "test-result-type";
+        const intentToRegister = {
+            intent: 'another-party-intent',
+            contextTypes: ["contextType"],
+            displayName: 'another-party-intent-displayName',
+            icon: 'another-party-intent-icon',
+            description: 'another-party-intent-description',
+            resultType
+        };
+
+        unsubObj = glue.intents.addIntentListener(intentToRegister, () => { });
+        unsubObj.intent = intentToRegister.intent;
+
+        await gtf.intents.waitForIntentListenerAdded(intentToRegister.intent);
+
+        const newIntents = await glue.intents.all();
+
+        expect(initIntents.length + 1).to.eql(newIntents.length);
+    });
+
+    it("Should add one more element to the array returned from all() when another app registers an intent with addIntentListenerRequest and resultType", async() => {
+        const initIntents = await glue.intents.all();
+        
+        const intentName = 'test-intent';
+        const resultType = "test-result-type";
+
+        const intentToRegister = {
+            intent: intentName,
+            displayName: 'another-party-intent-displayName',
+            icon: 'another-party-intent-icon',
+            description: 'another-party-intent-description',
+            resultType
+        };
+
+        glueApplication = await gtf.createApp();
+        await glueApplication.intents.addIntentListener(intentToRegister);
+
+        const newIntents = await glue.intents.all();
+
+        expect(initIntents.length + 1).to.eql(newIntents.length);
+    });
+
+    it("Should add a correct intent handler when current app registers an intent with resultType", async() => {
+        const resultType = "test-result-type";
+        const intentToRegister = {
+            intent: 'another-party-intent',
+            contextTypes: ["contextType"],
+            displayName: 'another-party-intent-displayName',
+            icon: 'another-party-intent-icon',
+            description: 'another-party-intent-description',
+            resultType
+        };
+
+        unsubObj = glue.intents.addIntentListener(intentToRegister, () => { });
+        unsubObj.intent = intentToRegister.intent;
+
+        await gtf.intents.waitForIntentListenerAdded(intentToRegister.intent);
+
+        const allIntents = await glue.intents.all();
+        const addedIntent = allIntents.find(intent => intent.handlers.some(handler => handler.resultType === resultType));
+
+        expect(addedIntent).to.not.be.undefined;
+    });
+
+    it("Should add a correct intent handler when another app registers an intent with resultType", async() => {
+        const resultType = "test-result-type";
+        const intentToRegister = {
+            intent: 'another-party-intent',
+            contextTypes: ["contextType"],
+            displayName: 'another-party-intent-displayName',
+            icon: 'another-party-intent-icon',
+            description: 'another-party-intent-description',
+            resultType
+        };
+
+        glueApplication = await gtf.createApp();
+        await glueApplication.intents.addIntentListener(intentToRegister);
+
+        const allIntents = await glue.intents.all();
+        const addedIntent = allIntents.find(intent => intent.handlers.some(handler => handler.resultType === resultType));
+
+        expect(addedIntent).to.not.be.undefined;
+    });
+
+    it("Should consists correct handler when resultType is set in the application definition", async() => {
+        const appName = "AppWithDetails-local";
+        const resultType = "test-result-type";
+
+        const allIntents = await glue.intents.all();
+
+        const intentHandlerWithResultType = allIntents.find(intent => intent.handlers.some(handler => handler.applicationName === appName && handler.resultType === resultType));
+
+        expect(intentHandlerWithResultType).to.not.be.undefined;
+    });
 });

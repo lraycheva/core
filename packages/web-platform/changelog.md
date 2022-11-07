@@ -1,3 +1,5 @@
+1.17.0
+feat: added support for intents result type
 1.16.1
 fix: Fixes various types issues in web platform
 1.16.0

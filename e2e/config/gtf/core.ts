@@ -1,11 +1,12 @@
 import { Glue42Web } from "../../../packages/web/web.d";
 import { GtfApp } from "./app";
-import { CancellablePromise, Gtf } from "./gtf";
+import { CancellablePromise, CreateAppConfig, Gtf } from "./gtf";
 import { Glue42WebPlatform } from "../../../packages/web-platform/platform.d";
 import { channelsConfig, remoteStoreConfig } from "./config";
 
 export class GtfCore implements Gtf.Core {
     private readonly controlMethodName = "G42Core.E2E.Control";
+    private readonly defaultSupportAppName = "coreSupport";
     private windowNameCounter = 0;
     private counter = 0;
     private activeWindowHooks: (() => void | Promise<void>)[] = [];
@@ -138,10 +139,19 @@ export class GtfCore implements Gtf.Core {
         return channelsConfig.definitions.map((channelContext) => channelContext.name);
     }
 
-    public async createApp(appName = "coreSupport"): Promise<Gtf.App> {
+    public async createApp(appConfig?: string | CreateAppConfig): Promise<Gtf.App> {
+        const appName = typeof appConfig === "string" 
+            ? appConfig 
+            : appConfig && appConfig.name 
+                ? appConfig.name 
+                : this.defaultSupportAppName;
 
         if (!this.glue) {
             throw new Error("GTF cannot create an app, because it is running in Puppet mode, please use the gtf.puppet API");
+        }
+
+        if (typeof appConfig === "object" && appConfig.exposeFdc3 && appName !== this.defaultSupportAppName) {
+            throw new Error(`GTF does not support exposing FDC3 in ${appName} app. Use coreSupport app instead`);
         }
 
         const foundApp = this.glue.appManager.application(appName);
@@ -152,7 +162,7 @@ export class GtfCore implements Gtf.Core {
 
         const supportInstance = await foundApp.start();
 
-        return new GtfApp(this.glue, supportInstance, this.controlMethodName);
+        return new GtfApp(this.glue, supportInstance, this.controlMethodName, typeof appConfig === "object" ? appConfig : {});
     }
 
     public post(url: string, body: string): Promise<Response> {

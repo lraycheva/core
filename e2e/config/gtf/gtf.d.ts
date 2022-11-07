@@ -2,6 +2,7 @@ import { Glue42Web } from "../../../packages/web/web";
 import { Glue42WebPlatform } from "../../../packages/web-platform/platform";
 import { Glue42Core } from "../../../packages/core/glue";
 import { UnsubscribeFunction } from "callback-registry";
+import { AppIdentifier, Context, IntentResolution, Listener } from '../gtf/fdc3/types';
 
 export interface ControlArgs {
     operation: string;
@@ -22,6 +23,10 @@ export interface CancellablePromise<T> extends Promise<T> {
     cancel: () => void;
 }
 
+export type CreateAppConfig = {
+    name?: string;
+    exposeFdc3?: boolean;
+}
 export namespace Gtf {
     export interface Agm {
         getMethodName(): string;
@@ -63,6 +68,16 @@ export namespace Gtf {
             destroy(ctxName: string): Promise<void>;
             setPath(ctxName: string, path: string, data: any): Promise<void>;
             setPaths(ctxName: string, paths: Glue42Web.Contexts.PathValue[]): Promise<void>
+        };
+
+        fdc3?: {
+            joinUserChannel(channelId: string): Promise<void>;
+            broadcast(context: Context): Promise<void>;
+            broadcastOnChannel(channelId: string, context: Context): Promise<void>;
+            raiseIntent(intent: string, context: Context, app?: AppIdentifier): Promise<IntentResolution>;
+            addContextListenerOnPrivateChannel(contextType: string): Promise<void>;
+            unsubscribeFromPrivateChannelListener(): Promise<void>;
+            disconnectFromPrivateChannel(): Promise<void>;
         }
     }
 
@@ -87,7 +102,7 @@ export namespace Gtf {
 
         getChannelNames(): Promise<string[]>;
 
-        createApp(appName?: string): Promise<App>;
+        createApp(config?: string | CreateAppConfig): Promise<App>;
 
         post(url: string, body: string): Promise<Response>;
     }
@@ -99,6 +114,13 @@ export namespace Gtf {
     export interface Contexts {
         getContextName(): string;
         generateComplexObject(complexity: number): { superNestedObject: any, numberArr: number[], stringArr: string[], objectArr: any[], singleObject: any, dateArr: Date[] };
+    }
+
+    export interface Fdc3 {
+        getContext(): Context;
+        addActiveListener(listener: Listener): void;
+        removeActiveListeners(): void;
+        removeCreatedChannels(): Promise<void>;
     }
 
     export interface AppManager {

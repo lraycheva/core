@@ -1,41 +1,118 @@
 export const channelsConfig = {
     definitions: [
         {
-            name: "Red",
+            name: 'Red',
             meta: {
-                color: "red"
+                color: 'red',
+                fdc3: {
+                    id: 'fdc3.channel.1',
+                    displayMetadata: {
+                        name: 'Channel 1',
+                        glyph: '1',
+                    },
+                },
             },
             data: {}
         },
         {
-            name: "Green",
+            name: 'Green',
             meta: {
-                color: "green"
+                color: 'green',
+                fdc3: {
+                    id: 'fdc3.channel.4',
+                    displayMetadata: {
+                        name: 'Channel 4',
+                        glyph: '4',
+                    },
+                },
             },
             data: {}
         },
         {
-            name: "Blue",
+            name: 'Blue',
             meta: {
-                color: "blue"
+                color: "blue",
+                fdc3: {
+                    id: 'fdc3.channel.6',
+                    displayMetadata: {
+                        name: 'Channel 6',
+                        glyph: '4',
+                    },
+                },
             },
             data: {}
         },
         {
-            name: "Pink",
+            name: 'Yellow',
             meta: {
-                color: "pink"
+                color: '#FFE733',
+                fdc3: {
+                    id: 'fdc3.channel.3',
+                    displayMetadata: {
+                        name: 'Channel 3',
+                        glyph: '3',
+                    },
+                },
             },
             data: {}
         },
         {
-            name: "Yellow",
+            name: 'Orange',
             meta: {
-                color: "yellow"
+                color: '#fa5a28',
+                fdc3: {
+                    id: 'fdc3.channel.2',
+                    displayMetadata: {
+                        name: 'Channel 2',
+                        glyph: '2',
+                    },
+                },
             },
             data: {}
-        }
-    ]
+        },
+        {
+            name: 'Purple',
+            meta: {
+                color: '#c873ff',
+                fdc3: {
+                    id: 'fdc3.channel.8',
+                    displayMetadata: {
+                        name: 'Channel 8',
+                        glyph: '8',
+                    },
+                },
+            },
+            data: {}
+        },
+        {
+            name: 'Magenta',
+            meta: {
+                color: '#cc338b',
+                fdc3: {
+                    id: 'fdc3.channel.7',
+                    displayMetadata: {
+                        name: 'Channel 7',
+                        glyph: '7',
+                    },
+                },
+            },
+            data: {}
+        },
+        {
+            name: 'Cyan',
+            meta: {
+                color: '#80f3ff',
+                fdc3: {
+                    id: 'fdc3.channel.5',
+                    displayMetadata: {
+                        name: 'Channel 5',
+                        glyph: '5',
+                    },
+                },
+            },
+            data: {}
+        },
+    ],
 };
 
 export const localApplicationsConfig = [
@@ -65,7 +142,8 @@ export const localApplicationsConfig = [
                 displayName: "core-intent-displayName",
                 contexts: [
                     "test-context"
-                ]
+                ],
+                resultType: "test-result-type"
             }
         ]
     },
@@ -102,7 +180,8 @@ export const localApplicationsConfig = [
                 displayName: "AppWithDetails-local-intent-displayName",
                 contexts: [
                     "test-context"
-                ]
+                ],
+                resultType: "test-result-type"
             }
         ]
     },

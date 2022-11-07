@@ -1,8 +1,13 @@
+import { isChannel, extractChannelMetadata } from '../shared/utils.js';
+
 const controlMethodName = 'G42Core.E2E.Control';
 
 let myStreams = [];
 let mySubscriptions = [];
 const intentToUnsubObj = {};
+
+let privateChannel;
+let privateChannelListener;
 
 const setContext = async ({ name, data }, success, error) => {
     if (!name) {
@@ -283,6 +288,108 @@ const publish = async ({ data, name }, success) => {
     success();
 };
 
+const initFdc3 = async(_, success) => {
+    const fdc3Ready = new Promise((resolve) => {
+        window.addEventListener("fdc3Ready", resolve);
+    });
+
+    await import("../libs/fdc3.umd.js");
+
+    await fdc3Ready;
+
+    success();
+};
+
+const fdc3JoinUserChannel = async({ channelId }, success, error) => {
+    try {
+        await fdc3.joinUserChannel(channelId);
+        success();
+    } catch (err) {
+        error(err);
+    }
+}
+
+const fdc3Broadcast = async({ context }, success, error) => {
+    try {
+        await fdc3.broadcast(context);
+        success();
+    } catch (err) {
+        error(err);
+    }
+};
+
+const fdc3RaiseIntent = async(params, success, error) => {
+    try {
+        const resolution = await fdc3.raiseIntent(params.intent, params.context, params.app);
+
+        const { getResult, ...data } = resolution;
+        
+        const resolutionResult = await getResult();
+
+        const resultIsChannel = isChannel(resolutionResult);
+
+        if (resultIsChannel) {
+            privateChannel = resolutionResult;
+        }
+
+        const result = { 
+            data, 
+            resolutionResult:
+                resultIsChannel // if result is a channel => return the metadata only
+                    ? extractChannelMetadata(resolutionResult) 
+                    : resolutionResult 
+        };
+
+        success({ result });
+    } catch (err) {
+        error(err);
+    }
+}
+
+const fdc3BroadcastOnChannel = async({ channelId, context }, success, error) => {
+    const channel = await fdc3.getOrCreateChannel(channelId);
+
+    if (!channel) {
+        error("No channel with such name");
+    }
+
+    try {
+        await channel.broadcast(context);
+        success();
+    } catch (err) {
+        error(err);
+    }
+}
+
+const fdc3AddContextListenerOnPrivateChannel = async({ contextType }, success, error) => {
+    const handler = () => {};
+
+    try {
+        privateChannelListener = await privateChannel.addContextListener(contextType, handler);
+        success();
+    } catch (err) {
+        error(err);
+    }
+}
+
+const fdc3UnsubscribeFromPrivateChannelListener = async(_, success, error) => {
+    try {
+        privateChannelListener.unsubscribe();
+        success();
+    } catch (err) {
+        error(err);
+    }
+}
+
+const fdc3DisconnectFromPrivateChannel = async(_, success, error) => {
+    try {
+        await privateChannel.disconnect();
+        success();
+    } catch (err) {
+        error(err);
+    }
+}
+
 const operations = [
     { name: 'setContext', execute: setContext },
     { name: 'updateContext', execute: updateContext },
@@ -302,7 +409,15 @@ const operations = [
     { name: 'waitForMethodAdded', execute: waitForMethodAdded },
     { name: 'addIntentListener', execute: addIntentListener },
     { name: 'unregisterIntent', execute: unregisterIntent },
-    { name: 'publish', execute: publish }
+    { name: 'publish', execute: publish },
+    { name: 'initFdc3', execute: initFdc3 },
+    { name: 'fdc3JoinUserChannel', execute: fdc3JoinUserChannel },
+    { name: 'fdc3Broadcast', execute: fdc3Broadcast },
+    { name: 'fdc3RaiseIntent', execute: fdc3RaiseIntent },
+    { name: 'fdc3BroadcastOnChannel', execute: fdc3BroadcastOnChannel },
+    { name: 'fdc3AddContextListenerOnPrivateChannel', execute: fdc3AddContextListenerOnPrivateChannel },
+    { name: 'fdc3UnsubscribeFromPrivateChannelListener', execute: fdc3UnsubscribeFromPrivateChannelListener },
+    { name: 'fdc3DisconnectFromPrivateChannel', execute: fdc3DisconnectFromPrivateChannel }
 ];
 
 const handleControl = (args, _, success, error) => {

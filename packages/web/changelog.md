@@ -1,3 +1,6 @@
+2.9.0
+feat: added events dispatcher
+fix: channel subscribe now replays current channel data
 2.8.4
 fix: can not import up to 1000 layouts in a simple bulk import
 2.8.3

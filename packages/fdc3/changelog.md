@@ -1,3 +1,6 @@
+3.0.0
+feat: implements FDC3 2.0 standard
+feat: no longer bundles the Glue42 libs
 2.5.24
 chore: bump due to dependencies update
 2.5.23

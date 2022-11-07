@@ -19,7 +19,8 @@ const intentHandlerDecoder: Decoder<Glue42Web.Intents.IntentHandler> = object({
     displayName: optional(string()),
     contextTypes: optional(array(nonEmptyStringDecoder)),
     instanceId: optional(string()),
-    instanceTitle: optional(string())
+    instanceTitle: optional(string()),
+    resultType: optional(nonEmptyStringDecoder)
 });
 
 const intentDecoder: Decoder<Glue42Web.Intents.Intent> = object({
@@ -50,7 +51,8 @@ export const wrappedIntentsDecoder: Decoder<WrappedIntents> = object({
 export const wrappedIntentFilterDecoder: Decoder<WrappedIntentFilter> = object({
     filter: optional(object({
         name: optional(nonEmptyStringDecoder),
-        contextType: optional(nonEmptyStringDecoder)
+        contextType: optional(nonEmptyStringDecoder),
+        resultType: optional(nonEmptyStringDecoder)
     }))
 });
 

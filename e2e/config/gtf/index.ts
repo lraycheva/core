@@ -12,9 +12,10 @@ import { Glue42WebPlatform, Glue42WebPlatformFactoryFunction } from "../../../pa
 import { WorkspacesFactoryFunction } from "../../../packages/workspaces-api/workspaces";
 // TODO: Add building and serving the Workspaces application to the e2e script.
 import { channelsConfig, localApplicationsConfig } from "./config";
-import sinon, { fake } from "sinon";
+import sinon from "sinon";
 import { GtfPuppet } from "./puppet";
 import { GtfContexts } from './contexts';
+import { GtfFdc3 } from './fdc3/fdc3';
 
 // Make the RUNNER environment variable available inside of the tests (resolved during the gtf build process) and set it as window title.
 const RUNNER = process.env.RUNNER;
@@ -23,11 +24,60 @@ document.title = RUNNER;
 
 console.log(`Runner in GTF: ${RUNNER}`);
 
-const isRunningPuppetMode = process.env.RUNNER === "Puppet";
+const runningMode = process.env.RUNNER;
 
 declare const window: any;
 declare const GlueWorkspaces: WorkspacesFactoryFunction;
 declare const GlueWebPlatform: Glue42WebPlatformFactoryFunction;
+
+const getBaseGluePlatformConfig = (): Glue42WebPlatform.Config => {
+    const glueWebConfig: Glue42Web.Config = {
+        libraries: [GlueWorkspaces],
+        systemLogger: { level: "error" }
+    };
+
+    const gluePlatformConfig: Glue42WebPlatform.Config = {
+        // TODO: Test supplier and remote applications modes.
+        applications: {
+            local: localApplicationsConfig
+        },
+        layouts: {
+            mode: "session"
+        },
+        channels: channelsConfig,
+        glue: glueWebConfig,
+        workspaces: {
+            // TODO: Add building and serving the Workspaces application to the e2e script.
+            src: "http://localhost:7654"
+        },
+        serviceWorker: {
+            registrationPromise: setupNotifications()
+        },
+        gateway: {
+            logging: {
+                level: "error"
+            }
+        },
+        environment: {
+            test: 42,
+            testObj: {
+                test: 42
+            },
+            testArr: [42]
+        }
+    };
+
+    return gluePlatformConfig;
+}
+
+const baseGlueSetup = async() => {
+    const gluePlatformConfig =  getBaseGluePlatformConfig();
+
+    const { glue, platform } = await (GlueWebPlatform as (config?: Glue42WebPlatform.Config) => Promise<{ glue: Glue42Web.API, platform: Glue42WebPlatform.API }>)(gluePlatformConfig);
+
+    window.glue = glue;
+    window.platform = platform;
+}
 
 const setupNotifications = () => {
     window.notificationsFakeTriggerClick = false;
@@ -83,47 +133,7 @@ const startPuppetGtf = async () => {
 };
 
 const startGtf = async () => {
-
-    const glueWebConfig: Glue42Web.Config = {
-        libraries: [GlueWorkspaces],
-        systemLogger: { level: "error" }
-    };
-
-    const gluePlatformConfig: Glue42WebPlatform.Config = {
-        // TODO: Test supplier and remote applications modes.
-        applications: {
-            local: localApplicationsConfig
-        },
-        layouts: {
-            mode: "session"
-        },
-        channels: channelsConfig,
-        glue: glueWebConfig,
-        workspaces: {
-            // TODO: Add building and serving the Workspaces application to the e2e script.
-            src: "http://localhost:7654"
-        },
-        serviceWorker: {
-            registrationPromise: setupNotifications()
-        },
-        gateway: {
-            logging: {
-                level: "error"
-            }
-        },
-        environment: {
-            test: 42,
-            testObj: {
-                test: 42
-            },
-            testArr: [42]
-        }
-    };
-
-    const { glue, platform } = await (GlueWebPlatform as (config?: Glue42WebPlatform.Config) => Promise<{ glue: Glue42Web.API, platform: Glue42WebPlatform.API }>)(gluePlatformConfig);
-
-    window.glue = glue;
-    window.platform = platform;
+    await baseGlueSetup();
 
     const gtfCore = new GtfCore(glue);
     const gtfLogger = new GtfLogger(glue);
@@ -143,4 +153,39 @@ const startGtf = async () => {
     );
 };
 
-window.coreReady = isRunningPuppetMode ? startPuppetGtf() : startGtf();
+const getGtfWithFdc3 = (gtfCore: GtfCore) => {
+    return Object.assign(
+        gtfCore,
+        { fdc3: new GtfFdc3(glue) },
+        { appManager: new GtfAppManager(glue) },
+        { channels: new GtfChannels(glue) },
+        { intents: new GtfIntents(glue) },
+        { contexts: new GtfContexts() }
+    );
+}
+
+const startFdc3Gtf = async(): Promise<void> => {
+    const fdc3ReadyPromise = new Promise<void>((resolve) => {
+        if (window.fdc3) {
+            resolve();
+        }
+
+        window.addEventListener("fdc3Ready", resolve);
+    });
+
+    await fdc3ReadyPromise;
+
+    await baseGlueSetup();
+    
+    const gtfCore = new GtfCore(glue);
+
+    window.gtf = getGtfWithFdc3(gtfCore);
+}
+
+if (runningMode === "Puppet") {
+    window.coreReady = startPuppetGtf();
+} else if (runningMode === "Fdc3") {
+    window.coreReady = startFdc3Gtf();
+} else {
+    window.coreReady = startGtf();
+}

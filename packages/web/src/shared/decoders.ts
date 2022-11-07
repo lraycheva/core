@@ -503,7 +503,8 @@ const intentHandlerDecoder: Decoder<Glue42Web.Intents.IntentHandler> = object({
     displayName: optional(string()),
     contextTypes: optional(array(nonEmptyStringDecoder)),
     instanceId: optional(string()),
-    instanceTitle: optional(string())
+    instanceTitle: optional(string()),
+    resultType: optional(string())
 });
 
 const intentDecoder: Decoder<Glue42Web.Intents.Intent> = object({
@@ -533,7 +534,8 @@ export const wrappedIntentsDecoder: Decoder<WrappedIntents> = object({
 
 export const intentFilterDecoder: Decoder<Glue42Web.Intents.IntentFilter> = object({
     name: optional(nonEmptyStringDecoder),
-    contextType: optional(nonEmptyStringDecoder)
+    contextType: optional(nonEmptyStringDecoder),
+    resultType: optional(nonEmptyStringDecoder)
 });
 
 export const findFilterDecoder: Decoder<string | Glue42Web.Intents.IntentFilter> = oneOf<string | Glue42Web.Intents.IntentFilter>(
@@ -568,7 +570,8 @@ export const addIntentListenerRequestDecoder: Decoder<Glue42Web.Intents.AddInten
     contextTypes: optional(array(nonEmptyStringDecoder)),
     displayName: optional(string()),
     icon: optional(string()),
-    description: optional(string())
+    description: optional(string()),
+    resultType: optional(string())
 });
 
 export const addIntentListenerIntentDecoder: Decoder<string | Glue42Web.Intents.AddIntentListenerRequest> = oneOf<string | Glue42Web.Intents.AddIntentListenerRequest>(
@@ -579,14 +582,6 @@ export const addIntentListenerIntentDecoder: Decoder<string | Glue42Web.Intents.
 export const channelNameDecoder = (channelNames: string[]): Decoder<string> => {
     return nonEmptyStringDecoder.where(s => channelNames.includes(s), "Expected a valid channel name");
 };
-
-export const channelContextDecoder: Decoder<Glue42Web.Channels.ChannelContext> = object({
-    name: nonEmptyStringDecoder,
-    meta: object({
-        color: nonEmptyStringDecoder
-    }),
-    data: optional(anyJson()),
-});
 
 export const interopActionSettingsDecoder: Decoder<Glue42Web.Notifications.InteropActionSettings> = object({
     method: nonEmptyStringDecoder,
@@ -647,6 +642,15 @@ export const glue42NotificationOptionsDecoder: Decoder<Glue42Web.Notifications.R
     timestamp: optional(nonNegativeNumberDecoder),
     vibrate: optional(array(number()))
 });
+
+export const channelContextDecoder: Decoder<Glue42Web.Channels.ChannelContext> = object({
+    name: nonEmptyStringDecoder,
+    meta: object({
+        color: nonEmptyStringDecoder
+    }),
+    data: optional(object()),
+});
+
 
 export const raiseNotificationDecoder: Decoder<RaiseNotification> = object({
     settings: glue42NotificationOptionsDecoder,

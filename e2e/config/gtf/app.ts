@@ -1,14 +1,21 @@
 import { Glue42Web } from "../../../packages/web/web";
-import { Gtf, ControlArgs, SubscriptionFacade, StreamFacade } from "./gtf";
+import { Fdc3IntentResolution, AppIdentifier, Context, IntentResolution } from './fdc3/types';
+import { Gtf, ControlArgs, SubscriptionFacade, StreamFacade, CreateAppConfig } from "./gtf";
 
 export class GtfApp implements Gtf.App {
     private registerResponseCounter = 0;
+    private fdc3Ready?: Promise<void>;
 
     constructor(
         private readonly glue: Glue42Web.API,
         public readonly myInstance: Glue42Web.AppManager.Instance,
-        private readonly controlMethodName: string
-    ) { }
+        private readonly controlMethodName: string,
+        private readonly config: CreateAppConfig
+    ) {
+        if (this.config.exposeFdc3) {
+            this.fdc3Ready = this.initializeFdc3();
+        }
+    }
 
     public get agm() {
         const methodDefinitionToParams = (methodDefinition: string | Glue42Web.Interop.MethodDefinition) => {
@@ -280,6 +287,99 @@ export class GtfApp implements Gtf.App {
                 return this.sendControl<any>(controlArgs);
             }
         };
+    }
+
+    public get fdc3() {
+        return {
+            joinUserChannel: async(channelId: string): Promise<void> => {
+                const controlArgs: ControlArgs = {
+                    operation: "fdc3JoinUserChannel",
+                    params: { channelId }
+                };
+
+                await this.fdc3Ready;
+
+                return this.sendControl<void>(controlArgs);
+            },
+            broadcast: async(context: Context): Promise<void> => {
+                const controlArgs: ControlArgs = {
+                    operation: "fdc3Broadcast",
+                    params: { context }
+                };
+
+                await this.fdc3Ready;
+
+                return this.sendControl<void>(controlArgs);
+            },
+            broadcastOnChannel: async(channelId: string, context: Context): Promise<void> => {
+                const controlArgs: ControlArgs = {
+                    operation: "fdc3BroadcastOnChannel",
+                    params: { channelId, context }
+                }
+
+                await this.fdc3Ready;
+
+                return this.sendControl<void>(controlArgs);
+            },
+            raiseIntent: async(intent: string, context: Context, app?: AppIdentifier): Promise<IntentResolution> => {
+                const controlArgs: ControlArgs = {
+                    operation: "fdc3RaiseIntent",
+                    params: { intent, context }
+                };
+
+                if (app) {
+                    controlArgs.params.app = app;
+                }
+
+                await this.fdc3Ready;
+
+                const { resolutionResult, data } = await this.sendControl<Fdc3IntentResolution>(controlArgs);
+
+                return {
+                    ...data,
+                    getResult: () => Promise.resolve(resolutionResult)
+                }
+            },
+            addContextListenerOnPrivateChannel: async(contextType: string): Promise<void> => {
+                const controlArgs: ControlArgs = {
+                    operation: "fdc3AddContextListenerOnPrivateChannel",
+                    params: { contextType }
+                }
+
+                await this.fdc3Ready;
+
+                return this.sendControl<void>(controlArgs);
+            },
+            unsubscribeFromPrivateChannelListener: async(): Promise<void> => {
+                const controlArgs: ControlArgs = {
+                    operation: "fdc3UnsubscribeFromPrivateChannelListener",
+                    params: { }
+                }
+
+                await this.fdc3Ready;
+
+                return this.sendControl<void>(controlArgs);
+            },
+            disconnectFromPrivateChannel: async(): Promise<void> => {
+                const controlArgs: ControlArgs = {
+                    operation: "fdc3DisconnectFromPrivateChannel",
+                    params: {}
+                };
+
+                await this.fdc3Ready;
+
+                return this.sendControl<void>(controlArgs); 
+            }
+        };
+    }
+
+    private async initializeFdc3() {
+        const controlArgs: ControlArgs = {
+            operation: "initFdc3",
+            params: {}
+        };
+
+        return this.sendControl<void>(controlArgs);
     }
 
     private async sendControl<T>(controlArgs: ControlArgs): Promise<T> {

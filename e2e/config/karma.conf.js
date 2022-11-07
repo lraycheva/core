@@ -3,14 +3,33 @@ const config = require('../config.js');
 module.exports = (config) => {
     console.log(`Runner in Karma Config: ${process.env.RUNNER}`);
 
-    const files = process.env.RUNNER === "Puppet" ?
-        [
+    let files;
+
+    if (process.env.RUNNER === "Puppet") {
+        files = [
             {
                 pattern: 'e2e/config/gtf.js'
             },
             `e2e/tests/temp-test-collection/**/*.spec.js`
-        ] :
-        [
+        ]
+    } else if (process.env.RUNNER === "Fdc3") {
+        files = [
+            {
+                pattern: 'packages/web-platform/dist/platform.web.umd.js'
+            },
+            {
+                pattern: 'packages/fdc3/dist/fdc3.umd.js'
+            },
+            {
+                pattern: 'packages/workspaces-api/dist/workspaces.umd.js'
+            },
+            {
+                pattern: 'e2e/config/gtf.js'
+            },
+            `e2e/tests/temp-test-collection/**/*.spec.js`
+        ]
+    } else {
+        files = [
             {
                 pattern: 'packages/web-platform/dist/platform.web.umd.js'
             },
@@ -22,6 +41,7 @@ module.exports = (config) => {
             },
             `e2e/tests/temp-test-collection/**/*.spec.js`
         ];
+    }
 
     config.set({
         frameworks: ["mocha", "chai"],

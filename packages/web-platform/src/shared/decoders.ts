@@ -219,7 +219,8 @@ export const intentDefinitionDecoder: Decoder<Glue42Web.AppManager.Intent> = obj
     name: nonEmptyStringDecoder,
     displayName: optional(string()),
     contexts: optional(array(string())),
-    customConfig: optional(object())
+    customConfig: optional(object()),
+    resultType: optional(nonEmptyStringDecoder)
 });
 
 export const glueCoreAppDefinitionDecoder: Decoder<Glue42Web.AppManager.Definition> = object({

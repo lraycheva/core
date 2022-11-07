@@ -16,7 +16,8 @@ module.exports = {
         'packages/core/dist/core.es.js',
         'packages/web/dist/web.es.js',
         'packages/web-platform/dist/platform.web.es.js',
-        'packages/workspaces-api/dist/workspaces.es.js'
+        'packages/workspaces-api/dist/workspaces.es.js',
+        'packages/fdc3/dist/fdc3.umd.js'
     ],
     run: [
         {
@@ -55,6 +56,11 @@ module.exports = {
         {
             groupName: 'connection',
             processes: ['puppetBridge']
+        }
+    ],
+    runFdc3: [
+        {
+            groupName: 'fdc3'
         }
     ],
     processes: [

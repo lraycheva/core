@@ -7,6 +7,7 @@ import { IoC } from "./ioc";
 
 export interface ParsedConfig extends Glue42Web.Config {
     logger: any;
+    exposeGlue: boolean;
     isPlatformInternal: boolean;
     libraries: Array<(glue: Glue42Web.API, config?: Glue42Web.Config | Glue42.Config) => Promise<void>>;
     identity?: { [key: string]: string | number | boolean };
@@ -43,4 +44,9 @@ export interface TransportState extends Glue42Core.Connection.TransportSwitchSet
 
 export interface SessionWebSettings {
     clientInstanceId: string;
+}
+
+export interface Glue42EventPayload {
+    glue42core?: any;
+    glue42?: any;
 }

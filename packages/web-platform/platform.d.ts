@@ -159,6 +159,12 @@ export namespace Glue42WebPlatform {
              * Custom configuration for the intent that may be required for a particular desktop agent.
              */
             customConfig?: object;
+
+            /**
+             * Result type may be a type name, the string "channel" (which indicates that the app will return a channel) or a string indicating a channel that returns a specific type, e.g. "channel<fdc3.instrument>"
+             */
+
+            resultType?: string;
         }
 
         /** Generic object for passing properties, settings, etc., in the for of key/value pairs. */

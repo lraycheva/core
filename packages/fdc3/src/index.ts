@@ -1,20 +1,15 @@
 import fdc3Factory from "./main";
-import { WindowType } from "./types/windowtype";
+import { checkIfInElectron } from './shared/utils';
 
-let globalFdc3 = (window as WindowType).fdc3;
+let globalFdc3 = window.fdc3 as any;
 
 if (typeof globalFdc3 === "undefined") {
     globalFdc3 = fdc3Factory();
-    // if we are running Electron with contextIsolated
-    const hasGlue42electron = typeof window !== "undefined" && "glue42electron" in window;
-    if (hasGlue42electron) {
-        const runningInElectron = typeof process !== "undefined" &&  "contextIsolated" in process;
-        if(runningInElectron){
-            const contextBridge = require("electron").contextBridge;
-            contextBridge.exposeInMainWorld("fdc3", globalFdc3);
-        }
-    }
-    (window as WindowType).fdc3 = globalFdc3;
+
+    /* If running in Glue42 Enterprise */
+    checkIfInElectron(globalFdc3);
+
+    window.fdc3 = globalFdc3;
 } else {
     console.warn("Defaulting to using the auto-injected fdc3.");
 }

@@ -10,14 +10,13 @@ export default {
     output: [
         {
             file: pkg.main,
-            name: 'fdc3-glue42',
+            name: 'fdc3',
             format: 'umd',
             sourcemap: true
         },
         {
-            file: './dist/fdc3-glue42.min.js',
-            name: 'fdc3-glue42.min',
-            format: 'umd',
+            file: pkg.module,
+            format: 'es',
             sourcemap: true,
             plugins: [terser()]
         },

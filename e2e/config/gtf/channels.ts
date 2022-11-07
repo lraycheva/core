@@ -6,13 +6,11 @@ export class GtfChannels implements Gtf.Channels {
     }
 
     public async resetContexts(): Promise<void[]> {
-        const channelNames = await this.glue.channels.all();
+        const channels = await this.glue.channels.list();
 
-        const resetContextsPromises = channelNames.map((channelName) => this.glue.contexts.set(`___channel___${channelName}`, {
-            name: channelName,
-            meta: {
-                color: channelName.toLowerCase()
-            },
+        const resetContextsPromises = channels.map((channelContext) => this.glue.contexts.set(`___channel___${channelContext.name}`, {
+            name: channelContext.name,
+            meta: channelContext.meta,
             data: {}
         }));
 

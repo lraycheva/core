@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Glue42Core } from "@glue42/core";
 import { Glue42Web } from "../../web";
-import { channelNameDecoder, channelContextDecoder } from "../shared/decoders";
+import { channelContextDecoder, channelNameDecoder } from "../shared/decoders";
 import { LibController } from "../shared/types";
 import {
     default as CallbackRegistryFactory,
@@ -179,6 +179,12 @@ export class ChannelsController implements LibController {
             throw new Error("Cannot subscribe to channels, because the provided callback is not a function!");
         }
 
+        const currentChannel = this.current();
+        
+        if (currentChannel) {
+            this.replaySubscribe(callback, currentChannel);
+        }
+
         return this.registry.add(this.SubsKey, callback);
     }
 
@@ -261,5 +267,24 @@ export class ChannelsController implements LibController {
         await this.bridge.send<Glue42Web.Channels.ChannelContext, void>("channels", operations.addChannel, channelContext);
 
         return channelContext;
+    }
+
+    private replaySubscribe = (callback: (data: any, context: Glue42Web.Channels.ChannelContext, updaterId: string) => void,  channelId: string) => {
+        this.get(channelId)
+            .then((channelContext: Glue42Web.Channels.ChannelContext) => {
+                if (typeof channelContext.data === "object" && Object.keys(channelContext.data).length) {
+                    const contextName = this.createContextName(channelContext.name);
+
+                    return this.contexts.subscribe(contextName, (context, _, __, ___, extraData) => {
+                        callback(context.data, context, extraData?.updaterId);
+                    });
+                }
+            })
+            .then((un: (() => void) | undefined) => {
+                if (un && typeof un === "function") {
+                    un();
+                }
+            })
+            .catch(err => this.logger.trace(err));
     }
 }

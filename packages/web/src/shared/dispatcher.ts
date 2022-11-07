@@ -5,15 +5,19 @@ import {
     UnsubscribeFunction,
 } from "callback-registry";
 import { Glue42Web } from "../../web";
+import { Glue42EventPayload, ParsedConfig } from "./types";
 
 export class EventsDispatcher {
     private glue!: Glue42Web.API;
     private readonly registry: CallbackRegistry = CallbackRegistryFactory();
-    private readonly glue42CoreEventName = "Glue42CoreRuntime";
+    private readonly glue42EventName = "Glue42";
 
-    private readonly events: { [key in string]: { name: string; handle: (glue42coreData: any) => void | Promise<void> } } = {
+    constructor(private readonly config: ParsedConfig) { }
+
+    private readonly events: { [key in string]: { name: string; handle: (glue42Data: any) => void | Promise<void> } } = {
         notifyStarted: { name: "notifyStarted", handle: this.handleNotifyStarted.bind(this) },
-        contentInc: { name: "contentInc", handle: this.handleContentInc.bind(this) }
+        contentInc: { name: "contentInc", handle: this.handleContentInc.bind(this) },
+        requestGlue: { name: "requestGlue", handle: this.handleRequestGlue.bind(this) }
     }
 
     public start(glue: Glue42Web.API): void {
@@ -25,7 +29,7 @@ export class EventsDispatcher {
     }
 
     public sendContentMessage<T>(message: T): void {
-        this.send("contentOut", message);
+        this.send("contentOut", "glue42core", message);
     }
 
     public onContentMessage(callback: (message: any) => void): UnsubscribeFunction {
@@ -33,14 +37,16 @@ export class EventsDispatcher {
     }
 
     private wireCustomEventListener(): void {
-        window.addEventListener(this.glue42CoreEventName, (event) => {
+        window.addEventListener(this.glue42EventName, (event) => {
             const data = (event as CustomEvent).detail;
 
-            if (!data || !data.glue42core) {
+            const namespace = data?.glue42 ?? data?.glue42core;
+            
+            if (!namespace) {
                 return;
             }
 
-            const glue42Event: string = data.glue42core.event;
+            const glue42Event: string = namespace.event;
 
             const foundHandler = this.events[glue42Event];
 
@@ -48,13 +54,22 @@ export class EventsDispatcher {
                 return;
             }
 
-            foundHandler.handle(data.glue42core.message);
+            foundHandler.handle(namespace.message);
 
         });
     }
 
     private announceStarted(): void {
-        this.send("start");
+        this.send("start", "glue42");
+    }
+
+    private handleRequestGlue(): void {
+        if (!this.config.exposeGlue) {
+            this.send("requestGlueResponse", "glue42", { error: "Will not give access to the underlying Glue API, because it was explicitly denied upon initialization." });
+            return;
+        }
+
+        this.send("requestGlueResponse", "glue42", { glue: this.glue });
     }
 
     private handleNotifyStarted(): void {
@@ -65,10 +80,11 @@ export class EventsDispatcher {
         this.registry.execute("content-inc", message);
     }
 
-    private send(eventName: string, message?: any): void {
-        const payload = { glue42core: { event: eventName, message } };
+    private send(eventName: string, namespace: "glue42core" | "glue42", message?: any): void {
+        const payload: Glue42EventPayload = {};
+        payload[namespace] = { event: eventName, message };
 
-        const event = new CustomEvent(this.glue42CoreEventName, { detail: payload });
+        const event = new CustomEvent(this.glue42EventName, { detail: payload });
 
         window.dispatchEvent(event);
     }

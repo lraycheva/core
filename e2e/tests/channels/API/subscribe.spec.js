@@ -452,4 +452,58 @@ describe('subscribe()', () => {
             })
             .catch(done);
     });
+
+    it("Should invoke the callback when there's published data on the current channel", async() => {
+        const channel = gtf.getChannelsConfigDefinitions()[0];
+        const channelName = channel.name;
+
+        await glue.channels.join(channelName);
+
+        const data = { test: 42 };
+
+        await glue.channels.publish(data);
+
+        const subscriptionPromise = new Promise((resolve) => {
+            const unsubscribeFn = glue.channels.subscribe((data, context) => {
+                unsubscribeFn();
+                resolve({ data, context });
+            })
+        })
+
+        const result = await subscriptionPromise;
+
+        const channelData = await glue.channels.get(channelName)
+
+        expect(result.data).to.eql(data);
+        expect(result.context).to.eql({ name: channelName, meta: channelData.meta, data });
+    });
+
+    it("Should invoke the callback with the correct data when there's published data on the current channel", async() => {
+        const channel = gtf.getChannelsConfigDefinitions()[0];
+        const channelName = channel.name;
+
+        await glue.channels.join(channelName);
+
+        const data = { test: 42 };
+
+        const newData = { test: 77 };
+
+        await glue.channels.publish(data);
+
+        await glue.channels.publish(newData);
+
+        const subscriptionPromise = new Promise((resolve) => {
+            const unsubscribeFn = glue.channels.subscribe((data, context) => {
+                unsubscribeFn();
+                resolve({ data, context });
+            })
+        });
+
+        const result = await subscriptionPromise;
+
+        const channelData = await glue.channels.get(channelName);
+
+        expect(result.data).to.eql(newData);
+        expect(result.context).to.eql({ name: channelName, meta: channelData.meta, data: newData});
+    });
 });
