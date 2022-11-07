@@ -1,3 +1,5 @@
+1.11.2
+chore: bump due to dependencies update
 1.11.1
 bugfix: added cleanup logic when closing a window or a workspace to prevent memory leaks
 1.11.0

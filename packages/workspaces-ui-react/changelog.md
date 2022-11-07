@@ -1,3 +1,5 @@
+2.0.4
+chore: bump due to dependencies update
 2.0.3
 improvement: workspaceTabV2 back button style improvements
 2.0.2
