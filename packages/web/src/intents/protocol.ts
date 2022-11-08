@@ -17,3 +17,16 @@ export interface WrappedIntentFilter {
 export interface WrappedIntents {
     intents: Glue42Web.Intents.Intent[];
 }
+
+export interface IntentsResolverResponse {
+    intent: string;
+    handler: Glue42Web.Intents.IntentHandler;
+}
+
+export interface IntentsResolverResponsePromise {
+    intent: string;
+    methodName: string;
+    promise: Promise<IntentsResolverResponse>;
+    resolve: (arg: IntentsResolverResponse) => void;
+    reject: (reason: string) => void;
+}

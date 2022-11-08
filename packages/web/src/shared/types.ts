@@ -46,6 +46,17 @@ export interface SessionWebSettings {
     clientInstanceId: string;
 }
 
+export interface IntentsResolverStartContext {
+    intent: string;
+    callerId: string;
+    methodName: string;
+}
+
+export interface IntentResolverResponse {
+    intent: string;
+    handler: Glue42Web.Intents.IntentHandler;
+}
+
 export interface Glue42EventPayload {
     glue42core?: any;
     glue42?: any;

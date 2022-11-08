@@ -1,0 +1,44 @@
+{
+    "name": "@glue42/intents-resolver-api",
+    "version": "0.0.0",
+    "description": "Glue42 Intents Resolver",
+    "main": "./dist/intents-resolver-api.umd.js",
+    "module": "./dist/intents-resolver-api.es.js",
+    "types": "./intents-resolver.d.ts",
+    "keywords": [
+        "glue",
+        "glue42",
+        "resolver",
+        "desktop",
+        "intents"
+    ],
+    "homepage": "https://glue42.com/",
+    "scripts": {
+        "build": "rollup -c",
+        "test": "echo \"Error: no test specified\" && exit 0",
+        "audit": "echo no audit found",
+        "audit:V1": "node ../../scripts/audit/index.js",
+        "preversion": "npm run build && npm run test && npm run audit",
+        "version": "npm run build"
+    },
+    "author": {
+        "name": "Glue42",
+        "url": "https://glue42.com"
+    },
+    "license": "MIT",
+    "devDependencies": {
+        "@rollup/plugin-commonjs": "^14.0.0",
+        "@rollup/plugin-json": "^4.1.0",
+        "@rollup/plugin-node-resolve": "^8.4.0",
+        "rollup": "^2.22.1",
+        "rollup-plugin-terser": "^7.0.1",
+        "rollup-plugin-typescript2": "^0.27.1",
+        "typescript": "^3.7.3"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "dependencies": {
+        "decoder-validate": "0.0.2"
+    }
+}

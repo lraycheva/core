@@ -5,7 +5,7 @@ import { AppsImportOperation, AppHelloSuccess, ApplicationData, ApplicationStart
 import { AllLayoutsFullConfig, AllLayoutsSummariesResult, GetAllLayoutsConfig, LayoutsImportConfig, LayoutsOperationTypes, OptionalSimpleLayoutResult, RestoreLayoutConfig, SaveLayoutConfig, SaveRequestClientResponse, PlatformSaveRequestConfig, SimpleLayoutConfig, SimpleLayoutResult, PermissionStateResult, SimpleAvailabilityResult } from "../layouts/protocol";
 import { HelloSuccess, OpenWindowConfig, CoreWindowData, WindowHello, WindowOperationTypes, SimpleWindowCommand, WindowTitleConfig, WindowBoundsResult, WindowMoveResizeConfig, WindowUrlResult, FrameWindowBoundsResult } from "../windows/protocol";
 import { IntentsOperationTypes, WrappedIntentFilter, WrappedIntents } from "../intents/protocol";
-import { LibDomains } from "./types";
+import { IntentResolverResponse, LibDomains } from "./types";
 import { NotificationEventPayload, NotificationsOperationTypes, PermissionQueryResult, PermissionRequestResult, RaiseNotification } from "../notifications/protocol";
 
 export const nonEmptyStringDecoder: Decoder<string> = string().where((s) => s.length > 0, "Expected a non-empty string");
@@ -506,6 +506,11 @@ const intentHandlerDecoder: Decoder<Glue42Web.Intents.IntentHandler> = object({
     instanceTitle: optional(string()),
     resultType: optional(string())
 });
+
+export const intentResolverResponseDecoder: Decoder<IntentResolverResponse> = object({
+    intent: nonEmptyStringDecoder,
+    handler: intentHandlerDecoder
+})
 
 const intentDecoder: Decoder<Glue42Web.Intents.Intent> = object({
     name: nonEmptyStringDecoder,

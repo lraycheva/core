@@ -97,6 +97,9 @@ export namespace Glue42Web {
          * A list of glue libraries which will be initiated internally and provide access to specific functionalities
          */
         libraries?: Array<(glue: Glue42Web.API, config?: Glue42Web.Config | Glue42.Config) => Promise<void>>;
+
+        /* Enable and configure Intents Resolver UI */
+        intents?: Glue42Web.Intents.Config;
     }
 
     export interface SystemLogger {
@@ -1194,6 +1197,53 @@ export namespace Glue42Web {
              * @returns Promise that resolves with the found intents that match the provided filtering criteria.
              */
             find(intentFilter?: string | IntentFilter): Promise<Intent[]>;
+
+            /**
+             * An object, through which IntentsResolver API is exposed.
+             */
+            resolver?: Resolver
+        }
+        export interface Config {
+            /**
+             * Whether to use Intents Resolver UI to handle raising an intent. 
+             * The UI provides the user with a list of all available applications and running instances which can handle the raised intent.
+             * Default value: true
+             */
+             enableIntentsResolverUI?: boolean;
+
+             /**
+              * Specify your custom application name for Intents Resolver UI which will open when glue.intents.raise() is invoked.
+              * If not provided, Intents API will use the default Intents Resolver UI application to handle raising an intent with multiple handlers
+              */
+             intentsResolverAppName?: string;
+        }  
+
+        export interface Resolver {
+            /**
+             * Name of the raised intent 
+             */
+            intent: string;
+
+            /**
+             * Notifies when an {@link IntentHandler} of the current intent is added. Replays the already existing handlers. 
+             */
+            onHandlerAdded(callback: (handler: IntentHandler) => void): void;
+
+            /**
+             * Notifies when an {@link IntentHandler} of the current intent is removed.
+             */
+            onHandlerRemoved(callback: (removedHandler: RemovedIntentHandler) => void): void;
+
+            /**
+             * Sends the chosen handler to the application which raised the intent
+             */
+            sendResponse(handler: IntentHandler): Promise<Glue42.Interop.InvocationResult | undefined>;
+        }
+
+        export interface RemovedIntentHandler {
+            type: "app" | "instance";
+            applicationName: string;
+            instanceId?: string;
         }
 
         /** Use to define dynamic intents, that will have the same lifespan as your application instance */

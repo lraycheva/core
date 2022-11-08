@@ -1,0 +1,6 @@
+*
+!dist/**
+!package.json
+!*.md
+!intents-resolver.d.ts
+!license.md

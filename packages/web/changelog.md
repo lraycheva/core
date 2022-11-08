@@ -1,3 +1,5 @@
+2.10.0
+feat: added support for intents resolver
 2.9.0
 feat: added events dispatcher
 fix: channel subscribe now replays current channel data

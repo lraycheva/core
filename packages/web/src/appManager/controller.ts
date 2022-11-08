@@ -112,6 +112,12 @@ export class AppManagerController implements LibController {
         return this.ioc.buildInstance(openResult, app);
     }
 
+    public getApplication(name: string): Glue42Web.AppManager.Application {
+        const verifiedName = nonEmptyStringDecoder.runWithException(name);
+
+        return this.applications.find((app) => app.name === verifiedName) as Glue42Web.AppManager.Application;
+    }
+
     private toApi(): Glue42Web.AppManager.API {
         const api: Glue42Web.AppManager.API = {
             myInstance: this.me as unknown as Glue42Web.AppManager.Instance,
@@ -169,7 +175,6 @@ export class AppManagerController implements LibController {
 
         return this.registry.add("application-changed", callback);
     }
-
 
     private async handleApplicationAddedMessage(appData: BaseApplicationData): Promise<void> {
 
@@ -308,12 +313,6 @@ export class AppManagerController implements LibController {
         const response = await this.bridge.send<void, AppsExportOperation>("appManager", operations.export, undefined, { methodResponseTimeoutMs: this.baseApplicationsTimeoutMS });
 
         return response.definitions;
-    }
-
-    private getApplication(name: string): Glue42Web.AppManager.Application {
-        const verifiedName = nonEmptyStringDecoder.runWithException(name);
-
-        return this.applications.find((app) => app.name === verifiedName) as Glue42Web.AppManager.Application;
     }
 
     private getApplications(): Glue42Web.AppManager.Application[] {
