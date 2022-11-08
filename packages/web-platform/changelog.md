@@ -1,3 +1,5 @@
+1.17.1
+chore: bump due to dependencies update
 1.17.0
 feat: added support for intents result type
 1.16.1
