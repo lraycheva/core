@@ -3,9 +3,9 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
-import GlueWeb from './lib/web.es';
-import GlueIntentsResolver from './lib/intents-resolver-api.es';
-import Glue from './lib/desktop.es';
+import GlueWeb from "@glue42/web";
+import Glue from "@glue42/desktop";
+import GlueIntentsResolver from "@glue42/intents-resolver-api";
 import { GlueProvider } from '@glue42/react-hooks';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
