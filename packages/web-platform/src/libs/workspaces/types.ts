@@ -67,7 +67,8 @@ export type WorkspacesOperationsTypes = "isWindowInWorkspace" |
     "getWorkspaceWindowsOnLayoutSaveContext" |
     "getWorkspacesLayouts" |
     "setMaximizationBoundary" | 
-    "operationCheck";
+    "operationCheck" |
+    "getWorkspaceWindowFrameBounds";
 
 export interface FrameQueryConfig {
     frameId?: string;

@@ -5,7 +5,7 @@ import { AppsImportOperation, AppHelloSuccess, ApplicationData, ApplicationStart
 import { AllLayoutsFullConfig, AllLayoutsSummariesResult, GetAllLayoutsConfig, LayoutsImportConfig, LayoutsOperationTypes, OptionalSimpleLayoutResult, RestoreLayoutConfig, SaveLayoutConfig, SaveRequestClientResponse, PlatformSaveRequestConfig, SimpleLayoutConfig, SimpleLayoutResult, PermissionStateResult, SimpleAvailabilityResult } from "../layouts/protocol";
 import { HelloSuccess, OpenWindowConfig, CoreWindowData, WindowHello, WindowOperationTypes, SimpleWindowCommand, WindowTitleConfig, WindowBoundsResult, WindowMoveResizeConfig, WindowUrlResult, FrameWindowBoundsResult } from "../windows/protocol";
 import { IntentsOperationTypes, WrappedIntentFilter, WrappedIntents } from "../intents/protocol";
-import { IntentResolverResponse, LibDomains } from "./types";
+import { IntentResolverResponse, LibDomains, OperationCheckConfig, OperationCheckResult, SimpleItemIdRequest, WorkspaceFrameBoundsResult } from "./types";
 import { NotificationEventPayload, NotificationsOperationTypes, PermissionQueryResult, PermissionRequestResult, RaiseNotification } from "../notifications/protocol";
 
 export const nonEmptyStringDecoder: Decoder<string> = string().where((s) => s.length > 0, "Expected a non-empty string");
@@ -703,4 +703,20 @@ export const permissionStateResultDecoder: Decoder<PermissionStateResult> = obje
 
 export const simpleAvailabilityResultDecoder: Decoder<SimpleAvailabilityResult> = object({
     isAvailable: boolean()
+});
+
+export const simpleItemIdDecoder: Decoder<SimpleItemIdRequest> = object({
+    itemId: nonEmptyStringDecoder
+});
+
+export const operationCheckResultDecoder: Decoder<OperationCheckResult> = object({
+    isSupported: boolean()
+});
+
+export const operationCheckConfigDecoder: Decoder<OperationCheckConfig> = object({
+    operation: nonEmptyStringDecoder
+});
+
+export const workspaceFrameBoundsResultDecoder: Decoder<WorkspaceFrameBoundsResult> = object({
+    bounds: windowBoundsDecoder
 });

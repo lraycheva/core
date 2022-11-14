@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Glue42Core } from "@glue42/core";
 import { IoC } from "../shared/ioc";
-import { IntentResolverResponse as IntentsResolverResponse, IntentsResolverStartContext, LibController } from "../shared/types";
+import { IntentResolverResponse as IntentsResolverResponse, IntentsResolverStartContext, LibController, LibDomains, OperationCheckConfig, OperationCheckResult, SimpleItemIdRequest, WorkspaceFrameBoundsResult } from "../shared/types";
 import { Glue42Web } from "../../web";
 import { GlueBridge } from "../communication/bridge";
 import { UnsubscribeFunction } from "callback-registry";
@@ -11,6 +11,7 @@ import { AppManagerController } from '../appManager/controller';
 import shortid from 'shortid';
 import { WindowsController } from '../windows/controller';
 import { GLUE42_FDC3_INTENTS_METHOD_PREFIX, INTENTS_RESOLVER_APP_NAME, INTENTS_RESOLVER_HEIGHT, INTENTS_RESOLVER_INTEROP_PREFIX, INTENTS_RESOLVER_WIDTH } from './constants';
+import { systemOperations } from "../shared/systemOperations";
 
 export class IntentsController implements LibController {
     private bridge!: GlueBridge;
@@ -23,7 +24,7 @@ export class IntentsController implements LibController {
     private intentsResolverAppName!: string;
 
     private windowsManager!: WindowsController;
-    private intentsResolverResponsePromises: { [ instanceId: string ]: IntentsResolverResponsePromise } = {};
+    private intentsResolverResponsePromises: { [instanceId: string]: IntentsResolverResponsePromise } = {};
 
     public async start(coreGlue: Glue42Core.GlueCore, ioc: IoC): Promise<void> {
         this.logger = coreGlue.logger.subLogger("intents.controller.web");
@@ -304,7 +305,7 @@ export class IntentsController implements LibController {
     }
 
     private async composeStartOptions(): Promise<Glue42Web.AppManager.ApplicationStartOptions> {
-        const bounds = await this.windowsManager.my().getBounds();
+        const bounds = await this.getTargetBounds();
 
         return {
             top: (bounds.height - INTENTS_RESOLVER_HEIGHT) / 2 + bounds.top,
@@ -312,6 +313,45 @@ export class IntentsController implements LibController {
             width: INTENTS_RESOLVER_WIDTH,
             height: INTENTS_RESOLVER_HEIGHT
         };
+    }
+
+    private async getTargetBounds(): Promise<Glue42Web.Windows.Bounds> {
+        let bounds: Glue42Web.Windows.Bounds;
+
+        try {
+            bounds = await this.windowsManager.my().getBounds();
+
+            this.logger.trace(`Opening the resolver UI relative to my window bounds: ${JSON.stringify(bounds)}`);
+
+            return bounds;
+        } catch (error) {
+            this.logger.trace(`Failure to get my window bounds: ${JSON.stringify(error)}`);
+        }
+
+        try {
+            await this.bridge.send<OperationCheckConfig, OperationCheckResult>("workspaces" as LibDomains, systemOperations.operationCheck, { operation: "getWorkspaceWindowFrameBounds" });
+
+            const bridgeResponse = await this.bridge.send<SimpleItemIdRequest, WorkspaceFrameBoundsResult>("workspaces" as LibDomains, systemOperations.getWorkspaceWindowFrameBounds, { itemId: this.windowsManager.my().id });
+
+            bounds = bridgeResponse.bounds;
+
+            this.logger.trace(`Opening the resolver UI relative to my workspace frame window bounds: ${JSON.stringify(bounds)}`);
+
+            return bounds;
+        } catch (error) {
+            this.logger.trace(`Failure to get my workspace frame window bounds: ${JSON.stringify(error)}`);
+        }
+
+        bounds = {
+            top: (window as any).screen.availTop || 0,
+            left: (window as any).screen.availLeft || 0,
+            width: window.screen.width,
+            height: window.screen.height
+        };
+
+        this.logger.trace(`Opening the resolver UI relative to my screen bounds: ${JSON.stringify(bounds)}`);
+
+        return bounds;
     }
 
     private subscribeOnInstanceStopped(instance: Glue42Web.AppManager.Instance): void {

@@ -7,6 +7,7 @@ import GlueWeb from "@glue42/web";
 import Glue from "@glue42/desktop";
 import GlueIntentsResolver from "@glue42/intents-resolver-api";
 import { GlueProvider } from '@glue42/react-hooks';
+import "@glue42/theme";
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

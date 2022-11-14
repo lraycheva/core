@@ -61,3 +61,19 @@ export interface Glue42EventPayload {
     glue42core?: any;
     glue42?: any;
 }
+
+export interface SimpleItemIdRequest {
+    itemId: string;
+}
+
+export interface WorkspaceFrameBoundsResult {
+    bounds: Glue42Web.Windows.Bounds;
+}
+
+export interface OperationCheckResult {
+    isSupported: boolean;
+}
+
+export interface OperationCheckConfig {
+    operation: string;
+}
