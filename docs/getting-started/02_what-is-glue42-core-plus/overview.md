@@ -1,6 +1,6 @@
 ## Overview
 
-[**Glue42 Core+**](https://glue42.com/core-plus/) is a Plugin for [**Glue42 Core**](https://glue42.com/core/) and offers an extensive set of additional features available under a paid license, thus bridging the gap between [**Glue42 Core**](https://glue42.com/core/) and [**Glue42 Enterprise**](https://glue42.com/enterprise/).
+[**Glue42 Core+**](https://glue42.com/core-plus/) is available as a standalone NPM package - [`@glue42/core-plus`](https://www.npmjs.com/package/@glue42/core-plus), and offers an extensive set of additional features available under a paid license, thus bridging the gap between [**Glue42 Core**](https://glue42.com/core/) and [**Glue42 Enterprise**](https://glue42.com/enterprise/).
 
 The following diagram shows the features offered by [**Glue42 Core**](https://glue42.com/core/) and [**Glue42 Core+**](https://glue42.com/core-plus/):
 
@@ -15,7 +15,7 @@ In a licensed [**Glue42 Core+**](https://glue42.com/core-plus/) project, you can
 - [Layouts](../../capabilities/windows/layouts/setup/index.html) to save and restore multi-monitor app arrangements;
 - Metrics to track performance;
 - Connectors to integrate your web apps with Bloomberg, Fidessa, Excel, Outlook and more;
-- an installable Browser Extension which replaces the need for a [Main app](../../developers/core-concepts/web-platform/overview/index.html) and provides many other handy features for your web project;
+- an installable Browser Extension which replaces the need for a [Main app](../../developers/core-plus-platform/index.html) and provides many other handy features for your web project;
 - automatic [FDC3](https://fdc3.finos.org/) implementation injection;
 - Glue42 Developer Tools (Interop Viewer, Context Viewer) for tracking the behavior of [Interop methods and streams](../../capabilities/data-sharing-between-apps/interop/index.html) and [shared contexts](../../capabilities/data-sharing-between-apps/shared-contexts/index.html).
 
@@ -23,9 +23,9 @@ In a licensed [**Glue42 Core+**](https://glue42.com/core-plus/) project, you can
 
 ## Licensing
 
-The [`@glue42/core-plus`](https://www.npmjs.com/package/@glue42/core-plus) Plugin is free to download from the public NPM registry, but it requires a valid license key to operate. To purchase a license or request a trial one, [contact us](https://glue42.com/contacts/) at `info@glue42.com`.
+The [`@glue42/core-plus`](https://www.npmjs.com/package/@glue42/core-plus) library is free to download from the public NPM registry, but it requires a valid license key to operate. To purchase a license or request a trial one, [contact us](https://glue42.com/contacts/) at `info@glue42.com`.
 
-*For more details on how to enable the [**Glue42 Core+**](https://glue42.com/core-plus/) Plugin if you already have a valid license key, see the [Developers > Glue42 Core+ Plugin](../../developers/core-plus-plugin/index.html) section.*
+*For more details on how to use the [**Glue42 Core+**](https://glue42.com/core-plus/) platform if you already have a valid license key, see the [Developers > Glue42 Core+ Platform](../../developers/core-plus-platform/index.html) section.*
 
 ## Features
 
@@ -41,7 +41,7 @@ The Glue42 Metrics in a [**Glue42 Core+**](https://glue42.com/core-plus/) projec
 
 ### Browser Extension
 
-The Browser Extension is an installable extension that provides an out-of-the-box setup for the [**Glue42 Core+**](https://glue42.com/core-plus/) environment, replacing the need for a [Main app](../../developers/core-concepts/web-platform/overview/index.html) in your project. The extension provides the connection between the [Web Client](../../developers/core-concepts/web-client/overview/index.html) apps, supports connecting to app and Layout stores, can inject the [Glue42 Web](../../reference/core/latest/glue42%20web/index.html) library and an [FDC3](https://fdc3.finos.org/) implementation for your apps to use, has a fully configured [Workspaces App](../../capabilities/windows/workspaces/workspaces-app/index.html) and a [Notifications](../../capabilities/notifications/setup/index.html) library. It also contains the Glue42 Interop Viewer and Context Viewer developer tools and an optional widget that can be used in [Web Client](../../developers/core-concepts/web-client/overview/index.html) apps to show the Glue42 connection status and a Channel Selector.
+The Browser Extension is an installable extension that provides an out-of-the-box setup for the [**Glue42 Core+**](https://glue42.com/core-plus/) environment, replacing the need for a [Main app](../../developers/core-plus-platform/index.html) in your project. The extension provides the connection between the [Web Client](../../developers/core-concepts/web-client/overview/index.html) apps, supports connecting to app and Layout stores, can inject the [Glue42 Web](../../reference/core/latest/glue42%20web/index.html) library and an [FDC3](https://fdc3.finos.org/) implementation for your apps to use, has a fully configured [Workspaces App](../../capabilities/windows/workspaces/workspaces-app/index.html) and a [Notifications](../../capabilities/notifications/setup/index.html) library. It also contains the Glue42 Interop Viewer and Context Viewer developer tools and an optional widget that can be used in [Web Client](../../developers/core-concepts/web-client/overview/index.html) apps to show the Glue42 connection status and a Channel Selector.
 
 ### Connectors
 
@@ -73,7 +73,7 @@ Customer support is included under a paid license for [**Glue42 Core+**](https:/
 
 ## High Level Structure
 
-The basic structure of a [**Glue42 Core+**](https://glue42.com/core-plus/) project is identical to a [**Glue42 Core**](https://glue42.com/core/) project. It consists of a [Main app](../../developers/core-concepts/web-platform/overview/index.html) which uses the Glue42 [Web Platform](https://www.npmjs.com/package/@glue42/web-platform) library and multiple [Web Client](../../developers/core-concepts/web-client/overview/index.html) apps that use the [Glue42 Web](../../reference/core/latest/glue42%20web/index.html) library. The Main app acts as a hub through which the user can access all other apps part of the [**Glue42 Core+**](https://glue42.com/core-plus/) project while the [Web Platform](https://www.npmjs.com/package/@glue42/web-platform) library provides the communication connection between all client apps. The [Glue42 Web](../../reference/core/latest/glue42%20web/index.html) library provides Glue42 functionality to the client apps through sets of Glue42 APIs.
+The basic structure of a [**Glue42 Core+**](https://glue42.com/core-plus/) project is identical to a [**Glue42 Core**](https://glue42.com/core/) project. It consists of a [Main app](../../developers/core-plus-platform/index.html) which uses the [Glue42 Core+ Platform](../../developers/core-plus-platform/index.html) library and multiple [Web Client](../../developers/core-concepts/web-client/overview/index.html) apps that use the [Glue42 Web](../../reference/core/latest/glue42%20web/index.html) library. The Main app acts as a hub through which the user can access all other apps part of the [**Glue42 Core+**](https://glue42.com/core-plus/) project while the [`@glue42/core-plus`](https://www.npmjs.com/package/@glue42/core-plus) library provides the communication connection between all client apps. The [Glue42 Web](../../reference/core/latest/glue42%20web/index.html) library provides Glue42 functionality to the client apps through sets of Glue42 APIs.
 
 *For more details, see the [Capabilities](../../capabilities/application-management/index.html) section.*
 
@@ -81,8 +81,7 @@ The basic structure of a [**Glue42 Core+**](https://glue42.com/core-plus/) proje
 
 All [requirements](../what-is-glue42-core/index.html#requirements) for a [**Glue42 Core**](https://glue42.com/core/) project are also valid for [**Glue42 Core+**](https://glue42.com/core-plus/).
 
-The [`@glue42/core-plus`](https://www.npmjs.com/package/@glue42/core-plus) Plugin also requires:
+Additionally, in order to be able to participate in [Global Layouts](../../capabilities/windows/layouts/setup/index.html), the [Web Client](../../developers/core-concepts/web-client/overview/index.html) apps must use:
 
-- [`@glue42/web-platform`](https://www.npmjs.com/package/@glue42/web-platform) version 1.14.1 or later;
 - [`@glue42/web`](https://www.npmjs.com/package/@glue42/web) version 2.8.1 or later;
 - [`@glue42/workspaces-api`](https://www.npmjs.com/package/@glue42/workspaces-api) version 1.16.4 or later;

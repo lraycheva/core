@@ -4,9 +4,9 @@ This guide will show you how to initialize the [Glue42 Web](../../../../referenc
 
 ## Referencing Glue42 Web
 
-Install the [`@glue42/web`](https://www.npmjs.com/package/@glue42/web) package from `npm` and reference the library file directly, or reference the Glue42 Web library in your web apps with a link to `UNPKG`.
+Install the [`@glue42/web`](https://www.npmjs.com/package/@glue42/web) package from NPM and reference the library file directly, or reference the Glue42 Web library in your web apps with a link to UNPKG.
 
-- From `npm`:
+- From NPM:
 
 Install the `@glue42/web` package in the root directory of your project:
 
@@ -20,7 +20,7 @@ Reference the library in your web app:
 <script src="./node_modules/@glue42/web/dist/web.umd.js">
 ```
 
-- From `UNPKG`:
+- From UNPKG:
 
 Reference the library in your web app:
 

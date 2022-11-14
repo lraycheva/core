@@ -15,7 +15,7 @@ The [**Glue42 Core+**](https://glue42.com/core-plus/) Layouts library supports d
 
 This type of Layout can contain floating windows, apps and [Workspaces](../../workspaces/overview/index.html). A Global Layout describes the bounds and context of all components participating in it.
 
-*Note that the [Main app](../../../../developers/core-concepts/web-platform/overview/index.html) isn't saved in a Global Layout, as it's assumed that the Main app is the entry point of a [**Glue42 Core+**](https://glue42.com/core-plus/) project from where all Global Layouts are to be handled.*
+*Note that the [Main app](../../../../developers/core-plus-platform/index.html) isn't saved in a Global Layout, as it's assumed that the Main app is the entry point of a [**Glue42 Core+**](https://glue42.com/core-plus/) project from where all Global Layouts are to be handled.*
 
 - **Workspace**
 
@@ -23,35 +23,25 @@ The Layout of a [Workspace](../../workspaces/overview/index.html#workspaces_conc
 
 ## Enabling Layouts
 
-*Note that this feature is available only under a paid license for [**Glue42 Core+**](https://glue42.com/core-plus/). For information on purchasing the [**Glue42 Core+**](https://glue42.com/core-plus/) Plugin  or requesting a trial license, [contact us](https://glue42.com/contacts/) at `info@glue42.com`. For more details on how to enable the [**Glue42 Core+**](https://glue42.com/core-plus/) Plugin, see the [Developers > Glue42 Core+ Plugin](../../../../developers/core-plus-plugin/index.html) section.*
+*Note that this feature is available only under a paid license for [**Glue42 Core+**](https://glue42.com/core-plus/). For information on purchasing the [**Glue42 Core+**](https://glue42.com/core-plus/) platform  or requesting a trial license, [contact us](https://glue42.com/contacts/) at `info@glue42.com`. For more details on how to enable the [**Glue42 Core+**](https://glue42.com/core-plus/) platform, see the [Developers > Glue42 Core+ Platform](../../../../developers/core-plus-platform/index.html) section.*
 
 Most of the [Layouts API](../../../../reference/core/latest/layouts/index.html) is available as part of the standard free [**Glue42 Core**](https://glue42.com/core/) APIs - users are able to import, export and listen for Layout events. However, saving and restoring Global Layouts is exclusive to [**Glue42 Core+**](https://glue42.com/core-plus/).
 
-The Global Layouts functionality is available by default when you enable the [`@glue42/core-plus`](https://www.npmjs.com/package/@glue42/core-plus) Plugin in your [Main app](../../../../developers/core-concepts/web-platform/overview/index.html). Use the `layouts` property of the `config` object in the [`@glue42/core-plus`](https://www.npmjs.com/package/@glue42/core-plus) Plugin configuration to set the behavior of the Global Layouts:
+The Global Layouts functionality is available by default when you activate the [`@glue42/core-plus`](https://www.npmjs.com/package/@glue42/core-plus) package in your [Main app](../../../../developers/core-plus-platform/index.html). Use the `layouts` property of the configuration object for the [`@glue42/core-plus`](https://www.npmjs.com/package/@glue42/core-plus) library to enable or disable Global Layouts:
 
 ```javascript
-import GlueWebPlatform from "@glue42/web-platform";
-import GlueWorkspaces from "@glue42/workspaces-api";
 import Glue42CorePlus from "@glue42/core-plus";
+import GlueWorkspaces from "@glue42/workspaces-api";
 
 const config = {
+    licenseKey: "my-license-key",
     glue: { libraries: [GlueWorkspaces] },
     workspaces: { src: "http://localhost:3000" },
-    corePlus: {
-        start: Glue42CorePlus,
-        config: {
-            licenseKey: "my-license-key",
-            // Global Layouts configuration.
-            layouts: {
-                enabled: true,
-                critical: true
-            }
-        },
-        critical: true
-    }
+    // Global Layouts configuration.
+    layouts: { enabled: true }
 };
 
-const { glue } = await GlueWebPlatform(config);
+const { glue } = await Glue42CorePlus(config);
 ```
 
 The `layouts` object has the following properties:
@@ -59,11 +49,8 @@ The `layouts` object has the following properties:
 | Property | Type | Description |
 |----------|------|-------------|
 | `enabled` | `boolean` | If `true` (default), saving and restoring Global Layouts will be enabled. |
-| `critical` | `boolean` | If `true`, the [`@glue42/core-plus`](https://www.npmjs.com/package/@glue42/core-plus) Plugin will wait for this module to be fully operational before completing its initialization. Defaults to `false`. |
 
 Enabling the [Workspaces API](https://www.npmjs.com/package/@glue42/workspaces-api) isn't strictly required in order to use Global Layouts, but it's highly recommended, because you can never be completely sure what type of Layout your system will need to restore. If the Global Layout you want to restore describes one or more components which are [Workspace Layouts](../../workspaces/overview/index.html#workspaces_concepts-workspace_layout), then a missing [Workspaces configuration](../../workspaces/enabling-workspaces/index.html) will result in errors.
-
-When enabling Global Layouts, it's recommended to set the optional `critical` property of the `layouts` object to `true`, and also set the optional `critical` property of the `corePlus` object to `true`. This isn't a mandatory requirement, but highly recommended if the Global Layouts functionality is essential to your system. This will ensure that the [Web Platform](https://www.npmjs.com/package/@glue42/web-platform) library will wait for Global Layouts to be fully operational before completing its initialization, and that any initialization errors or incompatibilities will be immediately visible upon connection, instead of at an unknown moment at runtime.
 
 ## Compatibility with Glue42 Enterprise
 
@@ -91,7 +78,7 @@ The [Multi-Screen Window Placement API](https://www.w3.org/TR/window-placement/)
 
 ### Outdated Glue42 Libraries
 
-Projects containing a [Main app](../../../../developers/core-concepts/web-platform/overview/index.html) with [Web Platform](https://www.npmjs.com/package/@glue42/web-platform) library version older than 1.13.0 and [Web Clients](../../../../developers/core-concepts/web-client/overview/index.html) with [Glue42 Web](https://www.npmjs.com/package/@glue42/web) library version older than 2.7.0 will be able to use and participate in Global Layouts, but the Web Clients won't be able to pass context to be saved with the [`onSaveRequested()`](../../../../reference/core/latest/layouts/index.html#API-onSaveRequested) method, because this functionality isn't available in the older library versions.
+Projects containing [Web Clients](../../../../developers/core-concepts/web-client/overview/index.html) with [Glue42 Web](https://www.npmjs.com/package/@glue42/web) library version older than 2.7.0 will be able to use and participate in Global Layouts, but the Web Clients won't be able to pass context to be saved with the [`onSaveRequested()`](../../../../reference/core/latest/layouts/index.html#API-onSaveRequested) method, because this functionality isn't available in the older library versions.
 
 [Workspaces Apps](../../workspaces/workspaces-app/index.html) using a [`@glue42/workspaces-ui-react`](https://www.npmjs.com/package/@glue42/workspaces-ui-react) library version older that 1.10.0 won't be able to participate in Global Layouts.
 

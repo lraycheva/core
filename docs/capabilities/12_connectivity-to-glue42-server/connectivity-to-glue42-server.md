@@ -10,7 +10,7 @@ It also includes an Admin UI that helps managing the data stored in the Glue42 S
 
 *For more details about the Glue42 Server, see the [Glue42 Server](https://docs.glue42.com/glue42-concepts/glue42-server/index.html) section of the [**Glue42 Enterprise**](https://glue42.com/enterprise/) documentation.*
 
-Currently, the [`@glue42/core-plus`](https://www.npmjs.com/package/@glue42/core-plus) Plugin allows:
+Currently, the [`@glue42/core-plus`](https://www.npmjs.com/package/@glue42/core-plus) library allows:
 
 - opening a session and authenticating with a Glue42 Server - both basic and token-based authentication mechanisms are supported. You can also provide custom headers to be included in every request;
 
@@ -18,38 +18,32 @@ Currently, the [`@glue42/core-plus`](https://www.npmjs.com/package/@glue42/core-
 
 ## Setup
 
-*Note that this feature is available only under a paid license for [**Glue42 Core+**](https://glue42.com/core-plus/). For information on purchasing the [**Glue42 Core+**](https://glue42.com/core-plus/) Plugin or requesting a trial license, [contact us](https://glue42.com/contacts/) at `info@glue42.com`. For more details on how to enable the [**Glue42 Core+**](https://glue42.com/core-plus/) Plugin, see the [Developers > Glue42 Core+ Plugin](../../developers/core-plus-plugin/index.html) section.*
+*Note that this feature is available only under a paid license for [**Glue42 Core+**](https://glue42.com/core-plus/). For information on purchasing the [**Glue42 Core+**](https://glue42.com/core-plus/) platform or requesting a trial license, [contact us](https://glue42.com/contacts/) at `info@glue42.com`. For more details on how to enable the [**Glue42 Core+**](https://glue42.com/core-plus/) platform, see the [Developers > Glue42 Core+ Platform](../../developers/core-plus-platform/index.html) section.*
 
-Use the `server` property of the `config` object in the [`@glue42/core-plus`](https://www.npmjs.com/package/@glue42/core-plus) Plugin configuration to specify settings for the connection to the Glue42 Server. The following example demonstrates configuring the connection to a Glue42 Server using basic authentication:
+Use the `server` property of the configuration object for the [`@glue42/core-plus`](https://www.npmjs.com/package/@glue42/core-plus) library to specify settings for the connection to the Glue42 Server. The following example demonstrates configuring the connection to a Glue42 Server using basic authentication:
 
 ```javascript
-import GlueWebPlatform from "@glue42/web-platform";
 import Glue42CorePlus from "@glue42/core-plus";
 
 const config = {
-    corePlus: {
-        start: Glue42CorePlus,
-        config: {
-            licenseKey: "my-license-key",
-            server: {
-                // URL pointing to a Glue42 Server.
-                url: "https://server-demos.glue42.com:4081/api",
-                // Basic authentication.
-                auth: {
-                    basic: {
-                        username: "username",
-                        password: "password"
-                    }
-                },
-                fetchIntervalMS: 10000,
-                tokenRefreshIntervalMS: 15000,
-                critical: true
+    licenseKey: "my-license-key",
+    server: {
+        // URL pointing to a Glue42 Server.
+        url: "https://server-demos.glue42.com:4081/api",
+        // Basic authentication.
+        auth: {
+            basic: {
+                username: "username",
+                password: "password"
             }
-        }
+        },
+        fetchIntervalMS: 10000,
+        tokenRefreshIntervalMS: 15000,
+        critical: true
     }
 };
 
-const { glue } = await GlueWebPlatform(config);
+const { glue } = await Glue42CorePlus(config);
 ```
 
 The `server` object has the following properties:
@@ -61,7 +55,7 @@ The `server` object has the following properties:
 | `headers` | `object` | Object containing key/value pairs of headers to be sent with every request.  |
 | `fetchIntervalMS` | `number` | Interval in milliseconds at which a new snapshot of app definitions and Layouts will be fetched from the Glue42 Server. Defaults to 60000. |
 | `tokenRefreshIntervalMS` | `number` | Interval in milliseconds at which the session token will be refreshed. Defaults to 3600000. |
-| `critical` | `boolean` | If `true`, the [`@glue42/core-plus`](https://www.npmjs.com/package/@glue42/core-plus) Plugin will wait for this module to be fully operational before completing its initialization. Defaults to `false`. |
+| `critical` | `boolean` | If `true`, the [`@glue42/core-plus`](https://www.npmjs.com/package/@glue42/core-plus) library will wait for this module to be fully operational before completing its initialization. Defaults to `false`. |
 
 The `auth` object has the following properties:
 
