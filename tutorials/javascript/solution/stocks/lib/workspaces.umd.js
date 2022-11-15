@@ -4194,6 +4194,11 @@
             };
             return this.layouts.onRemoved(wrappedCallback);
         }
+        importLayouts(layouts, mode) {
+            return __awaiter(this, void 0, void 0, function* () {
+                yield this.layouts.import(layouts, mode);
+            });
+        }
         transformStreamPayloadToWorkspace(payload) {
             return __awaiter(this, void 0, void 0, function* () {
                 const frameConfig = {
@@ -4652,9 +4657,9 @@
                 return yield this.bridge.send(OPERATIONS.saveLayout.name, config);
             });
         }
-        importLayout(layouts, mode) {
+        importLayouts(layouts, mode) {
             return __awaiter(this, void 0, void 0, function* () {
-                yield Promise.all(layouts.map((layout) => this.bridge.send(OPERATIONS.importLayout.name, { layout, mode })));
+                yield this.base.importLayouts(layouts, mode);
             });
         }
         handleOnSaved(callback) {
@@ -5090,7 +5095,7 @@
         }
     }
 
-    var version = "1.17.1";
+    var version = "1.17.2";
 
     const composeAPI = (glue, ioc) => {
         const controller = ioc.controller;
@@ -5189,7 +5194,7 @@
                     throw new Error(`The provided layouts argument is not an array: ${JSON.stringify(layouts)}`);
                 }
                 layouts.forEach((layout) => workspaceLayoutDecoder.runWithException(layout));
-                return controller.importLayout(layouts, mode);
+                return controller.importLayouts(layouts, mode);
             }),
             save: (config) => __awaiter(void 0, void 0, void 0, function* () {
                 const verifiedConfig = workspaceLayoutSaveConfigDecoder.runWithException(config);

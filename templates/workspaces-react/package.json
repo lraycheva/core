@@ -4,9 +4,9 @@
   "private": true,
   "homepage": "./",
   "dependencies": {
-    "@glue42/react-hooks": "^2.8.3",
-    "@glue42/workspaces-api": "^1.17.1",
-    "@glue42/workspaces-ui-react": "^2.0.2",
+    "@glue42/react-hooks": "^2.10.0",
+    "@glue42/workspaces-api": "^1.17.2",
+    "@glue42/workspaces-ui-react": "^2.0.5",
     "react": "^17.0.1",
     "react-dom": "^17.0.1"
   },

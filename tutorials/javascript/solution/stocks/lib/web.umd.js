@@ -44,7 +44,8 @@
     const defaultConfig = {
         logger: "info",
         gateway: { webPlatform: {} },
-        libraries: []
+        libraries: [],
+        exposeGlue: true
     };
     const parseConfig = (config) => {
         var _a, _b, _c, _d;
@@ -1201,7 +1202,12 @@
         displayName: optional(string()),
         contextTypes: optional(array(nonEmptyStringDecoder)),
         instanceId: optional(string()),
-        instanceTitle: optional(string())
+        instanceTitle: optional(string()),
+        resultType: optional(string())
+    });
+    const intentResolverResponseDecoder = object({
+        intent: nonEmptyStringDecoder,
+        handler: intentHandlerDecoder
     });
     const intentDecoder = object({
         name: nonEmptyStringDecoder,
@@ -1221,7 +1227,8 @@
     });
     const intentFilterDecoder = object({
         name: optional(nonEmptyStringDecoder),
-        contextType: optional(nonEmptyStringDecoder)
+        contextType: optional(nonEmptyStringDecoder),
+        resultType: optional(nonEmptyStringDecoder)
     });
     const findFilterDecoder = oneOf(nonEmptyStringDecoder, intentFilterDecoder);
     const wrappedIntentFilterDecoder = object({
@@ -1244,19 +1251,13 @@
         contextTypes: optional(array(nonEmptyStringDecoder)),
         displayName: optional(string()),
         icon: optional(string()),
-        description: optional(string())
+        description: optional(string()),
+        resultType: optional(string())
     });
     const addIntentListenerIntentDecoder = oneOf(nonEmptyStringDecoder, addIntentListenerRequestDecoder);
     const channelNameDecoder = (channelNames) => {
         return nonEmptyStringDecoder.where(s => channelNames.includes(s), "Expected a valid channel name");
     };
-    const channelContextDecoder = object({
-        name: nonEmptyStringDecoder,
-        meta: object({
-            color: nonEmptyStringDecoder
-        }),
-        data: optional(anyJson()),
-    });
     const interopActionSettingsDecoder = object({
         method: nonEmptyStringDecoder,
         arguments: optional(anyJson()),
@@ -1302,6 +1303,13 @@
         timestamp: optional(nonNegativeNumberDecoder),
         vibrate: optional(array(number()))
     });
+    const channelContextDecoder = object({
+        name: nonEmptyStringDecoder,
+        meta: object({
+            color: nonEmptyStringDecoder
+        }),
+        data: optional(object()),
+    });
     const raiseNotificationDecoder = object({
         settings: glue42NotificationOptionsDecoder,
         id: nonEmptyStringDecoder
@@ -1330,6 +1338,18 @@
     });
     const simpleAvailabilityResultDecoder = object({
         isAvailable: boolean()
+    });
+    const simpleItemIdDecoder = object({
+        itemId: nonEmptyStringDecoder
+    });
+    const operationCheckResultDecoder = object({
+        isSupported: boolean()
+    });
+    const operationCheckConfigDecoder = object({
+        operation: nonEmptyStringDecoder
+    });
+    const workspaceFrameBoundsResultDecoder = object({
+        bounds: windowBoundsDecoder
     });
 
     const operations = {
@@ -2078,6 +2098,10 @@
                 return this.ioc.buildInstance(openResult, app);
             });
         }
+        getApplication(name) {
+            const verifiedName = nonEmptyStringDecoder.runWithException(name);
+            return this.applications.find((app) => app.name === verifiedName);
+        }
         toApi() {
             const api = {
                 myInstance: this.me,
@@ -2241,10 +2265,6 @@
                 const response = yield this.bridge.send("appManager", operations$1.export, undefined, { methodResponseTimeoutMs: this.baseApplicationsTimeoutMS });
                 return response.definitions;
             });
-        }
-        getApplication(name) {
-            const verifiedName = nonEmptyStringDecoder.runWithException(name);
-            return this.applications.find((app) => app.name === verifiedName);
         }
         getApplications() {
             return this.applications.slice();
@@ -2455,6 +2475,9 @@
                 importModeDecoder.runWithException(mode);
                 if (!Array.isArray(layouts)) {
                     throw new Error("Import must be called with an array of layouts");
+                }
+                if (layouts.length > 1000) {
+                    throw new Error("Cannot import more than 1000 layouts at once in Glue42 Core.");
                 }
                 const parseResult = layouts.reduce((soFar, layout) => {
                     const decodeResult = glueLayoutDecoder.run(layout);
@@ -3028,10 +3051,22 @@
         raiseIntent: { name: "raiseIntent", dataDecoder: intentRequestDecoder, resultDecoder: intentResultDecoder }
     };
 
+    const GLUE42_FDC3_INTENTS_METHOD_PREFIX = "Tick42.FDC3.Intents.";
+    const INTENTS_RESOLVER_INTEROP_PREFIX = "T42.Intents.Resolver.Control";
+    const INTENTS_RESOLVER_WIDTH = 400;
+    const INTENTS_RESOLVER_HEIGHT = 440;
+    const INTENTS_RESOLVER_APP_NAME = "intentsResolver";
+
+    const systemOperations = {
+        operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder, resultDecoder: operationCheckResultDecoder },
+        getWorkspaceWindowFrameBounds: { name: "getWorkspaceWindowFrameBounds", resultDecoder: workspaceFrameBoundsResultDecoder, dataDecoder: simpleItemIdDecoder }
+    };
+
     class IntentsController {
         constructor() {
             this.myIntents = new Set();
-            this.GlueWebIntentsPrefix = "Tick42.FDC3.Intents.";
+            this.useIntentsResolverUI = true;
+            this.intentsResolverResponsePromises = {};
         }
         start(coreGlue, ioc) {
             return __awaiter(this, void 0, void 0, function* () {
@@ -3039,6 +3074,9 @@
                 this.logger.trace("starting the web intents controller");
                 this.bridge = ioc.bridge;
                 this.interop = coreGlue.interop;
+                this.appManager = ioc.appManagerController;
+                this.windowsManager = ioc.windowsController;
+                this.checkIfIntentsResolverIsEnabled(ioc.config);
                 const api = this.toApi();
                 this.logger.trace("no need for platform registration, attaching the intents property to glue and returning");
                 coreGlue.intents = api;
@@ -3065,21 +3103,48 @@
                 addIntentListener: this.addIntentListener.bind(this),
                 find: this.find.bind(this)
             };
-            return Object.freeze(api);
+            return api;
         }
         raise(request) {
             return __awaiter(this, void 0, void 0, function* () {
-                const requestObj = raiseRequestDecoder.runWithException(request);
-                let data;
-                if (typeof requestObj === "string") {
-                    data = {
-                        intent: requestObj
-                    };
+                let intentDecoder = raiseRequestDecoder.runWithException(request);
+                const intent = typeof intentDecoder === "string"
+                    ? { intent: intentDecoder }
+                    : intentDecoder;
+                if (intent.target) {
+                    this.logger.trace(`Intents Resolver won't be used. Target is provided in Intent Request - ${JSON.stringify(intent)}`);
+                    return this.raiseIntent(intent);
                 }
-                else {
-                    data = requestObj;
+                if (!this.useIntentsResolverUI) {
+                    this.logger.trace(`Intent Resolver is disabled. Raising intent to first found handler`);
+                    return this.raiseIntent(intent);
                 }
-                const result = yield this.bridge.send("intents", operations$4.raiseIntent, data);
+                const intentsResolverApp = this.appManager.getApplication(this.intentsResolverAppName);
+                if (!intentsResolverApp) {
+                    this.logger.trace(`Intent Resolver Application with name ${this.intentsResolverAppName} not found. Intents Resolver won't be used for handling raised intents`);
+                    return this.raiseIntent(intent);
+                }
+                const hasOneHandler = (yield this.find(intent.intent))[0].handlers.length === 1;
+                if (hasOneHandler) {
+                    this.logger.trace(`Intents Resolver won't be used - intent has only one handler.`);
+                    return this.raiseIntent(intent);
+                }
+                const registeredMethod = yield this.registerIntentResolverMethod();
+                this.logger.trace(`Registered interop method ${registeredMethod}`);
+                const resolverInstance = yield this.openIntentResolverApplication(intent, registeredMethod);
+                const { handler } = yield this.intentsResolverResponsePromises[resolverInstance.id].promise;
+                this.stopIntensResolverInstance(resolverInstance.id);
+                const target = handler.type === "app"
+                    ? { app: handler.applicationName }
+                    : { instance: handler.instanceId };
+                this.logger.trace(`Intent handler chosen by the user: ${JSON.stringify(target)}`);
+                const data = Object.assign(Object.assign({}, intent), { target });
+                return this.raiseIntent(data);
+            });
+        }
+        raiseIntent(requestObj) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const result = this.bridge.send("intents", operations$4.raiseIntent, requestObj);
                 return result;
             });
         }
@@ -3096,7 +3161,7 @@
             }
             let registerPromise;
             const intentName = typeof intent === "string" ? intent : intent.intent;
-            const methodName = `${this.GlueWebIntentsPrefix}${intentName}`;
+            const methodName = `${GLUE42_FDC3_INTENTS_METHOD_PREFIX}${intentName}`;
             const alreadyRegistered = this.myIntents.has(intentName);
             if (alreadyRegistered) {
                 throw new Error(`Intent listener for intent ${intentName} already registered!`);
@@ -3148,6 +3213,130 @@
                 return result.intents;
             });
         }
+        createResponsePromise(intent, instanceId, methodName) {
+            let resolve = () => { };
+            let reject = () => { };
+            const promise = new Promise((res, rej) => {
+                resolve = res;
+                reject = rej;
+            });
+            this.intentsResolverResponsePromises[instanceId] = { intent, resolve, reject, promise, methodName };
+        }
+        resolverResponseHandler(args, callerId) {
+            const response = intentResolverResponseDecoder.run(args);
+            const instanceId = callerId.instance;
+            if (!response.ok) {
+                this.logger.trace(`Intent Resolver sent invalid response. Error: ${response.error}`);
+                this.intentsResolverResponsePromises[instanceId].reject(response.error.message);
+                this.stopIntensResolverInstance(instanceId);
+                return;
+            }
+            this.intentsResolverResponsePromises[instanceId].resolve(response.result);
+        }
+        stopIntensResolverInstance(instanceId) {
+            const appInstances = this.appManager.getApplication(this.intentsResolverAppName).instances;
+            const searchedInstance = appInstances.find((inst) => inst.id === instanceId);
+            if (!searchedInstance) {
+                return;
+            }
+            searchedInstance.stop().catch(err => this.logger.error(err));
+        }
+        registerIntentResolverMethod() {
+            return __awaiter(this, void 0, void 0, function* () {
+                const methodName = INTENTS_RESOLVER_INTEROP_PREFIX + shortid();
+                yield this.interop.register(methodName, this.resolverResponseHandler.bind(this));
+                return methodName;
+            });
+        }
+        openIntentResolverApplication(requestObj, methodName) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const startContext = {
+                    intent: requestObj.intent,
+                    callerId: this.interop.instance.instance,
+                    methodName
+                };
+                const startOptions = yield this.composeStartOptions();
+                const instance = yield this.appManager.getApplication(this.intentsResolverAppName).start(startContext, startOptions);
+                this.subscribeOnInstanceStopped(instance);
+                this.createResponsePromise(requestObj.intent, instance.id, methodName);
+                return instance;
+            });
+        }
+        cleanUpIntentResolverPromise(instanceId) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const intentPromise = this.intentsResolverResponsePromises[instanceId];
+                if (!intentPromise) {
+                    return;
+                }
+                const unregisterPromise = this.interop.unregister(intentPromise.methodName);
+                unregisterPromise.catch((error) => this.logger.warn(error));
+                delete this.intentsResolverResponsePromises[instanceId];
+            });
+        }
+        composeStartOptions() {
+            return __awaiter(this, void 0, void 0, function* () {
+                const bounds = yield this.getTargetBounds();
+                return {
+                    top: (bounds.height - INTENTS_RESOLVER_HEIGHT) / 2 + bounds.top,
+                    left: (bounds.width - INTENTS_RESOLVER_WIDTH) / 2 + bounds.left,
+                    width: INTENTS_RESOLVER_WIDTH,
+                    height: INTENTS_RESOLVER_HEIGHT
+                };
+            });
+        }
+        getTargetBounds() {
+            return __awaiter(this, void 0, void 0, function* () {
+                let bounds;
+                try {
+                    bounds = yield this.windowsManager.my().getBounds();
+                    this.logger.trace(`Opening the resolver UI relative to my window bounds: ${JSON.stringify(bounds)}`);
+                    return bounds;
+                }
+                catch (error) {
+                    this.logger.trace(`Failure to get my window bounds: ${JSON.stringify(error)}`);
+                }
+                try {
+                    yield this.bridge.send("workspaces", systemOperations.operationCheck, { operation: "getWorkspaceWindowFrameBounds" });
+                    const bridgeResponse = yield this.bridge.send("workspaces", systemOperations.getWorkspaceWindowFrameBounds, { itemId: this.windowsManager.my().id });
+                    bounds = bridgeResponse.bounds;
+                    this.logger.trace(`Opening the resolver UI relative to my workspace frame window bounds: ${JSON.stringify(bounds)}`);
+                    return bounds;
+                }
+                catch (error) {
+                    this.logger.trace(`Failure to get my workspace frame window bounds: ${JSON.stringify(error)}`);
+                }
+                bounds = {
+                    top: window.screen.availTop || 0,
+                    left: window.screen.availLeft || 0,
+                    width: window.screen.width,
+                    height: window.screen.height
+                };
+                this.logger.trace(`Opening the resolver UI relative to my screen bounds: ${JSON.stringify(bounds)}`);
+                return bounds;
+            });
+        }
+        subscribeOnInstanceStopped(instance) {
+            const { application } = instance;
+            const unsub = application.onInstanceStopped((inst) => {
+                if (inst.id !== instance.id) {
+                    return;
+                }
+                const intentPromise = this.intentsResolverResponsePromises[inst.id];
+                if (!intentPromise) {
+                    return unsub();
+                }
+                intentPromise.reject(`Cannot resolve raise intent ${intentPromise.intent} - User closed ${this.intentsResolverAppName} app without choosing an intent handler`);
+                this.cleanUpIntentResolverPromise(inst.id);
+                unsub();
+            });
+        }
+        checkIfIntentsResolverIsEnabled(options) {
+            var _a, _b, _c;
+            this.useIntentsResolverUI = typeof ((_a = options.intents) === null || _a === void 0 ? void 0 : _a.enableIntentsResolverUI) === "boolean"
+                ? options.intents.enableIntentsResolverUI
+                : true;
+            this.intentsResolverAppName = (_c = (_b = options.intents) === null || _b === void 0 ? void 0 : _b.intentsResolverAppName) !== null && _c !== void 0 ? _c : INTENTS_RESOLVER_APP_NAME;
+        }
     }
 
     const Glue42CoreMessageTypes = {
@@ -3174,6 +3363,23 @@
             this.GlueWebChannelsPrefix = "___channel___";
             this.SubsKey = "subs";
             this.ChangedKey = "changed";
+            this.replaySubscribe = (callback, channelId) => {
+                this.get(channelId)
+                    .then((channelContext) => {
+                    if (typeof channelContext.data === "object" && Object.keys(channelContext.data).length) {
+                        const contextName = this.createContextName(channelContext.name);
+                        return this.contexts.subscribe(contextName, (context, _, __, ___, extraData) => {
+                            callback(context.data, context, extraData === null || extraData === void 0 ? void 0 : extraData.updaterId);
+                        });
+                    }
+                })
+                    .then((un) => {
+                    if (un && typeof un === "function") {
+                        un();
+                    }
+                })
+                    .catch(err => this.logger.trace(err));
+            };
         }
         start(coreGlue, ioc) {
             return __awaiter(this, void 0, void 0, function* () {
@@ -3298,6 +3504,10 @@
         subscribe(callback) {
             if (typeof callback !== "function") {
                 throw new Error("Cannot subscribe to channels, because the provided callback is not a function!");
+            }
+            const currentChannel = this.current();
+            if (currentChannel) {
+                this.replaySubscribe(callback, currentChannel);
             }
             return this.registry.add(this.SubsKey, callback);
         }
@@ -3498,12 +3708,14 @@
     }
 
     class EventsDispatcher {
-        constructor() {
+        constructor(config) {
+            this.config = config;
             this.registry = lib();
-            this.glue42CoreEventName = "Glue42CoreRuntime";
+            this.glue42EventName = "Glue42";
             this.events = {
                 notifyStarted: { name: "notifyStarted", handle: this.handleNotifyStarted.bind(this) },
-                contentInc: { name: "contentInc", handle: this.handleContentInc.bind(this) }
+                contentInc: { name: "contentInc", handle: this.handleContentInc.bind(this) },
+                requestGlue: { name: "requestGlue", handle: this.handleRequestGlue.bind(this) }
             };
         }
         start(glue) {
@@ -3512,27 +3724,36 @@
             this.announceStarted();
         }
         sendContentMessage(message) {
-            this.send("contentOut", message);
+            this.send("contentOut", "glue42core", message);
         }
         onContentMessage(callback) {
             return this.registry.add("content-inc", callback);
         }
         wireCustomEventListener() {
-            window.addEventListener(this.glue42CoreEventName, (event) => {
+            window.addEventListener(this.glue42EventName, (event) => {
+                var _a;
                 const data = event.detail;
-                if (!data || !data.glue42core) {
+                const namespace = (_a = data === null || data === void 0 ? void 0 : data.glue42) !== null && _a !== void 0 ? _a : data === null || data === void 0 ? void 0 : data.glue42core;
+                if (!namespace) {
                     return;
                 }
-                const glue42Event = data.glue42core.event;
+                const glue42Event = namespace.event;
                 const foundHandler = this.events[glue42Event];
                 if (!foundHandler) {
                     return;
                 }
-                foundHandler.handle(data.glue42core.message);
+                foundHandler.handle(namespace.message);
             });
         }
         announceStarted() {
-            this.send("start");
+            this.send("start", "glue42");
+        }
+        handleRequestGlue() {
+            if (!this.config.exposeGlue) {
+                this.send("requestGlueResponse", "glue42", { error: "Will not give access to the underlying Glue API, because it was explicitly denied upon initialization." });
+                return;
+            }
+            this.send("requestGlueResponse", "glue42", { glue: this.glue });
         }
         handleNotifyStarted() {
             this.announceStarted();
@@ -3540,9 +3761,10 @@
         handleContentInc(message) {
             this.registry.execute("content-inc", message);
         }
-        send(eventName, message) {
-            const payload = { glue42core: { event: eventName, message } };
-            const event = new CustomEvent(this.glue42CoreEventName, { detail: payload });
+        send(eventName, namespace, message) {
+            const payload = {};
+            payload[namespace] = { event: eventName, message };
+            const event = new CustomEvent(this.glue42EventName, { detail: payload });
             window.dispatchEvent(event);
         }
     }
@@ -3808,7 +4030,7 @@
         }
         get eventsDispatcher() {
             if (!this._eventsDispatcher) {
-                this._eventsDispatcher = new EventsDispatcher();
+                this._eventsDispatcher = new EventsDispatcher(this.config);
             }
             return this._eventsDispatcher;
         }
@@ -3859,7 +4081,7 @@
         }
     }
 
-    var version$1 = "2.8.3";
+    var version$1 = "2.10.0";
 
     const createFactoryFunction = (coreFactoryFunction) => {
         return (userConfig) => __awaiter(void 0, void 0, void 0, function* () {

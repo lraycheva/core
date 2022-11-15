@@ -81,7 +81,8 @@
     const defaultConfig = {
         logger: "info",
         gateway: { webPlatform: {} },
-        libraries: []
+        libraries: [],
+        exposeGlue: true
     };
     const parseConfig = (config) => {
         var _a, _b, _c, _d;
@@ -1238,7 +1239,12 @@
         displayName: optional(string()),
         contextTypes: optional(array(nonEmptyStringDecoder)),
         instanceId: optional(string()),
-        instanceTitle: optional(string())
+        instanceTitle: optional(string()),
+        resultType: optional(string())
+    });
+    const intentResolverResponseDecoder = object({
+        intent: nonEmptyStringDecoder,
+        handler: intentHandlerDecoder
     });
     const intentDecoder = object({
         name: nonEmptyStringDecoder,
@@ -1258,7 +1264,8 @@
     });
     const intentFilterDecoder = object({
         name: optional(nonEmptyStringDecoder),
-        contextType: optional(nonEmptyStringDecoder)
+        contextType: optional(nonEmptyStringDecoder),
+        resultType: optional(nonEmptyStringDecoder)
     });
     const findFilterDecoder = oneOf(nonEmptyStringDecoder, intentFilterDecoder);
     const wrappedIntentFilterDecoder = object({
@@ -1281,19 +1288,13 @@
         contextTypes: optional(array(nonEmptyStringDecoder)),
         displayName: optional(string()),
         icon: optional(string()),
-        description: optional(string())
+        description: optional(string()),
+        resultType: optional(string())
     });
     const addIntentListenerIntentDecoder = oneOf(nonEmptyStringDecoder, addIntentListenerRequestDecoder);
     const channelNameDecoder = (channelNames) => {
         return nonEmptyStringDecoder.where(s => channelNames.includes(s), "Expected a valid channel name");
     };
-    const channelContextDecoder = object({
-        name: nonEmptyStringDecoder,
-        meta: object({
-            color: nonEmptyStringDecoder
-        }),
-        data: optional(anyJson()),
-    });
     const interopActionSettingsDecoder = object({
         method: nonEmptyStringDecoder,
         arguments: optional(anyJson()),
@@ -1339,6 +1340,13 @@
         timestamp: optional(nonNegativeNumberDecoder),
         vibrate: optional(array(number()))
     });
+    const channelContextDecoder = object({
+        name: nonEmptyStringDecoder,
+        meta: object({
+            color: nonEmptyStringDecoder
+        }),
+        data: optional(object()),
+    });
     const raiseNotificationDecoder = object({
         settings: glue42NotificationOptionsDecoder,
         id: nonEmptyStringDecoder
@@ -1367,6 +1375,18 @@
     });
     const simpleAvailabilityResultDecoder = object({
         isAvailable: boolean()
+    });
+    const simpleItemIdDecoder = object({
+        itemId: nonEmptyStringDecoder
+    });
+    const operationCheckResultDecoder = object({
+        isSupported: boolean()
+    });
+    const operationCheckConfigDecoder = object({
+        operation: nonEmptyStringDecoder
+    });
+    const workspaceFrameBoundsResultDecoder = object({
+        bounds: windowBoundsDecoder
     });
 
     const operations = {
@@ -2115,6 +2135,10 @@
                 return this.ioc.buildInstance(openResult, app);
             });
         }
+        getApplication(name) {
+            const verifiedName = nonEmptyStringDecoder.runWithException(name);
+            return this.applications.find((app) => app.name === verifiedName);
+        }
         toApi() {
             const api = {
                 myInstance: this.me,
@@ -2278,10 +2302,6 @@
                 const response = yield this.bridge.send("appManager", operations$1.export, undefined, { methodResponseTimeoutMs: this.baseApplicationsTimeoutMS });
                 return response.definitions;
             });
-        }
-        getApplication(name) {
-            const verifiedName = nonEmptyStringDecoder.runWithException(name);
-            return this.applications.find((app) => app.name === verifiedName);
         }
         getApplications() {
             return this.applications.slice();
@@ -2492,6 +2512,9 @@
                 importModeDecoder.runWithException(mode);
                 if (!Array.isArray(layouts)) {
                     throw new Error("Import must be called with an array of layouts");
+                }
+                if (layouts.length > 1000) {
+                    throw new Error("Cannot import more than 1000 layouts at once in Glue42 Core.");
                 }
                 const parseResult = layouts.reduce((soFar, layout) => {
                     const decodeResult = glueLayoutDecoder.run(layout);
@@ -3065,10 +3088,22 @@
         raiseIntent: { name: "raiseIntent", dataDecoder: intentRequestDecoder, resultDecoder: intentResultDecoder }
     };
 
+    const GLUE42_FDC3_INTENTS_METHOD_PREFIX = "Tick42.FDC3.Intents.";
+    const INTENTS_RESOLVER_INTEROP_PREFIX = "T42.Intents.Resolver.Control";
+    const INTENTS_RESOLVER_WIDTH = 400;
+    const INTENTS_RESOLVER_HEIGHT = 440;
+    const INTENTS_RESOLVER_APP_NAME = "intentsResolver";
+
+    const systemOperations = {
+        operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder, resultDecoder: operationCheckResultDecoder },
+        getWorkspaceWindowFrameBounds: { name: "getWorkspaceWindowFrameBounds", resultDecoder: workspaceFrameBoundsResultDecoder, dataDecoder: simpleItemIdDecoder }
+    };
+
     class IntentsController {
         constructor() {
             this.myIntents = new Set();
-            this.GlueWebIntentsPrefix = "Tick42.FDC3.Intents.";
+            this.useIntentsResolverUI = true;
+            this.intentsResolverResponsePromises = {};
         }
         start(coreGlue, ioc) {
             return __awaiter$1(this, void 0, void 0, function* () {
@@ -3076,6 +3111,9 @@
                 this.logger.trace("starting the web intents controller");
                 this.bridge = ioc.bridge;
                 this.interop = coreGlue.interop;
+                this.appManager = ioc.appManagerController;
+                this.windowsManager = ioc.windowsController;
+                this.checkIfIntentsResolverIsEnabled(ioc.config);
                 const api = this.toApi();
                 this.logger.trace("no need for platform registration, attaching the intents property to glue and returning");
                 coreGlue.intents = api;
@@ -3102,21 +3140,48 @@
                 addIntentListener: this.addIntentListener.bind(this),
                 find: this.find.bind(this)
             };
-            return Object.freeze(api);
+            return api;
         }
         raise(request) {
             return __awaiter$1(this, void 0, void 0, function* () {
-                const requestObj = raiseRequestDecoder.runWithException(request);
-                let data;
-                if (typeof requestObj === "string") {
-                    data = {
-                        intent: requestObj
-                    };
+                let intentDecoder = raiseRequestDecoder.runWithException(request);
+                const intent = typeof intentDecoder === "string"
+                    ? { intent: intentDecoder }
+                    : intentDecoder;
+                if (intent.target) {
+                    this.logger.trace(`Intents Resolver won't be used. Target is provided in Intent Request - ${JSON.stringify(intent)}`);
+                    return this.raiseIntent(intent);
                 }
-                else {
-                    data = requestObj;
+                if (!this.useIntentsResolverUI) {
+                    this.logger.trace(`Intent Resolver is disabled. Raising intent to first found handler`);
+                    return this.raiseIntent(intent);
                 }
-                const result = yield this.bridge.send("intents", operations$4.raiseIntent, data);
+                const intentsResolverApp = this.appManager.getApplication(this.intentsResolverAppName);
+                if (!intentsResolverApp) {
+                    this.logger.trace(`Intent Resolver Application with name ${this.intentsResolverAppName} not found. Intents Resolver won't be used for handling raised intents`);
+                    return this.raiseIntent(intent);
+                }
+                const hasOneHandler = (yield this.find(intent.intent))[0].handlers.length === 1;
+                if (hasOneHandler) {
+                    this.logger.trace(`Intents Resolver won't be used - intent has only one handler.`);
+                    return this.raiseIntent(intent);
+                }
+                const registeredMethod = yield this.registerIntentResolverMethod();
+                this.logger.trace(`Registered interop method ${registeredMethod}`);
+                const resolverInstance = yield this.openIntentResolverApplication(intent, registeredMethod);
+                const { handler } = yield this.intentsResolverResponsePromises[resolverInstance.id].promise;
+                this.stopIntensResolverInstance(resolverInstance.id);
+                const target = handler.type === "app"
+                    ? { app: handler.applicationName }
+                    : { instance: handler.instanceId };
+                this.logger.trace(`Intent handler chosen by the user: ${JSON.stringify(target)}`);
+                const data = Object.assign(Object.assign({}, intent), { target });
+                return this.raiseIntent(data);
+            });
+        }
+        raiseIntent(requestObj) {
+            return __awaiter$1(this, void 0, void 0, function* () {
+                const result = this.bridge.send("intents", operations$4.raiseIntent, requestObj);
                 return result;
             });
         }
@@ -3133,7 +3198,7 @@
             }
             let registerPromise;
             const intentName = typeof intent === "string" ? intent : intent.intent;
-            const methodName = `${this.GlueWebIntentsPrefix}${intentName}`;
+            const methodName = `${GLUE42_FDC3_INTENTS_METHOD_PREFIX}${intentName}`;
             const alreadyRegistered = this.myIntents.has(intentName);
             if (alreadyRegistered) {
                 throw new Error(`Intent listener for intent ${intentName} already registered!`);
@@ -3185,6 +3250,130 @@
                 return result.intents;
             });
         }
+        createResponsePromise(intent, instanceId, methodName) {
+            let resolve = () => { };
+            let reject = () => { };
+            const promise = new Promise((res, rej) => {
+                resolve = res;
+                reject = rej;
+            });
+            this.intentsResolverResponsePromises[instanceId] = { intent, resolve, reject, promise, methodName };
+        }
+        resolverResponseHandler(args, callerId) {
+            const response = intentResolverResponseDecoder.run(args);
+            const instanceId = callerId.instance;
+            if (!response.ok) {
+                this.logger.trace(`Intent Resolver sent invalid response. Error: ${response.error}`);
+                this.intentsResolverResponsePromises[instanceId].reject(response.error.message);
+                this.stopIntensResolverInstance(instanceId);
+                return;
+            }
+            this.intentsResolverResponsePromises[instanceId].resolve(response.result);
+        }
+        stopIntensResolverInstance(instanceId) {
+            const appInstances = this.appManager.getApplication(this.intentsResolverAppName).instances;
+            const searchedInstance = appInstances.find((inst) => inst.id === instanceId);
+            if (!searchedInstance) {
+                return;
+            }
+            searchedInstance.stop().catch(err => this.logger.error(err));
+        }
+        registerIntentResolverMethod() {
+            return __awaiter$1(this, void 0, void 0, function* () {
+                const methodName = INTENTS_RESOLVER_INTEROP_PREFIX + shortid();
+                yield this.interop.register(methodName, this.resolverResponseHandler.bind(this));
+                return methodName;
+            });
+        }
+        openIntentResolverApplication(requestObj, methodName) {
+            return __awaiter$1(this, void 0, void 0, function* () {
+                const startContext = {
+                    intent: requestObj.intent,
+                    callerId: this.interop.instance.instance,
+                    methodName
+                };
+                const startOptions = yield this.composeStartOptions();
+                const instance = yield this.appManager.getApplication(this.intentsResolverAppName).start(startContext, startOptions);
+                this.subscribeOnInstanceStopped(instance);
+                this.createResponsePromise(requestObj.intent, instance.id, methodName);
+                return instance;
+            });
+        }
+        cleanUpIntentResolverPromise(instanceId) {
+            return __awaiter$1(this, void 0, void 0, function* () {
+                const intentPromise = this.intentsResolverResponsePromises[instanceId];
+                if (!intentPromise) {
+                    return;
+                }
+                const unregisterPromise = this.interop.unregister(intentPromise.methodName);
+                unregisterPromise.catch((error) => this.logger.warn(error));
+                delete this.intentsResolverResponsePromises[instanceId];
+            });
+        }
+        composeStartOptions() {
+            return __awaiter$1(this, void 0, void 0, function* () {
+                const bounds = yield this.getTargetBounds();
+                return {
+                    top: (bounds.height - INTENTS_RESOLVER_HEIGHT) / 2 + bounds.top,
+                    left: (bounds.width - INTENTS_RESOLVER_WIDTH) / 2 + bounds.left,
+                    width: INTENTS_RESOLVER_WIDTH,
+                    height: INTENTS_RESOLVER_HEIGHT
+                };
+            });
+        }
+        getTargetBounds() {
+            return __awaiter$1(this, void 0, void 0, function* () {
+                let bounds;
+                try {
+                    bounds = yield this.windowsManager.my().getBounds();
+                    this.logger.trace(`Opening the resolver UI relative to my window bounds: ${JSON.stringify(bounds)}`);
+                    return bounds;
+                }
+                catch (error) {
+                    this.logger.trace(`Failure to get my window bounds: ${JSON.stringify(error)}`);
+                }
+                try {
+                    yield this.bridge.send("workspaces", systemOperations.operationCheck, { operation: "getWorkspaceWindowFrameBounds" });
+                    const bridgeResponse = yield this.bridge.send("workspaces", systemOperations.getWorkspaceWindowFrameBounds, { itemId: this.windowsManager.my().id });
+                    bounds = bridgeResponse.bounds;
+                    this.logger.trace(`Opening the resolver UI relative to my workspace frame window bounds: ${JSON.stringify(bounds)}`);
+                    return bounds;
+                }
+                catch (error) {
+                    this.logger.trace(`Failure to get my workspace frame window bounds: ${JSON.stringify(error)}`);
+                }
+                bounds = {
+                    top: window.screen.availTop || 0,
+                    left: window.screen.availLeft || 0,
+                    width: window.screen.width,
+                    height: window.screen.height
+                };
+                this.logger.trace(`Opening the resolver UI relative to my screen bounds: ${JSON.stringify(bounds)}`);
+                return bounds;
+            });
+        }
+        subscribeOnInstanceStopped(instance) {
+            const { application } = instance;
+            const unsub = application.onInstanceStopped((inst) => {
+                if (inst.id !== instance.id) {
+                    return;
+                }
+                const intentPromise = this.intentsResolverResponsePromises[inst.id];
+                if (!intentPromise) {
+                    return unsub();
+                }
+                intentPromise.reject(`Cannot resolve raise intent ${intentPromise.intent} - User closed ${this.intentsResolverAppName} app without choosing an intent handler`);
+                this.cleanUpIntentResolverPromise(inst.id);
+                unsub();
+            });
+        }
+        checkIfIntentsResolverIsEnabled(options) {
+            var _a, _b, _c;
+            this.useIntentsResolverUI = typeof ((_a = options.intents) === null || _a === void 0 ? void 0 : _a.enableIntentsResolverUI) === "boolean"
+                ? options.intents.enableIntentsResolverUI
+                : true;
+            this.intentsResolverAppName = (_c = (_b = options.intents) === null || _b === void 0 ? void 0 : _b.intentsResolverAppName) !== null && _c !== void 0 ? _c : INTENTS_RESOLVER_APP_NAME;
+        }
     }
 
     const Glue42CoreMessageTypes = {
@@ -3211,6 +3400,23 @@
             this.GlueWebChannelsPrefix = "___channel___";
             this.SubsKey = "subs";
             this.ChangedKey = "changed";
+            this.replaySubscribe = (callback, channelId) => {
+                this.get(channelId)
+                    .then((channelContext) => {
+                    if (typeof channelContext.data === "object" && Object.keys(channelContext.data).length) {
+                        const contextName = this.createContextName(channelContext.name);
+                        return this.contexts.subscribe(contextName, (context, _, __, ___, extraData) => {
+                            callback(context.data, context, extraData === null || extraData === void 0 ? void 0 : extraData.updaterId);
+                        });
+                    }
+                })
+                    .then((un) => {
+                    if (un && typeof un === "function") {
+                        un();
+                    }
+                })
+                    .catch(err => this.logger.trace(err));
+            };
         }
         start(coreGlue, ioc) {
             return __awaiter$1(this, void 0, void 0, function* () {
@@ -3335,6 +3541,10 @@
         subscribe(callback) {
             if (typeof callback !== "function") {
                 throw new Error("Cannot subscribe to channels, because the provided callback is not a function!");
+            }
+            const currentChannel = this.current();
+            if (currentChannel) {
+                this.replaySubscribe(callback, currentChannel);
             }
             return this.registry.add(this.SubsKey, callback);
         }
@@ -3535,12 +3745,14 @@
     }
 
     class EventsDispatcher {
-        constructor() {
+        constructor(config) {
+            this.config = config;
             this.registry = lib();
-            this.glue42CoreEventName = "Glue42CoreRuntime";
+            this.glue42EventName = "Glue42";
             this.events = {
                 notifyStarted: { name: "notifyStarted", handle: this.handleNotifyStarted.bind(this) },
-                contentInc: { name: "contentInc", handle: this.handleContentInc.bind(this) }
+                contentInc: { name: "contentInc", handle: this.handleContentInc.bind(this) },
+                requestGlue: { name: "requestGlue", handle: this.handleRequestGlue.bind(this) }
             };
         }
         start(glue) {
@@ -3549,27 +3761,36 @@
             this.announceStarted();
         }
         sendContentMessage(message) {
-            this.send("contentOut", message);
+            this.send("contentOut", "glue42core", message);
         }
         onContentMessage(callback) {
             return this.registry.add("content-inc", callback);
         }
         wireCustomEventListener() {
-            window.addEventListener(this.glue42CoreEventName, (event) => {
+            window.addEventListener(this.glue42EventName, (event) => {
+                var _a;
                 const data = event.detail;
-                if (!data || !data.glue42core) {
+                const namespace = (_a = data === null || data === void 0 ? void 0 : data.glue42) !== null && _a !== void 0 ? _a : data === null || data === void 0 ? void 0 : data.glue42core;
+                if (!namespace) {
                     return;
                 }
-                const glue42Event = data.glue42core.event;
+                const glue42Event = namespace.event;
                 const foundHandler = this.events[glue42Event];
                 if (!foundHandler) {
                     return;
                 }
-                foundHandler.handle(data.glue42core.message);
+                foundHandler.handle(namespace.message);
             });
         }
         announceStarted() {
-            this.send("start");
+            this.send("start", "glue42");
+        }
+        handleRequestGlue() {
+            if (!this.config.exposeGlue) {
+                this.send("requestGlueResponse", "glue42", { error: "Will not give access to the underlying Glue API, because it was explicitly denied upon initialization." });
+                return;
+            }
+            this.send("requestGlueResponse", "glue42", { glue: this.glue });
         }
         handleNotifyStarted() {
             this.announceStarted();
@@ -3577,9 +3798,10 @@
         handleContentInc(message) {
             this.registry.execute("content-inc", message);
         }
-        send(eventName, message) {
-            const payload = { glue42core: { event: eventName, message } };
-            const event = new CustomEvent(this.glue42CoreEventName, { detail: payload });
+        send(eventName, namespace, message) {
+            const payload = {};
+            payload[namespace] = { event: eventName, message };
+            const event = new CustomEvent(this.glue42EventName, { detail: payload });
             window.dispatchEvent(event);
         }
     }
@@ -3845,7 +4067,7 @@
         }
         get eventsDispatcher() {
             if (!this._eventsDispatcher) {
-                this._eventsDispatcher = new EventsDispatcher();
+                this._eventsDispatcher = new EventsDispatcher(this.config);
             }
             return this._eventsDispatcher;
         }
@@ -3896,7 +4118,7 @@
         }
     }
 
-    var version$1 = "2.8.3";
+    var version$1 = "2.10.0";
 
     const createFactoryFunction = (coreFactoryFunction) => {
         return (userConfig) => __awaiter$1(void 0, void 0, void 0, function* () {
@@ -11597,6 +11819,10 @@
             setTimeout(() => resolve(false), defaultOpenerTimeoutMs);
         });
     };
+    const checkIfPlacedInWorkspace = () => {
+        const hasWspSuffix = window.name.indexOf("#wsp") !== -1;
+        return hasWspSuffix;
+    };
 
     const fallbackToEnterprise = (config) => __awaiter(void 0, void 0, void 0, function* () {
         var _a, _b, _c, _d;
@@ -13451,7 +13677,7 @@
                 yield this._gatewayWebInstance.start();
             });
         }
-        connectClient(clientPort, removeFromPlatform) {
+        connectClient(clientPort) {
             return __awaiter(this, void 0, void 0, function* () {
                 const client = yield this._gatewayWebInstance.connect((_, message) => clientPort.postMessage(message));
                 return client;
@@ -13525,6 +13751,470 @@
                     return;
                 }
             });
+        }
+    }
+
+    class PlatformLogger {
+        setLogger(logger) {
+            this._logger = logger;
+        }
+        get(subSystem) {
+            if (!this._logger) {
+                return;
+            }
+            return this._logger.subLogger(subSystem);
+        }
+    }
+    var logger = new PlatformLogger();
+
+    // Found this seed-based random generator somewhere
+    // Based on The Central Randomizer 1.3 (C) 1997 by Paul Houle (houle@msc.cornell.edu)
+
+    var seed$2 = 1;
+
+    /**
+     * return a random number based on a seed
+     * @param seed
+     * @returns {number}
+     */
+    function getNextValue$2() {
+        seed$2 = (seed$2 * 9301 + 49297) % 233280;
+        return seed$2/(233280.0);
+    }
+
+    function setSeed$3(_seed_) {
+        seed$2 = _seed_;
+    }
+
+    var randomFromSeed$2 = {
+        nextValue: getNextValue$2,
+        seed: setSeed$3
+    };
+
+    var ORIGINAL$2 = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-';
+    var alphabet$2;
+    var previousSeed$2;
+
+    var shuffled$2;
+
+    function reset$2() {
+        shuffled$2 = false;
+    }
+
+    function setCharacters$2(_alphabet_) {
+        if (!_alphabet_) {
+            if (alphabet$2 !== ORIGINAL$2) {
+                alphabet$2 = ORIGINAL$2;
+                reset$2();
+            }
+            return;
+        }
+
+        if (_alphabet_ === alphabet$2) {
+            return;
+        }
+
+        if (_alphabet_.length !== ORIGINAL$2.length) {
+            throw new Error('Custom alphabet for shortid must be ' + ORIGINAL$2.length + ' unique characters. You submitted ' + _alphabet_.length + ' characters: ' + _alphabet_);
+        }
+
+        var unique = _alphabet_.split('').filter(function(item, ind, arr){
+           return ind !== arr.lastIndexOf(item);
+        });
+
+        if (unique.length) {
+            throw new Error('Custom alphabet for shortid must be ' + ORIGINAL$2.length + ' unique characters. These characters were not unique: ' + unique.join(', '));
+        }
+
+        alphabet$2 = _alphabet_;
+        reset$2();
+    }
+
+    function characters$2(_alphabet_) {
+        setCharacters$2(_alphabet_);
+        return alphabet$2;
+    }
+
+    function setSeed$4(seed) {
+        randomFromSeed$2.seed(seed);
+        if (previousSeed$2 !== seed) {
+            reset$2();
+            previousSeed$2 = seed;
+        }
+    }
+
+    function shuffle$2() {
+        if (!alphabet$2) {
+            setCharacters$2(ORIGINAL$2);
+        }
+
+        var sourceArray = alphabet$2.split('');
+        var targetArray = [];
+        var r = randomFromSeed$2.nextValue();
+        var characterIndex;
+
+        while (sourceArray.length > 0) {
+            r = randomFromSeed$2.nextValue();
+            characterIndex = Math.floor(r * sourceArray.length);
+            targetArray.push(sourceArray.splice(characterIndex, 1)[0]);
+        }
+        return targetArray.join('');
+    }
+
+    function getShuffled$2() {
+        if (shuffled$2) {
+            return shuffled$2;
+        }
+        shuffled$2 = shuffle$2();
+        return shuffled$2;
+    }
+
+    /**
+     * lookup shuffled letter
+     * @param index
+     * @returns {string}
+     */
+    function lookup$2(index) {
+        var alphabetShuffled = getShuffled$2();
+        return alphabetShuffled[index];
+    }
+
+    function get$1 () {
+      return alphabet$2 || ORIGINAL$2;
+    }
+
+    var alphabet_1$2 = {
+        get: get$1,
+        characters: characters$2,
+        seed: setSeed$4,
+        lookup: lookup$2,
+        shuffled: getShuffled$2
+    };
+
+    var crypto$2 = typeof window === 'object' && (window.crypto || window.msCrypto); // IE 11 uses window.msCrypto
+
+    var randomByte$2;
+
+    if (!crypto$2 || !crypto$2.getRandomValues) {
+        randomByte$2 = function(size) {
+            var bytes = [];
+            for (var i = 0; i < size; i++) {
+                bytes.push(Math.floor(Math.random() * 256));
+            }
+            return bytes;
+        };
+    } else {
+        randomByte$2 = function(size) {
+            return crypto$2.getRandomValues(new Uint8Array(size));
+        };
+    }
+
+    var randomByteBrowser$2 = randomByte$2;
+
+    // This file replaces `format.js` in bundlers like webpack or Rollup,
+    // according to `browser` config in `package.json`.
+
+    var format_browser$1 = function (random, alphabet, size) {
+      // We can’t use bytes bigger than the alphabet. To make bytes values closer
+      // to the alphabet, we apply bitmask on them. We look for the closest
+      // `2 ** x - 1` number, which will be bigger than alphabet size. If we have
+      // 30 symbols in the alphabet, we will take 31 (00011111).
+      // We do not use faster Math.clz32, because it is not available in browsers.
+      var mask = (2 << Math.log(alphabet.length - 1) / Math.LN2) - 1;
+      // Bitmask is not a perfect solution (in our example it will pass 31 bytes,
+      // which is bigger than the alphabet). As a result, we will need more bytes,
+      // than ID size, because we will refuse bytes bigger than the alphabet.
+
+      // Every hardware random generator call is costly,
+      // because we need to wait for entropy collection. This is why often it will
+      // be faster to ask for few extra bytes in advance, to avoid additional calls.
+
+      // Here we calculate how many random bytes should we call in advance.
+      // It depends on ID length, mask / alphabet size and magic number 1.6
+      // (which was selected according benchmarks).
+
+      // -~f => Math.ceil(f) if n is float number
+      // -~i => i + 1 if n is integer number
+      var step = -~(1.6 * mask * size / alphabet.length);
+      var id = '';
+
+      while (true) {
+        var bytes = random(step);
+        // Compact alternative for `for (var i = 0; i < step; i++)`
+        var i = step;
+        while (i--) {
+          // If random byte is bigger than alphabet even after bitmask,
+          // we refuse it by `|| ''`.
+          id += alphabet[bytes[i] & mask] || '';
+          // More compact than `id.length + 1 === size`
+          if (id.length === +size) return id
+        }
+      }
+    };
+
+    function generate$1(number) {
+        var loopCounter = 0;
+        var done;
+
+        var str = '';
+
+        while (!done) {
+            str = str + format_browser$1(randomByteBrowser$2, alphabet_1$2.get(), 1);
+            done = number < (Math.pow(16, loopCounter + 1 ) );
+            loopCounter++;
+        }
+        return str;
+    }
+
+    var generate_1$1 = generate$1;
+
+    // Ignore all milliseconds before a certain time to reduce the size of the date entropy without sacrificing uniqueness.
+    // This number should be updated every year or so to keep the generated id short.
+    // To regenerate `new Date() - 0` and bump the version. Always bump the version!
+    var REDUCE_TIME$1 = 1567752802062;
+
+    // don't change unless we change the algos or REDUCE_TIME
+    // must be an integer and less than 16
+    var version$3 = 7;
+
+    // Counter is used when shortid is called multiple times in one second.
+    var counter$1;
+
+    // Remember the last time shortid was called in case counter is needed.
+    var previousSeconds$1;
+
+    /**
+     * Generate unique id
+     * Returns string id
+     */
+    function build$1(clusterWorkerId) {
+        var str = '';
+
+        var seconds = Math.floor((Date.now() - REDUCE_TIME$1) * 0.001);
+
+        if (seconds === previousSeconds$1) {
+            counter$1++;
+        } else {
+            counter$1 = 0;
+            previousSeconds$1 = seconds;
+        }
+
+        str = str + generate_1$1(version$3);
+        str = str + generate_1$1(clusterWorkerId);
+        if (counter$1 > 0) {
+            str = str + generate_1$1(counter$1);
+        }
+        str = str + generate_1$1(seconds);
+        return str;
+    }
+
+    var build_1$1 = build$1;
+
+    function isShortId$2(id) {
+        if (!id || typeof id !== 'string' || id.length < 6 ) {
+            return false;
+        }
+
+        var nonAlphabetic = new RegExp('[^' +
+          alphabet_1$2.get().replace(/[|\\{}()[\]^$+*?.-]/g, '\\$&') +
+        ']');
+        return !nonAlphabetic.test(id);
+    }
+
+    var isValid$2 = isShortId$2;
+
+    var lib$3 = createCommonjsModule$2(function (module) {
+
+
+
+
+
+    // if you are using cluster or multiple servers use this to make each instance
+    // has a unique value for worker
+    // Note: I don't know if this is automatically set when using third
+    // party cluster solutions such as pm2.
+    var clusterWorkerId =  0;
+
+    /**
+     * Set the seed.
+     * Highly recommended if you don't want people to try to figure out your id schema.
+     * exposed as shortid.seed(int)
+     * @param seed Integer value to seed the random alphabet.  ALWAYS USE THE SAME SEED or you might get overlaps.
+     */
+    function seed(seedValue) {
+        alphabet_1$2.seed(seedValue);
+        return module.exports;
+    }
+
+    /**
+     * Set the cluster worker or machine id
+     * exposed as shortid.worker(int)
+     * @param workerId worker must be positive integer.  Number less than 16 is recommended.
+     * returns shortid module so it can be chained.
+     */
+    function worker(workerId) {
+        clusterWorkerId = workerId;
+        return module.exports;
+    }
+
+    /**
+     *
+     * sets new characters to use in the alphabet
+     * returns the shuffled alphabet
+     */
+    function characters(newCharacters) {
+        if (newCharacters !== undefined) {
+            alphabet_1$2.characters(newCharacters);
+        }
+
+        return alphabet_1$2.shuffled();
+    }
+
+    /**
+     * Generate unique id
+     * Returns string id
+     */
+    function generate() {
+      return build_1$1(clusterWorkerId);
+    }
+
+    // Export all other functions as properties of the generate function
+    module.exports = generate;
+    module.exports.generate = generate;
+    module.exports.seed = seed;
+    module.exports.worker = worker;
+    module.exports.characters = characters;
+    module.exports.isValid = isValid$2;
+    });
+
+    var shortid$2 = lib$3;
+
+    class PlatformController {
+        constructor(domainsController, glueController, portsBridge, stateController, serviceWorkerController, preferredConnectionController, interceptionController, pluginsController) {
+            this.domainsController = domainsController;
+            this.glueController = glueController;
+            this.portsBridge = portsBridge;
+            this.stateController = stateController;
+            this.serviceWorkerController = serviceWorkerController;
+            this.preferredConnectionController = preferredConnectionController;
+            this.interceptionController = interceptionController;
+            this.pluginsController = pluginsController;
+        }
+        get logger() {
+            return logger.get("main.web.platform");
+        }
+        get ctxTrackingGlue() {
+            return this.glueController.contextsTrackingGlue;
+        }
+        get systemGlue() {
+            return this.glueController.systemGlue;
+        }
+        get platformApi() {
+            return this._platformApi;
+        }
+        start(config) {
+            var _a, _b;
+            return __awaiter(this, void 0, void 0, function* () {
+                yield this.portsBridge.configure(config);
+                this.portsBridge.onClientUnloaded(this.handleClientUnloaded.bind(this));
+                yield this.glueController.start(config);
+                yield Promise.all([
+                    this.glueController.createPlatformSystemMethod(this.handleClientMessage.bind(this)),
+                    this.glueController.createPlatformSystemStream()
+                ]);
+                this.stateController.start();
+                yield this.domainsController.startAllDomains(config);
+                yield this.glueController.initClientGlue(config === null || config === void 0 ? void 0 : config.glue, config === null || config === void 0 ? void 0 : config.glueFactory, (_a = config === null || config === void 0 ? void 0 : config.workspaces) === null || _a === void 0 ? void 0 : _a.isFrame);
+                yield this.serviceWorkerController.connect(config);
+                this._platformApi = this.buildPlatformApi(config);
+                yield this.pluginsController.startCorePlus(config);
+                yield this.pluginsController.start({
+                    platformConfig: config,
+                    plugins: (_b = config.plugins) === null || _b === void 0 ? void 0 : _b.definitions,
+                    api: this.platformApi,
+                    handlePluginMessage: this.handlePluginMessage.bind(this)
+                });
+                if (config.connection.preferred) {
+                    yield this.preferredConnectionController.start(config.connection.preferred);
+                }
+                this.serviceWorkerController.notifyReady();
+                this.portsBridge.start();
+            });
+        }
+        getClientGlue() {
+            return this.glueController.clientGlue;
+        }
+        handleClientMessage(args, caller, success, error) {
+            this.processControllerCommand(args, "client", caller.instance)
+                .then((result) => success(result))
+                .catch((err) => error(err));
+        }
+        handlePluginMessage(args, pluginName) {
+            return __awaiter(this, void 0, void 0, function* () {
+                return this.processControllerCommand(args, "plugin", pluginName);
+            });
+        }
+        processControllerCommand(args, callerType, callerId) {
+            var _a, _b, _c, _d;
+            return __awaiter(this, void 0, void 0, function* () {
+                try {
+                    this.domainsController.validateDomain(args.domain);
+                }
+                catch (error) {
+                    const errString = JSON.stringify(error);
+                    (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`rejecting execution of a command issued by a ${callerType}: ${callerId}, because of a domain validation error: ${errString}`);
+                    throw new Error(`Cannot execute this platform control, because of domain validation error: ${errString}`);
+                }
+                const controlMessage = Object.assign({}, args, {
+                    commandId: shortid$2.generate(),
+                    callerId, callerType
+                });
+                (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace(`[${controlMessage.commandId}] received a command for a valid domain: ${args.domain} from ${callerType}: ${callerId}, forwarding to the appropriate controller`);
+                try {
+                    const result = yield this.executeCommand(controlMessage);
+                    (_c = this.logger) === null || _c === void 0 ? void 0 : _c.trace(`[${controlMessage.commandId}] this command was executed successfully, sending the result to the caller.`);
+                    return result;
+                }
+                catch (error) {
+                    const stringError = typeof error === "string" ? error : JSON.stringify(error.message);
+                    (_d = this.logger) === null || _d === void 0 ? void 0 : _d.trace(`[${controlMessage.commandId}] this command's execution was rejected, reason: ${stringError}`);
+                    throw new Error(`The platform rejected operation ${controlMessage.operation} for domain: ${args.domain} with reason: ${stringError}`);
+                }
+            });
+        }
+        handleClientUnloaded(client) {
+            this.domainsController.notifyDomainsClientUnloaded(client);
+        }
+        executeCommand(controlMessage) {
+            var _a, _b;
+            const interceptor = this.interceptionController.getOperationInterceptor({ domain: controlMessage.domain, operation: controlMessage.operation });
+            if (interceptor && !((_a = controlMessage.settings) === null || _a === void 0 ? void 0 : _a.skipInterception)) {
+                (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace(`[${controlMessage.commandId}] The operation is being intercepted and executed by: ${interceptor.name}`);
+                return interceptor.intercept(controlMessage);
+            }
+            return this.domainsController.executeControlMessage(controlMessage);
+        }
+        buildPlatformApi(config) {
+            return {
+                version: this.glueController.platformVersion,
+                corePlus: config.corePlus ? { version: config.corePlus.version } : undefined,
+                contextTrackGlue: this.ctxTrackingGlue,
+                systemGlue: this.systemGlue,
+                connectExtClient: (client, port) => {
+                    return this.connectExtClient(client, port);
+                },
+                onSystemReconnect: (callback) => {
+                    return this.onSystemReconnect(callback);
+                }
+            };
+        }
+        connectExtClient(client, port) {
+            return __awaiter(this, void 0, void 0, function* () {
+                yield this.portsBridge.handleExtConnectionRequest(client, port);
+            });
+        }
+        onSystemReconnect(callback) {
+            return this.preferredConnectionController.onReconnect(callback);
         }
     }
 
@@ -14345,6 +15035,12 @@
             anyJson$1() :
             fail(`The provided argument as ${propDescription} should be of type function, provided: ${typeof providedType}`);
     };
+    const operationCheckConfigDecoder$1 = object$1({
+        operation: nonEmptyStringDecoder$1
+    });
+    const operationCheckResultDecoder$1 = object$1({
+        isSupported: boolean$1()
+    });
     const layoutSummaryDecoder$1 = object$1({
         name: nonEmptyStringDecoder$1,
         type: layoutTypeDecoder$1,
@@ -14376,7 +15072,7 @@
         state: windowComponentStateDecoder$1
     });
     const libDomainDecoder$1 = oneOf$1(constant$1("system"), constant$1("windows"), constant$1("appManager"), constant$1("layouts"), constant$1("workspaces"), constant$1("intents"), constant$1("notifications"), constant$1("extension"), constant$1("channels"));
-    const systemOperationTypesDecoder = oneOf$1(constant$1("getEnvironment"), constant$1("getBase"));
+    const systemOperationTypesDecoder = oneOf$1(constant$1("getEnvironment"), constant$1("getBase"), constant$1("operationCheck"));
     const windowLayoutItemDecoder$1 = object$1({
         type: constant$1("window"),
         config: object$1({
@@ -14448,7 +15144,8 @@
         name: nonEmptyStringDecoder$1,
         displayName: optional$1(string$1()),
         contexts: optional$1(array$1(string$1())),
-        customConfig: optional$1(object$1())
+        customConfig: optional$1(object$1()),
+        resultType: optional$1(nonEmptyStringDecoder$1)
     });
     const glueCoreAppDefinitionDecoder = object$1({
         name: nonEmptyStringDecoder$1,
@@ -14500,6 +15197,7 @@
     const pluginDefinitionDecoder = object$1({
         name: nonEmptyStringDecoder$1,
         start: anyJson$1(),
+        version: optional$1(nonEmptyStringDecoder$1),
         config: optional$1(anyJson$1()),
         critical: optional$1(boolean$1())
     });
@@ -14581,8 +15279,7 @@
     });
     const corePlusConfigDecoder = object$1({
         start: anyJson$1(),
-        critical: optional$1(boolean$1()),
-        config: anyJson$1()
+        version: nonEmptyStringDecoder$1
     });
     const platformConfigDecoder = object$1({
         windows: optional$1(windowsConfigDecoder),
@@ -14615,499 +15312,6 @@
             operation: nonEmptyStringDecoder$1
         }))
     });
-
-    class PlatformLogger {
-        setLogger(logger) {
-            this._logger = logger;
-        }
-        get(subSystem) {
-            if (!this._logger) {
-                return;
-            }
-            return this._logger.subLogger(subSystem);
-        }
-    }
-    var logger = new PlatformLogger();
-
-    // Found this seed-based random generator somewhere
-    // Based on The Central Randomizer 1.3 (C) 1997 by Paul Houle (houle@msc.cornell.edu)
-
-    var seed$2 = 1;
-
-    /**
-     * return a random number based on a seed
-     * @param seed
-     * @returns {number}
-     */
-    function getNextValue$2() {
-        seed$2 = (seed$2 * 9301 + 49297) % 233280;
-        return seed$2/(233280.0);
-    }
-
-    function setSeed$3(_seed_) {
-        seed$2 = _seed_;
-    }
-
-    var randomFromSeed$2 = {
-        nextValue: getNextValue$2,
-        seed: setSeed$3
-    };
-
-    var ORIGINAL$2 = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-';
-    var alphabet$2;
-    var previousSeed$2;
-
-    var shuffled$2;
-
-    function reset$2() {
-        shuffled$2 = false;
-    }
-
-    function setCharacters$2(_alphabet_) {
-        if (!_alphabet_) {
-            if (alphabet$2 !== ORIGINAL$2) {
-                alphabet$2 = ORIGINAL$2;
-                reset$2();
-            }
-            return;
-        }
-
-        if (_alphabet_ === alphabet$2) {
-            return;
-        }
-
-        if (_alphabet_.length !== ORIGINAL$2.length) {
-            throw new Error('Custom alphabet for shortid must be ' + ORIGINAL$2.length + ' unique characters. You submitted ' + _alphabet_.length + ' characters: ' + _alphabet_);
-        }
-
-        var unique = _alphabet_.split('').filter(function(item, ind, arr){
-           return ind !== arr.lastIndexOf(item);
-        });
-
-        if (unique.length) {
-            throw new Error('Custom alphabet for shortid must be ' + ORIGINAL$2.length + ' unique characters. These characters were not unique: ' + unique.join(', '));
-        }
-
-        alphabet$2 = _alphabet_;
-        reset$2();
-    }
-
-    function characters$2(_alphabet_) {
-        setCharacters$2(_alphabet_);
-        return alphabet$2;
-    }
-
-    function setSeed$4(seed) {
-        randomFromSeed$2.seed(seed);
-        if (previousSeed$2 !== seed) {
-            reset$2();
-            previousSeed$2 = seed;
-        }
-    }
-
-    function shuffle$2() {
-        if (!alphabet$2) {
-            setCharacters$2(ORIGINAL$2);
-        }
-
-        var sourceArray = alphabet$2.split('');
-        var targetArray = [];
-        var r = randomFromSeed$2.nextValue();
-        var characterIndex;
-
-        while (sourceArray.length > 0) {
-            r = randomFromSeed$2.nextValue();
-            characterIndex = Math.floor(r * sourceArray.length);
-            targetArray.push(sourceArray.splice(characterIndex, 1)[0]);
-        }
-        return targetArray.join('');
-    }
-
-    function getShuffled$2() {
-        if (shuffled$2) {
-            return shuffled$2;
-        }
-        shuffled$2 = shuffle$2();
-        return shuffled$2;
-    }
-
-    /**
-     * lookup shuffled letter
-     * @param index
-     * @returns {string}
-     */
-    function lookup$2(index) {
-        var alphabetShuffled = getShuffled$2();
-        return alphabetShuffled[index];
-    }
-
-    function get$1 () {
-      return alphabet$2 || ORIGINAL$2;
-    }
-
-    var alphabet_1$2 = {
-        get: get$1,
-        characters: characters$2,
-        seed: setSeed$4,
-        lookup: lookup$2,
-        shuffled: getShuffled$2
-    };
-
-    var crypto$2 = typeof window === 'object' && (window.crypto || window.msCrypto); // IE 11 uses window.msCrypto
-
-    var randomByte$2;
-
-    if (!crypto$2 || !crypto$2.getRandomValues) {
-        randomByte$2 = function(size) {
-            var bytes = [];
-            for (var i = 0; i < size; i++) {
-                bytes.push(Math.floor(Math.random() * 256));
-            }
-            return bytes;
-        };
-    } else {
-        randomByte$2 = function(size) {
-            return crypto$2.getRandomValues(new Uint8Array(size));
-        };
-    }
-
-    var randomByteBrowser$2 = randomByte$2;
-
-    // This file replaces `format.js` in bundlers like webpack or Rollup,
-    // according to `browser` config in `package.json`.
-
-    var format_browser$1 = function (random, alphabet, size) {
-      // We can’t use bytes bigger than the alphabet. To make bytes values closer
-      // to the alphabet, we apply bitmask on them. We look for the closest
-      // `2 ** x - 1` number, which will be bigger than alphabet size. If we have
-      // 30 symbols in the alphabet, we will take 31 (00011111).
-      // We do not use faster Math.clz32, because it is not available in browsers.
-      var mask = (2 << Math.log(alphabet.length - 1) / Math.LN2) - 1;
-      // Bitmask is not a perfect solution (in our example it will pass 31 bytes,
-      // which is bigger than the alphabet). As a result, we will need more bytes,
-      // than ID size, because we will refuse bytes bigger than the alphabet.
-
-      // Every hardware random generator call is costly,
-      // because we need to wait for entropy collection. This is why often it will
-      // be faster to ask for few extra bytes in advance, to avoid additional calls.
-
-      // Here we calculate how many random bytes should we call in advance.
-      // It depends on ID length, mask / alphabet size and magic number 1.6
-      // (which was selected according benchmarks).
-
-      // -~f => Math.ceil(f) if n is float number
-      // -~i => i + 1 if n is integer number
-      var step = -~(1.6 * mask * size / alphabet.length);
-      var id = '';
-
-      while (true) {
-        var bytes = random(step);
-        // Compact alternative for `for (var i = 0; i < step; i++)`
-        var i = step;
-        while (i--) {
-          // If random byte is bigger than alphabet even after bitmask,
-          // we refuse it by `|| ''`.
-          id += alphabet[bytes[i] & mask] || '';
-          // More compact than `id.length + 1 === size`
-          if (id.length === +size) return id
-        }
-      }
-    };
-
-    function generate$1(number) {
-        var loopCounter = 0;
-        var done;
-
-        var str = '';
-
-        while (!done) {
-            str = str + format_browser$1(randomByteBrowser$2, alphabet_1$2.get(), 1);
-            done = number < (Math.pow(16, loopCounter + 1 ) );
-            loopCounter++;
-        }
-        return str;
-    }
-
-    var generate_1$1 = generate$1;
-
-    // Ignore all milliseconds before a certain time to reduce the size of the date entropy without sacrificing uniqueness.
-    // This number should be updated every year or so to keep the generated id short.
-    // To regenerate `new Date() - 0` and bump the version. Always bump the version!
-    var REDUCE_TIME$1 = 1567752802062;
-
-    // don't change unless we change the algos or REDUCE_TIME
-    // must be an integer and less than 16
-    var version$3 = 7;
-
-    // Counter is used when shortid is called multiple times in one second.
-    var counter$1;
-
-    // Remember the last time shortid was called in case counter is needed.
-    var previousSeconds$1;
-
-    /**
-     * Generate unique id
-     * Returns string id
-     */
-    function build$1(clusterWorkerId) {
-        var str = '';
-
-        var seconds = Math.floor((Date.now() - REDUCE_TIME$1) * 0.001);
-
-        if (seconds === previousSeconds$1) {
-            counter$1++;
-        } else {
-            counter$1 = 0;
-            previousSeconds$1 = seconds;
-        }
-
-        str = str + generate_1$1(version$3);
-        str = str + generate_1$1(clusterWorkerId);
-        if (counter$1 > 0) {
-            str = str + generate_1$1(counter$1);
-        }
-        str = str + generate_1$1(seconds);
-        return str;
-    }
-
-    var build_1$1 = build$1;
-
-    function isShortId$2(id) {
-        if (!id || typeof id !== 'string' || id.length < 6 ) {
-            return false;
-        }
-
-        var nonAlphabetic = new RegExp('[^' +
-          alphabet_1$2.get().replace(/[|\\{}()[\]^$+*?.-]/g, '\\$&') +
-        ']');
-        return !nonAlphabetic.test(id);
-    }
-
-    var isValid$2 = isShortId$2;
-
-    var lib$3 = createCommonjsModule$2(function (module) {
-
-
-
-
-
-    // if you are using cluster or multiple servers use this to make each instance
-    // has a unique value for worker
-    // Note: I don't know if this is automatically set when using third
-    // party cluster solutions such as pm2.
-    var clusterWorkerId =  0;
-
-    /**
-     * Set the seed.
-     * Highly recommended if you don't want people to try to figure out your id schema.
-     * exposed as shortid.seed(int)
-     * @param seed Integer value to seed the random alphabet.  ALWAYS USE THE SAME SEED or you might get overlaps.
-     */
-    function seed(seedValue) {
-        alphabet_1$2.seed(seedValue);
-        return module.exports;
-    }
-
-    /**
-     * Set the cluster worker or machine id
-     * exposed as shortid.worker(int)
-     * @param workerId worker must be positive integer.  Number less than 16 is recommended.
-     * returns shortid module so it can be chained.
-     */
-    function worker(workerId) {
-        clusterWorkerId = workerId;
-        return module.exports;
-    }
-
-    /**
-     *
-     * sets new characters to use in the alphabet
-     * returns the shuffled alphabet
-     */
-    function characters(newCharacters) {
-        if (newCharacters !== undefined) {
-            alphabet_1$2.characters(newCharacters);
-        }
-
-        return alphabet_1$2.shuffled();
-    }
-
-    /**
-     * Generate unique id
-     * Returns string id
-     */
-    function generate() {
-      return build_1$1(clusterWorkerId);
-    }
-
-    // Export all other functions as properties of the generate function
-    module.exports = generate;
-    module.exports.generate = generate;
-    module.exports.seed = seed;
-    module.exports.worker = worker;
-    module.exports.characters = characters;
-    module.exports.isValid = isValid$2;
-    });
-
-    var shortid$2 = lib$3;
-
-    class PlatformController {
-        constructor(systemController, glueController, windowsController, applicationsController, layoutsController, workspacesController, intentsController, channelsController, notificationsController, portsBridge, stateController, serviceWorkerController, extensionController, preferredConnectionController, interceptionController, pluginsController) {
-            this.systemController = systemController;
-            this.glueController = glueController;
-            this.windowsController = windowsController;
-            this.applicationsController = applicationsController;
-            this.layoutsController = layoutsController;
-            this.workspacesController = workspacesController;
-            this.intentsController = intentsController;
-            this.channelsController = channelsController;
-            this.notificationsController = notificationsController;
-            this.portsBridge = portsBridge;
-            this.stateController = stateController;
-            this.serviceWorkerController = serviceWorkerController;
-            this.extensionController = extensionController;
-            this.preferredConnectionController = preferredConnectionController;
-            this.interceptionController = interceptionController;
-            this.pluginsController = pluginsController;
-            this.controllers = {
-                system: this.systemController,
-                windows: this.windowsController,
-                appManager: this.applicationsController,
-                layouts: this.layoutsController,
-                workspaces: this.workspacesController,
-                intents: this.intentsController,
-                channels: this.channelsController,
-                notifications: this.notificationsController,
-                extension: this.extensionController
-            };
-        }
-        get logger() {
-            return logger.get("main.web.platform");
-        }
-        get ctxTrackingGlue() {
-            return this.glueController.contextsTrackingGlue;
-        }
-        get systemGlue() {
-            return this.glueController.systemGlue;
-        }
-        get platformApi() {
-            return this._platformApi;
-        }
-        start(config) {
-            var _a, _b;
-            return __awaiter(this, void 0, void 0, function* () {
-                yield this.portsBridge.configure(config);
-                this.portsBridge.onClientUnloaded(this.handleClientUnloaded.bind(this));
-                yield this.glueController.start(config);
-                yield Promise.all([
-                    this.glueController.createPlatformSystemMethod(this.handleClientMessage.bind(this)),
-                    this.glueController.createPlatformSystemStream()
-                ]);
-                this.stateController.start();
-                yield Promise.all(Object.values(this.controllers).map((controller) => controller.start(config)));
-                yield this.glueController.initClientGlue(config === null || config === void 0 ? void 0 : config.glue, config === null || config === void 0 ? void 0 : config.glueFactory, (_a = config === null || config === void 0 ? void 0 : config.workspaces) === null || _a === void 0 ? void 0 : _a.isFrame);
-                yield this.serviceWorkerController.connect(config);
-                this._platformApi = this.buildPlatformApi();
-                yield this.pluginsController.start({
-                    platformConfig: config,
-                    plugins: (_b = config.plugins) === null || _b === void 0 ? void 0 : _b.definitions,
-                    api: this.platformApi,
-                    handlePluginMessage: this.handlePluginMessage.bind(this)
-                });
-                yield this.pluginsController.startCorePlus(config.corePlus);
-                if (config.connection.preferred) {
-                    yield this.preferredConnectionController.start(config.connection.preferred);
-                }
-                this.serviceWorkerController.notifyReady();
-                this.portsBridge.start();
-            });
-        }
-        getClientGlue() {
-            return this.glueController.clientGlue;
-        }
-        handleClientMessage(args, caller, success, error) {
-            this.processControllerCommand(args, "client", caller.instance)
-                .then((result) => success(result))
-                .catch((err) => error(err));
-        }
-        handlePluginMessage(args, pluginName) {
-            return __awaiter(this, void 0, void 0, function* () {
-                return this.processControllerCommand(args, "plugin", pluginName);
-            });
-        }
-        processControllerCommand(args, callerType, callerId) {
-            var _a, _b, _c, _d;
-            return __awaiter(this, void 0, void 0, function* () {
-                const decodeResult = libDomainDecoder$1.run(args.domain);
-                if (!decodeResult.ok) {
-                    const errString = JSON.stringify(decodeResult.error);
-                    (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`rejecting execution of a command issued by a ${callerType}: ${callerId}, because of a domain validation error: ${errString}`);
-                    throw new Error(`Cannot execute this platform control, because of domain validation error: ${errString}`);
-                }
-                const domain = decodeResult.result;
-                const controlMessage = Object.assign({}, args, {
-                    commandId: shortid$2.generate(),
-                    callerId, callerType
-                });
-                (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace(`[${controlMessage.commandId}] received a command for a valid domain: ${domain} from ${callerType}: ${callerId}, forwarding to the appropriate controller`);
-                try {
-                    const result = yield this.executeCommand(controlMessage);
-                    (_c = this.logger) === null || _c === void 0 ? void 0 : _c.trace(`[${controlMessage.commandId}] this command was executed successfully, sending the result to the caller.`);
-                    return result;
-                }
-                catch (error) {
-                    const stringError = typeof error === "string" ? error : JSON.stringify(error.message);
-                    (_d = this.logger) === null || _d === void 0 ? void 0 : _d.trace(`[${controlMessage.commandId}] this command's execution was rejected, reason: ${stringError}`);
-                    throw new Error(`The platform rejected operation ${controlMessage.operation} for domain: ${domain} with reason: ${stringError}`);
-                }
-            });
-        }
-        handleClientUnloaded(client) {
-            var _a;
-            (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`detected unloading of client: ${client.windowId}, notifying all controllers`);
-            Object.values(this.controllers).forEach((controller, idx) => {
-                var _a, _b;
-                try {
-                    (_a = controller.handleClientUnloaded) === null || _a === void 0 ? void 0 : _a.call(controller, client.windowId, client.win);
-                }
-                catch (error) {
-                    const stringError = typeof error === "string" ? error : JSON.stringify(error.message);
-                    const controllerName = Object.keys(this.controllers)[idx];
-                    (_b = this.logger) === null || _b === void 0 ? void 0 : _b.error(`${controllerName} controller threw when handling unloaded client ${client.windowId} with error message: ${stringError}`);
-                }
-            });
-        }
-        executeCommand(controlMessage) {
-            var _a, _b;
-            const interceptor = this.interceptionController.getOperationInterceptor({ domain: controlMessage.domain, operation: controlMessage.operation });
-            if (interceptor && !((_a = controlMessage.settings) === null || _a === void 0 ? void 0 : _a.skipInterception)) {
-                (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace(`[${controlMessage.commandId}] The operation is being intercepted and executed by: ${interceptor.name}`);
-                return interceptor.intercept(controlMessage);
-            }
-            return this.controllers[controlMessage.domain].handleControl(controlMessage);
-        }
-        buildPlatformApi() {
-            return {
-                version: this.glueController.platformVersion,
-                contextTrackGlue: this.ctxTrackingGlue,
-                systemGlue: this.systemGlue,
-                connectExtClient: (client, port) => {
-                    return this.connectExtClient(client, port);
-                },
-                onSystemReconnect: (callback) => {
-                    return this.onSystemReconnect(callback);
-                }
-            };
-        }
-        connectExtClient(client, port) {
-            return __awaiter(this, void 0, void 0, function* () {
-                yield this.portsBridge.handleExtConnectionRequest(client, port);
-            });
-        }
-        onSystemReconnect(callback) {
-            return this.preferredConnectionController.onReconnect(callback);
-        }
-    }
 
     var isMergeableObject = function isMergeableObject(value) {
     	return isNonNullObject(value)
@@ -15282,7 +15486,7 @@
         }
         processConfig(config = {}) {
             var _a, _b, _c;
-            const verifiedConfig = platformConfigDecoder.runWithException(config);
+            const verifiedConfig = config.corePlus ? config : platformConfigDecoder.runWithException(config);
             this.validatePlugins(verifiedConfig);
             this.platformConfig = cjs(defaultPlatformConfig, verifiedConfig);
             let systemSettings = this.session.getSystemSettings();
@@ -26577,7 +26781,7 @@
     };
     const wait = (ms) => new Promise((resolve) => setTimeout(() => resolve(), ms));
 
-    var version$5 = "1.14.3";
+    var version$5 = "1.17.1";
 
     class GlueController {
         constructor(portsBridge, sessionStorage) {
@@ -27139,7 +27343,7 @@
             var _a;
             return __awaiter(this, void 0, void 0, function* () {
                 const channel = this.ioc.createMessageChannel();
-                const client = yield this.gateway.connectClient(channel.port1, this.removeClient.bind(this));
+                const client = yield this.gateway.connectClient(channel.port1);
                 this.setupGwClientPort({ client, clientId, clientPort: channel.port1 });
                 this.allClients.push({ client, bridgeInstanceId, clientId });
                 const foundData = this.sessionStorage.getBridgeInstanceData(bridgeInstanceId);
@@ -27263,7 +27467,7 @@
         }
     }
 
-    const windowOperationDecoder = oneOf$1(constant$1("openWindow"), constant$1("windowHello"), constant$1("getUrl"), constant$1("getTitle"), constant$1("setTitle"), constant$1("moveResize"), constant$1("focus"), constant$1("close"), constant$1("getBounds"), constant$1("getFrameBounds"), constant$1("registerWorkspaceWindow"), constant$1("unregisterWorkspaceWindow"));
+    const windowOperationDecoder = oneOf$1(constant$1("openWindow"), constant$1("windowHello"), constant$1("getUrl"), constant$1("getTitle"), constant$1("setTitle"), constant$1("moveResize"), constant$1("focus"), constant$1("close"), constant$1("getBounds"), constant$1("getFrameBounds"), constant$1("registerWorkspaceWindow"), constant$1("unregisterWorkspaceWindow"), constant$1("operationCheck"));
     const openWindowConfigDecoder$1 = object$1({
         name: nonEmptyStringDecoder$1,
         url: nonEmptyStringDecoder$1,
@@ -27300,7 +27504,7 @@
         title: string$1()
     });
 
-    const workspacesOperationDecoder = oneOf$1(constant$1("isWindowInWorkspace"), constant$1("createWorkspace"), constant$1("createFrame"), constant$1("initFrame"), constant$1("getAllFramesSummaries"), constant$1("getFrameSummary"), constant$1("getAllWorkspacesSummaries"), constant$1("getWorkspaceSnapshot"), constant$1("getAllLayoutsSummaries"), constant$1("openWorkspace"), constant$1("deleteLayout"), constant$1("saveLayout"), constant$1("importLayout"), constant$1("exportAllLayouts"), constant$1("restoreItem"), constant$1("maximizeItem"), constant$1("focusItem"), constant$1("closeItem"), constant$1("resizeItem"), constant$1("moveFrame"), constant$1("getFrameSnapshot"), constant$1("forceLoadWindow"), constant$1("ejectWindow"), constant$1("setItemTitle"), constant$1("moveWindowTo"), constant$1("addWindow"), constant$1("addContainer"), constant$1("bundleWorkspace"), constant$1("changeFrameState"), constant$1("getFrameState"), constant$1("getFrameBounds"), constant$1("frameHello"), constant$1("hibernateWorkspace"), constant$1("resumeWorkspace"), constant$1("getWorkspacesConfig"), constant$1("lockWorkspace"), constant$1("lockContainer"), constant$1("lockWindow"), constant$1("pinWorkspace"), constant$1("unpinWorkspace"), constant$1("getWorkspaceIcon"), constant$1("setWorkspaceIcon"), constant$1("checkStarted"), constant$1("getPlatformFrameId"), constant$1("getWorkspaceWindowsOnLayoutSaveContext"), constant$1("getWorkspacesLayouts"), constant$1("setMaximizationBoundary"));
+    const workspacesOperationDecoder = oneOf$1(constant$1("isWindowInWorkspace"), constant$1("createWorkspace"), constant$1("createFrame"), constant$1("initFrame"), constant$1("getAllFramesSummaries"), constant$1("getFrameSummary"), constant$1("getAllWorkspacesSummaries"), constant$1("getWorkspaceSnapshot"), constant$1("getAllLayoutsSummaries"), constant$1("openWorkspace"), constant$1("deleteLayout"), constant$1("saveLayout"), constant$1("importLayout"), constant$1("exportAllLayouts"), constant$1("restoreItem"), constant$1("maximizeItem"), constant$1("focusItem"), constant$1("closeItem"), constant$1("resizeItem"), constant$1("moveFrame"), constant$1("getFrameSnapshot"), constant$1("forceLoadWindow"), constant$1("ejectWindow"), constant$1("setItemTitle"), constant$1("moveWindowTo"), constant$1("addWindow"), constant$1("addContainer"), constant$1("bundleWorkspace"), constant$1("changeFrameState"), constant$1("getFrameState"), constant$1("getFrameBounds"), constant$1("frameHello"), constant$1("hibernateWorkspace"), constant$1("resumeWorkspace"), constant$1("getWorkspacesConfig"), constant$1("lockWorkspace"), constant$1("lockContainer"), constant$1("lockWindow"), constant$1("pinWorkspace"), constant$1("unpinWorkspace"), constant$1("getWorkspaceIcon"), constant$1("setWorkspaceIcon"), constant$1("checkStarted"), constant$1("getPlatformFrameId"), constant$1("getWorkspaceWindowsOnLayoutSaveContext"), constant$1("getWorkspacesLayouts"), constant$1("setMaximizationBoundary"), constant$1("operationCheck"), constant$1("getWorkspaceWindowFrameBounds"));
     const frameHelloDecoder = object$1({
         windowId: optional$1(nonEmptyStringDecoder$1)
     });
@@ -27846,7 +28050,8 @@
                 getTitle: { name: "getTitle", dataDecoder: simpleWindowDecoder$1, resultDecoder: windowTitleConfigDecoder$1, execute: this.handleGetTitle.bind(this) },
                 setTitle: { name: "setTitle", dataDecoder: windowTitleConfigDecoder$1, execute: this.handleSetTitle.bind(this) },
                 registerWorkspaceWindow: { name: "registerWorkspaceWindow", dataDecoder: workspaceWindowDataDecoder, execute: this.registerWorkspaceWindow.bind(this) },
-                unregisterWorkspaceWindow: { name: "unregisterWorkspaceWindow", dataDecoder: simpleWindowDecoder$1, execute: this.handleWorkspaceClientRemoval.bind(this) }
+                unregisterWorkspaceWindow: { name: "unregisterWorkspaceWindow", dataDecoder: simpleWindowDecoder$1, execute: this.handleWorkspaceClientRemoval.bind(this) },
+                operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder$1, resultDecoder: operationCheckResultDecoder$1, execute: this.handleOperationCheck.bind(this) }
             };
         }
         get logger() {
@@ -27959,6 +28164,13 @@
                 }
                 this.emitStreamData("windowAdded", { windowId: data.windowId, name: data.name });
                 (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace(`[${commandId}] workspace window registered successfully with id ${data.windowId} and name ${data.name}`);
+            });
+        }
+        handleOperationCheck(config) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const operations = Object.keys(this.operations);
+                const isSupported = operations.some((operation) => operation.toLowerCase() === config.operation.toLowerCase());
+                return { isSupported };
             });
         }
         emitStreamData(operation, data) {
@@ -28523,7 +28735,7 @@
         }
     }
 
-    const appManagerOperationTypesDecoder$1 = oneOf$1(constant$1("appHello"), constant$1("applicationStart"), constant$1("instanceStop"), constant$1("registerWorkspaceApp"), constant$1("unregisterWorkspaceApp"), constant$1("export"), constant$1("import"), constant$1("remove"), constant$1("clear"), constant$1("registerRemoteApps"));
+    const appManagerOperationTypesDecoder$1 = oneOf$1(constant$1("appHello"), constant$1("applicationStart"), constant$1("instanceStop"), constant$1("registerWorkspaceApp"), constant$1("unregisterWorkspaceApp"), constant$1("export"), constant$1("import"), constant$1("remove"), constant$1("clear"), constant$1("registerRemoteApps"), constant$1("operationCheck"));
     const basicInstanceDataDecoder$1 = object$1({
         id: nonEmptyStringDecoder$1
     });
@@ -28606,6 +28818,7 @@
                 export: { name: "export", resultDecoder: appsExportOperationDecoder$1, execute: this.handleExport.bind(this) },
                 clear: { name: "clear", execute: this.handleClear.bind(this) },
                 registerRemoteApps: { name: "registerRemoteApps", dataDecoder: appsRemoteRegistrationDecoder, execute: this.handleRegisterRemoteApps.bind(this) },
+                operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder$1, resultDecoder: operationCheckResultDecoder$1, execute: this.handleOperationCheck.bind(this) }
             };
         }
         get logger() {
@@ -28741,6 +28954,13 @@
                     initialBounds
                 };
                 yield this.ioc.windowsController.processNewWindow(windowData, context, child);
+            });
+        }
+        handleOperationCheck(config) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const operations = Object.keys(this.operations);
+                const isSupported = operations.some((operation) => operation.toLowerCase() === config.operation.toLowerCase());
+                return { isSupported };
             });
         }
         handleAppHello(helloMsg, commandId) {
@@ -28924,7 +29144,7 @@
         }
     }
 
-    const layoutsOperationTypesDecoder$1 = oneOf$1(constant$1("get"), constant$1("getAll"), constant$1("export"), constant$1("import"), constant$1("remove"), constant$1("save"), constant$1("restore"), constant$1("getRawWindowsLayoutData"), constant$1("clientSaveRequest"), constant$1("getGlobalPermissionState"), constant$1("checkGlobalActivated"), constant$1("requestGlobalPermission"));
+    const layoutsOperationTypesDecoder$1 = oneOf$1(constant$1("get"), constant$1("getAll"), constant$1("export"), constant$1("import"), constant$1("remove"), constant$1("save"), constant$1("restore"), constant$1("getRawWindowsLayoutData"), constant$1("clientSaveRequest"), constant$1("getGlobalPermissionState"), constant$1("checkGlobalActivated"), constant$1("requestGlobalPermission"), constant$1("operationCheck"));
     const newLayoutOptionsDecoder$1 = object$1({
         name: nonEmptyStringDecoder$1,
         context: optional$1(anyJson$1()),
@@ -29022,7 +29242,8 @@
                 clientSaveRequest: { name: "clientSaveRequest", dataDecoder: rawWindowsLayoutDataRequestConfigDecoder, resultDecoder: saveRequestClientResponseDecoder$1, execute: () => __awaiter(this, void 0, void 0, function* () { }) },
                 getGlobalPermissionState: { name: "getGlobalPermissionState", resultDecoder: permissionStateResultDecoder$1, execute: this.handleGetGlobalPermissionState.bind(this) },
                 requestGlobalPermission: { name: "requestGlobalPermission", resultDecoder: simpleAvailabilityResultDecoder$1, execute: this.handleRequestGlobalPermission.bind(this) },
-                checkGlobalActivated: { name: "checkGlobalActivated", resultDecoder: simpleAvailabilityResultDecoder$1, execute: this.handleCheckGlobalActivated.bind(this) }
+                checkGlobalActivated: { name: "checkGlobalActivated", resultDecoder: simpleAvailabilityResultDecoder$1, execute: this.handleCheckGlobalActivated.bind(this) },
+                operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder$1, resultDecoder: operationCheckResultDecoder$1, execute: this.handleOperationCheck.bind(this) }
             };
         }
         get logger() {
@@ -29034,9 +29255,11 @@
                 this.config = config.layouts;
                 (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`initializing with mode: ${this.config.mode}`);
                 if (this.config.local && this.config.local.length) {
+                    const localGlobalLayouts = this.config.local.filter((layout) => layout.type === "Global");
+                    const localWorkspaceLayouts = this.config.local.filter((layout) => layout.type === "Workspace");
                     yield Promise.all([
-                        this.mergeImport(this.config.local.filter((layout) => layout.type === "Global"), "Global"),
-                        this.mergeImport(this.config.local.filter((layout) => layout.type === "Workspace"), "Workspace")
+                        this.mergeImport(localGlobalLayouts, "Global"),
+                        this.mergeImport(localWorkspaceLayouts, "Workspace")
                     ]);
                 }
                 this.started = true;
@@ -29114,9 +29337,11 @@
                 (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${commandId}] handling mass import request for layout names: ${config.layouts.map((l) => l.name).join(", ")}`);
                 const importExecution = config.mode === "merge" ? this.mergeImport.bind(this) : this.replaceImport.bind(this);
                 (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace(`[${commandId}] importing the layouts in ${config.mode} mode`);
+                const workspaceLayouts = config.layouts.filter((layout) => layout.type === "Workspace");
+                const globalLayouts = config.layouts.filter((layout) => layout.type === "Global");
                 yield Promise.all([
-                    importExecution(config.layouts.filter((layout) => layout.type === "Global"), "Global"),
-                    importExecution(config.layouts.filter((layout) => layout.type === "Workspace"), "Workspace")
+                    importExecution(globalLayouts, "Global"),
+                    importExecution(workspaceLayouts, "Workspace")
                 ]);
                 (_c = this.logger) === null || _c === void 0 ? void 0 : _c.trace(`[${commandId}] mass import completed, responding to caller`);
             });
@@ -29155,6 +29380,13 @@
                 };
                 (_c = this.logger) === null || _c === void 0 ? void 0 : _c.trace(`[${commandId}] request completed, responding to the caller`);
                 return result;
+            });
+        }
+        handleOperationCheck(config) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const operations = Object.keys(this.operations);
+                const isSupported = operations.some((operation) => operation.toLowerCase() === config.operation.toLowerCase());
+                return { isSupported };
             });
         }
         buildRawGlueWindowData(windowData, requestConfig, commandId) {
@@ -29269,7 +29501,7 @@
                     }
                 }
                 yield this.cleanSave(currentLayouts, type);
-                pendingEvents.forEach((pending) => this.emitStreamData(pending.operation, pending.layout));
+                yield this.announceEvents(pendingEvents);
             });
         }
         replaceImport(layouts, type) {
@@ -29296,7 +29528,19 @@
                     pendingEvents.push({ operation: "layoutRemoved", layout });
                 });
                 yield this.cleanSave(layouts, type);
-                pendingEvents.forEach((pending) => this.emitStreamData(pending.operation, pending.layout));
+                yield this.announceEvents(pendingEvents);
+            });
+        }
+        announceEvents(events) {
+            return __awaiter(this, void 0, void 0, function* () {
+                let batchCount = 0;
+                for (const event of events) {
+                    ++batchCount;
+                    if (batchCount % 10 === 0) {
+                        yield this.waitEventFlush();
+                    }
+                    this.emitStreamData(event.operation, event.layout);
+                }
             });
         }
         getAll(type) {
@@ -29380,6 +29624,9 @@
                 allNonPlatformWindows = allNonPlatformWindows.filter((eligibleWindow) => ignoredServers.every((server) => server.windowId !== eligibleWindow.windowId));
             }
             return allNonPlatformWindows;
+        }
+        waitEventFlush() {
+            return new Promise((resolve) => setTimeout(resolve, 10));
         }
     }
 
@@ -29507,7 +29754,9 @@
                 getPlatformFrameId: { name: "getPlatformFrameId", execute: this.handleGetPlatformFrameId.bind(this) },
                 getWorkspacesLayouts: { name: "getWorkspacesLayouts", dataDecoder: getWorkspacesLayoutsConfigDecoder, resultDecoder: getWorkspacesLayoutsResponseDecoder, execute: this.handleGetWorkspacesLayouts.bind(this) },
                 getWorkspaceWindowsOnLayoutSaveContext: { name: "getWorkspaceWindowsOnLayoutSaveContext", dataDecoder: getWorkspaceWindowsOnLayoutSaveContextConfigDecoder, resultDecoder: getWorkspaceWindowsOnLayoutSaveContextResult, execute: this.handleGetWorkspaceWindowsOnLayoutSaveContext.bind(this) },
-                setMaximizationBoundary: { name: "setMaximizationBoundary", dataDecoder: setMaximizationBoundaryConfigDecoder, resultDecoder: voidResultDecoder, execute: this.handleSetMaximizationBoundary.bind(this) }
+                setMaximizationBoundary: { name: "setMaximizationBoundary", dataDecoder: setMaximizationBoundaryConfigDecoder, resultDecoder: voidResultDecoder, execute: this.handleSetMaximizationBoundary.bind(this) },
+                operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder$1, resultDecoder: operationCheckResultDecoder$1, execute: this.handleOperationCheck.bind(this) },
+                getWorkspaceWindowFrameBounds: { name: "getWorkspaceWindowFrameBounds", resultDecoder: frameBoundsResultDecoder, dataDecoder: simpleItemConfigDecoder, execute: this.getWorkspaceWindowFrameBounds.bind(this) }
             };
         }
         start(config) {
@@ -29615,6 +29864,13 @@
             return __awaiter(this, void 0, void 0, function* () {
                 (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${commandId}] handling getWorkspacesConfiguration request`);
                 return this.settings;
+            });
+        }
+        handleOperationCheck(config) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const operations = Object.keys(this.operations);
+                const isSupported = operations.some((operation) => operation.toLowerCase() === config.operation.toLowerCase());
+                return { isSupported };
             });
         }
         handleFrameHello(config, commandId) {
@@ -29725,6 +29981,32 @@
                 const result = yield this.glueController.callFrame(this.operations.getWorkspaceSnapshot, config, frame.windowId);
                 (_c = this.logger) === null || _c === void 0 ? void 0 : _c.trace(`[${commandId}] frame ${frame.windowId} responded with a valid snapshot, retuning to caller`);
                 return result;
+            });
+        }
+        handleCheckStarted(config, commandId) {
+            var _a, _b;
+            return __awaiter(this, void 0, void 0, function* () {
+                (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${commandId}] handling handleCheckStarted request`);
+                (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace(`[${commandId}] the controller has been started, responding to caller`);
+                return { started: true };
+            });
+        }
+        handleGetPlatformFrameId(config, commandId) {
+            var _a, _b;
+            return __awaiter(this, void 0, void 0, function* () {
+                (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${commandId}] handling GetPlatformFrameId request`);
+                const platformFrameData = this.framesController.getPlatformFrameSessionData();
+                (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace(`[${commandId}] GetPlatformFrameId completed, responding to caller`);
+                return { id: platformFrameData === null || platformFrameData === void 0 ? void 0 : platformFrameData.windowId };
+            });
+        }
+        handleGetWorkspacesLayouts(config, commandId) {
+            var _a, _b;
+            return __awaiter(this, void 0, void 0, function* () {
+                (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${commandId}] handling handleGetWorkspacesLayouts request for frame: ${config.frameId} for layout: ${config.layoutName} of type: ${config.layoutType}`);
+                const response = yield this.glueController.callFrame(this.operations.getWorkspacesLayouts, config, config.frameId);
+                (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace(`[${commandId}] handleGetWorkspacesLayouts request completed for frame: ${config.frameId} for layout: ${config.layoutName} of type: ${config.layoutType}`);
+                return response;
             });
         }
         getAllLayoutsSummaries(config, commandId) {
@@ -30001,32 +30283,6 @@
                 (_c = this.logger) === null || _c === void 0 ? void 0 : _c.trace(`[${commandId}] frame ${frame.windowId} gave a success signal, responding to caller`);
             });
         }
-        handleCheckStarted(config, commandId) {
-            var _a, _b;
-            return __awaiter(this, void 0, void 0, function* () {
-                (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${commandId}] handling handleCheckStarted request`);
-                (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace(`[${commandId}] the controller has been started, responding to caller`);
-                return { started: true };
-            });
-        }
-        handleGetPlatformFrameId(config, commandId) {
-            var _a, _b;
-            return __awaiter(this, void 0, void 0, function* () {
-                (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${commandId}] handling GetPlatformFrameId request`);
-                const platformFrameData = this.framesController.getPlatformFrameSessionData();
-                (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace(`[${commandId}] GetPlatformFrameId completed, responding to caller`);
-                return { id: platformFrameData === null || platformFrameData === void 0 ? void 0 : platformFrameData.windowId };
-            });
-        }
-        handleGetWorkspacesLayouts(config, commandId) {
-            var _a, _b;
-            return __awaiter(this, void 0, void 0, function* () {
-                (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${commandId}] handling handleGetWorkspacesLayouts request for frame: ${config.frameId} for layout: ${config.layoutName} of type: ${config.layoutType}`);
-                const response = yield this.glueController.callFrame(this.operations.getWorkspacesLayouts, config, config.frameId);
-                (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace(`[${commandId}] handleGetWorkspacesLayouts request completed for frame: ${config.frameId} for layout: ${config.layoutName} of type: ${config.layoutType}`);
-                return response;
-            });
-        }
         handleGetWorkspaceWindowsOnLayoutSaveContext(config, commandId) {
             var _a, _b;
             return __awaiter(this, void 0, void 0, function* () {
@@ -30068,6 +30324,16 @@
                 const frame = yield this.framesController.getFrameInstance({ frameId: config.itemId });
                 const frameWindowBounds = yield this.glueController.callWindow("windows", this.ioc.windowsController.getFrameBoundsOperation, { windowId: frame.windowId }, frame.windowId);
                 (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace(`[${commandId}] getFrameBounds completed`);
+                return { bounds: frameWindowBounds.bounds };
+            });
+        }
+        getWorkspaceWindowFrameBounds(config, commandId) {
+            var _a, _b;
+            return __awaiter(this, void 0, void 0, function* () {
+                (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`[${commandId}] handling getWorkspaceWindowFrameBounds request with config ${JSON.stringify(config)}`);
+                const frame = yield this.framesController.getFrameInstance({ itemId: config.itemId });
+                const frameWindowBounds = yield this.glueController.callWindow("windows", this.ioc.windowsController.getFrameBoundsOperation, { windowId: frame.windowId }, frame.windowId);
+                (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace(`[${commandId}] getWorkspaceWindowFrameBounds completed`);
                 return { bounds: frameWindowBounds.bounds };
             });
         }
@@ -30118,7 +30384,7 @@
         }
     }
 
-    const intentsOperationTypesDecoder$1 = oneOf$1(constant$1("findIntent"), constant$1("getIntents"), constant$1("raiseIntent"));
+    const intentsOperationTypesDecoder$1 = oneOf$1(constant$1("findIntent"), constant$1("getIntents"), constant$1("raiseIntent"), constant$1("operationCheck"));
     const intentHandlerDecoder$1 = object$1({
         applicationName: nonEmptyStringDecoder$1,
         applicationTitle: string$1(),
@@ -30128,7 +30394,8 @@
         displayName: optional$1(string$1()),
         contextTypes: optional$1(array$1(nonEmptyStringDecoder$1)),
         instanceId: optional$1(string$1()),
-        instanceTitle: optional$1(string$1())
+        instanceTitle: optional$1(string$1()),
+        resultType: optional$1(nonEmptyStringDecoder$1)
     });
     const intentDecoder$1 = object$1({
         name: nonEmptyStringDecoder$1,
@@ -30149,7 +30416,8 @@
     const wrappedIntentFilterDecoder$1 = object$1({
         filter: optional$1(object$1({
             name: optional$1(nonEmptyStringDecoder$1),
-            contextType: optional$1(nonEmptyStringDecoder$1)
+            contextType: optional$1(nonEmptyStringDecoder$1),
+            resultType: optional$1(nonEmptyStringDecoder$1)
         }))
     });
     const intentRequestDecoder$1 = object$1({
@@ -30172,7 +30440,8 @@
             this.operations = {
                 getIntents: { name: "getIntents", resultDecoder: wrappedIntentsDecoder$1, execute: this.getWrappedIntents.bind(this) },
                 findIntent: { name: "findIntent", dataDecoder: wrappedIntentFilterDecoder$1, resultDecoder: wrappedIntentsDecoder$1, execute: this.findIntent.bind(this) },
-                raiseIntent: { name: "raiseIntent", dataDecoder: intentRequestDecoder$1, resultDecoder: intentResultDecoder$1, execute: this.raiseIntent.bind(this) }
+                raiseIntent: { name: "raiseIntent", dataDecoder: intentRequestDecoder$1, resultDecoder: intentResultDecoder$1, execute: this.raiseIntent.bind(this) },
+                operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder$1, resultDecoder: operationCheckResultDecoder$1, execute: this.handleOperationCheck.bind(this) }
             };
             this.started = false;
         }
@@ -30209,6 +30478,13 @@
                 return result;
             });
         }
+        handleOperationCheck(config) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const operations = Object.keys(this.operations);
+                const isSupported = operations.some((operation) => operation.toLowerCase() === config.operation.toLowerCase());
+                return { isSupported };
+            });
+        }
         extractAppIntents(apps) {
             const intents = {};
             const appsWithIntents = apps.filter((app) => app.intents.length > 0);
@@ -30224,7 +30500,8 @@
                         displayName: intentDef.displayName,
                         contextTypes: intentDef.contexts,
                         applicationIcon: app.icon,
-                        type: "app"
+                        type: "app",
+                        resultType: intentDef.resultType
                     };
                     intents[intentDef.name].push(handler);
                 }
@@ -30261,7 +30538,8 @@
                             displayName: info.displayName || (appIntent === null || appIntent === void 0 ? void 0 : appIntent.displayName),
                             contextTypes: info.contextTypes || (appIntent === null || appIntent === void 0 ? void 0 : appIntent.contexts),
                             instanceTitle: title,
-                            type: "instance"
+                            type: "instance",
+                            resultType: (appIntent === null || appIntent === void 0 ? void 0 : appIntent.resultType) || info.resultType
                         };
                         intents[intentName].push(handler);
                     })));
@@ -30329,6 +30607,10 @@
                 }
                 if (intentFilter.name) {
                     intents = intents.filter((intent) => intent.name === intentFilter.name);
+                }
+                if (intentFilter.resultType) {
+                    const resultTypeToLower = intentFilter.resultType.toLowerCase();
+                    intents = intents.filter((intent) => intent.handlers.some(handler => { var _a; return ((_a = handler.resultType) === null || _a === void 0 ? void 0 : _a.toLowerCase()) === resultTypeToLower; }));
                 }
                 (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace(`[${commandId}] findIntent command completed`);
                 return this.wrapIntents(intents);
@@ -30442,7 +30724,7 @@
         }
     }
 
-    const channelOperationDecoder = oneOf$1(constant$1("addChannel"));
+    const channelOperationDecoder = oneOf$1(constant$1("addChannel"), constant$1("operationCheck"));
     const channelContextDecoder$1 = object$1({
         name: nonEmptyStringDecoder$1,
         meta: object$1({
@@ -30455,7 +30737,8 @@
         constructor(glueController) {
             this.glueController = glueController;
             this.operations = {
-                addChannel: { name: "addChannel", execute: this.addChannel.bind(this), dataDecoder: channelContextDecoder$1 }
+                addChannel: { name: "addChannel", execute: this.addChannel.bind(this), dataDecoder: channelContextDecoder$1 },
+                operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder$1, resultDecoder: operationCheckResultDecoder$1, execute: this.handleOperationCheck.bind(this) }
             };
         }
         get logger() {
@@ -30492,6 +30775,13 @@
                 }
                 (_d = this.logger) === null || _d === void 0 ? void 0 : _d.trace(`[${commandId}] ${operationName} command was executed successfully`);
                 return result;
+            });
+        }
+        handleOperationCheck(config) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const operations = Object.keys(this.operations);
+                const isSupported = operations.some((operation) => operation.toLowerCase() === config.operation.toLowerCase());
+                return { isSupported };
             });
         }
         setupChannels(channels) {
@@ -30860,7 +31150,7 @@
         }
         buildTimer(workspaceId) {
             var _a, _b;
-            const timeout = setTimeout(() => {
+            const timeout = window.setTimeout(() => {
                 var _a;
                 (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`Timer triggered will try to hibernated ${workspaceId}`);
                 this.tryHibernateWorkspace(workspaceId);
@@ -30875,9 +31165,13 @@
             this.session = session;
             this.base = {};
             this.started = false;
+            this.platformOperations = [
+                "cleanupClientsOnWorkspaceFrameUnregister"
+            ];
             this.operations = {
                 getEnvironment: { name: "getEnvironment", resultDecoder: anyDecoder$1, execute: this.handleGetEnvironment.bind(this) },
-                getBase: { name: "getBase", resultDecoder: anyDecoder$1, execute: this.handleGetBase.bind(this) }
+                getBase: { name: "getBase", resultDecoder: anyDecoder$1, execute: this.handleGetBase.bind(this) },
+                operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder$1, resultDecoder: operationCheckResultDecoder$1, execute: this.handleOperationCheck.bind(this) }
             };
         }
         get logger() {
@@ -30917,6 +31211,14 @@
                 }
                 (_d = this.logger) === null || _d === void 0 ? void 0 : _d.trace(`[${commandId}] ${operationName} command was executed successfully`);
                 return result;
+            });
+        }
+        handleOperationCheck(config) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const operations = Object.keys(this.operations);
+                const isSupportedByController = operations.some((operation) => operation.toLowerCase() === config.operation.toLowerCase());
+                const isSupportedByPlatform = this.platformOperations.some((operation) => operation.toLowerCase() === config.operation.toLowerCase());
+                return { isSupported: isSupportedByController || isSupportedByPlatform };
             });
         }
         handleGetEnvironment() {
@@ -31330,7 +31632,7 @@
         }
     }
 
-    const notificationsOperationDecoder = oneOf$1(constant$1("raiseNotification"), constant$1("requestPermission"), constant$1("getPermission"));
+    const notificationsOperationDecoder = oneOf$1(constant$1("raiseNotification"), constant$1("requestPermission"), constant$1("getPermission"), constant$1("operationCheck"));
     const interopActionSettingsDecoder$1 = object$1({
         method: nonEmptyStringDecoder$1,
         arguments: optional$1(anyJson$1()),
@@ -31382,7 +31684,8 @@
             this.operations = {
                 raiseNotification: { name: "raiseNotification", execute: this.handleRaiseNotification.bind(this), dataDecoder: raiseNotificationDecoder$1 },
                 requestPermission: { name: "requestPermission", resultDecoder: permissionRequestResultDecoder$1, execute: this.handleRequestPermission.bind(this) },
-                getPermission: { name: "getPermission", resultDecoder: permissionQueryResultDecoder$1, execute: this.handleGetPermission.bind(this) }
+                getPermission: { name: "getPermission", resultDecoder: permissionQueryResultDecoder$1, execute: this.handleGetPermission.bind(this) },
+                operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder$1, resultDecoder: operationCheckResultDecoder$1, execute: this.handleOperationCheck.bind(this) }
             };
         }
         get logger() {
@@ -31398,6 +31701,13 @@
                     this.listenForExtensionNotificationsEvents();
                 }
                 this.serviceWorkerController.onNotificationClick(this.handleNotificationClick.bind(this));
+            });
+        }
+        handleOperationCheck(config) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const operations = Object.keys(this.operations);
+                const isSupported = operations.some((operation) => operation.toLowerCase() === config.operation.toLowerCase());
+                return { isSupported };
             });
         }
         handleNotificationClick(clickData) {
@@ -31596,7 +31906,7 @@
         }
     }
 
-    const extensionOperationTypesDecoder$1 = oneOf$1(constant$1("clientHello"));
+    const extensionOperationTypesDecoder$1 = oneOf$1(constant$1("clientHello"), constant$1("operationCheck"));
     const clientHelloResponseDecoder = object$1({
         widget: object$1({
             inject: boolean$1()
@@ -31611,7 +31921,8 @@
             this.session = session;
             this.started = false;
             this.operations = {
-                clientHello: { name: "appHello", resultDecoder: clientHelloResponseDecoder, dataDecoder: clientHelloDecoder, execute: this.handleClientHello.bind(this) }
+                clientHello: { name: "appHello", resultDecoder: clientHelloResponseDecoder, dataDecoder: clientHelloDecoder, execute: this.handleClientHello.bind(this) },
+                operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder$1, resultDecoder: operationCheckResultDecoder$1, execute: this.handleOperationCheck.bind(this) }
             };
         }
         get logger() {
@@ -31664,6 +31975,13 @@
                 };
                 (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace(`[${commandId}] responding to client hello command with: ${JSON.stringify(response)}`);
                 return response;
+            });
+        }
+        handleOperationCheck(config) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const operations = Object.keys(this.operations);
+                const isSupported = operations.some((operation) => operation.toLowerCase() === config.operation.toLowerCase());
+                return { isSupported };
             });
         }
         getWidgetConfig() {
@@ -32217,9 +32535,10 @@
     }
 
     class PluginsController {
-        constructor(interceptionController, glueController) {
+        constructor(interceptionController, glueController, startCore) {
             this.interceptionController = interceptionController;
             this.glueController = glueController;
+            this.startCore = startCore;
             this.registeredPlugins = [];
         }
         get logger() {
@@ -32228,7 +32547,6 @@
         start(config) {
             return __awaiter(this, void 0, void 0, function* () {
                 this.handlePluginMessage = config.handlePluginMessage;
-                this.internalConfig = config.platformConfig;
                 this.platformApi = config.api;
                 if (!config.plugins || !config.plugins.length) {
                     return;
@@ -32243,23 +32561,21 @@
                 yield Promise.all(criticalPlugins);
             });
         }
-        startCorePlus(definition) {
+        startCorePlus(platformConfig) {
             return __awaiter(this, void 0, void 0, function* () {
-                if (!definition) {
+                if (!platformConfig.corePlus) {
                     return;
                 }
-                const coreStartPromise = this.startPlugin(Object.assign(Object.assign({}, definition), { name: "Glue42CorePlus" }));
-                if (definition.critical) {
-                    yield coreStartPromise;
-                }
+                yield this.startCore(platformConfig);
             });
         }
         startPlugin(definition) {
-            var _a;
+            var _a, _b;
             return __awaiter(this, void 0, void 0, function* () {
                 try {
                     const platformControls = this.buildPlatformControls(definition.name, this.platformApi);
                     yield definition.start(this.glueController.clientGlue, definition.config, platformControls);
+                    this.registerPlugin(definition.name, (_a = definition.version) !== null && _a !== void 0 ? _a : "N/A");
                 }
                 catch (error) {
                     const stringError = typeof error === "string" ? error : JSON.stringify(error.message);
@@ -32268,7 +32584,7 @@
                         throw new Error(message);
                     }
                     else {
-                        (_a = this.logger) === null || _a === void 0 ? void 0 : _a.warn(message);
+                        (_b = this.logger) === null || _b === void 0 ? void 0 : _b.warn(message);
                     }
                 }
             });
@@ -32282,27 +32598,8 @@
                     register: (request) => this.interceptionController.registerInterceptor(request, pluginName)
                 },
                 system: {
-                    sendControl: (args) => this.handlePluginMessage(args, pluginName),
-                    register: this.registerPlugin.bind(this),
-                    getInfo: this.getGlueInfo.bind(this)
+                    sendControl: (args) => this.handlePluginMessage(args, pluginName)
                 }
-            };
-        }
-        getGlueInfo() {
-            var _a;
-            const workspaces = this.glueController.clientGlue.workspaces ? {
-                version: this.glueController.clientGlue.workspaces.version,
-                frameUrl: (_a = this.internalConfig.workspaces) === null || _a === void 0 ? void 0 : _a.src
-            } : undefined;
-            return {
-                web: {
-                    version: this.glueController.clientGlue.version
-                },
-                platform: {
-                    version: this.glueController.platformVersion,
-                    plugins: this.registeredPlugins
-                },
-                workspaces
             };
         }
         registerPlugin(name, version) {
@@ -32314,6 +32611,89 @@
                 return;
             }
             this.registeredPlugins.push({ name, version });
+        }
+    }
+
+    class DomainsController {
+        constructor(systemController, windowsController, applicationsController, layoutsController, workspacesController, intentsController, channelsController, notificationsController, extensionController) {
+            this.systemController = systemController;
+            this.windowsController = windowsController;
+            this.applicationsController = applicationsController;
+            this.layoutsController = layoutsController;
+            this.workspacesController = workspacesController;
+            this.intentsController = intentsController;
+            this.channelsController = channelsController;
+            this.notificationsController = notificationsController;
+            this.extensionController = extensionController;
+            this.defaultDomainNames = ["system", "windows", "appManager", "layouts", "workspaces", "intents", "channels", "notifications", "extension"];
+            this.domains = {
+                system: { name: "system", libController: this.systemController },
+                windows: { name: "windows", libController: this.windowsController },
+                appManager: { name: "appManager", libController: this.applicationsController },
+                layouts: { name: "layouts", libController: this.layoutsController },
+                workspaces: { name: "workspaces", libController: this.workspacesController },
+                intents: { name: "intents", libController: this.intentsController },
+                channels: { name: "channels", libController: this.channelsController },
+                notifications: { name: "notifications", libController: this.notificationsController },
+                extension: { name: "extension", libController: this.extensionController }
+            };
+        }
+        get logger() {
+            return logger.get("domains.controller");
+        }
+        validateDomain(domainName) {
+            const domain = this.domains[domainName];
+            const decoder = domain.domainNameDecoder ? domain.domainNameDecoder : libDomainDecoder$1;
+            decoder === null || decoder === void 0 ? void 0 : decoder.runWithException(domainName);
+        }
+        startAllDomains(config) {
+            var _a, _b;
+            return __awaiter(this, void 0, void 0, function* () {
+                (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace("Starting all domains lib controllers");
+                yield Promise.all(Object.values(this.domains).map((controller) => controller.libController.start(config)));
+                (_b = this.logger) === null || _b === void 0 ? void 0 : _b.trace("All domains have been initialized");
+            });
+        }
+        notifyDomainsClientUnloaded(client) {
+            var _a;
+            (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`detected unloading of client: ${client.windowId}, notifying all controllers`);
+            Object.values(this.domains).forEach((domain) => {
+                var _a, _b, _c;
+                try {
+                    (_b = (_a = domain.libController).handleClientUnloaded) === null || _b === void 0 ? void 0 : _b.call(_a, client.windowId, client.win);
+                }
+                catch (error) {
+                    const stringError = typeof error === "string" ? error : JSON.stringify(error.message);
+                    const controllerName = domain.name;
+                    (_c = this.logger) === null || _c === void 0 ? void 0 : _c.error(`${controllerName} controller threw when handling unloaded client ${client.windowId} with error message: ${stringError}`);
+                }
+            });
+        }
+        executeControlMessage(controlMessage) {
+            const domain = this.domains[controlMessage.domain];
+            if (!domain) {
+                throw new Error(`Cannot process message for domain: ${controlMessage.domain} and operation ${controlMessage.operation}, because no domain can service it.`);
+            }
+            return domain.libController.handleControl(controlMessage);
+        }
+        registerDynamicDomain(domain) {
+            const currentDomainNames = Object.values(this.domains).map((registeredDomain) => registeredDomain.name);
+            if (currentDomainNames.some((domainName) => domainName === domain.name)) {
+                throw new Error(`Cannot register a domain with name: ${domain.name}, because it is already registered`);
+            }
+            if (!domain.libController || !domain.libController.start || !domain.libController.handleControl || !domain.libController.handleClientUnloaded) {
+                throw new Error(`Cannot register a domain with name: ${domain.name}, because it does not have a valid libController`);
+            }
+            if (!domain.domainNameDecoder) {
+                throw new Error(`Cannot register a domain with name: ${domain.name}, because it does not have a domain decoder`);
+            }
+            this.domains[domain.name] = domain;
+        }
+        unregisterDynamicDomain(domainName) {
+            if (this.defaultDomainNames.some((defaultDomainName) => defaultDomainName === domainName)) {
+                throw new Error(`Cannot unregister a domain: ${domainName}, because it is a reserved default domain`);
+            }
+            delete this.domains[domainName];
         }
     }
 
@@ -32333,9 +32713,15 @@
             }
             return this._platformInstance;
         }
+        get domainsController() {
+            if (!this._domainsController) {
+                this._domainsController = new DomainsController(this.systemController, this.windowsController, this.applicationsController, this.layoutsController, this.workspacesController, this.intentsController, this.channelsController, this.notificationsController, this.extensionController);
+            }
+            return this._domainsController;
+        }
         get controller() {
             if (!this._mainController) {
-                this._mainController = new PlatformController(this.systemController, this.glueController, this.windowsController, this.applicationsController, this.layoutsController, this.workspacesController, this.intentsController, this.channelsController, this.notificationsController, this.portsBridge, this.stateController, this.serviceWorkerController, this.extensionController, this.preferredConnectionController, this.interceptionController, this.pluginsController);
+                this._mainController = new PlatformController(this.domainsController, this.glueController, this.portsBridge, this.stateController, this.serviceWorkerController, this.preferredConnectionController, this.interceptionController, this.pluginsController);
             }
             return this._mainController;
         }
@@ -32467,7 +32853,7 @@
         }
         get pluginsController() {
             if (!this._pluginsController) {
-                this._pluginsController = new PluginsController(this.interceptionController, this.glueController);
+                this._pluginsController = new PluginsController(this.interceptionController, this.glueController, this.startCore.bind(this));
             }
             return this._pluginsController;
         }
@@ -32495,6 +32881,12 @@
         createSequelizer(looseInterval) {
             return new AsyncSequelizer$2(looseInterval);
         }
+        startCore(platformConfig) {
+            var _a;
+            return __awaiter(this, void 0, void 0, function* () {
+                yield ((_a = platformConfig.corePlus) === null || _a === void 0 ? void 0 : _a.start(this, platformConfig));
+            });
+        }
         setUpDb(database) {
             if (!database.objectStoreNames.contains("workspaceLayouts")) {
                 database.createObjectStore("workspaceLayouts");
@@ -32513,7 +32905,8 @@
             return fallbackToEnterprise(config);
         }
         const isOpenerGlue = yield checkIsOpenerGlue();
-        if ((config === null || config === void 0 ? void 0 : config.clientOnly) || isOpenerGlue) {
+        const isPlacedInWorkspace = checkIfPlacedInWorkspace();
+        if ((config === null || config === void 0 ? void 0 : config.clientOnly) || isOpenerGlue || isPlacedInWorkspace) {
             const glue = (config === null || config === void 0 ? void 0 : config.glueFactory) ?
                 yield (config === null || config === void 0 ? void 0 : config.glueFactory(config === null || config === void 0 ? void 0 : config.glue)) :
                 yield glueWebFactory(config === null || config === void 0 ? void 0 : config.glue);
