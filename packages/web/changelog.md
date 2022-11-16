@@ -1,3 +1,5 @@
+2.10.1
+fix: reworked the resolver API typings to be more simplistic
 2.10.0
 feat: added support for intents resolver
 2.9.0
