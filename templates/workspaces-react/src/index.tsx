@@ -15,9 +15,7 @@ ReactDOM.render(
     <GlueProvider settings={{
       web: {
         config: { libraries: [GlueWorkspaces] },
-        factory: (config) => {
-          return GlueWeb(config);
-        }
+        factory: GlueWeb
       },
       desktop: {
         config: { libraries: [GlueWorkspaces], appManager: "skipIcons" },
