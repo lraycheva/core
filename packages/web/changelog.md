@@ -1,5 +1,6 @@
 2.10.1
 fix: reworked the resolver API typings to be more simplistic
+fix: intents raise now works correctly when the raising app is in a workspace
 2.10.0
 feat: added support for intents resolver
 2.9.0
