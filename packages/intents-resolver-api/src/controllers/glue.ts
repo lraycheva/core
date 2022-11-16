@@ -1,6 +1,8 @@
+import { ENTERPRISE_NO_APP_NAME, GLUE42_FDC3_INTENTS_METHOD_PREFIX } from '../shared/constants';
 import { StartContextDecoder } from '../shared/decoders';
 import { validateGlue } from '../shared/utils';
-import { AppDefinitionInGD, Application, Glue42, Instance, Intent, IntentHandler, IntentInfo, InvocationResult, RemovedIntentHandler, UnsubscribeFunction } from '../types/glue';
+import { AppDefinitionInGD, Application, Glue42, Intent, IntentHandler, InvocationResult, UnsubscribeFunction } from '../types/glue';
+import { ResolverIntentHandler } from '../types/types';
 
 export class GlueController {
     private glue!: Glue42;
@@ -14,7 +16,7 @@ export class GlueController {
 
         this.glue = glue;
 
-        const context = await this.glue.appManager.myInstance.getContext();
+        const context = await this.glue.windows.my().getContext();
 
         StartContextDecoder.runWithException(context);
 
@@ -27,78 +29,80 @@ export class GlueController {
         return this._intent;
     }
 
-    public async sendInteropMethodResponse(handler: IntentHandler): Promise<InvocationResult | undefined> {
+    public async sendInteropMethodResponse(handler: ResolverIntentHandler): Promise<InvocationResult | undefined> {
+        const extendedHandler = await this.getIntentHandler(handler);
+
         const methodIsRegistered = this.isMethodRegistered();
 
         if (!this.isInstanceStillRunning()) {
-            this.glue.appManager.myInstance.stop();
+            this.glue.windows.my().close();
             return;
         }
 
         if (!methodIsRegistered) {
-            return this.subscribeForServerMethodAdded(handler);
+            return this.waitForResponseMethodAdded(extendedHandler);
         }
 
-        return this.glue.interop.invoke(this._methodName, { intent: this.intent, handler }, { instance: this._callerId });
+        return this.glue.interop.invoke(this._methodName, { intent: this.intent, handler: extendedHandler }, { instance: this._callerId });
     }
 
-    public subscribeOnInstanceStarted(callback: (handler: IntentHandler) => void): UnsubscribeFunction {
-        return this.glue.appManager.onInstanceStarted(async (inst: Instance) => {
-            const currentIntentDef = await this.extractCurrentIntentInfoFromApp(inst.application);
+    public subscribeForServerMethodAdded(callback: (handler: ResolverIntentHandler) => void): UnsubscribeFunction {
+        return this.glue.interop.serverMethodAdded(({ server, method }) => {
+            const isMethodForCurrentIntent = this.checkIfMethodIsForCurrentIntent(method.name);
 
-            if (!currentIntentDef) {
+            if (!isMethodForCurrentIntent) {
                 return;
             }
 
-            const builtInstance = this.buildIntentHandler(inst.application, currentIntentDef, inst.id);
+            const builtHandler = this.buildIntentHandler(server.applicationName, server.instance);
+
+            callback(builtHandler);
+        });
+    }
+
+    public subscribeForServerMethodRemoved(callback: (handler: ResolverIntentHandler) => void): UnsubscribeFunction {
+        return this.glue.interop.serverMethodRemoved(({ server, method }) => {
+            const isMethodForCurrentIntent = this.checkIfMethodIsForCurrentIntent(method.name);
+
+            if (!isMethodForCurrentIntent) {
+                return;
+            }
+
+            const builtInstance = this.buildIntentHandler(server.applicationName, server.instance);
 
             callback(builtInstance);
         });
     }
 
-    public subscribeOnInstanceStopped(callback: (handler: RemovedIntentHandler) => void): UnsubscribeFunction {
-        return this.glue.appManager.onInstanceStopped(async (inst: Instance) => {
-            const currentIntentDef = await this.extractCurrentIntentInfoFromApp(inst.application);
-
-            if (!currentIntentDef) {
-                return;
-            }
-
-            const builtInstance = this.buildRemovedIntentHandler(inst.application, inst.id);
-
-            callback(builtInstance);
-        });
-    }
-
-    public subscribeOnAppAdded(callback: (handler: IntentHandler) => void): UnsubscribeFunction {
+    public subscribeOnAppAdded(callback: (handler: ResolverIntentHandler) => void): UnsubscribeFunction {
         return this.glue.appManager.onAppAdded(async (app: Application) => {
-            const currentIntentDef = await this.extractCurrentIntentInfoFromApp(app);
+            const isIntentHandler = await this.checkIfIntentHandler(app);
 
-            if (!currentIntentDef) {
+            if (!isIntentHandler) {
                 return;
             }
 
-            const builtHandler = this.buildIntentHandler(app, currentIntentDef);
+            const builtHandler = this.buildIntentHandler(app.name);
 
             callback(builtHandler);
         });
     }
 
-    public subscribeOnAppRemoved(callback: (handler: RemovedIntentHandler) => void): UnsubscribeFunction {
+    public subscribeOnAppRemoved(callback: (handler: ResolverIntentHandler) => void): UnsubscribeFunction {
         return this.glue.appManager.onAppRemoved(async (app: Application) => {
-            const currentIntentDef = await this.extractCurrentIntentInfoFromApp(app);
+            const isIntentHandler = await this.checkIfIntentHandler(app);
 
-            if (!currentIntentDef) {
+            if (!isIntentHandler) {
                 return;
             }
 
-            const builtHandler = this.buildRemovedIntentHandler(app);
+            const builtHandler = this.buildIntentHandler(app.name);
 
             callback(builtHandler);
         });
     }
 
-    private subscribeForServerMethodAdded(handler: IntentHandler): Promise<InvocationResult> {
+    private waitForResponseMethodAdded(handler: ResolverIntentHandler): Promise<InvocationResult> {
         const responsePromise: Promise<InvocationResult> = new Promise((resolve, reject) => {
             const unsub = this.glue.interop.serverMethodAdded(async ({ server, method }) => {
                 if (server.instance !== this._callerId || method.name !== this._methodName) {
@@ -121,48 +125,59 @@ export class GlueController {
         return responsePromise;
     }
 
-    private async extractCurrentIntentInfoFromApp(app: Application): Promise<IntentInfo | undefined> {
-        let intentDef;
-
+    private async checkIfIntentHandler(app: Application): Promise<boolean> {
         if ((window as any).glue42core) {
-            intentDef = app.userProperties.intents?.find((intent: Intent) => intent.name === this.intent);
+            return !!app.userProperties.intents?.find((intent: Intent) => intent.name === this.intent);
         }
 
         if ((window as any).glue42gd) {
-            let apps: AppDefinitionInGD[];
+            const apps = await this.getAppDefinitionsInGD();
 
-            try {
-                const result = await this.glue.interop.invoke("T42.ACS.GetApplications", { withIntentsInfo: true });
-                apps = result.returned.applications;
-            } catch (error) {
-                return;
-            }
-
-            intentDef = apps.find(appDef => appDef.name === app.name && appDef.intents?.find(intent => intent.name === this.intent));
+            return !!apps?.find(appDef => appDef.name === app.name && appDef.intents?.find(intent => intent.name === this.intent));
         }
 
-        return intentDef;
+        return false;
     }
 
-    private buildIntentHandler(app: Application, intentDef: IntentInfo, instanceId?: string): IntentHandler {
-        return {
-            applicationName: app.name,
-            applicationTitle: app.title || "",
-            applicationDescription: app.caption,
-            applicationIcon: app.icon,
-            displayName: intentDef.displayName,
-            type: instanceId ? "instance" : "app",
-            resultType: intentDef.resultType,
-            instanceId
+    private async getAppDefinitionsInGD(): Promise<AppDefinitionInGD[] | undefined> {
+        try {
+            const result = await this.glue.interop.invoke("T42.ACS.GetApplications", { withIntentsInfo: true });
+            return result.returned.applications;
+        } catch (error) {
+            return;
         }
     }
 
-    private buildRemovedIntentHandler(app: Application, instanceId?: string): RemovedIntentHandler {
+    private buildIntentHandler(appName: string, instanceId?: string): ResolverIntentHandler {
+        const foundApp = this.glue.appManager.application(appName);
+
+        /* Handle cases where a window is opened via glue.windows.open() and it adds a intent listener for the current intent:
+            Glue42 Core -> there will be no application in AppManager API
+            Glue42 Enterprise -> there will be an instance of an application called "no-app-window" in AppManager API 
+        */
         return {
-            applicationName: app.name,
-            type: instanceId ? "instance" : "app",
-            instanceId
-        };
+            applicationName: foundApp?.name !== ENTERPRISE_NO_APP_NAME
+                ? foundApp?.name || ""
+                : "",
+            applicationIcon: foundApp?.icon,
+            instanceId,
+        }
+    }
+
+    private async getIntentHandler(userHandler: ResolverIntentHandler): Promise<IntentHandler> {
+        const searchedIntent = (await this.glue.intents.find(this.intent)).find(intent => intent.name === this.intent);
+
+        if (!searchedIntent) {
+            throw new Error(`Intent with name ${this.intent} does not exist`);
+        }
+
+        const handler = searchedIntent.handlers.find(handler => (userHandler.instanceId && handler.instanceId === userHandler.instanceId) || (userHandler.applicationName && handler.applicationName === userHandler.applicationName));
+
+        if (!handler) {
+            throw new Error(`There's no such existing intent handler: ${JSON.stringify(userHandler)}`);
+        }
+
+        return handler;
     }
 
     private isMethodRegistered(): boolean {
@@ -171,5 +186,14 @@ export class GlueController {
 
     private isInstanceStillRunning(): boolean {
         return !!this.glue.interop.servers().find(server => server.windowId === this._callerId);
+    }
+
+    private checkIfMethodIsForCurrentIntent(methodName: string): boolean {
+        const methodNameToLower = methodName.toLowerCase();
+        const prefixToLower = GLUE42_FDC3_INTENTS_METHOD_PREFIX.toLowerCase();
+
+        const expectedMethodName = `${prefixToLower}${this.intent}`;
+
+        return expectedMethodName === methodNameToLower;
     }
 }

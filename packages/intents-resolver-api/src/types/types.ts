@@ -1,15 +1,21 @@
-import { IntentHandler, InvocationResult, RemovedIntentHandler, UnsubscribeFunction } from './glue';
+import { InvocationResult, UnsubscribeFunction } from './glue';
 
 export type IntentsResolverFactoryFunction = (glue: any) => Promise<void>;
 
 export interface IntentsResolver {
     intent: string;
-    sendResponse(): Promise<InvocationResult | undefined>;
-    onHandlerAdded(callback: (handler: IntentHandler) => void): UnsubscribeFunction;
-    onHandlerRemoved(callback: (handler: RemovedIntentHandler) => void): UnsubscribeFunction;
+    sendResponse(handler: ResolverIntentHandler): Promise<InvocationResult | undefined>;
+    onHandlerAdded(callback: (handler: ResolverIntentHandler) => void): UnsubscribeFunction;
+    onHandlerRemoved(callback: (handler: ResolverIntentHandler) => void): UnsubscribeFunction;
+}
+
+export interface ResolverIntentHandler {
+    applicationName?: string;
+    applicationIcon?: string;
+    instanceId?: string;
 }
 
 export interface IntentResolverResponse {
     intent: string;
-    handlers: IntentHandler[];
+    handlers: ResolverIntentHandler[];
 }

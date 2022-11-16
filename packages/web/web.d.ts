@@ -1216,7 +1216,13 @@ export namespace Glue42Web {
               * If not provided, Intents API will use the default Intents Resolver UI application to handle raising an intent with multiple handlers
               */
              intentsResolverAppName?: string;
-        }  
+        }
+
+        interface ResolverIntentHandler {
+            applicationName: string;
+            applicationIcon?: string;
+            instanceId?: string;
+        }
 
         export interface Resolver {
             /**
@@ -1225,25 +1231,19 @@ export namespace Glue42Web {
             intent: string;
 
             /**
-             * Notifies when an {@link IntentHandler} of the current intent is added. Replays the already existing handlers. 
+             * Notifies when a {@link ResolverIntentHandler} of the current intent is added. Replays the already existing handlers. 
              */
-            onHandlerAdded(callback: (handler: IntentHandler) => void): void;
+            onHandlerAdded(callback: (handler: ResolverIntentHandler) => void): UnsubscribeFunction;
 
             /**
-             * Notifies when an {@link IntentHandler} of the current intent is removed.
+             * Notifies when a {@link ResolverIntentHandler} of the current intent is removed.
              */
-            onHandlerRemoved(callback: (removedHandler: RemovedIntentHandler) => void): void;
+            onHandlerRemoved(callback: (removedHandler: ResolverIntentHandler) => void): UnsubscribeFunction;
 
             /**
              * Sends the chosen handler to the application which raised the intent
              */
-            sendResponse(handler: IntentHandler): Promise<Glue42.Interop.InvocationResult | undefined>;
-        }
-
-        export interface RemovedIntentHandler {
-            type: "app" | "instance";
-            applicationName: string;
-            instanceId?: string;
+            sendResponse(handler: ResolverIntentHandler): Promise<Glue42.Interop.InvocationResult | undefined>;
         }
 
         /** Use to define dynamic intents, that will have the same lifespan as your application instance */

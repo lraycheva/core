@@ -1,8 +1,21 @@
-import { IntentsResolver } from './types';
+import { ResolverIntentHandler, IntentsResolver } from './types';
 
 export type Intent = {
     name: string;
     handlers:  IntentHandler[];
+}
+
+export interface IntentHandler {
+    applicationName: string;
+    applicationTitle: string;
+    applicationDescription?: string;
+    applicationIcon?: string;
+    contextTypes?: string[];
+    displayName?: string;
+    instanceId?: string;
+    instanceTitle?: string;
+    resultType?: string;
+    type: "app" | "instance";
 }
 
 type IntentContext = {
@@ -17,44 +30,25 @@ type IntentRequest = {
     readonly options?: ApplicationStartOptions;
 }
 
-export interface IntentHandler {
-    applicationName: string;
-    applicationTitle: string;
-    applicationDescription?: string;
-    applicationIcon?: string;
-    type: "app" | "instance";
-    displayName?: string;
-    contextTypes?: string[];
-    instanceId?: string;
-    instanceTitle?: string;
-    resultType?: string;
-}
-
-export interface RemovedIntentHandler {
-    applicationName: string;
-    type: "app" | "instance";
-    instanceId?: string;
-}
-
 export type SharedContext = {
     callerId: string;
     intent: string;
 }
 
 export type IntentHandlersResponse = {
-    instances: IntentHandler[];
-    applications: IntentHandler[];
+    instances: ResolverIntentHandler[];
+    applications: ResolverIntentHandler[];
 }
 
 export type UnsubscribeFunction = () => void;
 
 type IntentResult = {
     request: IntentRequest;
-    handler: IntentHandler;
+    handler: ResolverIntentHandler;
     result?: any;
 }
 
-interface AddIntentListenerRequest {
+export interface AddIntentListenerRequest {
     intent: string;
     contextTypes?: string[];
     displayName?: string;
@@ -173,7 +167,7 @@ export interface InvocationResult {
     status: number;
 }
 
-export interface InteropMethod {
+interface InteropMethod {
     accepts?: string;
     description?: string;
     displayName?: string;
@@ -195,20 +189,35 @@ interface InteropAPI {
     methods(filter?: string | InteropMethodFilter ): InteropMethod[];
     methodAdded(cb: (method: InteropMethod) => void): UnsubscribeFunction;
     serverMethodAdded(cb: (info: { server: ServerInstance, method: InteropMethod }) => void): UnsubscribeFunction;
+    serverMethodRemoved(cb: (info: { server: ServerInstance, method: InteropMethod }) => void): UnsubscribeFunction;
 }
 
 interface AppManagerAPI {
-    myInstance: Instance;
+    myInstance: Instance | undefined;
     applications(): Application[];
-    application(name: string): Application;
+    application(name: string): Application | undefined;
     instances(): Instance[];
     onInstanceStarted(callback: (instance: Instance) => void): UnsubscribeFunction;
     onInstanceStopped(callback: (instance: Instance) => void): UnsubscribeFunction;
     onAppAdded(callback: (app: Application) => void): UnsubscribeFunction;
     onAppRemoved(callback: (app: Application) => void): UnsubscribeFunction;
 }
+
+interface WebWindow {
+    id: string;
+    name: string;
+    getTitle(): Promise<string>;
+    close(): Promise<WebWindow>;
+    getContext(): Promise<any>;
+}
+
+interface WindowsAPI {
+    findById(id: string): WebWindow;
+    my(): WebWindow;
+}
 export interface Glue42 {
     intents: IntentsAPI;
     interop: InteropAPI;
     appManager: AppManagerAPI;
+    windows: WindowsAPI; 
 }
