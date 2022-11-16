@@ -34,12 +34,27 @@ const App = () => {
     return myWin.resizeTo(undefined, height + 50);
   };
 
+  const getHandlerTitle = (handler) => {
+    // Handler may not have application name if it's started using glue.windows.open => get the title using WindowsAPI
+    if (!handler.applicationName) {
+      const winDef = glue.windows.findById(handler.instanceId);
+
+      return winDef.name;
+    }
+
+    const app = glue.appManager.application(handler.applicationName);
+
+    return app.title || handler.applicationName;
+  };
+
   const subscribeOnHandlerAdded = () => {
     return glue.intents.resolver.onHandlerAdded((handler) => {
       setHandlers((handlers) => {
-        const handlerWithId = { ...handler, id: handler.type === "app" ? handler.applicationName : handler.instanceId };
+        const handlerTitle = getHandlerTitle(handler);
 
-        return [...handlers, handlerWithId];
+        const parsedHandler = { ...handler, id: handler.instanceId || handler.applicationName, title: handlerTitle };
+
+        return [...handlers, parsedHandler];
       })
     });
   };
@@ -49,17 +64,15 @@ const App = () => {
       setHandlers((handlers) => {
         const removedHandlerWithId = { ...removedHandler, id: removedHandler.type === "app" ? removedHandler.applicationName : removedHandler.instanceId };
 
-        const filteredHandlers = handlers.filter(handler => handler.id !== removedHandlerWithId.id);
-
-        return filteredHandlers;
-      })
+        return handlers.filter(handler => handler.id !== removedHandlerWithId.id);
+      });
     });
   };
 
   const submitHandler = async (id) => {
-    const chosenHandler = handlers.find((h) => (h.type === 'app' ? h.applicationName === id : h.instanceId === id));
+    const chosenHandler = handlers.find((handler) => handler.id === id);
 
-    await glue.intents.resolver.sendResponse({ ...chosenHandler, id: undefined });
+    await glue.intents.resolver.sendResponse(chosenHandler);
   };
 
   useEffect(() => {
@@ -80,13 +93,13 @@ const App = () => {
         </div>
       )}
 
-      <div className='row mt-3'>
+      <div className='row mt-3' style={{ cursor: "default" }}>
         <div className='col'>
           <h3 style={{ margin: 0 }}>Choose an app to {glue.intents.resolver.intent}</h3>
         </div>
       </div>
 
-      <div className='row mt-3'>
+      <div className='row mt-3' style={{ cursor: "default" }}>
         <div className='col'>
           <h5>Start new:</h5>
         </div>
@@ -94,12 +107,13 @@ const App = () => {
 
       <ul className='list-group'>
         {handlers
-          .filter((handler) => handler.type === 'app')
+          .filter((handler) => !handler.instanceId)
           .map((handler) => (
             <li
               className='list-group-item list-group-item-action d-flex justify-content-between align-items-center'
               key={handler.id}
               onClick={() => submitHandler(handler.id)}
+              style={{cursor: "pointer"}}
             >
               <span>
                 {handler.applicationIcon ? (
@@ -112,14 +126,14 @@ const App = () => {
                 ) : (
                   <i className='icon-app mr-3'></i>
                 )}
-                {handler.applicationTitle || handler.applicationName}
+                { handler.title || handler.applicationName }
               </span>
               <span className={`badge badge-info badge-pill`}>app</span>
             </li>
           ))}
       </ul>
 
-      {!!handlers.filter((handler) => handler.type === 'instance').length && (
+      {!!handlers.filter((handler) => handler.instanceId).length && (
         <>
           <div className='row mt-3'>
             <div className='col'>
@@ -129,12 +143,13 @@ const App = () => {
 
           <ul className='list-group'>
             {handlers
-              .filter((handler) => handler.type === 'instance')
+              .filter((handler) => handler.instanceId)
               .map((handler) => (
                 <li
                   className='list-group-item list-group-item-action d-flex justify-content-between align-items-center'
                   key={handler.id}
                   onClick={() => submitHandler(handler.id)}
+                  style={{cursor: "pointer"}}
                 >
                   <span>
                     {handler.applicationIcon ? (
@@ -147,7 +162,7 @@ const App = () => {
                     ) : (
                       <i className='icon-app mr-3'></i>
                     )}
-                    {handler.applicationTitle || handler.applicationName}
+                    {handler.title || handler.applicationName}
                   </span>
                   <span className={`badge badge-secondary badge-pill`}>inst</span>
                 </li>
