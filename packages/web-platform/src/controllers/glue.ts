@@ -173,12 +173,7 @@ export class GlueController {
         return result;
     }
 
-    public async setInstanceStartContext(windowId: string, context: any): Promise<void> {
-        const key = `___instance___${windowId}`;
-        await this._systemGlue.contexts.set(key, context);
-    }
-
-    public setWindowStartContext(windowId: string, context: any): Promise<void> {
+    public setStartContext(windowId: string, context: any, type: "workspace" | "instance" | "window"): Promise<void> {
         return PromisePlus((resolve, reject) => {
             let unsub: () => void;
 
@@ -186,7 +181,7 @@ export class GlueController {
                 resolve();
                 unsub();
             });
-            const key = `___window___${windowId}`;
+            const key = `___${type}___${windowId}`;
 
             this._clientGlue.contexts.subscribe(key, ready)
                 .then((un) => {
@@ -194,7 +189,18 @@ export class GlueController {
                     ready();
                 });
             this._systemGlue.contexts.set(key, context).then(ready).catch(reject);
-        }, 10000, `Timed out waiting to set the window context for: ${windowId}`);
+        }, 10000, `Timed out waiting to set the ${type} context for: ${windowId}`);
+    }
+
+    public async clearContext(windowId: string, type: "workspace" | "instance" | "window"): Promise<void> {
+        const key = `___${type}___${windowId}`;
+
+        const keyExist = this._systemGlue.contexts.all().some((context) => context === key);
+
+        if (keyExist) {
+            await this._systemGlue.contexts.destroy(key);
+        }
+
     }
 
     public getServers(): Glue42Web.Interop.Instance[] {
@@ -286,7 +292,7 @@ export class GlueController {
         if (isWorkspaceFrame) {
             const platformFrame = this.sessionStorage.getPlatformFrame();
 
-            this._platformClientWindowId = platformFrame ? platformFrame.windowId : 
+            this._platformClientWindowId = platformFrame ? platformFrame.windowId :
                 window.name ? window.name : generate();
 
             if (!platformFrame) {

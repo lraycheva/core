@@ -127,7 +127,7 @@ export class WindowsController implements LibController {
 
         if (context) {
             this.logger?.trace(`setting the context for window ${windowData.windowId}`);
-            await this.glueController.setWindowStartContext(windowData.windowId, context);
+            await this.glueController.setStartContext(windowData.windowId, context, "window");
         }
 
         this.emitStreamData("windowAdded", windowData);
@@ -159,7 +159,9 @@ export class WindowsController implements LibController {
 
         const somethingRemoved = this.sessionController.fullWindowClean(windowId);
 
+        
         if (somethingRemoved) {
+            this.glueController.clearContext(windowId, "window").catch(() => { });
             this.emitStreamData("windowRemoved", { windowId });
         }
     }
@@ -174,7 +176,7 @@ export class WindowsController implements LibController {
         this.sessionController.saveNonGlue({ windowId: data.windowId });
 
         if (data.context) {
-            await this.glueController.setWindowStartContext(data.windowId, data.context);
+            await this.glueController.setStartContext(data.windowId, data.context, "window");
         }
 
         this.emitStreamData("windowAdded", { windowId: data.windowId, name: data.name });

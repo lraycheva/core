@@ -275,6 +275,9 @@ export namespace Glue42WebPlatform {
                 level?: LogLevel;
                 appender?: LogAppender;
             };
+            clients?: {
+                buffer_size?: number
+            }
         }
     }
 

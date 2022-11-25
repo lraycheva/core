@@ -27,7 +27,9 @@ export class Gateway {
             });
         }
 
-        this._gatewayWebInstance = this.create({ clients: { inactive_seconds: 0 } });
+        const buffer_size = typeof config?.clients?.buffer_size === "number" ? config.clients.buffer_size : 1000;
+
+        this._gatewayWebInstance = this.create({ clients: { inactive_seconds: 0, buffer_size } });
 
         await this._gatewayWebInstance.start();
     }

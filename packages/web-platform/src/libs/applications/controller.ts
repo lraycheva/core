@@ -208,9 +208,11 @@ export class ApplicationsController implements LibController {
 
         if (instanceData) {
             delete this.locks[instanceData.id];
+            this.glueController.clearContext(selfWindowId, "instance").catch(() => { });
             this.sessionStorage.removeInstance(instanceData.id);
             this.emitStreamData("instanceStopped", instanceData);
         }
+
     }
 
     private async notifyWindows(url: string, instance: InstanceData, initialBounds: Glue42Web.Windows.Bounds, context?: any, child?: Window): Promise<void> {
@@ -403,7 +405,7 @@ export class ApplicationsController implements LibController {
         this.logger?.trace(`[${commandId}] processing valid workspace application registration with id ${data.windowId}, app name ${data.appName} and frame ${data.frameId}`);
 
         if (data.context) {
-            await this.glueController.setInstanceStartContext(data.windowId, data.context);
+            await this.glueController.setStartContext(data.windowId, data.context, "instance");
         }
 
         const instanceData: InstanceData = { id: data.windowId, applicationName: data.appName };
@@ -419,7 +421,7 @@ export class ApplicationsController implements LibController {
 
     private async processNewInstance(config: InstanceProcessInfo): Promise<void> {
         if (config.context) {
-            await this.glueController.setInstanceStartContext(config.data.id, config.context);
+            await this.glueController.setStartContext(config.data.id, config.context, "instance");
         }
 
         this.sessionStorage.saveInstanceData(config.data);

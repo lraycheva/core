@@ -161,6 +161,10 @@ export class WorkspacesController implements LibController {
     public handleWorkspaceEvent(data: WorkspaceEventPayload): void {
         this.glueController.pushWorkspacesMessage(data);
 
+        if (data.action === "closed" && data.type === "workspace") {
+            this.glueController.clearContext((data as any).payload.workspaceSummary.id as string, "workspace");
+        }
+
         if (this.settings.hibernation) {
             this.hibernationWatcher.notifyEvent(data);
         }

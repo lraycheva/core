@@ -316,6 +316,9 @@ export const gatewayConfigDecoder: Decoder<Glue42WebPlatform.Gateway.Config> = o
     logging: optional(object({
         level: optional(logLevelDecoder),
         appender: optional(anyJson().andThen((result) => functionCheck(result, "gateway log appender")))
+    })),
+    clients: optional(object({
+        buffer_size: optional(number())
     }))
 });
 
