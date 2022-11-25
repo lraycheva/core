@@ -4,6 +4,7 @@ import typescript from 'rollup-plugin-typescript2'
 import { terser } from "rollup-plugin-terser";
 import copy from 'rollup-plugin-copy';
 const packageJson = require('./package.json');
+import del from 'rollup-plugin-delete';
 
 const globals = {
     react: 'React',
@@ -30,6 +31,7 @@ export default [
         ],
         external: [...Object.keys(packageJson.peerDependencies || {})],
         plugins: [
+            del({ targets: 'dist/*' }),
             resolve({
                 mainFields: ['module', 'main', 'browser'],
             }),

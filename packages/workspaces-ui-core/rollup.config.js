@@ -5,11 +5,13 @@ import external from 'rollup-plugin-peer-deps-external';
 import { terser } from "rollup-plugin-terser";
 import copy from "rollup-plugin-copy";
 import execute from "rollup-plugin-execute";
+import del from 'rollup-plugin-delete';
 
 export default [
     {
         input: 'src/export.ts',
         plugins: [
+            del({ targets: 'dist/*' }),
             typescript(),
             commonjs(),
             resolve({

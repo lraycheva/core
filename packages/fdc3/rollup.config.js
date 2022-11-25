@@ -4,6 +4,7 @@ import commonjs from '@rollup/plugin-commonjs';
 import resolve from '@rollup/plugin-node-resolve';
 import json from '@rollup/plugin-json';
 import pkg from './package.json';
+import del from 'rollup-plugin-delete';
 
 export default {
     input: 'src/index.ts',
@@ -27,6 +28,7 @@ export default {
     ],
 
     plugins: [
+        del({ targets: 'dist/*' }),
         typescript({
             typescript: require('typescript'),
         }),
