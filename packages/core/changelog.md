@@ -1,3 +1,5 @@
+5.7.9
+chore: updated rollup build to use a clean dist dir
 5.7.8
 fix: iframes now have unique ids every time, even after top refresh
 5.7.7
