@@ -1,3 +1,5 @@
+3.0.1
+chore: updated rollup build to use a clean dist dir
 3.0.0
 feat: implements FDC3 2.0 standard
 feat: no longer bundles the Glue42 libs

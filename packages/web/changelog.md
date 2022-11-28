@@ -1,3 +1,5 @@
+2.10.2
+chore: updated rollup build to use a clean dist dir
 2.10.1
 fix: reworked the resolver API typings to be more simplistic
 fix: intents raise now works correctly when the raising app is in a workspace

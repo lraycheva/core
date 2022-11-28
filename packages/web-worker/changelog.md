@@ -1,3 +1,5 @@
+1.1.2
+chore: updated rollup build to use a clean dist dir
 1.1.1
 chore: resolved dependency vulnerabilities
 1.1.0

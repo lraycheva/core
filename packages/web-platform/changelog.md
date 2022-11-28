@@ -1,5 +1,6 @@
 1.17.3
 fix: upgraded GW to 3.0.17, sets the client buffer to 1000, which fixes the issue of 50+ clients not being able to connect
+chore: updated rollup build to use a clean dist dir
 1.17.2
 chore: bump due to dependencies update
 1.17.1

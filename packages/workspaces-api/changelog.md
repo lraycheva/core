@@ -1,3 +1,5 @@
+1.17.3
+chore: updated rollup build to use a clean dist dir
 1.17.2
 fix: dedicated the layouts import to the underlying glue, instead of transmitting a dedicated workspaces protocol message
 1.17.1
