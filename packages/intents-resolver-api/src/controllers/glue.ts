@@ -126,7 +126,7 @@ export class GlueController {
     }
 
     private async checkIfIntentHandler(app: Application): Promise<boolean> {
-        if ((window as any).glue42core) {
+        if ((window as any).glue42core && (window as any).glue42core.webStarted) {
             return !!app.userProperties.intents?.find((intent: Intent) => intent.name === this.intent);
         }
 
@@ -171,13 +171,23 @@ export class GlueController {
             throw new Error(`Intent with name ${this.intent} does not exist`);
         }
 
-        const handler = searchedIntent.handlers.find(handler => (userHandler.instanceId && handler.instanceId === userHandler.instanceId) || (userHandler.applicationName && handler.applicationName === userHandler.applicationName));
+        const handler = this.findHandlerByFilter({ instanceId: userHandler.instanceId, applicationName: userHandler.applicationName }, searchedIntent.handlers);
 
         if (!handler) {
             throw new Error(`There's no such existing intent handler: ${JSON.stringify(userHandler)}`);
         }
 
         return handler;
+    }
+
+    private findHandlerByFilter (filterObject: { instanceId?: string, applicationName?: string }, handlers: IntentHandler[]): IntentHandler | undefined {
+        if (filterObject.instanceId) {
+            return handlers.find(handler => handler.instanceId === filterObject.instanceId);
+        }
+
+        if (filterObject.applicationName) {
+            return handlers.find(handler => handler.applicationName === filterObject.applicationName);
+        }
     }
 
     private isMethodRegistered(): boolean {
@@ -189,11 +199,8 @@ export class GlueController {
     }
 
     private checkIfMethodIsForCurrentIntent(methodName: string): boolean {
-        const methodNameToLower = methodName.toLowerCase();
-        const prefixToLower = GLUE42_FDC3_INTENTS_METHOD_PREFIX.toLowerCase();
+        const expectedMethodName = `${GLUE42_FDC3_INTENTS_METHOD_PREFIX}${this.intent}`;
 
-        const expectedMethodName = `${prefixToLower}${this.intent}`;
-
-        return expectedMethodName === methodNameToLower;
+        return expectedMethodName === methodName;
     }
 }
