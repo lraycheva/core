@@ -62,7 +62,6 @@ import {
 } from "../types/protocol";
 import { WorkspaceEventType, WorkspaceEventAction } from "../types/subscription";
 import { Glue42Workspaces } from "../../workspaces";
-import { SetMaximizationBoundaryConfig as APISetMaximizationBoundaryConfig } from "../../temp";
 
 export const nonEmptyStringDecoder: Decoder<string> = string().where((s) => s.length > 0, "Expected a non-empty string");
 export const nonNegativeNumberDecoder: Decoder<number> = number().where((num) => num >= 0, "Expected a non-negative number");
@@ -406,7 +405,7 @@ export const streamRequestArgumentsDecoder: Decoder<{ type: WorkspaceEventType; 
     branch: nonEmptyStringDecoder
 });
 
-export const workspaceEventActionDecoder: Decoder<WorkspaceEventAction> = oneOf<"opened" | "closing" | "closed" | "focus" | "added" | "loaded" | "removed" | "childrenUpdate" | "containerChange" | "maximized" | "restored" | "minimized" | "normal" | "selected" |"lock-configuration-changed">(
+export const workspaceEventActionDecoder: Decoder<WorkspaceEventAction> = oneOf<"opened" | "closing" | "closed" | "focus" | "added" | "loaded" | "removed" | "childrenUpdate" | "containerChange" | "maximized" | "restored" | "minimized" | "normal" | "selected" | "lock-configuration-changed">(
     constant("opened"),
     constant("closing"),
     constant("closed"),
@@ -891,7 +890,7 @@ export const shortcutClickedDataDecoder: Decoder<ShortcutClickedData> = object({
     frameId: nonEmptyStringDecoder
 });
 
-export const setMaximizationBoundaryAPIConfigDecoder: Decoder<APISetMaximizationBoundaryConfig> = object({
+export const setMaximizationBoundaryAPIConfigDecoder: Decoder<Glue42Workspaces.SetMaximizationBoundaryConfig> = object({
     enabled: boolean()
 });
 

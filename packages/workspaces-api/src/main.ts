@@ -4,11 +4,10 @@ import { checkThrowCallback, nonEmptyStringDecoder, workspaceLayoutDecoder, work
 import { FrameStreamData, WorkspaceStreamData, WorkspaceSnapshotResult, WindowStreamData } from "./types/protocol";
 import { FrameCreateConfig, WorkspaceIoCCreateConfig } from "./types/ioc";
 import { Glue42Workspaces } from "./../workspaces";
-import { API } from "./../temp";
 import { WorkspacesController } from "./types/controller";
 import { version } from "../package.json";
 
-export const composeAPI = (glue: any, ioc: IoC): API => {
+export const composeAPI = (glue: any, ioc: IoC): Glue42Workspaces.API => {
 
     const controller: WorkspacesController = ioc.controller;
 

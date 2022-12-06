@@ -2,7 +2,6 @@ import { Base } from "./base/base";
 import { Glue42Workspaces } from "../../workspaces.d";
 import { checkThrowCallback, nonNegativeNumberDecoder, rowLockConfigDecoder, setMaximizationBoundaryAPIConfigDecoder } from "../shared/decoders";
 import { SubscriptionConfig } from "../types/subscription";
-import { SetMaximizationBoundaryConfig } from "../../temp";
 
 interface PrivateData {
     base: Base;
@@ -182,7 +181,7 @@ export class Row implements Glue42Workspaces.Row {
         const unsubscribe = await getBase(this).processLocalSubscription(this, config);
         return unsubscribe;
     }
-    public async setMaximizationBoundary(config: SetMaximizationBoundaryConfig): Promise<void> {
+    public async setMaximizationBoundary(config: Glue42Workspaces.SetMaximizationBoundaryConfig): Promise<void> {
        const validatedConfig = setMaximizationBoundaryAPIConfigDecoder.runWithException(config);
         return getBase(this).setMaximizationBoundary(this, validatedConfig);
     }

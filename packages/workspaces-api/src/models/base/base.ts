@@ -11,7 +11,6 @@ import { Row } from "../row";
 import { Column } from "../column";
 import { ColumnSnapshotConfig, GroupSnapshotConfig, RowSnapshotConfig } from "../../types/protocol";
 import { SubscriptionConfig } from "../../types/subscription";
-import { SetMaximizationBoundaryConfig } from "../../../temp";
 
 interface PrivateData {
     manager: PrivateDataManager;
@@ -363,7 +362,7 @@ export class Base {
         await this.getMyWorkspace(modelData.parent).refreshReference();
     }
 
-    public async setMaximizationBoundary(model: Row | Column, config: SetMaximizationBoundaryConfig): Promise<void> {
+    public async setMaximizationBoundary(model: Row | Column, config: Glue42Workspaces.SetMaximizationBoundaryConfig): Promise<void> {
         const modelData = getData(this, model) as ParentPrivateData;
         const { controller, id } = modelData;
 

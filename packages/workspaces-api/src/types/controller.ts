@@ -6,7 +6,6 @@ import { RefreshChildrenConfig } from "./privateData";
 import { Child, ContainerLockConfig, SubParentTypes } from "./builders";
 import { GDWindow } from "./glue";
 import { UnsubscribeFunction } from "callback-registry";
-import { SetMaximizationBoundaryConfig } from "../../temp";
 
 export interface WorkspacesController {
     checkIsInSwimlane(windowId: string): Promise<boolean>;
@@ -72,7 +71,7 @@ export interface WorkspacesController {
     getWorkspaceIcon(workspaceId: string): Promise<string>;
     setWorkspaceIcon(workspaceId: string, icon: string): Promise<void>;
     registerShortcut(shortcut: string, frameId: string, callback: () => void): Promise<UnsubscribeFunction>;
-    setMaximizationBoundary(itemId: string, config: SetMaximizationBoundaryConfig): Promise<void>;
+    setMaximizationBoundary(itemId: string, config: Glue42Workspaces.SetMaximizationBoundaryConfig): Promise<void>;
     showWorkspaceLoadingAnimation(workspaceId: string): Promise<void>;
     hideWorkspaceLoadingAnimation(workspaceId: string): Promise<void>;
 }

@@ -760,6 +760,12 @@ export namespace Glue42Workspaces {
         close(): Promise<void>;
 
         /**
+         * Initializes the frame with the provided workspaces in the config when the frame has been opened as empty
+         * @param config The configuration with which the frame will be initialized
+         */
+        init(config: FrameInitializationConfig): Promise<void>;
+
+        /**
          * Returns an object detailing the current state of this frame.
          */
         snapshot(): Promise<FrameSnapshot>;
@@ -814,6 +820,18 @@ export namespace Glue42Workspaces {
          * @param callback Callback function to handle the event.
          */
         onNormal(callback: () => void): Promise<Unsubscribe>;
+
+        /**
+         * Triggered when either a window in the frame is focused or the frame itself (supported only in Glue42 Enterprise).
+         * @param callback Callback function to handle the event. It receives a data oject which indicates how the focus has changed.
+         */
+        onFocusChanged(callback: (data: FrameFocusChangedData) => void): Promise<Glue42Workspaces.Unsubscribe>;
+
+        /**
+         * Notifies when a the frame is created without being initialized.
+         * @param callback Callback function to handle the event. Receives a context for the initialization request
+         */
+        onInitializationRequested(callback: (context?: Glue42Workspaces.FrameInitializationContext) => Promise<void>): Promise<void>
 
         /**
          * Notifies when a new workspace was opened in this frame and returns an unsubscribe function.
@@ -1134,6 +1152,12 @@ export namespace Glue42Workspaces {
         onClosed(callback: (closed?: WorkspaceClosedData) => void): Promise<Unsubscribe>;
 
         /**
+         * Notifies when the a change in the lock configuration of the workspace has been made
+         * @param callback Callback function to handle the event. Receives the new lock configuration as a parameter.
+         */
+        onLockConfigurationChanged(callback: (config: Glue42Workspaces.WorkspaceLockConfig) => void): Promise<Glue42Workspaces.Unsubscribe>;
+
+        /**
          * Notifies when a new window was added to this workspace and returns an unsubscribe function.
          * An added window means that the window has a place in the workspace (it is a valid workspace element), but does not guarantee that the contents of the window are loaded.
          * @param callback Callback function to handle the event. Receives the added window as a parameter.
@@ -1153,6 +1177,19 @@ export namespace Glue42Workspaces {
          * @param callback Callback function to handle the event. Receives the loaded window as a parameter.
          */
         onWindowLoaded(callback: (window: WorkspaceWindow) => void): Promise<Unsubscribe>;
+        /** 
+                * Notifies when a window was maximized in this workspace and returns an unsubscribe function.
+                * A maximized window means that the window has been maximized either by an API call or from the maximize button by the user.
+                * @param callback Callback function to handle the event. Receives the maximized window as a parameter.
+                */
+        onWindowMaximized(callback: (window: Glue42Workspaces.WorkspaceWindow) => void): Promise<Glue42Workspaces.Unsubscribe>;
+
+        /**
+          * Notifies when a window was restored in this workspace and returns an unsubscribe function.
+          * A restored window means that the window has been restored from a maximized state either by an API call or from the restored button by the user.
+          * @param callback Callback function to handle the event. Receives the restored window as a parameter.
+          */
+        onWindowRestored(callback: (window: Glue42Workspaces.WorkspaceWindow) => void): Promise<Glue42Workspaces.Unsubscribe>;
 
         /**
          * Indicates if the workspace is in a pinned state or not
@@ -1185,6 +1222,16 @@ export namespace Glue42Workspaces {
          * @param icon 
          */
         setIcon(icon: string): Promise<void>;
+
+        /**
+         * Shows the loading animation of the workspace (supported only in Glue42 Enterprise)
+         */
+        showLoadingAnimation(): Promise<void>;
+
+        /**
+         * Hides the loading animation of the workspace (supported only in Glue42 Enterprise)
+         */
+        hideLoadingAnimation(): Promise<void>;
     }
 
     /** An object containing the summary of a workspace box */
@@ -1312,6 +1359,18 @@ export namespace Glue42Workspaces {
          * @param height A required number which should be the new height of the row
          */
         setHeight(height: number): Promise<void>;
+
+        /**
+        * Changes whether the row is a maximizationBoundary
+        * @param config Object which specifies how the maximizationBoundary behavior should be changed
+        */
+        setMaximizationBoundary(config: SetMaximizationBoundaryConfig): Promise<void>
+
+        /**
+         * Notifies when the a change in the lock configuration of the row has been made
+         * @param callback Callback function to handle the event. Receives the new lock configuration as a parameter
+         */
+        onLockConfigurationChanged(callback: (config: Glue42Workspaces.RowLockConfig) => void): Promise<Glue42Workspaces.Unsubscribe>
     }
 
     /** An object describing a column type workspace box */
@@ -1338,6 +1397,18 @@ export namespace Glue42Workspaces {
          * @param width A required number which should be the new width of the column
          */
         setWidth(width: number): Promise<void>;
+
+        /**
+         * Changes whether the column is a maximizationBoundary
+         * @param config Object which specifies how the maximizationBoundary behavior should be changed
+         */
+        setMaximizationBoundary(config: SetMaximizationBoundaryConfig): Promise<void>
+
+        /**
+         * Notifies when the a change in the lock configuration of the column has been made
+         * @param callback Callback function to handle the event. Receives the new lock configuration as a parameter
+         */
+        onLockConfigurationChanged(callback: (config: Glue42Workspaces.ColumnLockConfig) => void): Promise<Glue42Workspaces.Unsubscribe>
     }
 
     /** An object describing a group type workspace box */
@@ -1385,6 +1456,12 @@ export namespace Glue42Workspaces {
          * @param sizeConfig A config object which should be the new size of the group.
          */
         setSize(sizeConfig: ElementResizeConfig): Promise<void>;
+
+        /**
+         * Notifies when a change in the lock configuration of the group has been made
+         * @param  callback Callback function to handle the event. Receives the new lock configuration as a parameter
+         */
+        onLockConfigurationChanged(callback: (config: Glue42Workspaces.GroupLockConfig) => void): Promise<Glue42Workspaces.Unsubscribe>
     }
 
     /** An object describing the basic details of a workspace window */
@@ -1526,6 +1603,12 @@ export namespace Glue42Workspaces {
          * @param callback Callback function to handle the event.
          */
         onRemoved(callback: () => void): Promise<Unsubscribe>;
+
+        /**
+         * Notifies when a change in the lock configuration of the workspace window has been made
+         * @param callback Callback function to handle the event. Receives the new lock configuration as a parameter
+         */
+        onLockConfigurationChanged(callback: (config: Glue42Workspaces.WorkspaceWindowLockConfig) => void): Promise<Glue42Workspaces.Unsubscribe>
     }
 
     /** An object describing a builder user to create workspaces */
@@ -1612,6 +1695,13 @@ export namespace Glue42Workspaces {
         metadata?: object;
     }
 
+    export interface SetMaximizationBoundaryConfig {
+        /**
+         * Represents the new value of the maximizationBoundary property
+         */
+        enabled: boolean;
+    }
+
     /** An object describing the complete state of a frame at the time when the object was created */
     export interface FrameSnapshot {
         /**
@@ -1627,6 +1717,10 @@ export namespace Glue42Workspaces {
     export interface FrameClosedData {
         frameId: string;
         frameBounds?: FrameBounds;
+    }
+
+    export interface FrameFocusChangedData {
+        isFocused: boolean;
     }
 
     export interface WorkspaceClosedData {
@@ -1841,6 +1935,20 @@ export namespace Glue42Workspaces {
          * @param callback Callback function to handle the event. Receives an object containing the ids of the removed window, and the respective workspace and frame as a parameter.
          */
         onWindowRemoved(callback: (removed: { windowId?: string; workspaceId: string; frameId: string }) => void): Promise<Unsubscribe>;
+
+        /**
+         * Notifies when a window was maximized in any workspace in any frame and returns an unsubscribe function.
+         * A maximized window means that the window has been maximized either by an API call or from the maximize button by the user.
+         * @param callback Callback function to handle the event. Receives the maximized window as a parameter.
+         */
+        onWindowMaximized(callback: (workspaceWindow: Glue42Workspaces.WorkspaceWindow) => void): Promise<Glue42Workspaces.Unsubscribe>;
+
+        /**
+         * Notifies when a window was restored from a maximized state in any workspace in any frame and returns an unsubscribe function.
+         * A restored window means that the window has been restored from a maximized state either by an API call or from the restore button by the user.
+         * @param callback Callback function to handle the event. Receives the restored window as a parameter.
+         */
+        onWindowRestored(callback: (workspaceWindow: Glue42Workspaces.WorkspaceWindow) => void): Promise<Glue42Workspaces.Unsubscribe>;
 
         /** Glue42 Workspaces API version. */
         version: string;

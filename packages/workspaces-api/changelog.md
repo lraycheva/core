@@ -1,3 +1,5 @@
+1.18.0
+chore: updated the typings
 1.17.3
 chore: updated rollup build to use a clean dist dir
 1.17.2
