@@ -1,3 +1,5 @@
+2.0.8
+chore: bump due to dependencies update
 2.0.7
 chore: updated rollup build to use a clean dist dir
 2.0.6
